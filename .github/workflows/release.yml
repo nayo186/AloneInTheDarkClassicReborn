@@ -1,0 +1,46 @@
+# Builds the players' zip when a release is published and attaches it to the
+# release. Same steps as on a local PC: tools/makeRelease.ps1 (Release build,
+# without the development tools F9/F10, C++ runtime inside the executables,
+# only Launcher.exe, Tatou.exe, README.md and LICENSE in the zip).
+#
+# To publish a version: create a release on GitHub with a tag like
+# v1.0.0-beta.1; the zip ClassicReborn-1.0.0-beta.1-windows.zip appears in it
+# when the build ends. It can also be run by hand for an existing tag.
+
+name: Release zip
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing release tag (e.g. v1.0.0-beta.1)"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-2022
+    env:
+      TAG: ${{ github.event.release.tag_name || inputs.tag }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Get the code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+
+      - name: Build and pack
+        shell: pwsh
+        run: |
+          $version = $env:TAG.TrimStart('v')
+          ./tools/makeRelease.ps1 -Version $version
+
+      - name: Attach the zip to the release
+        shell: pwsh
+        run: |
+          $version = $env:TAG.TrimStart('v')
+          gh release upload $env:TAG "release/ClassicReborn-$version-windows.zip" --clobber

@@ -172,6 +172,8 @@ cmake -S TatouSource -B TatouSource\build\vs2022 -DCLASSIC_REBORN_DEV_TOOLS=OFF
 
 **Debug mode** is switched on by hand: `debugMode = 1` in `launcher.cfg`. With a copy of the game files it also keeps every file the game writes inside that copy.
 
+**Releases.** The zip of each release is built by GitHub Actions (`.github/workflows/release.yml`) with the same script: publishing a release with a tag like `v1.0.0-beta.1` attaches `ClassicReborn-1.0.0-beta.1-windows.zip` to it. Locally: `powershell -ExecutionPolicy Bypass -File tools\makeRelease.ps1 -Version 1.0.0-beta.1`.
+
 Linux and Android are planned; most of the libraries already support them.
 
 ## Architecture
