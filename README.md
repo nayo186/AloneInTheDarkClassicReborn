@@ -2,6 +2,8 @@
 
 Play the original **Alone in the Dark** (1992) and **Jack in the Dark** on modern PCs, with their original graphics and a set of careful fixes and options.
 
+**[⬇ Download the latest version](https://github.com/nayo186/AloneInTheDarkClassicReborn/releases/latest)**: unzip it, run `Launcher.exe` and choose your GOG or Steam copy of the game. Nothing else to install.
+
 Classic Reborn is a C++17 reimplementation of the Infogrames engine. It is a fork of [Alone in the Dark: Re-Haunted](https://github.com/spacefarergames/AloneInTheDarkReHaunted), itself based on [FITD (Free in the Dark)](https://github.com/yaz0r/FITD) by yaz0r. Its goal is the 1992 game as it was meant to be seen, without its defects: the remaster's HD mode was removed and every addition is optional.
 
 > **The game data is not included.** You need your own copy of *Alone in the Dark* (the GOG or Steam edition). Nothing of the original game is in this repository.
