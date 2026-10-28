@@ -1,0 +1,11 @@
+# Local build output (generate with CMake into TatouSource/build/<name>)
+TatouSource/build/*
+
+# Python caches (tools/)
+__pycache__/
+
+# Players' zips made by tools/makeRelease.ps1
+release/
+
+# Visual Studio folder settings
+.vs/

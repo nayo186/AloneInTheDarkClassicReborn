@@ -1,0 +1,37 @@
+#include "windows.h"
+
+// Icon of the project, shared with the launcher (Shared/assets)
+IDI_ICON1 ICON "../Shared/assets/aitd.ico"
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION 2,0,0,0
+PRODUCTVERSION 2,0,0,0
+FILEFLAGSMASK 0x3f
+#ifdef _DEBUG
+FILEFLAGS 0x1
+#else
+FILEFLAGS 0x0
+#endif
+FILEOS 0x40004
+FILETYPE 0x1
+FILESUBTYPE 0x0
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "CompanyName", "Alone in the Dark: Classic Reborn"
+            VALUE "FileDescription", "Alone in the Dark: Classic Reborn - Launcher"
+            VALUE "FileVersion", "2.0.0.0"
+            VALUE "InternalName", "Launcher"
+            VALUE "LegalCopyright", "GPL v2. Based on FITD by yaz0r and AloneInTheDarkReHaunted by Spacefarer Retro Remasters"
+            VALUE "OriginalFilename", "Launcher.exe"
+            VALUE "ProductName", "Alone in the Dark: Classic Reborn"
+            VALUE "ProductVersion", "2.0.0.0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
