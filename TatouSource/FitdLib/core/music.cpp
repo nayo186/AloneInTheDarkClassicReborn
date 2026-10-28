@@ -1258,6 +1258,9 @@ void loadMusic(int param, char* musicPtr)
 
 int fadeParam[3];
 
+// The music that is playing comes from a CD track (else from the AdLib)
+static bool s_musicFromTrack = false;
+
 int fadeMusic(int param1, int param2, int param3)
 {
     fadeParam[0] = param1;
@@ -1288,8 +1291,12 @@ void playMusic(int musicNumber)
 	if(g_gameId != JACK)
 	{
 		if(osystem_playTrack(trackNumber))
+		{
+			s_musicFromTrack = true;
 			return;
+		}
 	}
+	s_musicFromTrack = false;
 
 	//  if(musicEnabled)
 	{
@@ -1328,6 +1335,20 @@ void playMusic(int musicNumber)
 			}
 		}
 	}
+}
+
+void stopMusic()
+{
+	fadeMusic(0,0,0x40);
+	osystem_stopTrack();
+	currentMusic = -1;
+}
+
+bool isMusicOver()
+{
+	if(s_musicFromTrack)
+		return !osystem_isTrackPlaying();
+	return fadeMusic(0,0,0x10)==-1;
 }
 
 int updateLoop = 0;

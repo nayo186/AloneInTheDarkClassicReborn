@@ -37,8 +37,7 @@ int make3dTatou(void)
     // Stop any CD audio before loading resources. On mixed-mode CDs the drive
     // cannot read data while an audio track is playing, which would cause
     // CheckLoadMallocPak to fail and crash.
-    osystem_stopTrack();
-    currentMusic = -1;
+    stopMusic();
 
     char* tatou2d = CheckLoadMallocPak("ITD_RESS",AITD1_TATOU_MCG);
 

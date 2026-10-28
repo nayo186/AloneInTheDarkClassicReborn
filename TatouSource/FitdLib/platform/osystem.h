@@ -136,6 +136,8 @@
 	int osystem_playTrack(int trackId);
 	// Stops the CD music
 	void osystem_stopTrack();
+	// True while a CD music track (CD, loose file or GAME.GOG) is still playing
+	int osystem_isTrackPlaying();
 	// Starts the AdLib music output (Jack in the Dark)
 	void osystem_playAdlib();
 

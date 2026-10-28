@@ -27,4 +27,8 @@ void callMusicUpdate(void);
 void destroyMusicDriver(void);
 // Fades the music in or out
 int fadeMusic(int param1, int param2, int param3);
+// Silences the music, CD track and AdLib alike (BUGS.md C33)
+void stopMusic();
+// True when the music that was playing has ended (CD track or AdLib)
+bool isMusicOver();
 #endif

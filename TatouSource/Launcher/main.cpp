@@ -227,8 +227,7 @@ static void drawAdvancedOptions(LauncherState& state, const Fonts& fonts, const 
     ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
     ImGui::SetNextWindowSizeConstraints(ImVec2(width, 0.0f), ImVec2(width, io.DisplaySize.y * 0.94f));
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, metrics.px(24.0f, 20.0f));
-    if (!ImGui::BeginPopupModal("##advancedPopup", nullptr,
-        ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize))
+    if (!ImGui::BeginPopupModal("##advancedPopup", nullptr, menu::kPanelFlags | ImGuiWindowFlags_AlwaysAutoResize))
     {
         ImGui::PopStyleVar();
         return;
@@ -376,6 +375,7 @@ static void drawAdvancedOptions(LauncherState& state, const Fonts& fonts, const 
         ImGui::CloseCurrentPopup();
     }
     ImGui::Dummy(ImVec2(0.0f, metrics.px(4.0f)));
+    menu::dragScroll();
 
     // Their sizes follow the scale; the fonts are already made at it
     ControlsWindowStyle controlsStyle;

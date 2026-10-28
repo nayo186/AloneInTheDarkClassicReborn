@@ -171,6 +171,11 @@ struct Fonts
     ImFont* title = nullptr;    // 40 units, bold
 };
 
+// A fixed panel without title bar; its scroll bar appears only when the
+// content does not fit (NoDecoration would hide it)
+constexpr ImGuiWindowFlags kPanelFlags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+    ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings;
+
 // ── Widgets ─────────────────────────────────────────────────────────────────
 
 // Touch screens: dragging the current scrolling area moves it (phones have no

@@ -260,8 +260,7 @@ void advancedOptionsDraw()
     ImGui::PushFont(menuFonts().text);
 
     const bool controlsOpen = s_controls.open || s_audio.open;   // shown instead of the options
-    if (!controlsOpen && ImGui::Begin("##advancedOptions", nullptr,
-        ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings))
+    if (!controlsOpen && ImGui::Begin("##advancedOptions", nullptr, menu::kPanelFlags))
     {
         ImGui::PushFont(menuFonts().header);
         ImGui::TextColored(kGoldLight, "%s", text(AdvancedText::Title));
@@ -404,6 +403,7 @@ void advancedOptionsDraw()
         {
             advancedOptionsClose();
         }
+        menu::dragScroll();
     }
     if (!controlsOpen)
         ImGui::End();

@@ -2,7 +2,18 @@
 
 Alone in the Dark: Classic Reborn started on 2026-10-23 from [Alone in the Dark: Re-Haunted](https://github.com/spacefarergames/AloneInTheDarkReHaunted) by Spacefarer Retro Remasters, which in turn builds on [FITD](https://github.com/yaz0r/FITD) by yaz0r. The history of those projects is in their repositories.
 
-This repository was published with a single starting commit, to keep it light: the early history carried large files that are no longer part of the project. Below are the changes made in this fork before it was published, newest first, one line per change. The reasons behind larger removals are explained in `docs/DESCARTADO.md` and the fixes in `docs/baseline/BUGS.md`.
+This repository was published with a single starting commit, to keep it light: the early history carried large files that are no longer part of the project. Below are the changes of each release and, after them, the changes made in this fork before it was published, newest first, one line per change. The reasons behind larger removals are explained in `docs/DESCARTADO.md` and the fixes in `docs/baseline/BUGS.md`.
+
+## v1.0.0-beta.2 (2026-10-28)
+
+- Background music plays again when a piece ends: the music queued by the scripts follows (after a monster dies, after a scare) (BUGS.md C32)
+- The music stops when restarting, dying or going back to the title screen (BUGS.md C33)
+- Random events (ambient music and sounds, monsters) differ in every session instead of repeating (BUGS.md C34)
+- Advanced options (launcher and F1): scroll bar when the window is too small to show everything
+
+## v1.0.0-beta.1 (2026-10-28)
+
+First public release.
 
 ## 2026-10-27
 

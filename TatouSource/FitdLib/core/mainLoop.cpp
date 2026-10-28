@@ -34,22 +34,20 @@ void updatePendingEvents(void)
             if(evalChrono(&musicChrono)>180)
             {
                 playMusic(nextMusic);
+                nextMusic = -1;
             }
         }
-        else
+        else if(isMusicOver())
         {
-			/*
-            if(fadeMusic(0,0,0x10)==-1)
-            {
-                currentMusic = -1;
+            // The piece ended: silence, then the one the scripts queued with
+            // NEXT_MUSIC (BUGS.md C32)
+            currentMusic = -1;
 
-                if(nextMusic != -1)
-                {
-                    playMusic(nextMusic);
-                    nextMusic = -1;
-                }
+            if(nextMusic != -1)
+            {
+                playMusic(nextMusic);
+                nextMusic = -1;
             }
-			*/
         }
     }
 }

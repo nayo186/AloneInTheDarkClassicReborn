@@ -236,8 +236,7 @@ int ChoosePerso(void)
         osystem_drawBackground();
 
         // Stop any playing music
-        fadeMusic(0, 0, 0x40);
-        currentMusic = -1;
+        stopMusic();
 
         // Restore clean background from the cached snapshot instead of re-reading the PAK.
         FastCopyScreen(aux2, logicalScreen);

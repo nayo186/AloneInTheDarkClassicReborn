@@ -37,6 +37,7 @@ extern void playMenuSound(const char* soundName);
 #include <filesystem>
 #include <string>
 #include <fstream>
+#include <ctime>
 
 // stb_image for loading save slot preview PNGs (static, one copy per file that needs it)
 
@@ -59,6 +60,10 @@ extern "C" {
 
 int FitdMain(int argc, char* argv[])
 {
+    // A different chance in every session: the scripts' RANDOM uses rand(),
+    // which without a seed repeats the same numbers each time (BUGS.md C34)
+    srand((unsigned int)time(nullptr));
+
     // Load the settings early, before any systems that depend on them
     loadSettings();
 

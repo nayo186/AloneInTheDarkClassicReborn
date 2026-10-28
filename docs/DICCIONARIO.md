@@ -107,6 +107,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `isDebugMode` | Debug mode: test tools on; with a copy of the data, written into the copy |
 | `configFolder` | Folder of aitd_remaster.cfg, with a trailing separator (empty: the working directory) |
 | `customPicturesFolder` | The player's pictures, masks and the exports, relative to the working directory, with a trailing slash: Backgrounds/, Masks/, Exports/ in the portable folder, or backgrounds_custom/ (both) and backgrounds_export/ inside a copy in debug mode |
+| `savesFolder` | Folder of the saves, relative to the working directory, with a trailing slash: Saves/, or empty (the copy itself) in debug mode with a copy |
 | `customMasksFolder` | Folder of the player's masks (Masks, or backgrounds_custom in debug mode) |
 | `exportsFolder` | Folder of the exported backgrounds and masks |
 | `usesPortableFolders` | True when the working folder is UserData (outside the debug mode or with GOG/Steam) |
@@ -184,6 +185,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `osystem_drawUILayer` | Draws the text layer (uiLayer) over the scene |
 | `osystem_playTrack` | Plays a CD music track (loose file or GAME.GOG) |
 | `osystem_stopTrack` | Stops the CD music |
+| `osystem_isTrackPlaying` | True while a CD music track (CD, loose file or GAME.GOG) is still playing |
 | `osystem_playAdlib` | Starts the AdLib music output (Jack in the Dark) |
 | `osystem_updateSceneSnapshot` | Scene preview capture for pause menu |
 | `osystem_captureScenePreview` | Freezes the scene snapshot for the pause menu preview |
@@ -519,6 +521,8 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `callMusicUpdate` | Advances the AdLib music by one step |
 | `destroyMusicDriver` | Stops the AdLib emulation |
 | `fadeMusic` | Fades the music in or out |
+| `stopMusic` | Silences the music, CD track and AdLib alike (BUGS.md C33) |
+| `isMusicOver` | True when the music that was playing has ended (CD track or AdLib) |
 
 ### `core/object.h`
 
@@ -568,6 +572,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 
 | Función | Para qué sirve |
 | --- | --- |
+| `saveFilePath` | Path of a save file of slot `slot` (".ITD", or ".png" for its picture), in the saves folder |
 | `loadSave` | Reads a save file (both the GOG layout and older ones) |
 | `restoreSave` | The load screen: chooses a slot and loads it |
 | `makeSave` | The save screen: chooses a slot and writes the game (GOG layout for AITD1) |
@@ -804,7 +809,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `isGogInstallFolder` | True if the folder is a GOG or Steam installation |
 | `hasJackData` | True if Jack in the Dark is there too (PERE.PAK) |
 | `setLauncherDebugMode` | Debug mode (launcher.cfg "debugMode = 1", only by hand): with a copy of the data, the game writes inside the copy; otherwise everything goes to UserData next to the launcher (Shared/userFolder.h) |
-| `prepareUserData` | Creates UserData with each game's Backgrounds, Masks and Exports folders; called when the launcher opens |
+| `prepareUserData` | Creates UserData with each game's Saves, Backgrounds, Masks and Exports folders; called when the launcher opens |
 | `findGameLanguages` | Language PAKs present in the data folder, in a fixed order |
 | `readGameConfig` | Language and advanced options of the data folder's aitd_remaster.cfg |
 | `writeGameConfig` | Writes the launcher's options in the game's aitd_remaster.cfg, keeping every other line |

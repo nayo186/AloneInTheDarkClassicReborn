@@ -268,7 +268,7 @@ void initVars()
     LastSample = -1;
     nextSample = -1;
     LastPriority = -1;
-    currentMusic = -1;
+    stopMusic();
     nextMusic = -1;
 
     lightOff = 0;
