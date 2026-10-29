@@ -9,6 +9,7 @@
 
 #include "common.h"
 #include "consoleLog.h"
+#include "fileNameCase.h"
 
 // Menu sound helper (from systemMenu.cpp)
 extern void playMenuSound(const char* soundName);
@@ -49,7 +50,7 @@ void LoadWorld(void)
         char objectPath[512];
         strcpy(objectPath, homePath);
         strcat(objectPath, "OBJETS.ITD");
-        fHandle = fopen(objectPath, "rb");
+        fHandle = fopen(matchFileCase(objectPath).c_str(), "rb");
         if (!fHandle) {
             fatalError(0, "OBJETS.ITD");
         }
@@ -174,7 +175,7 @@ void LoadWorld(void)
         strcpy(definestPath, homePath);
         strcat(definestPath, "DEFINES.ITD");
 
-        fHandle = fopen(definestPath, "rb");
+        fHandle = fopen(matchFileCase(definestPath).c_str(), "rb");
         if (!fHandle)
         {
             fatalError(0, "DEFINES.ITD");

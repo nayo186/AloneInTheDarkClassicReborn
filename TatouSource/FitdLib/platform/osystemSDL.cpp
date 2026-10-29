@@ -174,7 +174,6 @@ int FitdInit(int argc, char* argv[])
     // Jack in the Dark runs in the JACK subfolder (before the log file opens)
     selectGameFolder(argc, argv);
 
-#ifdef WIN32
     //_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF | _CRTDBG_CHECK_ALWAYS_DF);
 
     // Initialize exception handler for crash logging and graceful recovery
@@ -185,8 +184,6 @@ int FitdInit(int argc, char* argv[])
     printf(SDL_OK "Log file: tatou.log (previous session: tatou.prev.log)\n");
     logGameFolder();
     printf(SDL_OK "Exception handler initialized - crash logs will be written to crash_log.txt\n");
-
-#endif
     startOfRender = SDL_CreateSemaphore(0);
     endOfRender = SDL_CreateSemaphore(0);
 
@@ -340,17 +337,24 @@ int FitdInit(int argc, char* argv[])
         // Normal operation: one renderFrame per game frame. Waits for the
         // game thread to submit via bgfx::frame(), then for its endOfRender
         // signal. Both waits are in short steps so a game thread that has
-        // ended does not leave the window frozen (BUGS.md C10).
+        // ended does not leave the window frozen (BUGS.md C10), and the
+        // window's messages are still read meanwhile (they wait in SDL's
+        // queue for readKeyboard): a long frame (an HD background loading)
+        // left them unread and Wayland closed the window (BUGS.md L9).
         for (;;)
         {
             if (bgfx::renderFrame(100) != bgfx::RenderFrame::Timeout)
             {
                 while (!SDL_WaitSemaphoreTimeout(endOfRender, 100))
+                {
+                    SDL_PumpEvents();
                     exitIfGameThreadEnded();
+                }
                 break;
             }
             if (SDL_TryWaitSemaphore(endOfRender))
                 break;
+            SDL_PumpEvents();
             exitIfGameThreadEnded();
         }
     }

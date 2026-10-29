@@ -9,6 +9,7 @@
 
 #include "common.h"
 #include "consoleLog.h"
+#include "fileNameCase.h"
 #include <cstring>
 // seg 20
 void fatalError(int type, const char* name)
@@ -33,7 +34,7 @@ char* loadFromItd(const char* name)
         char filePath[512];
         snprintf(filePath, sizeof(filePath), "%s%s", homePath, name);
 
-        fHandle = fopen(filePath,"rb");
+        fHandle = fopen(matchFileCase(filePath).c_str(),"rb");
         if(fHandle)
         {
             fseek(fHandle,0,SEEK_END);

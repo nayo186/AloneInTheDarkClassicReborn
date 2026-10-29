@@ -4,6 +4,15 @@ Alone in the Dark: Classic Reborn started on 2026-10-23 from [Alone in the Dark:
 
 This repository was published with a single starting commit, to keep it light: the early history carried large files that are no longer part of the project. Below are the changes of each release and, after them, the changes made in this fork before it was published, newest first, one line per change. The reasons behind larger removals are explained in `docs/DESCARTADO.md` and the fixes in `docs/baseline/BUGS.md`.
 
+## v1.0.0-beta.5 (2026-10-29)
+
+- Linux version: ClassicReborn-<version>-linux-x64.tar.gz, for Ubuntu 22.04, Linux Mint 21, Debian 12 and newer (64-bit), with the GOG or Steam installation (Heroic, Lutris, Proton) or a copy of the game files; nothing else to install (README, On Linux)
+- Camera changes with HD backgrounds no longer stall: the backgrounds of the room are decoded ahead in the background (BUGS.md L9)
+- Save list: the date and time of each save, right after its slot, were hidden behind the preview (BUGS.md C38)
+- The 3D models' gradients and spheres no longer read the palette in the wrong format, which Vulkan forbids (BUGS.md L7)
+- Menus use Gelasio, a free font made to Georgia's measures, where the system has no Georgia (Linux)
+- The packages carry Gelasio's license (Gelasio-OFL.txt)
+
 ## v1.0.0-beta.4 (2026-10-29)
 
 - Modern left stick: the character walks where the stick points, seen from the camera, keeping the direction through camera cuts, like the Resident Evil HD remasters; the D-pad and the keys stay tank controls. Option in Controls (launcher and F1), on by default

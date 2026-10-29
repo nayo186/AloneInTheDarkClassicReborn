@@ -54,6 +54,7 @@ extern s16 g_currentFloor;
 
 // Forward declaration — defined below at file scope
 extern int outputResolution[2];
+extern int windowResolution[2];
 
 void toggleFullscreen()
 {

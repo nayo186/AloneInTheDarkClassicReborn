@@ -213,11 +213,6 @@ static Uint64 Wayland_GetKeyboardTimestamp(struct SDL_WaylandInput *input, Uint3
     return 0;
 }
 
-static Uint64 Wayland_GetKeyboardTimestampRaw(struct SDL_WaylandInput *input, Uint32 wl_timestamp_ms)
-{
-    return input->keyboard_timestamp_ns ? input->keyboard_timestamp_ns : Wayland_EventTimestampMSToNS(wl_timestamp_ms);
-}
-
 static Uint64 Wayland_GetPointerTimestamp(struct SDL_WaylandInput *input, Uint32 wl_timestamp_ms)
 {
     if (wl_timestamp_ms) {
@@ -275,8 +270,8 @@ static bool keyboard_repeat_handle(SDL_WaylandKeyboardRepeat *repeat_info, Uint6
     bool ret = false;
     while (elapsed >= repeat_info->next_repeat_ns) {
         if (repeat_info->scancode != SDL_SCANCODE_UNKNOWN) {
-            const Uint64 timestamp = repeat_info->wl_press_time_ns + repeat_info->next_repeat_ns;
-            SDL_SendKeyboardKeyIgnoreModifiers(Wayland_GetEventTimestamp(timestamp), repeat_info->keyboard_id, repeat_info->key, repeat_info->scancode, true);
+            const Uint64 timestamp = repeat_info->base_time_ns + repeat_info->next_repeat_ns;
+            SDL_SendKeyboardKeyIgnoreModifiers(timestamp, repeat_info->keyboard_id, repeat_info->key, repeat_info->scancode, true);
         }
         if (repeat_info->text[0]) {
             SDL_SendKeyboardText(repeat_info->text);
@@ -295,8 +290,8 @@ static void keyboard_repeat_clear(SDL_WaylandKeyboardRepeat *repeat_info)
     repeat_info->is_key_down = false;
 }
 
-static void keyboard_repeat_set(SDL_WaylandKeyboardRepeat *repeat_info, Uint32 keyboard_id, uint32_t key, Uint64 wl_press_time_ns,
-                                uint32_t scancode, bool has_text, char text[8])
+static void keyboard_repeat_set(SDL_WaylandKeyboardRepeat *repeat_info, Uint32 keyboard_id, uint32_t key, Uint32 wl_press_time_ms,
+                                Uint64 base_time_ns, uint32_t scancode, bool has_text, char text[8])
 {
     if (!repeat_info->is_initialized || !repeat_info->repeat_rate) {
         return;
@@ -304,7 +299,8 @@ static void keyboard_repeat_set(SDL_WaylandKeyboardRepeat *repeat_info, Uint32 k
     repeat_info->is_key_down = true;
     repeat_info->keyboard_id = keyboard_id;
     repeat_info->key = key;
-    repeat_info->wl_press_time_ns = wl_press_time_ns;
+    repeat_info->wl_press_time_ms = wl_press_time_ms;
+    repeat_info->base_time_ns = base_time_ns;
     repeat_info->sdl_press_time_ns = SDL_GetTicksNS();
     repeat_info->next_repeat_ns = SDL_MS_TO_NS(repeat_info->repeat_delay_ms);
     repeat_info->scancode = scancode;
@@ -1859,7 +1855,6 @@ static void keyboard_handle_key(void *data, struct wl_keyboard *keyboard,
     char text[8];
     bool has_text = false;
     bool handled_by_ime = false;
-    const Uint64 timestamp_raw_ns = Wayland_GetKeyboardTimestampRaw(input, time);
 
     Wayland_UpdateImplicitGrabSerial(input, serial);
 
@@ -1875,7 +1870,18 @@ static void keyboard_handle_key(void *data, struct wl_keyboard *keyboard,
              * Using SDL_GetTicks would be wrong, as it would report when the release event is processed,
              * which may be off if the application hasn't pumped events for a while.
              */
-            keyboard_repeat_handle(&input->keyboard_repeat, timestamp_raw_ns - input->keyboard_repeat.wl_press_time_ns);
+            /* Classic Reborn: a compositor (WSLg) can report a release time before the press
+             * time; the difference then wraps around to ~49 days of key repeats, which filled
+             * the event queue and kept this loop busy until the compositor dropped the client.
+             * Never send more repeats than the real time since the press allows.
+             */
+            const Sint32 held_ms = (Sint32)(time - input->keyboard_repeat.wl_press_time_ms);
+            Uint64 elapsed = held_ms > 0 ? SDL_MS_TO_NS((Uint64)held_ms) : 0;
+            const Uint64 sdl_elapsed = SDL_GetTicksNS() - input->keyboard_repeat.sdl_press_time_ns;
+            if (elapsed > sdl_elapsed) {
+                elapsed = sdl_elapsed;
+            }
+            keyboard_repeat_handle(&input->keyboard_repeat, elapsed);
             keyboard_repeat_clear(&input->keyboard_repeat);
         }
         keyboard_input_get_text(text, input, key, false, &handled_by_ime);
@@ -1894,7 +1900,7 @@ static void keyboard_handle_key(void *data, struct wl_keyboard *keyboard,
             }
         }
         if (input->xkb.keymap && WAYLAND_xkb_keymap_key_repeats(input->xkb.keymap, key + 8)) {
-            keyboard_repeat_set(&input->keyboard_repeat, input->keyboard_id, key, timestamp_raw_ns, scancode, has_text, text);
+            keyboard_repeat_set(&input->keyboard_repeat, input->keyboard_id, key, time, timestamp, scancode, has_text, text);
         }
     }
 }

@@ -56,7 +56,8 @@ typedef struct
 
     bool is_key_down;
     uint32_t key;
-    Uint64 wl_press_time_ns;  // Key press time as reported by the Wayland API
+    Uint32 wl_press_time_ms;  // Key press time as reported by the Wayland API in milliseconds
+    Uint64 base_time_ns;      // Key press time as reported by the Wayland API in nanoseconds
     Uint64 sdl_press_time_ns; // Key press time expressed in SDL ticks
     Uint64 next_repeat_ns;    // Next repeat event in nanoseconds
     uint32_t scancode;

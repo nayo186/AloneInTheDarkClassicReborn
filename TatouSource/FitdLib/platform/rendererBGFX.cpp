@@ -1069,33 +1069,7 @@ void osystem_flushPendingPrimitives()
         );
 
         // Ramp vertices encode palette indices (colorIdx/15, bank/15) in their
-        // UVs, not atlas texture coordinates. Sampling a polygon atlas at those
-        // UVs produces garbage, so we always take the palette path here by
-        // leaving u_rampAtlasInfo at (0,0) and binding the palette texture.
-        // If/when ramps get real atlas UVs emitted from the vertex generator,
-        // re-enable the atlas branch.
-        bgfx::TextureHandle rampTexToUse = g_paletteTexture;  // Palette fallback (always)
-        float atlasWidth = 0.f;
-        float atlasHeight = 0.f;
-
-        // Use s_modelTexture uniform for ramp atlas (sampler slot 0)
-        static bgfx::UniformHandle modelTextureUniform = BGFX_INVALID_HANDLE;
-        if (!bgfx::isValid(modelTextureUniform))
-        {
-            modelTextureUniform = bgfx::createUniform("s_modelTexture", bgfx::UniformType::Sampler);
-        }
-
-        static bgfx::UniformHandle rampAtlasInfoUniform = BGFX_INVALID_HANDLE;
-        if (!bgfx::isValid(rampAtlasInfoUniform))
-        {
-            rampAtlasInfoUniform = bgfx::createUniform("u_rampAtlasInfo", bgfx::UniformType::Vec4);
-        }
-
-        // Set ramp atlas dimensions uniform (shader uses this to decide palette vs atlas mode)
-        float atlasInfo[] = { atlasWidth, atlasHeight, 0.f, 0.f };
-        bgfx::setUniform(rampAtlasInfoUniform, atlasInfo);
-
-        // Bind palette texture at slot 1 for getColor() fallback in palette.sh
+        // UVs: the palette at slot 1 for getColor() in palette.sh
         static bgfx::UniformHandle rampPaletteUniform = BGFX_INVALID_HANDLE;
         if (!bgfx::isValid(rampPaletteUniform))
         {
@@ -1103,7 +1077,6 @@ void osystem_flushPendingPrimitives()
         }
         bgfx::setTexture(1, rampPaletteUniform, g_paletteTexture);
 
-        bgfx::setTexture(0, modelTextureUniform, rampTexToUse);
         bgfx::setVertexBuffer(0, &transientBuffer);
         applyObjectStencil();
         applyDepthSlice();
@@ -1148,30 +1121,8 @@ void osystem_flushPendingPrimitives()
             | BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA)
         );
 
-        // Spheres and points take their colour from the palette (u_sphereAtlasInfo
-        // zero: the shader's palette mode)
-        bgfx::TextureHandle sphereTexToUse = g_paletteTexture;
-        float atlasWidth = 0.f;
-        float atlasHeight = 0.f;
-
-        // Use s_modelTexture uniform for sphere atlas (sampler slot 0)
-        static bgfx::UniformHandle modelTextureUniform = BGFX_INVALID_HANDLE;
-        if (!bgfx::isValid(modelTextureUniform))
-        {
-            modelTextureUniform = bgfx::createUniform("s_modelTexture", bgfx::UniformType::Sampler);
-        }
-
-        static bgfx::UniformHandle sphereAtlasInfoUniform = BGFX_INVALID_HANDLE;
-        if (!bgfx::isValid(sphereAtlasInfoUniform))
-        {
-            sphereAtlasInfoUniform = bgfx::createUniform("u_sphereAtlasInfo", bgfx::UniformType::Vec4);
-        }
-
-        // Set sphere atlas dimensions uniform (shader uses this to decide palette vs atlas mode)
-        float atlasInfo[] = { atlasWidth, atlasHeight, 0.f, 0.f };
-        bgfx::setUniform(sphereAtlasInfoUniform, atlasInfo);
-
-        // Bind palette texture at slot 1 for getColor() fallback in palette.sh
+        // Spheres and points take their colour from the palette: slot 1 for
+        // getColor() in palette.sh
         static bgfx::UniformHandle spherePaletteUniform = BGFX_INVALID_HANDLE;
         if (!bgfx::isValid(spherePaletteUniform))
         {
@@ -1179,7 +1130,6 @@ void osystem_flushPendingPrimitives()
         }
         bgfx::setTexture(1, spherePaletteUniform, g_paletteTexture);
 
-        bgfx::setTexture(0, modelTextureUniform, sphereTexToUse);
         bgfx::setVertexBuffer(0, &transientBuffer);
         applyObjectStencil();
         applyDepthSlice();

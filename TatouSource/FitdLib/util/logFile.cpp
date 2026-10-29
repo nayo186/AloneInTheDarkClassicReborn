@@ -77,7 +77,52 @@ void logFileFlush()
 
 #else
 
-void logFileInit() {}
-void logFileFlush() {}
+#include <fcntl.h>
+#include <stdio.h>
+#include <time.h>
+#include <unistd.h>
+
+static const char* kLogName = "tatou.log";
+static const char* kPrevLogName = "tatou.prev.log";
+
+static bool s_initialized = false;
+
+// As on Windows: stdout/stderr pointed straight at the file
+void logFileInit()
+{
+    if (s_initialized)
+        return;
+
+    // Keep the previous session's log
+    rename(kLogName, kPrevLogName);
+
+    const int fd = open(kLogName, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if (fd < 0)
+        return;
+
+    fflush(stdout);
+    fflush(stderr);
+    dup2(fd, fileno(stdout));
+    dup2(fd, fileno(stderr));
+    close(fd);
+
+    // Unbuffered so nothing is lost if the game crashes
+    setvbuf(stdout, NULL, _IONBF, 0);
+    setvbuf(stderr, NULL, _IONBF, 0);
+
+    s_initialized = true;
+
+    time_t now = time(nullptr);
+    printf("=== Tatou log started %s", ctime(&now));
+}
+
+void logFileFlush()
+{
+    if (!s_initialized)
+        return;
+
+    fflush(stdout);
+    fflush(stderr);
+}
 
 #endif

@@ -17,6 +17,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include "fileNameCase.h"
+
 // sprintf_s(buf, size, fmt, ...) shim.
 // The MSVC form always takes an explicit size as the 2nd argument.
 // On Linux we map to snprintf, discarding the size arg (buf is always
@@ -41,9 +43,14 @@ inline int ctime_s(char* buf, size_t bufsz, const time_t* timer) {
     return 0;
 }
 
-// fopen_s shim
+// localtime_s shim (MSVC argument order: result first)
+inline int localtime_s(struct tm* result, const time_t* timer) {
+    return localtime_r(timer, result) ? 0 : errno;
+}
+
+// fopen_s shim; a file read is found in any case (fileNameCase.h)
 inline int fopen_s(FILE** f, const char* name, const char* mode) {
-    *f = fopen(name, mode);
+    *f = fopen(mode[0] == 'r' ? matchFileCase(name).c_str() : name, mode);
     return (*f == nullptr) ? errno : 0;
 }
 

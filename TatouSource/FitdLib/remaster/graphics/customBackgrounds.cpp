@@ -25,10 +25,17 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "../ThirdParty/bgfx.cmake/bimg/3rdparty/stb/stb_image.h"
 
+#include "jobSystem.h"
+
 #include <atomic>
+#include <condition_variable>
 #include <cstring>
+#include <deque>
 #include <fstream>
 #include <filesystem>
+#include <map>
+#include <memory>
+#include <mutex>
 #include <string>
 #include <thread>
 #include <vector>
@@ -88,6 +95,99 @@ static Picture s_camera;
 static Picture s_screen;
 static bool s_screenOnScreen = false;
 
+// ---- Pictures decoded in the background ------------------------------------------
+// Decoding an HD picture takes ~130 ms (2880x2160): done by the job threads,
+// ahead for the other cameras of the room, so a camera change finds it ready.
+// When it is not ready the game waits for it with the last image on screen.
+
+struct DecodedPicture
+{
+    fs::file_time_type time;            // of the file decoded
+    unsigned char* pixels = nullptr;    // RGBA, stbi's (freed with it)
+    int width = 0;
+    int height = 0;
+    std::string error;                  // why it could not be read
+    bool ready = false;
+    std::mutex mutex;
+    std::condition_variable done;
+
+    ~DecodedPicture() { if (pixels) stbi_image_free(pixels); }
+};
+
+// By file path; at most kMaxDecoded kept (~190 MB at 2880x2160), oldest dropped
+static const size_t kMaxDecoded = 8;
+static std::map<std::string, std::shared_ptr<DecodedPicture>> s_decoded;
+static std::deque<std::string> s_decodedOrder;
+
+static void decodePicture(const std::string& path, DecodedPicture& decoded)
+{
+    int width, height, channels;
+    unsigned char* pixels = stbi_load(path.c_str(), &width, &height, &channels, 4);
+    std::lock_guard<std::mutex> lock(decoded.mutex);
+    decoded.pixels = pixels;
+    decoded.width = width;
+    decoded.height = height;
+    if (!pixels)
+        decoded.error = stbi_failure_reason() ? stbi_failure_reason() : "unknown";
+    decoded.ready = true;
+}
+
+// The picture of that file, decoded or on its way (a changed file is decoded
+// again, so a picture saved while playing appears)
+static std::shared_ptr<DecodedPicture> requestDecode(const fs::path& path, fs::file_time_type time)
+{
+    const std::string key = path.string();
+    auto found = s_decoded.find(key);
+    if (found != s_decoded.end() && found->second->time == time)
+        return found->second;
+
+    auto decoded = std::make_shared<DecodedPicture>();
+    decoded->time = time;
+    if (found == s_decoded.end())
+        s_decodedOrder.push_back(key);
+    s_decoded[key] = decoded;
+    while (s_decodedOrder.size() > kMaxDecoded)
+    {
+        s_decoded.erase(s_decodedOrder.front());   // a job still running keeps its own
+        s_decodedOrder.pop_front();
+    }
+
+    if (!JobSystem::instance().isInitialized())
+    {
+        decodePicture(key, *decoded);
+        return decoded;
+    }
+    JobSystem::instance().scheduleJob(JobSystem::JobType::LOAD_HD_BACKGROUND, JobSystem::Priority::HIGH,
+        [key, decoded]() {
+            decodePicture(key, *decoded);
+            decoded->done.notify_all();
+        });
+    return decoded;
+}
+
+static void dropDecoded()
+{
+    s_decoded.clear();
+    s_decodedOrder.clear();
+}
+
+// Reads ahead the HD pictures of the other cameras of the current room
+static void prefetchRoomCameras()
+{
+    if (!g_settings.graphics.customBackgrounds || currentRoom < 0 || currentRoom >= (int)roomDataTable.size())
+        return;
+    char pakName[16];
+    snprintf(pakName, sizeof(pakName), "CAMERA%02d", g_currentFloor);
+    for (const u16 camera : roomDataTable[currentRoom].cameraIdxTable)
+    {
+        const fs::path path = fs::u8path(folder(customPicturesFolder()) + pictureName(pakName, camera));
+        std::error_code error;
+        const fs::file_time_type time = fs::last_write_time(path, error);
+        if (!error)
+            requestDecode(path, time);
+    }
+}
+
 static void dropCustom(Picture& picture)
 {
     if (bgfx::isValid(picture.custom))
@@ -109,29 +209,46 @@ static void loadCustom(Picture& picture)
         return;
     picture.customTime = fs::last_write_time(path, error);
 
-    int width, height, channels;
-    unsigned char* pixels = stbi_load(path.string().c_str(), &width, &height, &channels, 4);
-    if (!pixels)
+    // Usually decoded already (prefetchRoomCameras); otherwise the game waits
+    // here with the last image on screen (the window keeps answering)
+    const std::shared_ptr<DecodedPicture> decoded = requestDecode(path, picture.customTime);
+    const double waitStart = (double)bx::getHPCounter() / (double)bx::getHPFrequency();
+    bool wasReady;
     {
-        printf(MAIN_WARN "Custom background %s could not be read (%s)\n", path.string().c_str(), stbi_failure_reason());
+        std::unique_lock<std::mutex> lock(decoded->mutex);
+        wasReady = decoded->ready;
+        decoded->done.wait(lock, [&] { return decoded->ready; });
+    }
+    const int waitedMs = (int)(((double)bx::getHPCounter() / (double)bx::getHPFrequency() - waitStart) * 1000.0);
+    if (!decoded->pixels)
+    {
+        printf(MAIN_WARN "Custom background %s could not be read (%s)\n", path.string().c_str(), decoded->error.c_str());
         return;
     }
+    const int width = decoded->width;
+    const int height = decoded->height;
     const float ratio = (float)width / (float)height;
     if (ratio < 4.0f / 3.0f - 0.01f)
     {
         printf(MAIN_WARN "Custom background %s is narrower than 4:3 (%dx%d): not used\n", path.string().c_str(), width, height);
-        stbi_image_free(pixels);
         return;
     }
+    // Uploaded straight from the decoded pixels (no 24 MB copy): bgfx lets go
+    // of them once uploaded, and only then this reference
+    auto* keep = new std::shared_ptr<DecodedPicture>(decoded);
     picture.custom = bgfx::createTexture2D((uint16_t)width, (uint16_t)height, false, 1, bgfx::TextureFormat::RGBA8,
-        BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP, bgfx::copy(pixels, (uint32_t)width * height * 4));
-    stbi_image_free(pixels);
+        BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP,
+        bgfx::makeRef(decoded->pixels, (uint32_t)width * height * 4,
+            [](void*, void* userData) { delete (std::shared_ptr<DecodedPicture>*)userData; }, keep));
     picture.customWidth = width;
     picture.customHeight = height;
     // The shape of the stored original (320x200 and its enlargements): the
     // whole picture is the play area, shown in 4:3 like the original pixels
     picture.customOriginalShape = (ratio > 1.6f - 0.01f && ratio < 1.6f + 0.01f);
-    printf(MAIN_TAG "Custom background %s (%dx%d)\n", pictureName(picture.pakName, picture.index).c_str(), width, height);
+    if (wasReady)
+        printf(MAIN_TAG "Custom background %s (%dx%d, decoded ahead)\n", pictureName(picture.pakName, picture.index).c_str(), width, height);
+    else
+        printf(MAIN_TAG "Custom background %s (%dx%d, waited %d ms)\n", pictureName(picture.pakName, picture.index).c_str(), width, height, waitedMs);
 }
 
 // Sets the picture shown; returns false when it was already this one
@@ -252,6 +369,7 @@ static void onCameraBackgroundReady(const char* pakName, int index, const unsign
     if (!sameCamera)
         dropMasks();  // the masks of this camera are created next (osystem_createMask)
     setPicture(s_camera, pakName, index, pixels);
+    prefetchRoomCameras();
 }
 
 // A full-screen picture is shown (title, book page, character choice...):
@@ -302,6 +420,7 @@ static void update()
     {
         dropCustom(s_camera);
         dropCustom(s_screen);
+        dropDecoded();
         s_camera.customChecked = s_screen.customChecked = false;
         for (CameraMask& mask : s_masks)
             dropMask(mask);

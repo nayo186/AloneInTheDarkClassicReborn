@@ -179,7 +179,10 @@ static std::string saveDate(const char* fileName)
     const auto written = std::filesystem::last_write_time(fileName, error);
     if (error)
         return std::string();
-    const auto systemTime = std::chrono::clock_cast<std::chrono::system_clock>(written);
+    // From the files' clock to the system's, by the gap between both now
+    // (clock_cast does it exactly but is missing before GCC 13)
+    const auto systemTime = std::chrono::time_point_cast<std::chrono::system_clock::duration>(
+        written - std::filesystem::file_time_type::clock::now() + std::chrono::system_clock::now());
     const std::time_t seconds = std::chrono::system_clock::to_time_t(systemTime);
     std::tm local = {};
     localtime_s(&local, &seconds);
@@ -296,9 +299,10 @@ int parseAllSaves(int arg)
                 PrintFont(30, yPos, logicalScreen, (u8*)buffer);
             }
 
-            // Date and time of the save, small, at the end of its line
+            // Date and time of the save, small, right after "Slot N": at the end
+            // of the line the preview's frame (from x=175) covered it
             if (saveExists[i] && !saveDates[i].empty())
-                drawTinyText(186 - 4 * (int)saveDates[i].size() - 4, yPos + 5, saveDates[i].c_str(),
+                drawTinyText(30 + ExtGetSizeFont((u8*)buffer) + 8, yPos + 5, saveDates[i].c_str(),
                     (i == currentSelectedSlot) ? 15 : 4);
         }
 

@@ -437,13 +437,20 @@ bool writeGameConfig(const std::string& folder, const LauncherSettings& settings
     return true;
 }
 
+// The game's executable, next to the launcher
+#ifdef _WIN32
+static const char* const kTatouFile = "Tatou.exe";
+#else
+static const char* const kTatouFile = "Tatou";
+#endif
+
 LaunchResult launchGame(const LauncherSettings& settings, const char* game)
 {
     std::error_code ec;
-    fs::path tatou = toPath(launcherFolder() + "Tatou.exe");
+    fs::path tatou = toPath(launcherFolder() + kTatouFile);
     if (!fs::exists(tatou, ec))
     {
-        logLine("ERROR: Tatou.exe not found in %s", launcherFolder().c_str());
+        logLine("ERROR: %s not found in %s", kTatouFile, launcherFolder().c_str());
         return LaunchResult::TatouMissing;
     }
 
@@ -454,7 +461,7 @@ LaunchResult launchGame(const LauncherSettings& settings, const char* game)
     // rest itself (platform/gameFolder.cpp)
     const GameInstall install = findGameInstall(settings.aitd1DataFolder);
     const fs::path startFolder = install.valid ? install.root : toPath(settings.aitd1DataFolder);
-    logLine("Starting Tatou.exe %s (working folder %s%s)", args.c_str(), startFolder.u8string().c_str(),
+    logLine("Starting %s %s (working folder %s%s)", kTatouFile, args.c_str(), startFolder.u8string().c_str(),
         install.gog ? ", GOG installation" : "");
 
 #ifdef _WIN32
@@ -494,6 +501,6 @@ LaunchResult launchGame(const LauncherSettings& settings, const char* game)
     SDL_DestroyProcess(process);  // does not stop the game
 #endif
 
-    logLine("Tatou.exe started");
+    logLine("%s started", kTatouFile);
     return LaunchResult::Started;
 }

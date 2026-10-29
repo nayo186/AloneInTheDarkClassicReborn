@@ -12,6 +12,7 @@
 #include "ui/launcherText.h"
 #include "ui/launcherScreen.h"
 #include "ui/menuBase.h"
+#include "ui/menuFontData.h"
 #include "ui/menuGamepad.h"
 #include "advancedOptionsText.h"
 #include "controlsWindow.h"
@@ -61,7 +62,7 @@ static void SDLCALL onFolderChosen(void*, const char* const* filelist, int)
     SDL_UnlockMutex(s_dialogMutex);
 }
 
-// ── Fonts: Georgia from Windows if present, ImGui's default otherwise, made
+// ── Fonts: Georgia from Windows if present, Gelasio otherwise, made
 // at the interface scale so the letters stay sharp at any size ─────────────
 static ImFont* addFont(const std::string& path, float size)
 {
@@ -87,11 +88,12 @@ static Fonts loadFonts(float scale)
     fonts.title = addFont(dir.empty() ? "" : dir + "georgiab.ttf", 40.0f * scale);
     if (!fonts.text)
     {
-        logLine("Georgia font not found, using the default font");
-        ImFontConfig config;
-        config.SizePixels = 15.0f * scale;
-        ImFont* fallback = ImGui::GetIO().Fonts->AddFontDefault(&config);
-        fonts.text = fonts.button = fonts.header = fonts.title = fallback;
+        // No Georgia (Linux): the project's own font, made to its measures
+        logLine("Georgia font not found, using Gelasio");
+        fonts.text = addEmbeddedFont(false, 17.0f * scale);
+        fonts.button = addEmbeddedFont(true, 21.0f * scale);
+        fonts.header = addEmbeddedFont(false, 30.0f * scale);
+        fonts.title = addEmbeddedFont(true, 40.0f * scale);
     }
     if (!fonts.button) fonts.button = fonts.text;
     if (!fonts.header) fonts.header = fonts.text;

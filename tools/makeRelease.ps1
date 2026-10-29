@@ -6,7 +6,8 @@
 # - CLASSIC_REBORN_DEV_TOOLS=OFF: no item window (F9) nor object editor (F10);
 #   the visual fixes of 3D objects are still included.
 # - Release configuration: optimised, no debug data.
-# - The zip holds only Launcher.exe, Tatou.exe, README.md and LICENSE: no
+# - The zip holds only Launcher.exe, Tatou.exe, README.md, LICENSE and the
+#   menu font's license (Gelasio-OFL.txt; the font is inside the programs): no
 #   launcher.cfg (debug mode stays off), no logs, no UserData, no .pdb.
 # The result goes to release\ClassicReborn-<version>-windows-x64.zip.
 
@@ -43,6 +44,7 @@ if (Test-Path $staging) { Remove-Item $staging -Recurse -Force }
 New-Item -ItemType Directory -Force $staging | Out-Null
 Copy-Item (Join-Path $output 'Launcher.exe'), (Join-Path $output 'Tatou.exe') $staging
 Copy-Item (Join-Path $repo 'README.md'), (Join-Path $repo 'LICENSE') $staging
+Copy-Item (Join-Path $source 'Shared\assets\fonts\OFL.txt') (Join-Path $staging 'Gelasio-OFL.txt')
 
 $zip = Join-Path $releaseFolder "$name.zip"
 if (Test-Path $zip) { Remove-Item $zip -Force }

@@ -7,6 +7,7 @@
 
 #include "menuFonts.h"
 #include "consoleLog.h"
+#include "ui/menuFontData.h"
 
 #include <SDL3/SDL.h>
 #include <imgui.h>
@@ -56,11 +57,11 @@ void menuFontsLoad()
     s_fonts.title = s_fonts.header;
     if (!s_fonts.text)
     {
-        // No Georgia (another system): ImGui's own font at the same scale
-        ImFontConfig config;
-        config.SizePixels = 15.0f * s_scale;
-        s_fonts.text = ImGui::GetIO().Fonts->AddFontDefault(&config);
-        printf(MAIN_WARN "Menu fonts: Georgia not found, ImGui's font used" CON_RESET "\n");
+        // No Georgia (Linux): the project's own font, made to its measures
+        s_fonts.text = menu::addEmbeddedFont(false, 17.0f * s_scale);
+        s_fonts.button = menu::addEmbeddedFont(true, 21.0f * s_scale);
+        s_fonts.header = menu::addEmbeddedFont(false, 30.0f * s_scale);
+        printf(MAIN_OK "Menu fonts: Georgia not found, Gelasio used\n");
     }
     if (!s_fonts.button) s_fonts.button = s_fonts.text;
     if (!s_fonts.header) s_fonts.header = s_fonts.text;

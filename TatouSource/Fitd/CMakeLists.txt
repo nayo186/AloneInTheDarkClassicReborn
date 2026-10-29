@@ -43,8 +43,12 @@ endif()
 
 add_executable (Fitd ${SOURCES})
 
-# Output executable as Tatou / Tatou.app on macOS
-set_target_properties(Fitd PROPERTIES OUTPUT_NAME "Tatou")
+# Output executable as Tatou / Tatou.app on macOS, in Fitd/<config> with every
+# generator (Visual Studio already does it; Ninja and Make on Linux need it),
+# next to the launcher
+set_target_properties(Fitd PROPERTIES
+    OUTPUT_NAME "Tatou"
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/Fitd/$<CONFIG>")
 
 IF(${CMAKE_SYSTEM_NAME} MATCHES Darwin)
     # Build as a proper .app bundle
@@ -103,6 +107,11 @@ if(APPLE)
 endif()
 
 set_target_properties(Fitd PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "$<TARGET_FILE_DIR:Fitd>")
+
+# Linux: function names in the crash report's stack trace (util/exceptionHandler.h)
+if(UNIX AND NOT APPLE)
+    set_target_properties(Fitd PROPERTIES ENABLE_EXPORTS ON)
+endif()
 
 # No console window except in Debug builds (all output goes to tatou.log).
 # A generator expression is needed: multi-config generators such as Visual

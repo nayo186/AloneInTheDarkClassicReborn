@@ -1,11 +1,14 @@
-# Builds the players' zip when a release is published and attaches it to the
-# release. Same steps as on a local PC: tools/makeRelease.ps1 (Release build,
-# without the development tools F9/F10, C++ runtime inside the executables,
-# only Launcher.exe, Tatou.exe, README.md and LICENSE in the zip).
+# Builds the players' packages when a release is published and attaches them
+# to the release. Same steps as on a local PC: tools/makeRelease.ps1 (Windows)
+# and tools/makeRelease.sh (Linux): Release build, without the development
+# tools F9/F10, C++ runtime inside the executables, only the launcher, the
+# game, README.md, LICENSE and Gelasio-OFL.txt (the menu font's license) in
+# the package.
 #
 # To publish a version: create a release on GitHub with a tag like
-# v1.0.0-beta.1; the zip ClassicReborn-1.0.0-beta.1-windows-x64.zip appears in it
-# when the build ends. It can also be run by hand for an existing tag.
+# v1.0.0-beta.1; ClassicReborn-1.0.0-beta.1-windows-x64.zip and
+# ClassicReborn-1.0.0-beta.1-linux-x64.tar.gz appear in it when the builds
+# end. It can also be run by hand for an existing tag.
 
 name: Release zip
 
@@ -22,7 +25,7 @@ permissions:
   contents: write
 
 jobs:
-  build:
+  windows:
     runs-on: windows-2022
     env:
       TAG: ${{ github.event.release.tag_name || inputs.tag }}
@@ -44,3 +47,32 @@ jobs:
         run: |
           $version = $env:TAG.TrimStart('v')
           gh release upload $env:TAG "release/ClassicReborn-$version-windows-x64.zip" --clobber
+
+  # Ubuntu 22.04: the oldest system the package is built on is the oldest it
+  # runs on (Ubuntu 22.04, Mint 21, Debian 12 and newer)
+  linux:
+    runs-on: ubuntu-22.04
+    env:
+      TAG: ${{ github.event.release.tag_name || inputs.tag }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Get the code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+
+      - name: Install the build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake ninja-build pkg-config \
+            libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxi-dev libxss-dev \
+            libxfixes-dev libxinerama-dev libxtst-dev libwayland-dev libxkbcommon-dev \
+            wayland-protocols libdecor-0-dev libgl1-mesa-dev libegl1-mesa-dev \
+            libgles2-mesa-dev libdrm-dev libgbm-dev libasound2-dev libpulse-dev \
+            libpipewire-0.3-dev libudev-dev libdbus-1-dev libibus-1.0-dev
+
+      - name: Build and pack
+        run: bash tools/makeRelease.sh "${TAG#v}"
+
+      - name: Attach the package to the release
+        run: gh release upload "$TAG" "release/ClassicReborn-${TAG#v}-linux-x64.tar.gz" --clobber

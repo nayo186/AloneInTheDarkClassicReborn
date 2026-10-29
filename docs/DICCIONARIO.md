@@ -10,8 +10,13 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 
 | Función | Para qué sirve |
 | --- | --- |
-| `Initialize` | Installs the crash handler (crash_log.txt and tatou.log) |
 | `Shutdown` | Removes the crash handler |
+
+### `util/fileNameCase.h`
+
+| Función | Para qué sirve |
+| --- | --- |
+| `matchFileCase` | The path as it is on disk, each folder and the file matched ignoring case (Linux and others); the same path if it exists, on Windows, or if nothing matches |
 
 ### `util/jobSystem.h`
 
@@ -46,7 +51,8 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | Función | Para qué sirve |
 | --- | --- |
 | `ctime_s` | ctime_s shim |
-| `fopen_s` | fopen_s shim |
+| `localtime_s` | localtime_s shim (MSVC argument order: result first) |
+| `fopen_s` | fopen_s shim; a file read is found in any case (fileNameCase.h) |
 | `strncpy_s` | strncpy_s shim |
 | `strcpy_s` | strcpy_s shim |
 | `strcat_s` | strcat_s shim |

@@ -25,7 +25,7 @@ El motor (`TatouSource/FitdLib/`) está dividido en capas. Cada capa usa solo la
 Fuera del motor, dos proyectos más y una carpeta compartida:
 
 ```
-  Launcher/            Launcher.exe (Windows): anfitrión de la pantalla del launcher
+  Launcher/            Launcher.exe (Windows) o Launcher (Linux): anfitrión de la pantalla del launcher
   Shared/, Shared/ui/  solo cabeceras, usadas por el juego y por el launcher
                        (menús, textos, controles, volumen); no dependen del motor
 ```
@@ -51,13 +51,14 @@ Cuando un archivo tiene `.cpp` y `.h`, va en una sola fila.
 | --- | --- |
 | `types.h` | Tipos de números por tamaño (`u8`, `u16`, `u32`, `s8`, `s16`, `s32`), los de los archivos del juego. |
 | `consoleLog.h` | Etiquetas del registro: cada mensaje empieza con la de su sistema (`[CFG]`, `[LIFE]`, `[BGFX]`...). |
-| `logFile.cpp/.h` | Todo lo que el motor escribe (`printf`) va a `tatou.log`, al instante; la sesión anterior queda en `tatou.prev.log`. |
-| `exceptionHandler.h` | Registro de cierres y corrupciones de memoria en `crash_log.txt` (Windows). |
+| `logFile.cpp/.h` | Todo lo que el motor escribe (`printf`) va a `tatou.log`, al instante; la sesión anterior queda en `tatou.prev.log` (Windows y Linux). |
+| `exceptionHandler.h` | Registro de cierres en `crash_log.txt`: en Windows también corrupciones de memoria que el motor deja pasar; en Linux, las señales de cierre, con las funciones que llevaron a él (también en `tatou.log`). |
+| `fileNameCase.cpp/.h` | `matchFileCase`: una ruta tal como está en el disco, cada carpeta y el archivo sin importar mayúsculas (Linux; en Windows, la misma ruta). |
 | `safeDelete.h` | Borrado protegido de recursos (lo usa `hqr.cpp` al vaciar sus listas). |
 | `unpack.cpp/.h` | Descompresión de las entradas de los `.PAK` (el "explode" de PKWARE del juego y deflate con zlib). |
 | `cosTable.cpp/.h` | Tabla de cosenos del motor (los giros del juego se miden en 1024 pasos por vuelta). |
 | `jobSystem.cpp/.h`, `jobSystemInit.h` | Hilos de trabajo: hoy decodifican las voces `.VOC` sin frenar el juego. |
-| `platform_compat.h` | Sustitutos de funciones solo de Microsoft (`fopen_s`, `strcpy_s`...) para otros compiladores (Linux, Fase 7). |
+| `platform_compat.h` | Sustitutos de funciones solo de Microsoft (`fopen_s`, `strcpy_s`, `localtime_s`...) para otros compiladores (Linux); su `fopen_s` lee los archivos en cualquier mayúscula. |
 | `version.h` | Fecha y hora de compilación, escritas en el registro al arrancar. |
 
 ### platform/: el sistema
@@ -159,7 +160,7 @@ Cuando un archivo tiene `.cpp` y `.h`, va en una sola fila.
 | --- | --- |
 | `config/remasterHooks.cpp/.h` | Conecta el remaster con el motor: fuentes, menús, teclas F9/F10 y los ganchos de cada sistema. |
 | `config/debugCheats.cpp/.h` | F9 (modo depuración, herramientas de desarrollo): ventana para darse objetos. |
-| `graphics/customBackgrounds.cpp/.h` | Fondos y máscaras del jugador en lugar de los originales; exportar todos los fondos y máscaras. |
+| `graphics/customBackgrounds.cpp/.h` | Fondos y máscaras del jugador en lugar de los originales (los fondos, descomprimidos en segundo plano y por adelantado los de la sala); exportar todos los fondos y máscaras. |
 | `graphics/objectFixes.cpp/.h` | Correcciones visuales de objetos 3D (posición, giro, tamaño), cargadas de `assets/objectFixes/`. |
 | `ui/advancedOptions.cpp/.h` | Ventana F1: las opciones del launcher dentro del juego, con Controles y Audio. |
 | `ui/menuFonts.cpp/.h` | Fuente Georgia de los menús, nítida a cualquier tamaño de ventana. |
@@ -182,7 +183,10 @@ Cuando un archivo tiene `.cpp` y `.h`, va en una sola fila.
 | `ui/menuGamepad.h` | El mando en los menús (sticks, botones, ayuda tras 4 segundos). |
 | `ui/launcherScreen.h` | Pantalla del launcher (solo disposición y dibujo): la usa `Launcher.exe` y, en Android, el propio juego. |
 | `ui/launcherText.h` | Textos del launcher en cinco idiomas. |
+| `ui/menuFontData.h` | La letra propia de los menús, Gelasio (hecha a las medidas de Georgia): se usa donde no hay Georgia (Linux); `addEmbeddedFont`. |
+| `embedFonts.cmake` | Mete `assets/fonts/Gelasio-*.ttf` en cada programa al compilar (`menuFontData.cpp` en su carpeta de compilación). |
 | `assets/aitd.ico` | Icono del proyecto. |
+| `assets/fonts/` | Gelasio normal y negrita, y su licencia (`OFL.txt`, va en los paquetes como `Gelasio-OFL.txt`). |
 
 ### Launcher/ y Fitd/
 

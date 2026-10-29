@@ -11,6 +11,7 @@
 
 #include "common.h"
 #include "consoleLog.h"
+#include "fileNameCase.h"
 
 // Menu sound helper (from systemMenu.cpp)
 extern void playMenuSound(const char* soundName);
@@ -47,7 +48,7 @@ extern "C" {
 
 FILE* Open(const char* filename, const char* mode) {
     std::filesystem::path path = std::filesystem::path(homePath) / filename;
-    return fopen(path.string().c_str(), mode);
+    return fopen(mode[0] == 'r' ? matchFileCase(path.string()).c_str() : path.string().c_str(), mode);
 }
 
 

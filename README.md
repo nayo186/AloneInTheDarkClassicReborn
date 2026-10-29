@@ -2,7 +2,7 @@
 
 Play the original **Alone in the Dark** (1992) and **Jack in the Dark** on modern PCs, with their original graphics and a set of careful fixes and options.
 
-**[⬇ Download the latest version](https://github.com/nayo186/AloneInTheDarkClassicReborn/releases/latest)**: unzip it, run `Launcher.exe` and choose your GOG or Steam copy of the game. Nothing else to install.
+**[⬇ Download the latest version](https://github.com/nayo186/AloneInTheDarkClassicReborn/releases/latest)** for Windows or Linux: unpack it, run `Launcher.exe` (`Launcher` on Linux) and choose your GOG or Steam copy of the game. Nothing else to install.
 
 Classic Reborn is a C++17 reimplementation of the Infogrames engine. It is a fork of [Alone in the Dark: Re-Haunted](https://github.com/spacefarergames/AloneInTheDarkReHaunted), itself based on [FITD (Free in the Dark)](https://github.com/yaz0r/FITD) by yaz0r. Its goal is the 1992 game as it was meant to be seen, without its defects: the remaster's HD mode was removed and every addition is optional.
 
@@ -35,13 +35,15 @@ Classic Reborn is a **source port**: a hand-written reimplementation of the orig
 
 **To play**
 
-- Windows 10 or 11, 64-bit, and a graphics card with DirectX 11.
+- **Windows** 10 or 11, 64-bit, and a graphics card with DirectX 11.
+- Or **Linux**, 64-bit (x86-64): Ubuntu 22.04, Linux Mint 21, Debian 12, Fedora 37 or newer, or any other distribution of the same age, with a graphics card that supports Vulkan or OpenGL.
 - Your own copy of *Alone in the Dark*: the GOG or Steam edition (*Jack in the Dark* comes with it).
-- Nothing else to install: no .NET, no Visual C++ Redistributable, no DirectX setup. Unzip and run `Launcher.exe`.
+- Nothing else to install: no .NET, no Visual C++ Redistributable, no DirectX setup, no Linux packages. Unpack and run the launcher.
 
 **To build the project**
 
-- [Visual Studio 2022](https://visualstudio.microsoft.com/vs/) (the free Community edition works) with the **Desktop development with C++** workload. It includes CMake.
+- On Windows: [Visual Studio 2022](https://visualstudio.microsoft.com/vs/) (the free Community edition works) with the **Desktop development with C++** workload. It includes CMake.
+- On Linux: GCC 11 or newer, CMake, Ninja and the development packages of X11, Wayland, OpenGL and the sound systems (the list is in [Building](#building)).
 - [Git](https://git-scm.com/downloads) to download the repository.
 - Optional: [Python 3](https://www.python.org/downloads/) for the scripts in `tools/` (dictionary of methods, layer check).
 - Every library is included in the repository.
@@ -72,11 +74,33 @@ Classic Reborn is a **source port**: a hand-written reimplementation of the orig
 ## Getting started
 
 1. Build the project (see [Building](#building)) or get a release.
-2. Run **`Launcher.exe`** (next to `Tatou.exe`).
+2. Run **`Launcher.exe`** (next to `Tatou.exe`). On Linux: **`Launcher`** (next to `Tatou`), see [On Linux](#on-linux).
 3. Press **Browse** and choose your game folder:
    - a **GOG or Steam installation** of *Alone in the Dark* (the folder with `GAME.GOG`, or its `INDARK` subfolder). Music and voices are read straight from the CD image; nothing is extracted or written there;
    - or a **copy of the game files** (a folder with the `.PAK` files; Jack in the Dark in its `JACK` subfolder).
 4. Choose the language of the game and press **Play**. The GOG and Steam editions include five languages (English, French, German, Italian and Spanish), all available from the launcher. *Jack in the Dark* has its own button when its files are found.
+
+### On Linux
+
+1. Unpack the `.tar.gz` anywhere in your home folder (most file managers open it with a double click, or `tar -xzf ClassicReborn-<version>-linux-x64.tar.gz`).
+2. Run `Launcher` from that folder (double click, or `./Launcher` in a terminal).
+3. **Browse** to the game installed for Windows:
+   - **GOG** with Heroic, Lutris or Wine: the game's folder inside the Wine prefix, the one with `GAME.GOG` (for example `~/Games/Heroic/Alone in the Dark`);
+   - **Steam** with Proton: `steamapps/common` in your Steam library (by default `~/.steam/steam/steamapps/common`);
+   - or a copy of the game files, as on Windows.
+
+   Folders whose name starts with a dot (`.steam`) are hidden: press Ctrl+H in the folder picker to show them, or type the path.
+
+The game runs natively, without Wine or Proton: those are only needed to install the game files. Everything works as on Windows, including music and voices from the CD image and `UserData` next to the programs.
+
+**The Linux version is ready to play:** built and tested on Ubuntu, with the GOG installation and a copy of the game files, in both games. Controllers use the same code as on Windows (SDL3), so they should work too. If anything does not work on your system (a controller, the sound, the picture...), please open an [issue](https://github.com/nayo186/AloneInTheDarkClassicReborn/issues) with your distribution and what happened, and we will fix it.
+
+**From Windows (WSL).** The Linux version also runs in WSL2 with Ubuntu. WSL is not a full Linux PC, so for a smooth game it helps to:
+
+- use the graphics card through Mesa's Dozen driver (Vulkan over Direct3D 12): Ubuntu's own Vulkan in WSL draws on the processor;
+- send the sound to a PulseAudio server on Windows: WSLg's own sound tends to stop after a while;
+- keep the game files inside Linux's disk, not on a Windows drive (`/mnt/c`, `/mnt/d`), so camera changes stay smooth;
+- try controllers on a real Linux PC: WSL does not pass them to Linux.
 
 ## Controls
 
@@ -92,7 +116,7 @@ Every action can be changed in **Controls** (F1 window or launcher). Defaults:
 | Options window (F1) | F1 or Home | Back |
 | Fullscreen | F11 or Alt+Enter | — |
 
-**Controllers.** Any controller Windows and SDL3 recognise works, connected by USB or Bluetooth, also when connected while playing: Xbox (One, Series, 360), PlayStation (DualShock 4, DualSense), Nintendo Switch Pro and most generic controllers. The table uses the Xbox names; on other controllers the buttons are in the same place:
+**Controllers.** Any controller SDL3 recognises works, on Windows and Linux (on Linux, please report any problem: see [On Linux](#on-linux)), connected by USB or Bluetooth, also when connected while playing: Xbox (One, Series, 360), PlayStation (DualShock 4, DualSense), Nintendo Switch Pro and most generic controllers. The table uses the Xbox names; on other controllers the buttons are in the same place:
 
 | Xbox | PlayStation | Switch Pro |
 | --- | --- | --- |
@@ -207,6 +231,21 @@ cmake -G "Visual Studio 17 2022" -A x64 -S TatouSource -B TatouSource\build\vs20
 
 Open `TatouSource\build\vs2022\FITD.sln`, choose **RelWithDebInfo x64** and build. `Launcher.exe` and `Tatou.exe` end up together in `TatouSource\build\vs2022\Fitd\RelWithDebInfo`; `Launcher` is the start project.
 
+**On Linux** (Ubuntu or Debian; other distributions have the same packages under similar names):
+
+```
+sudo apt install build-essential cmake ninja-build pkg-config \
+  libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxi-dev libxss-dev \
+  libxfixes-dev libxinerama-dev libxtst-dev libwayland-dev libxkbcommon-dev \
+  wayland-protocols libdecor-0-dev libgl1-mesa-dev libegl1-mesa-dev \
+  libgles2-mesa-dev libdrm-dev libgbm-dev libasound2-dev libpulse-dev \
+  libpipewire-0.3-dev libudev-dev libdbus-1-dev libibus-1.0-dev
+cmake -G Ninja -S TatouSource -B TatouSource/build/linux -DCMAKE_BUILD_TYPE=RelWithDebInfo
+cmake --build TatouSource/build/linux
+```
+
+`Launcher` and `Tatou` end up together in `TatouSource/build/linux/Fitd/RelWithDebInfo`. A crash is written, with the functions that led to it, to `crash_log.txt` and `tatou.log`, as on Windows.
+
 **Development tools.** The CMake option `CLASSIC_REBORN_DEV_TOOLS` (on by default) builds two tools that only work in debug mode: **F9** gives any item, **F10** is the object editor used to make the visual fixes of 3D objects. For a build to share with players, turn it off:
 
 ```
@@ -215,9 +254,9 @@ cmake -S TatouSource -B TatouSource\build\vs2022 -DCLASSIC_REBORN_DEV_TOOLS=OFF
 
 **Debug mode** is switched on by hand: `debugMode = 1` in `launcher.cfg`. With a copy of the game files it also keeps every file the game writes inside that copy.
 
-**Releases.** The zip of each release is built by GitHub Actions (`.github/workflows/release.yml`) with the same script: publishing a release with a tag like `v1.0.0-beta.1` attaches `ClassicReborn-1.0.0-beta.1-windows-x64.zip` to it (64-bit Windows). Locally: `powershell -ExecutionPolicy Bypass -File tools\makeRelease.ps1 -Version 1.0.0-beta.1`.
+**Releases.** The packages of each release are built by GitHub Actions (`.github/workflows/release.yml`) with the same scripts: publishing a release with a tag like `v1.0.0-beta.1` attaches `ClassicReborn-1.0.0-beta.1-windows-x64.zip` (64-bit Windows) and `ClassicReborn-1.0.0-beta.1-linux-x64.tar.gz` (64-bit Linux, built on Ubuntu 22.04 so that it runs on that and every newer system) to it. Locally: `powershell -ExecutionPolicy Bypass -File tools\makeRelease.ps1 -Version 1.0.0-beta.1` on Windows, `tools/makeRelease.sh 1.0.0-beta.1` on Linux.
 
-Linux and Android are planned; most of the libraries already support them.
+Android is planned; most of the libraries already support it.
 
 ## Architecture
 
@@ -310,6 +349,7 @@ This project exists thanks to the people who came before it. Re-Haunted brought 
 - **Alone in the Dark: Re-Haunted**: the remaster this fork comes from, by Spacefarer Retro Remasters (Jake Jackson): <https://github.com/spacefarergames/AloneInTheDarkReHaunted>
 - **Alone in the Dark** and **Jack in the Dark** were created by Infogrames. This project contains none of their data and is not affiliated with their rights holders.
 - Libraries: [bgfx](https://github.com/bkaradzic/bgfx), [SDL3](https://github.com/libsdl-org/SDL), [SoLoud](https://github.com/jarikomppa/soloud), [Dear ImGui](https://github.com/ocornut/imgui), [zlib](https://zlib.net), and the OPL2 (AdLib sound chip) emulator from MAME, which plays Jack in the Dark's music: it was written for that chip, which modern PCs no longer have.
+- **Gelasio**, the menus' font where the system has no Georgia (Linux), by Eben Sorkin and the Gelasio Project Authors, under the SIL Open Font License 1.1 (`Gelasio-OFL.txt` next to the programs): <https://github.com/SorkinType/Gelasio>
 
 ## License
 

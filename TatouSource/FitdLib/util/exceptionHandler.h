@@ -422,13 +422,73 @@ public:
         printf("Exception handled in " context "\n"); \
     }
 
-#else // Non-Windows platforms
+#else // Non-Windows platforms: a signal handler
+
+#include <csignal>
+#include <cstdio>
+#include <cstring>
+#include <fcntl.h>
+#include <unistd.h>
+#if defined(__GLIBC__)
+#include <execinfo.h>
+#endif
 
 class ExceptionHandler
 {
+private:
+    static void writeText(int fd, const char* text)
+    {
+        if (fd >= 0 && write(fd, text, strlen(text)) < 0)
+            return;
+    }
+
+    // A crash: what and where (the functions called), in crash_log.txt and
+    // tatou.log; then the system's own action, since unlike on Windows the
+    // game cannot go on. Only calls that are safe inside a signal handler.
+    static void onSignal(int signal)
+    {
+        const char* name =
+            signal == SIGSEGV ? "SEGMENTATION FAULT (access violation)" :
+            signal == SIGABRT ? "ABORT" :
+            signal == SIGFPE ? "ARITHMETIC ERROR (division by zero)" :
+            signal == SIGILL ? "ILLEGAL INSTRUCTION" :
+            signal == SIGBUS ? "BUS ERROR" : "SIGNAL";
+        const int crashLog = open("crash_log.txt", O_WRONLY | O_CREAT | O_APPEND, 0644);
+        for (const int fd : { crashLog, (int)STDERR_FILENO })
+        {
+            writeText(fd, "\n=== CRITICAL: ");
+            writeText(fd, name);
+            writeText(fd, " ===\nStack Trace:\n");
+#if defined(__GLIBC__)
+            void* frames[32];
+            backtrace_symbols_fd(frames, backtrace(frames, 32), fd);
+#endif
+            writeText(fd, "=== End of Exception Report ===\n");
+        }
+        if (crashLog >= 0)
+            close(crashLog);
+        std::signal(signal, SIG_DFL);
+        raise(signal);
+    }
+
 public:
     // Installs the crash handler (crash_log.txt and tatou.log)
-    static void Initialize(bool continueOnHeapCorruption = true) {}
+    static void Initialize(bool continueOnHeapCorruption = true)
+    {
+        (void)continueOnHeapCorruption;   // Windows only: heap errors cannot be skipped here
+#if defined(__GLIBC__)
+        // The first call loads its library: done now, not inside the handler
+        void* frame;
+        backtrace(&frame, 1);
+#endif
+        if (FILE* file = fopen("crash_log.txt", "w"))
+        {
+            fprintf(file, "=== Application Started - Exception Handler Active ===\n\n");
+            fclose(file);
+        }
+        for (const int signal : { SIGSEGV, SIGABRT, SIGFPE, SIGILL, SIGBUS })
+            std::signal(signal, onSignal);
+    }
     // Removes the crash handler
     static void Shutdown() {}
 };

@@ -2,8 +2,8 @@
 // Alone in the Dark: Classic Reborn
 // Based on FITD by yaz0r and AloneInTheDarkReHaunted, released under GPL
 //
-// Fonts of the in-game menus (F1, controls, audio): the launcher's Georgia,
-// made once at the largest scale this screen can need and drawn smaller with
+// Fonts of the in-game menus (F1, controls, audio): the launcher's Georgia
+// (Gelasio where the system has no Georgia, Shared/ui/menuFontData.h), made once at the largest scale this screen can need and drawn smaller with
 // the window font scale, so the letters stay sharp at any window size.
 ///////////////////////////////////////////////////////////////////////////////
 

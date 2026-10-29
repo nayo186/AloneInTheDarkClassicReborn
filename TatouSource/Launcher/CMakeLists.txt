@@ -22,6 +22,19 @@ add_custom_command(
     COMMENT "Embedding the game covers"
 )
 
+# The menus' own font compiled in, used where Georgia is missing
+# (Shared/assets/fonts -> menuFontData.cpp, Shared/ui/menuFontData.h)
+set(SHARED_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../Shared")
+set(MENU_FONT_DATA "${CMAKE_CURRENT_BINARY_DIR}/menuFontData.cpp")
+add_custom_command(
+    OUTPUT "${MENU_FONT_DATA}"
+    COMMAND ${CMAKE_COMMAND} -DSOURCE_DIR=${SHARED_DIR} -DOUTPUT=${MENU_FONT_DATA}
+            -P "${SHARED_DIR}/embedFonts.cmake"
+    DEPENDS "${SHARED_DIR}/assets/fonts/Gelasio-Regular.ttf" "${SHARED_DIR}/assets/fonts/Gelasio-Bold.ttf"
+            "${SHARED_DIR}/embedFonts.cmake"
+    COMMENT "Embedding the menu font"
+)
+
 add_executable(Launcher
     main.cpp
     launcherSettings.cpp
@@ -32,6 +45,7 @@ add_executable(Launcher
     folderDialog.h
     Launcher.rc
     "${COVER_DATA}"
+    "${MENU_FONT_DATA}"
     "${THIRD_PARTY}/imgui/imgui.cpp"
     "${THIRD_PARTY}/imgui/imgui_draw.cpp"
     "${THIRD_PARTY}/imgui/imgui_tables.cpp"
