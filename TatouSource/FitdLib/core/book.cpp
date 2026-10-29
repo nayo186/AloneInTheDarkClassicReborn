@@ -397,7 +397,7 @@ int Lire(int index, int startx, int top, int endx, int bottom, int demoMode, int
         // VOC naming: BBSSLL.VOC where BB=vocIndex, SS=page, LL=line
         if (vocIndex >= 0 && vocLinesOnPage > 0)
         {
-            osystem_playVocPageLines(vocIndex, page, vocLinesOnPage);
+            osystem_playVocPage(vocIndex, page);
 
             // PHASE 3: Pre-load next page VOC in background to eliminate page-turn stalls
             // Schedule the next page to be decoded while user reads current page

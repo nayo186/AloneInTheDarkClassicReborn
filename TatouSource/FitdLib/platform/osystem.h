@@ -16,6 +16,8 @@
 #include "string.h"
 #include <cstddef>
 #include <functional>
+#include <string>
+#include <vector>
 
 #include "palette.h"
 
@@ -82,16 +84,16 @@
 	// Plays the narrator voice of a book or message by its number
 	void osystem_playVocByIndex(int vocIndex);
 	// Plays the narrator voice of one page of a book
-	void osystem_playVocPageLines(int vocIndex, int page, int numLines);
+	void osystem_playVocPage(int vocIndex, int page);
 	// Stops the narrator voice
 	void osystem_stopVO();
 
 	// VOC pre-decode cache for seamless page turns during book reading
 	void osystem_preDecodeVocPage(int vocIndex, int page);
-	// The voice of a book page already decoded in the background, or nullptr
-	unsigned char* osystem_tryGetPreDecodedVocPage(int vocIndex, int page, size_t* outSize);
 	// Forgets the voices decoded in the background
 	void osystem_clearVocCache();
+	// The narrators with voices: the folders of Voices in the working folder
+	std::vector<std::string> osystem_findNarrators();
 
 	extern float g_voPitchMultiplier;
 	extern bool g_playWorldActive;

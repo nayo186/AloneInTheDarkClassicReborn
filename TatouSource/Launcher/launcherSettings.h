@@ -56,6 +56,7 @@ struct LauncherSettings
     // not part of the default settings button
     int musicVolume = kDefaultAudioVolume;
     int soundVolume = kDefaultAudioVolume;
+    std::string voices;   // narrator (audio.voices): a folder of Voices, empty = the game's (English)
 
     // Game controls ("controls.<action>" lines; not part of the default
     // settings button: they are reset in their own window)
@@ -112,14 +113,17 @@ bool isGogInstallFolder(const std::string& folder);
 
 // True if Jack in the Dark is there too (PERE.PAK)
 bool hasJackData(const std::string& folder);
+// The narrators with voices in AITD1's working folder (Voices: in
+// UserData\AITD1, or in the copy itself in debug mode; Shared/narrators.h)
+std::vector<std::string> findAitd1Narrators(const std::string& folder);
 
 // Debug mode (launcher.cfg "debugMode = 1", only by hand): with a copy of the data, the game
 // writes inside the copy; otherwise everything goes to UserData next to the
 // launcher (Shared/userFolder.h)
 void setLauncherDebugMode(bool debugMode);
 
-// Creates UserData with each game's Saves, Backgrounds, Masks and Exports folders;
-// called when the launcher opens
+// Creates UserData with each game's Saves, Backgrounds, Masks and Exports folders
+// (and AITD1's Voices); called when the launcher opens
 void prepareUserData();
 
 // Language PAKs present in the data folder, in a fixed order

@@ -11,6 +11,8 @@
 //       Backgrounds\  the player's camera backgrounds and full-screen pictures
 //       Masks\        the player's masks
 //       Exports\      what F1 exports
+//       Voices\       (AITD1) other narrators, one folder each (e.g. French
+//                     with the player's French CD): Shared/narrators.h
 // The launcher creates the folders the first time it opens (empty: the
 // general README explains them). With the debug
 // mode on and a copy of the data, everything stays inside the copy as before
@@ -24,3 +26,4 @@ static const char* const kSavesFolder = "Saves";
 static const char* const kPicturesFolder = "Backgrounds";
 static const char* const kMasksFolder = "Masks";
 static const char* const kExportsFolder = "Exports";
+static const char* const kVoicesFolder = "Voices";

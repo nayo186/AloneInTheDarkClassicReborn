@@ -38,6 +38,8 @@
 #include "gogImage.h"
 #include "osystemAL.h"
 #include "vocDecoder.h"
+#include "userFolder.h"
+#include "narrators.h"
 #include "jobSystem.h"
 
 #include "zlib.h"
@@ -830,6 +832,10 @@ static bool tryPlayVoFile(const char* path, const char* label)
     return false;
 }
 
+static std::shared_ptr<const NarratorVoices> currentNarrator();
+static unsigned char* buildNarration(const NarratorVoices* narrator, int first, int count, size_t* outSize);
+static bool playVoiceWav(unsigned char* wav, size_t wavSize, bool owned, const char* label);
+
 void osystem_playVocByIndex(int vocIndex)
 {
     if (!gSoloud || vocIndex < 0)
@@ -838,6 +844,20 @@ void osystem_playVocByIndex(int vocIndex)
     char vocName[64];
     sprintf_s(vocName, sizeof(vocName), "%06d.VOC", vocIndex);
     printf(VO_TAG "Playing VOC by index: %d -> %s\n", vocIndex, vocName);
+
+    // The chosen narrator when it has this reading
+    const std::shared_ptr<const NarratorVoices> narrator = currentNarrator();
+    if (narrator && narrator->hasPiece(vocIndex))
+    {
+        osystem_stopVO();
+        size_t wavSize = 0;
+        if (unsigned char* wav = buildNarration(narrator.get(), vocIndex, 1, &wavSize))
+        {
+            const std::string label = narrator->name() + " " + vocName;
+            if (playVoiceWav(wav, wavSize, true, label.c_str()))
+                return;
+        }
+    }
     osystem_playVO(vocName);
 }
 
@@ -859,6 +879,79 @@ static unsigned char* loadVocFromGogImage(const char* vocName, size_t* outSize)
     memcpy(raw, data.data(), data.size());
     *outSize = data.size();
     return raw;
+}
+
+// ---- Narrators (Shared/narrators.h) ---------------------------------------------
+
+// The chosen narrator (audio.voices: a folder of Voices in the working
+// folder), opened again when the choice changes; null for the game's own
+// (English) or when the folder has no voices. Main thread only; the
+// background decoding keeps its own reference.
+static std::shared_ptr<const NarratorVoices> currentNarrator()
+{
+    static std::shared_ptr<const NarratorVoices> s_narrator;
+    static std::string s_openedName;
+    static bool s_opened = false;
+    const std::string wanted = g_settings.audio.voices;
+    if (s_opened && wanted == s_openedName)
+        return s_narrator;
+    s_opened = true;
+    s_openedName = wanted;
+    s_narrator.reset();
+    if (wanted.empty())
+        return s_narrator;
+    auto voices = std::make_shared<NarratorVoices>();
+    if (voices->open(std::filesystem::u8path(std::string(kVoicesFolder) + "/" + wanted)))
+    {
+        const std::string image = narratorPathText(voices->imagePath().filename());
+        printf(VO_OK "Narrator: %s (%s)" CON_RESET "\n", wanted.c_str(),
+               image.empty() ? "voice files" : ("CD image " + image).c_str());
+        s_narrator = voices;
+    }
+    else
+    {
+        printf(VO_WARN "Narrator %s: no voices in %s/%s, the game's narrator is used" CON_RESET "\n",
+               wanted.c_str(), kVoicesFolder, wanted.c_str());
+    }
+    return s_narrator;
+}
+
+std::vector<std::string> osystem_findNarrators()
+{
+    return findNarrators(std::filesystem::u8path(kVoicesFolder));
+}
+
+// A voice file (VOC, WAV or OGG) as mono samples; false if it cannot be decoded
+static bool decodeVoicePiece(const std::vector<unsigned char>& data, const std::string& ext,
+                             std::vector<float>& samples, float& rate)
+{
+    const unsigned char* memory = data.data();
+    size_t size = data.size();
+    unsigned char* vocWav = nullptr;
+    if (ext == ".voc")
+    {
+        if (!vocDecodeToWav(memory, size, &vocWav, &size))
+            return false;
+        memory = vocWav;
+    }
+    SoLoud::Wav wav;
+    const bool loaded = wav.loadMem(memory, (unsigned int)size, true, false) == SoLoud::SO_NO_ERROR;
+    delete[] vocWav;
+    if (!loaded || wav.mSampleCount == 0)
+        return false;
+
+    // SoLoud keeps the channels one after the other
+    const unsigned int channels = wav.mChannels > 0 ? wav.mChannels : 1;
+    samples.resize(wav.mSampleCount);
+    for (unsigned int i = 0; i < wav.mSampleCount; i++)
+    {
+        float sum = 0.0f;
+        for (unsigned int c = 0; c < channels; c++)
+            sum += wav.mData[c * wav.mSampleCount + i];
+        samples[i] = sum / channels;
+    }
+    rate = wav.mBaseSamplerate;
+    return true;
 }
 
 // Helper: try to load raw file data for a VOC name from archive, CD, or filesystem.
@@ -938,155 +1031,147 @@ static unsigned char* loadVocFileData(const char* vocName, size_t* outSize)
     return nullptr;
 }
 
-// VOC page naming: BBSSLL.VOC where BB=vocIndex, SS=page, LL=line
-// Numeric value = vocIndex * 10000 + page * 100 + line
-void osystem_playVocPageLines(int vocIndex, int page, int numLines)
+// One voice: the chosen narrator's, or else the game's own (English)
+static bool readVoice(const NarratorVoices* narrator, int number, std::vector<unsigned char>& data, std::string& ext)
 {
-    if (!gSoloud || vocIndex < 0 || numLines <= 0)
+    if (narrator)
+        return narrator->readPiece(number, data, ext);
+    char vocName[16];
+    snprintf(vocName, sizeof(vocName), "%06d.VOC", number);
+    size_t size = 0;
+    unsigned char* raw = loadVocFileData(vocName, &size);
+    if (!raw)
+        return false;
+    data.assign(raw, raw + size);
+    delete[] raw;
+    ext = ".voc";
+    return true;
+}
+
+// The voices first, first + 1... (at most count, until the first missing one)
+// as one 16-bit mono WAV in memory (the buffer is the caller's: delete[]), or
+// nullptr. A book page is BBSS00 onwards: pieces of about 2.7 s of the
+// page's narration (BBSSNN: book, page, piece), which do not follow the lines
+// of the text, so a page plays them all (BUGS.md C35). Pieces with another
+// sample rate (WAV, OGG) are converted to the first one's.
+static unsigned char* buildNarration(const NarratorVoices* narrator, int first, int count, size_t* outSize)
+{
+    std::vector<float> narration;
+    float rate = 0.0f;
+    for (int piece = 0; piece < count; piece++)
+    {
+        std::vector<unsigned char> data;
+        std::string ext;
+        std::vector<float> samples;
+        float pieceRate = 0.0f;
+        if (!readVoice(narrator, first + piece, data, ext) || !decodeVoicePiece(data, ext, samples, pieceRate))
+            break;
+        if (rate == 0.0f)
+            rate = pieceRate;
+        if (pieceRate == rate)
+        {
+            narration.insert(narration.end(), samples.begin(), samples.end());
+            continue;
+        }
+        const double step = (double)pieceRate / rate;
+        for (double pos = 0.0; pos < samples.size() - 1; pos += step)
+        {
+            const size_t at = (size_t)pos;
+            const float t = (float)(pos - at);
+            narration.push_back(samples[at] + (samples[at + 1] - samples[at]) * t);
+        }
+    }
+    if (narration.empty())
+        return nullptr;
+
+    const uint32_t dataSize = (uint32_t)narration.size() * 2;
+    const uint32_t wavSize = 44 + dataSize;
+    unsigned char* wav = new (std::nothrow) unsigned char[wavSize];
+    if (!wav)
+        return nullptr;
+    auto put16 = [wav](int at, uint32_t value) { wav[at] = (unsigned char)(value & 0xFF); wav[at + 1] = (unsigned char)((value >> 8) & 0xFF); };
+    auto put32 = [&put16](int at, uint32_t value) { put16(at, value & 0xFFFF); put16(at + 2, value >> 16); };
+    const uint32_t sampleRate = (uint32_t)(rate + 0.5f);
+    memcpy(wav, "RIFF", 4);
+    put32(4, wavSize - 8);
+    memcpy(wav + 8, "WAVE", 4);
+    memcpy(wav + 12, "fmt ", 4);
+    put32(16, 16);              // fmt chunk size
+    put16(20, 1);               // PCM
+    put16(22, 1);               // mono
+    put32(24, sampleRate);
+    put32(28, sampleRate * 2);  // bytes per second
+    put16(32, 2);               // bytes per sample
+    put16(34, 16);              // bits per sample
+    memcpy(wav + 36, "data", 4);
+    put32(40, dataSize);
+    for (size_t i = 0; i < narration.size(); i++)
+    {
+        const float clamped = (std::max)(-1.0f, (std::min)(1.0f, narration[i]));
+        put16(44 + (int)i * 2, (uint16_t)(int16_t)(clamped * 32767.0f));
+    }
+    *outSize = wavSize;
+    return wav;
+}
+
+// Plays a voice WAV in memory; owned: deleted with the voice (else the cache keeps it)
+static bool playVoiceWav(unsigned char* wav, size_t wavSize, bool owned, const char* label)
+{
+    s_voStream = new SoLoud::WavStream();
+    if (s_voStream->loadMem(wav, static_cast<unsigned int>(wavSize), false, false) != SoLoud::SO_NO_ERROR)
+    {
+        if (owned)
+            delete[] wav;
+        delete s_voStream;
+        s_voStream = nullptr;
+        printf(VO_WARN "Failed to play the voice %s" CON_RESET "\n", label);
+        return false;
+    }
+    if (owned)
+        s_voBuf = wav;
+    s_voHandle = playAudioSource(*s_voStream);
+    if (g_voPitchMultiplier != 1.0f)
+        gSoloud->setRelativePlaySpeed(s_voHandle, g_voPitchMultiplier);
+    return true;
+}
+
+static std::string vocCacheKey(const NarratorVoices* narrator, int vocIndex, int page);
+static unsigned char* tryGetPreDecodedVocPage(const std::string& key, size_t* outSize);
+
+// The narrator of a page: the chosen one when it has that page (a page never
+// mixes narrators), else null (the game's own)
+static const NarratorVoices* pageNarrator(const std::shared_ptr<const NarratorVoices>& narrator, int vocIndex, int page)
+{
+    return (narrator && narrator->hasPiece(vocIndex * 10000 + page * 100)) ? narrator.get() : nullptr;
+}
+
+void osystem_playVocPage(int vocIndex, int page)
+{
+    if (!gSoloud || vocIndex < 0)
         return;
 
     osystem_stopVO();
 
-    // CACHE CHECK: Try pre-decoded page from cache first
-    size_t cachedWavSize = 0;
-    unsigned char* cachedWav = osystem_tryGetPreDecodedVocPage(vocIndex, page, &cachedWavSize);
-    if (cachedWav && cachedWavSize > 0)
-    {
-        s_voStream = new SoLoud::WavStream();
-        SoLoud::result res = s_voStream->loadMem(cachedWav, static_cast<unsigned int>(cachedWavSize), false, false);
-        if (res == SoLoud::SO_NO_ERROR)
-        {
-            s_voHandle = playAudioSource(*s_voStream);
-            if (g_voPitchMultiplier != 1.0f)
-                gSoloud->setRelativePlaySpeed(s_voHandle, g_voPitchMultiplier);
-            printf(VO_OK "Playing VOC page from cache: book %d page %d" CON_RESET "\n",
-                   vocIndex, page);
-            return;
-        }
-        else
-        {
-            delete s_voStream;
-            s_voStream = nullptr;
-        }
-    }
+    const std::shared_ptr<const NarratorVoices> chosen = currentNarrator();
+    const NarratorVoices* narrator = pageNarrator(chosen, vocIndex, page);
+    const std::string narratorName = narrator ? narrator->name() : std::string("the game's");
 
-    // CACHE MISS: Decode from scratch
-    // Collect decoded PCM data from all line VOCs for this page
-    std::vector<unsigned char> combinedPcm;
-    uint32_t sampleRate = 0;
-    uint16_t bitsPerSample = 0;
-    uint16_t numChannels = 0;
-    bool gotFormat = false;
-
-    for (int line = 0; line < numLines; line++)
-    {
-        int vocNum = vocIndex * 10000 + page * 100 + line;
-        char vocName[64];
-        sprintf_s(vocName, sizeof(vocName), "%06d.VOC", vocNum);
-
-        size_t rawSize = 0;
-        unsigned char* rawData = loadVocFileData(vocName, &rawSize);
-        if (!rawData)
-            break; // stop at first missing line
-
-        // Decode VOC to WAV
-        unsigned char* wavBuf = nullptr;
-        size_t wavSize = 0;
-        if (!vocDecodeToWav(rawData, rawSize, &wavBuf, &wavSize))
-        {
-            delete[] rawData;
-            break;
-        }
-        delete[] rawData;
-
-        // Extract format info from first decoded WAV header (44 bytes)
-        if (!gotFormat && wavSize >= 44)
-        {
-            sampleRate    = (uint32_t)wavBuf[24] | ((uint32_t)wavBuf[25] << 8) |
-                            ((uint32_t)wavBuf[26] << 16) | ((uint32_t)wavBuf[27] << 24);
-            numChannels   = (uint16_t)wavBuf[22] | ((uint16_t)wavBuf[23] << 8);
-            bitsPerSample = (uint16_t)wavBuf[34] | ((uint16_t)wavBuf[35] << 8);
-            gotFormat = true;
-        }
-
-        // Append PCM data (skip 44-byte WAV header)
-        if (wavSize > 44)
-            combinedPcm.insert(combinedPcm.end(), wavBuf + 44, wavBuf + wavSize);
-
-        delete[] wavBuf;
-    }
-
-    if (!gotFormat || combinedPcm.empty())
-    {
-        printf(VO_WARN "No VOC lines found for book %d page %d" CON_RESET "\n", vocIndex, page);
-        return;
-    }
-
-    // Build combined WAV in memory
-    uint32_t dataSize   = (uint32_t)combinedPcm.size();
-    uint32_t wavSize    = 44 + dataSize;
-    uint16_t blockAlign = numChannels * (bitsPerSample / 8);
-    uint32_t byteRate   = sampleRate * blockAlign;
-
-    unsigned char* wav = new (std::nothrow) unsigned char[wavSize];
+    // Already decoded in the background (the cache keeps the buffer)
+    size_t wavSize = 0;
+    unsigned char* wav = tryGetPreDecodedVocPage(vocCacheKey(narrator, vocIndex, page), &wavSize);
+    const bool cached = wav && wavSize > 0;
+    if (!cached)
+        wav = buildNarration(narrator, vocIndex * 10000 + page * 100, 100, &wavSize);
     if (!wav)
+    {
+        printf(VO_WARN "No voice for book %d page %d" CON_RESET "\n", vocIndex, page);
         return;
-
-    // RIFF header
-    memcpy(wav, "RIFF", 4);
-    wav[4] = (unsigned char)((wavSize - 8) & 0xFF);
-    wav[5] = (unsigned char)(((wavSize - 8) >> 8) & 0xFF);
-    wav[6] = (unsigned char)(((wavSize - 8) >> 16) & 0xFF);
-    wav[7] = (unsigned char)(((wavSize - 8) >> 24) & 0xFF);
-    memcpy(wav + 8, "WAVE", 4);
-
-    // fmt chunk
-    memcpy(wav + 12, "fmt ", 4);
-    wav[16] = 16; wav[17] = 0; wav[18] = 0; wav[19] = 0; // chunk size = 16
-    wav[20] = 1;  wav[21] = 0; // PCM format
-    wav[22] = (unsigned char)(numChannels & 0xFF);
-    wav[23] = (unsigned char)((numChannels >> 8) & 0xFF);
-    wav[24] = (unsigned char)(sampleRate & 0xFF);
-    wav[25] = (unsigned char)((sampleRate >> 8) & 0xFF);
-    wav[26] = (unsigned char)((sampleRate >> 16) & 0xFF);
-    wav[27] = (unsigned char)((sampleRate >> 24) & 0xFF);
-    wav[28] = (unsigned char)(byteRate & 0xFF);
-    wav[29] = (unsigned char)((byteRate >> 8) & 0xFF);
-    wav[30] = (unsigned char)((byteRate >> 16) & 0xFF);
-    wav[31] = (unsigned char)((byteRate >> 24) & 0xFF);
-    wav[32] = (unsigned char)(blockAlign & 0xFF);
-    wav[33] = (unsigned char)((blockAlign >> 8) & 0xFF);
-    wav[34] = (unsigned char)(bitsPerSample & 0xFF);
-    wav[35] = (unsigned char)((bitsPerSample >> 8) & 0xFF);
-
-    // data chunk
-    memcpy(wav + 36, "data", 4);
-    wav[40] = (unsigned char)(dataSize & 0xFF);
-    wav[41] = (unsigned char)((dataSize >> 8) & 0xFF);
-    wav[42] = (unsigned char)((dataSize >> 16) & 0xFF);
-    wav[43] = (unsigned char)((dataSize >> 24) & 0xFF);
-    memcpy(wav + 44, combinedPcm.data(), dataSize);
-
-    // Play the combined WAV
-    s_voStream = new SoLoud::WavStream();
-    SoLoud::result res = s_voStream->loadMem(wav, wavSize, false, false);
-    if (res == SoLoud::SO_NO_ERROR)
-    {
-        s_voBuf = wav;
-        s_voHandle = playAudioSource(*s_voStream);
-        if (g_voPitchMultiplier != 1.0f)
-            gSoloud->setRelativePlaySpeed(s_voHandle, g_voPitchMultiplier);
-        printf(VO_OK "Playing VOC page: book %d page %d (%d lines, %u bytes)" CON_RESET "\n",
-               vocIndex, page, numLines, dataSize);
     }
-    else
-    {
-        delete[] wav;
-        delete s_voStream;
-        s_voStream = nullptr;
-        printf(VO_WARN "Failed to play combined VOC for book %d page %d" CON_RESET "\n",
-               vocIndex, page);
-    }
+    char label[64];
+    snprintf(label, sizeof(label), "of book %d page %d", vocIndex, page);
+    if (playVoiceWav(wav, wavSize, !cached, label))
+        printf(VO_OK "Voice of book %d page %d: %s narrator, %u bytes%s" CON_RESET "\n", vocIndex, page,
+               narratorName.c_str(), (unsigned)wavSize, cached ? " (decoded in the background)" : "");
 }
 
 void osystem_playVO(const char* voFileName)
@@ -1196,12 +1281,13 @@ struct PreDecodedVocPage
     }
 };
 
-static std::unordered_map<uint32_t, std::shared_ptr<PreDecodedVocPage>> s_vocPageCache;
+static std::unordered_map<std::string, std::shared_ptr<PreDecodedVocPage>> s_vocPageCache;
 static std::mutex s_vocCacheMutex;
 
-static uint32_t makeVocCacheKey(int vocIndex, int page)
+// One entry per narrator, book and page
+static std::string vocCacheKey(const NarratorVoices* narrator, int vocIndex, int page)
 {
-    return (uint32_t)(vocIndex * 10000 + page);
+    return (narrator ? narrator->name() : std::string()) + "/" + std::to_string(vocIndex * 10000 + page);
 }
 
 void osystem_preDecodeVocPage(int vocIndex, int page)
@@ -1209,137 +1295,52 @@ void osystem_preDecodeVocPage(int vocIndex, int page)
     if (!JobSystem::instance().isInitialized())
         return;
 
-    uint32_t cacheKey = makeVocCacheKey(vocIndex, page);
+    // The job keeps the narrator alive even if the choice changes meanwhile
+    const std::shared_ptr<const NarratorVoices> chosen = currentNarrator();
+    const NarratorVoices* narrator = pageNarrator(chosen, vocIndex, page);
+    const std::string cacheKey = vocCacheKey(narrator, vocIndex, page);
 
+    auto cacheEntry = std::make_shared<PreDecodedVocPage>();
     {
         std::lock_guard<std::mutex> lock(s_vocCacheMutex);
         if (s_vocPageCache.count(cacheKey))
             return;
-    }
-
-    auto cacheEntry = std::make_shared<PreDecodedVocPage>();
-
-    {
-        std::lock_guard<std::mutex> lock(s_vocCacheMutex);
         s_vocPageCache[cacheKey] = cacheEntry;
     }
 
-    int numMaxLines = 20;
+    const std::shared_ptr<const NarratorVoices> keep = narrator ? chosen : nullptr;
     JobSystem::instance().scheduleJob(
         JobSystem::JobType::DECODE_VOC,
         JobSystem::Priority::HIGH,
-        [vocIndex, page, cacheEntry, numMaxLines]() {
-            std::vector<unsigned char> combinedPcm;
-            uint32_t sampleRate = 0;
-            uint16_t bitsPerSample = 0;
-            uint16_t numChannels = 0;
-            bool gotFormat = false;
-
-            for (int line = 0; line < numMaxLines; line++)
-            {
-                int vocNum = vocIndex * 10000 + page * 100 + line;
-                char vocName[64];
-                sprintf_s(vocName, sizeof(vocName), "%06d.VOC", vocNum);
-
-                        size_t rawSize = 0;
-                        unsigned char* rawData = loadVocFileData(vocName, &rawSize);
-                        if (!rawData)
-                            break;
-
-                unsigned char* wavBuf = nullptr;
-                size_t wavSz = 0;
-                if (!vocDecodeToWav(rawData, rawSize, &wavBuf, &wavSz))
-                {
-                    delete[] rawData;
-                    break;
-                }
-                delete[] rawData;
-
-                if (!gotFormat && wavSz >= 44)
-                {
-                    sampleRate    = (uint32_t)wavBuf[24] | ((uint32_t)wavBuf[25] << 8) |
-                                    ((uint32_t)wavBuf[26] << 16) | ((uint32_t)wavBuf[27] << 24);
-                    numChannels   = (uint16_t)wavBuf[22] | ((uint16_t)wavBuf[23] << 8);
-                    bitsPerSample = (uint16_t)wavBuf[34] | ((uint16_t)wavBuf[35] << 8);
-                    gotFormat = true;
-                }
-
-                if (wavSz > 44)
-                    combinedPcm.insert(combinedPcm.end(), wavBuf + 44, wavBuf + wavSz);
-
-                delete[] wavBuf;
-            }
-
-            if (!gotFormat || combinedPcm.empty())
-                return;
-
-            uint32_t dataSize   = (uint32_t)combinedPcm.size();
-            uint32_t totalWavSz = 44 + dataSize;
-            uint16_t blockAlign = numChannels * (bitsPerSample / 8);
-            uint32_t byteRate   = sampleRate * blockAlign;
-
-            unsigned char* wav = new (std::nothrow) unsigned char[totalWavSz];
+        [vocIndex, page, keep, cacheEntry]() {
+            size_t wavSize = 0;
+            unsigned char* wav = buildNarration(keep.get(), vocIndex * 10000 + page * 100, 100, &wavSize);
             if (!wav)
                 return;
-
-            memcpy(wav, "RIFF", 4);
-            wav[4] = (unsigned char)((totalWavSz - 8) & 0xFF);
-            wav[5] = (unsigned char)(((totalWavSz - 8) >> 8) & 0xFF);
-            wav[6] = (unsigned char)(((totalWavSz - 8) >> 16) & 0xFF);
-            wav[7] = (unsigned char)(((totalWavSz - 8) >> 24) & 0xFF);
-            memcpy(wav + 8, "WAVE", 4);
-            memcpy(wav + 12, "fmt ", 4);
-            wav[16] = 16; wav[17] = 0; wav[18] = 0; wav[19] = 0;
-            wav[20] = 1;  wav[21] = 0;
-            wav[22] = (unsigned char)(numChannels & 0xFF);
-            wav[23] = (unsigned char)((numChannels >> 8) & 0xFF);
-            wav[24] = (unsigned char)(sampleRate & 0xFF);
-            wav[25] = (unsigned char)((sampleRate >> 8) & 0xFF);
-            wav[26] = (unsigned char)((sampleRate >> 16) & 0xFF);
-            wav[27] = (unsigned char)((sampleRate >> 24) & 0xFF);
-            wav[28] = (unsigned char)(byteRate & 0xFF);
-            wav[29] = (unsigned char)((byteRate >> 8) & 0xFF);
-            wav[30] = (unsigned char)((byteRate >> 16) & 0xFF);
-            wav[31] = (unsigned char)((byteRate >> 24) & 0xFF);
-            wav[32] = (unsigned char)(blockAlign & 0xFF);
-            wav[33] = (unsigned char)((blockAlign >> 8) & 0xFF);
-            wav[34] = (unsigned char)(bitsPerSample & 0xFF);
-            wav[35] = (unsigned char)((bitsPerSample >> 8) & 0xFF);
-            memcpy(wav + 36, "data", 4);
-            wav[40] = (unsigned char)(dataSize & 0xFF);
-            wav[41] = (unsigned char)((dataSize >> 8) & 0xFF);
-            wav[42] = (unsigned char)((dataSize >> 16) & 0xFF);
-            wav[43] = (unsigned char)((dataSize >> 24) & 0xFF);
-            memcpy(wav + 44, combinedPcm.data(), dataSize);
-
             {
                 std::lock_guard<std::mutex> lock(cacheEntry->mtx);
                 cacheEntry->wavData = wav;
-                cacheEntry->wavSize = totalWavSz;
+                cacheEntry->wavSize = wavSize;
                 cacheEntry->ready = true;
             }
             cacheEntry->cv.notify_all();
         });
 }
 
-unsigned char* osystem_tryGetPreDecodedVocPage(int vocIndex, int page, size_t* outSize)
+// The voice of a book page already decoded in the background, or nullptr
+static unsigned char* tryGetPreDecodedVocPage(const std::string& key, size_t* outSize)
 {
-    uint32_t cacheKey = makeVocCacheKey(vocIndex, page);
-
     std::lock_guard<std::mutex> lock(s_vocCacheMutex);
-    auto it = s_vocPageCache.find(cacheKey);
+    auto it = s_vocPageCache.find(key);
     if (it == s_vocPageCache.end())
         return nullptr;
 
     auto& entry = it->second;
     std::lock_guard<std::mutex> entryLock(entry->mtx);
-
     if (!entry->ready)
         return nullptr;
-
     if (outSize)
         *outSize = entry->wavSize;
-
     return entry->wavData;
 }
 

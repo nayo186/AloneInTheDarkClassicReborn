@@ -173,7 +173,16 @@ const unsigned char defaultPaletteAITD3[0x30] =
 // "CHRONO == 10" from ever being true, so its oil never ran out again
 // (BUGS.md C29). Each object now keeps its own, counted from when it is
 // first run here; resetFoundObjectChronos starts them again after a load.
-static std::unordered_map<int, unsigned int> s_foundObjectChronos;
+// It only runs while the object is in the hand: dropped, stored or swapped
+// for another object, it is paused, and it goes on from where it was when
+// the object is in the hand again (BUGS.md C37).
+struct FoundObjectChrono
+{
+    unsigned int chrono = 0;    // the CHRONO of the object's script
+    unsigned int lastRun = 0;   // game clock when the script last ran
+};
+static std::unordered_map<int, FoundObjectChrono> s_foundObjectChronos;
+static const unsigned int kFoundObjectPauseTicks = 30;   // longer than a frame: it was out of the hand
 
 void resetFoundObjectChronos()
 {
@@ -257,18 +266,28 @@ void executeFoundLife(int objIdx)
         currentProcessedActorPtr->ANIM = -1;
     }
 
-    // The borrowed slot runs with this object's own chronometer
+    // The borrowed slot runs with this object's own chronometer, moved on
+    // by the time the object spent out of the hand
     if (var_2)
     {
-        auto chrono = s_foundObjectChronos.find(objIdx);
-        const bool valid = (chrono != s_foundObjectChronos.end()) && chrono->second <= timer;
-        currentProcessedActorPtr->CHRONO = valid ? chrono->second : timer;
+        auto found = s_foundObjectChronos.find(objIdx);
+        const bool valid = found != s_foundObjectChronos.end() && found->second.chrono <= found->second.lastRun &&
+            found->second.lastRun <= timer;
+        unsigned int chrono = timer;
+        if (valid)
+        {
+            chrono = found->second.chrono;
+            const unsigned int away = timer - found->second.lastRun;
+            if (away > kFoundObjectPauseTicks)
+                chrono += away;
+        }
+        currentProcessedActorPtr->CHRONO = chrono;
     }
 
     processLife(foundLife, true);
 
     if (var_2)
-        s_foundObjectChronos[objIdx] = currentProcessedActorPtr->CHRONO;
+        s_foundObjectChronos[objIdx] = { (unsigned int)currentProcessedActorPtr->CHRONO, timer };
 
     if (var_2)
     {

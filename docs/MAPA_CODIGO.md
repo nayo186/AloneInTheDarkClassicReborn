@@ -78,8 +78,8 @@ Cuando un archivo tiene `.cpp` y `.h`, va en una sola fila.
 | `platformHooks.cpp/.h` | Los ganchos del sistema (ver sección 1). |
 | `gameFolder.cpp/.h` | Carpetas: datos (copia o instalación de GOG/Steam), carpeta de trabajo (`UserData` o la copia en modo depuración), Jack en `JACK`. |
 | `fileAccess.cpp/.h` | Cargar archivos `.ITD` y entradas de `.PAK` en memoria, y el error fatal si falta uno. |
-| `gogImage.cpp/.h` | Lee la música y las voces de la imagen del CD de GOG (`GAME.GOG`), sin extraer nada. |
-| `osystemAL.cpp/.h` | Audio con SoLoud: efectos, voces, música del CD, dos grupos de volumen (música / voces y efectos). |
+| `gogImage.cpp/.h` | La música y las voces de la imagen del CD de GOG (`GAME.GOG`, leída con `Shared/cdImage.h`), sin extraer nada. |
+| `osystemAL.cpp/.h` | Audio con SoLoud: efectos, voces (narrador del juego o de `Voices`, página por página), música del CD, dos grupos de volumen (música / voces y efectos). |
 | `osystemAL_adlib.cpp` | Música AdLib de Jack in the Dark, como fuente de sonido de SoLoud. |
 | `fmopl.cpp/.h` | Emulador del chip AdLib (OPL2) de MAME, para la música de Jack. |
 | `vocDecoder.cpp/.h` | Convierte los archivos de voz `.VOC` (Creative) a WAV para SoLoud. |
@@ -170,9 +170,11 @@ Cuando un archivo tiene `.cpp` y `.h`, va en una sola fila.
 | --- | --- |
 | `advancedOptionsText.h` | Textos de las opciones avanzadas en cinco idiomas. |
 | `audioVolume.h` | Volúmenes (0-100) y su ganancia. |
-| `audioWindow.h` | Ventana "Audio" (música, voces y efectos). |
+| `audioWindow.h` | Ventana "Audio" (música, voces y efectos, narrador). |
+| `cdImage.h` | Lee una imagen de CD (`.iso`, `.bin`, `GAME.GOG`): sus archivos y, con su `.cue`, sus pistas. |
 | `controlsBindings.h` | Acciones del juego, sus entradas, valores por defecto y su forma de texto en `aitd_remaster.cfg`. |
 | `controlsWindow.h` | Ventana "Controles" para cambiar las asignaciones. |
+| `narrators.h` | Narradores: cada carpeta de `Voices` con voces sueltas (`.voc`, `.wav`, `.ogg`) o una imagen del CD. |
 | `userFolder.h` | Carpeta portable `UserData` junto a los ejecutables. |
 | `ui/menuBase.h` | Base de todos los menús: paleta, escala por pantalla, disposición horizontal o vertical, controles para ratón, toque, teclado y mando. |
 | `ui/menuGamepad.h` | El mando en los menús (sticks, botones, ayuda tras 4 segundos). |

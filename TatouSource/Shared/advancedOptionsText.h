@@ -74,6 +74,13 @@ enum class AdvancedText
     MusicVolumeHelp,
     SoundVolume,
     SoundVolumeHelp,
+    Voices,
+    VoicesHelp,
+    VoicesEnglish,
+    VoicesFrench,
+    VoicesSpanish,
+    VoicesItalian,
+    VoicesGerman,
     Count
 };
 
@@ -311,6 +318,24 @@ inline const char* advancedText(AdvancedText text, int language)
           "Narrateur et effets sonores.",
           "Narratore ed effetti sonori.",
           "Erzähler und Soundeffekte." },
+        // Voices
+        { "Narrator", "Narrador", "Narrateur", "Narratore", "Erzähler" },
+        // VoicesHelp
+        { "Voice that reads the books. Others: folders in UserData\\AITD1\\Voices (see the README).",
+          "Voz que lee los libros. Otras: carpetas en UserData\\AITD1\\Voices (ver el README).",
+          "Voix qui lit les livres. Autres : dossiers dans UserData\\AITD1\\Voices (voir le README).",
+          "Voce che legge i libri. Altre: cartelle in UserData\\AITD1\\Voices (vedi il README).",
+          "Stimme, die die Bücher liest. Weitere: Ordner in UserData\\AITD1\\Voices (siehe README)." },
+        // VoicesEnglish
+        { "English", "Inglés", "Anglais", "Inglese", "Englisch" },
+        // VoicesFrench
+        { "French", "Francés", "Français", "Francese", "Französisch" },
+        // VoicesSpanish
+        { "Spanish", "Español", "Espagnol", "Spagnolo", "Spanisch" },
+        // VoicesItalian
+        { "Italian", "Italiano", "Italien", "Italiano", "Italienisch" },
+        // VoicesGerman
+        { "German", "Alemán", "Allemand", "Tedesco", "Deutsch" },
     };
     if (language < 0 || language >= kAdvancedTextLanguages)
         language = 0;

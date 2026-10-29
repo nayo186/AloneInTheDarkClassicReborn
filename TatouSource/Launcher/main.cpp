@@ -213,6 +213,7 @@ static void handleGamepadEvent(const SDL_Event& event)
 // Controls and audio windows (Shared/), popups over the advanced options
 static ControlsWindowState s_controlsWindow;
 static AudioWindowState s_audioWindow;
+static std::vector<std::string> s_narrators;   // looked for when the audio window opens
 
 // B closes the advanced options (saving them, as Close does)
 static bool s_closeAdvanced = false;
@@ -365,6 +366,7 @@ static void drawAdvancedOptions(LauncherState& state, const Fonts& fonts, const 
     {
         s_audioWindow.open = true;
         s_audioWindow.justOpened = true;
+        s_narrators = findAitd1Narrators(state.settings.aitd1DataFolder);
     }
     if (darkButton("##closeAdvanced", advText(AdvancedText::Close), ImVec2(pos.x + (third + gap) * 2.0f, pos.y), buttonSize,
         fonts.button, true) || s_closeAdvanced)
@@ -388,9 +390,10 @@ static void drawAdvancedOptions(LauncherState& state, const Fonts& fonts, const 
         for (int a = 0; a < kGameActionCount; a++)
             logLine("Controls: %s = %s", gameActionId((GameAction)a), bindingsToText(state.settings.controls[a]).c_str());
     }
-    if (drawAudioWindow(s_audioWindow, state.settings.musicVolume, state.settings.soundVolume, (int)uiLanguage(),
-        true, controlsStyle))
-        logLine("Audio: music %d, voices and effects %d", state.settings.musicVolume, state.settings.soundVolume);
+    if (drawAudioWindow(s_audioWindow, state.settings.musicVolume, state.settings.soundVolume, state.settings.voices,
+        s_narrators, (int)uiLanguage(), true, controlsStyle))
+        logLine("Audio: music %d, voices and effects %d, narrator %s", state.settings.musicVolume, state.settings.soundVolume,
+            state.settings.voices.empty() ? "of the game" : state.settings.voices.c_str());
 
     ImGui::EndPopup();
     ImGui::PopStyleVar();

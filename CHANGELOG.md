@@ -4,6 +4,14 @@ Alone in the Dark: Classic Reborn started on 2026-10-23 from [Alone in the Dark:
 
 This repository was published with a single starting commit, to keep it light: the early history carried large files that are no longer part of the project. Below are the changes of each release and, after them, the changes made in this fork before it was published, newest first, one line per change. The reasons behind larger removals are explained in `docs/DESCARTADO.md` and the fixes in `docs/baseline/BUGS.md`.
 
+## v1.0.0-beta.3 (2026-10-28)
+
+- Narrators: the French CD's narrator (from the player's own CD: voice files, .iso or .bin) or a fans' dubbing (.wav, .ogg, .voc), chosen in the Audio window, with any text language (README, Narrators)
+- A book page always plays its whole narration; with some text languages the end of the first page was cut (BUGS.md C35)
+- After leaving an object at your feet, the "take it?" window no longer comes back while you walk away (BUGS.md C36)
+- The lamp keeps spending oil in the hand after being dropped or stored and taken again (BUGS.md C37)
+- One CD image reader for the narrators and the GOG/Steam CD image
+
 ## v1.0.0-beta.2 (2026-10-28)
 
 - Background music plays again when a piece ends: the music queued by the scripts follows (after a monster dies, after a scare) (BUGS.md C32)

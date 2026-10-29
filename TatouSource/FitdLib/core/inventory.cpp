@@ -13,6 +13,7 @@
 #include "input.h"
 #include <SDL.h>
 #include <math.h>
+#include <unordered_map>
 
 // Menu sound helper (from systemMenu.cpp)
 extern void playMenuSound(const char* soundName);
@@ -673,6 +674,14 @@ void DrawFoundWindow(int menuState, int objectName, int zoomFactor)
     }
 }
 
+// Objects whose "take it?" window was answered "leave": when the player last
+// touched each one. It is not asked again while the player keeps touching it,
+// only after being away for a moment (BUGS.md C36). The original kept the
+// time in the object's 16-bit track number, which overflowed after 9 minutes
+// of play and asked again at every frame.
+static std::unordered_map<int, unsigned int> s_declinedObjects;
+static const unsigned int kDeclinedAwayTicks = 60;   // 1 s away from it
+
 void FoundObjet(int objIdx, int param)
 {
     tWorldObject* objPtr;
@@ -692,13 +701,18 @@ void FoundObjet(int objIdx, int param)
         return;
     }
 
-    if (objPtr->trackNumber)
+    auto declined = s_declinedObjects.find(objIdx);
+    if (declined != s_declinedObjects.end())
     {
-        if (timer - objPtr->trackNumber < 300) // prevent from reopening the window every frame
+        const int sinceTouched = (int)(timer - declined->second);
+        if (sinceTouched >= 0 && sinceTouched < (int)kDeclinedAwayTicks)
+        {
+            if (param == 0)   // still touching it
+                declined->second = timer;
             return;
+        }
+        s_declinedObjects.erase(declined);
     }
-
-    objPtr->trackNumber = 0;
 
 
 
@@ -830,7 +844,7 @@ void FoundObjet(int objIdx, int param)
     }
     else
     {
-        objPtr->trackNumber = timer;
+        s_declinedObjects[objIdx] = timer;
     }
 
     while (key && Click)

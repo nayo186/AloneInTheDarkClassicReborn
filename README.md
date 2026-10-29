@@ -63,6 +63,7 @@ Classic Reborn is a **source port**: a hand-written reimplementation of the orig
 - **Custom backgrounds**: export every background and mask of the game, enlarge or repaint them, and the game uses yours. A ready-made **HD pack** for both games is available (see [Custom backgrounds](#custom-backgrounds)).
 - **Controls**: keyboard and game controller (Xbox, PlayStation, Nintendo Switch Pro and most other USB or Bluetooth controllers), every action can be changed, several inputs per action.
 - **Separate volumes** for music and for voices and effects.
+- **Narrators**: the French CD's narrator (from your own CD) or a fans' dubbing, with any text language (see [Narrators](#narrators)).
 - **Saves** in the format of the GOG edition: saves made in the GOG game load here.
 - **Menus** that adapt to any window size and work with mouse, keyboard, controller and touch.
 
@@ -117,7 +118,7 @@ The launcher's **Advanced options** and the in-game **F1** window share the same
 | Smooth animations | Poses blended between the original key frames |
 | Enhanced text | The game's letters redrawn sharp at screen resolution |
 | Custom backgrounds | Uses your pictures instead of the originals |
-| Audio | Music volume, voices and effects volume |
+| Audio | Music volume, voices and effects volume, narrator |
 | Controls | The inputs of every action |
 
 ## Folders
@@ -132,7 +133,8 @@ UserData/
 │   ├── tatou.log          log of the last session (tatou.prev.log: the one before)
 │   ├── Backgrounds/       your backgrounds and full-screen pictures
 │   ├── Masks/             your masks
-│   └── Exports/           what F1 exports (masks in masks/, with guides in masks_guides/)
+│   ├── Exports/           what F1 exports (masks in masks/, with guides in masks_guides/)
+│   └── Voices/            other narrators, one folder each (see Narrators)
 └── JACK/                  Jack in the Dark (same layout)
 ```
 
@@ -151,6 +153,40 @@ To make your own:
 3. Save them with the same name in `Backgrounds/` (masks in `Masks/`; white covers the characters). Switch on **Custom backgrounds**: pictures saved while playing appear at once.
 
 Masks matter when your picture moves or redraws an object that stands in front of the characters.
+
+## Narrators
+
+The narrator reads the books, letters and notes aloud, page by page. The GOG and Steam editions have one narrator, in English, and it reads with any text language. Other narrators can be added, each one in its own folder of **`UserData\AITD1\Voices`**; they appear in the **Narrator** list of the **Audio** window (launcher and F1), which stays on **English** until a folder with voices is found. Any narrator works with any text language: every language has the same pages.
+
+**The French CD.** The French CD-ROM edition (1993) has its own narrator. If you own it, put its voices in `UserData\AITD1\Voices\French`, in one of these forms:
+
+- the `.VOC` files of its `INDARK` folder, copied from the CD;
+- an image of the CD: an `.iso`, or a `.bin` (with or without its `.cue`). The voices are read straight from the image; nothing is extracted.
+
+The voices are not included with this project: you need your own CD.
+
+**Changing the narrator**, step by step:
+
+1. Open `UserData\AITD1\Voices` (next to `Launcher.exe`; the launcher creates it the first time it opens).
+2. Put the narrator's folder there: `French` with the French CD's voices (above), or the folder of a dubbing (below), e.g. `UserData\AITD1\Voices\Spanish (fan dub)\000000.wav`...
+3. In the launcher: **Advanced options** → **Audio** → **Narrator**, and choose it. In the game it is the same: **F1** → **Audio** → **Narrator**; the next page you read uses it.
+4. To go back to the original narrator, choose **English** in the same list.
+
+The list only shows the folders where voices were found: if yours is missing, check that it has the file `000000` (see below) or a CD image with an `INDARK` folder.
+
+**Your own dubbing.** Anyone can record a narrator in another language (or a new English one), use it in the game as explained above and share it as a folder. The folder's name is the narrator's name in the list (`Spanish`, `German`, `Italian`, `French` and `English` are shown translated; any other name as it is, e.g. `Spanish (fan dub)`). Inside, the voice files follow the game's numbering:
+
+| | |
+| --- | --- |
+| **Name** | `BBSSNN` + extension: `BB` the book (`00`-`19`), `SS` its page (`00` = the first), `NN` a piece of that page (`00`, `01`...) |
+| **Formats** | `.wav`, `.ogg` or `.voc`; mono or stereo, any sample rate (they are joined and converted when played) |
+| **A page** | its pieces play in order until the first missing one, so **one file per page is enough**: `BBSS00` |
+| **Required** | `000000` (book 0, page 0): without it the folder is not listed |
+| **Missing pages** | a page without a file is read by the English narrator; a page never mixes narrators |
+
+To know which text a page is, read the books in the game with the English narrator: each page you see is one file (`tatou.log` names each one, e.g. `Voice of book 1 page 2`). The pages of a book are the same in every text language. One book is an exception: *Story of a Louisiana Plantation* (book `10`) has 12 pages in English and 11 in French.
+
+Please share only recordings you made yourself, never the voices of the game or of its CDs.
 
 ## Saves
 

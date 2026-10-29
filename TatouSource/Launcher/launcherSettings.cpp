@@ -7,6 +7,7 @@
 
 #include "launcherSettings.h"
 #include "userFolder.h"
+#include "narrators.h"
 
 #include <SDL3/SDL.h>
 #include <cstdarg>
@@ -225,6 +226,15 @@ bool hasJackData(const std::string& folder)
     return install.valid && pathExists(install.jackData / "PERE.PAK");
 }
 
+std::vector<std::string> findAitd1Narrators(const std::string& folder)
+{
+    const GameInstall install = findGameInstall(folder);
+    if (!install.valid)
+        return {};
+    const fs::path workFolder = (!install.gog && s_debugMode) ? install.aitd1Data : userDataFolder() / "AITD1";
+    return findNarrators(workFolder / kVoicesFolder);
+}
+
 void prepareUserData()
 {
     for (const char* game : { "AITD1", "JACK" })
@@ -234,6 +244,8 @@ void prepareUserData()
         for (const char* name : { kSavesFolder, kPicturesFolder, kMasksFolder, kExportsFolder })
             fs::create_directories(gameFolder / name, ec);
     }
+    std::error_code ec;
+    fs::create_directories(userDataFolder() / "AITD1" / kVoicesFolder, ec);
     logLine("UserData ready: %s", userDataFolder().u8string().c_str());
 }
 
@@ -287,6 +299,7 @@ void readGameConfig(const std::string& folder, LauncherSettings& settings)
     settings.restoreDefaults();
     settings.restoreDefaultControls();
     settings.musicVolume = settings.soundVolume = kDefaultAudioVolume;
+    settings.voices.clear();
 
     std::ifstream file(gameConfigPath(folder));
     if (!file)
@@ -329,6 +342,8 @@ void readGameConfig(const std::string& folder, LauncherSettings& settings)
             settings.musicVolume = std::clamp(atoi(value.c_str()), 0, 100);
         else if (key == "audio.soundVolume")
             settings.soundVolume = std::clamp(atoi(value.c_str()), 0, 100);
+        else if (key == "audio.voices")
+            settings.voices = value;
         else if (key.compare(0, 9, "controls.") == 0)
         {
             for (int a = 0; a < kGameActionCount; a++)
@@ -377,6 +392,7 @@ bool writeGameConfig(const std::string& folder, const LauncherSettings& settings
     };
     wanted.push_back({ "audio.musicVolume", "audio.musicVolume = " + std::to_string(settings.musicVolume), false });
     wanted.push_back({ "audio.soundVolume", "audio.soundVolume = " + std::to_string(settings.soundVolume), false });
+    wanted.push_back({ "audio.voices", "audio.voices = \"" + settings.voices + "\"", false });
     if (settings.controls.size() == (size_t)kGameActionCount)
     {
         for (int a = 0; a < kGameActionCount; a++)

@@ -68,6 +68,7 @@ static std::vector<std::vector<InputBinding>> s_controlBindings;
 // Audio window (Shared/audioWindow.h): the volumes apply at once (the mixer
 // reads g_settings.audio every frame) and are saved when F1 closes
 static AudioWindowState s_audio;
+static std::vector<std::string> s_narrators;   // looked for when the audio window opens
 
 static void openControlsWindow()
 {
@@ -396,6 +397,7 @@ void advancedOptionsDraw()
         {
             s_audio.open = true;
             s_audio.justOpened = true;
+            s_narrators = osystem_findNarrators();
         }
         ImGui::SameLine();
         if (ImGui::Button(text(AdvancedText::Close), ImVec2(third, buttonH))
@@ -422,8 +424,10 @@ void advancedOptionsDraw()
             printf(CFG_TAG "Controls: %s = %s\n", gameActionId((GameAction)a), bindingsToText(s_controlBindings[a]).c_str());
         }
     }
-    drawAudioWindow(s_audio, g_settings.audio.musicVolume, g_settings.audio.soundVolume,
-        textLanguage(), false, controlsStyle);
+    std::string voices = g_settings.audio.voices;
+    if (drawAudioWindow(s_audio, g_settings.audio.musicVolume, g_settings.audio.soundVolume, voices, s_narrators,
+        textLanguage(), false, controlsStyle))
+        snprintf(g_settings.audio.voices, sizeof(g_settings.audio.voices), "%s", voices.c_str());
 
     io.FontGlobalScale = gameFontScale;
     ImGui::PopFont();

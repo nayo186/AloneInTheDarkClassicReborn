@@ -45,6 +45,7 @@ struct Settings
     struct {
         int musicVolume;   // background music (CD tracks, AdLib)
         int soundVolume;   // voices and sound effects
+        char voices[64];   // narrator: a folder of Voices (Shared/narrators.h), empty = the game's (English)
     } audio;
 
     // The game's language: the PAK chosen in the launcher, e.g. "ESPAGNOL"

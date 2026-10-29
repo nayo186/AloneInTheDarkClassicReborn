@@ -165,11 +165,11 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `osystem_isSamplePlaying` | True while a sound effect is playing |
 | `osystem_playVO` | Plays a narrator voice by its file name (loose file or GAME.GOG) |
 | `osystem_playVocByIndex` | Plays the narrator voice of a book or message by its number |
-| `osystem_playVocPageLines` | Plays the narrator voice of one page of a book |
+| `osystem_playVocPage` | Plays the narrator voice of one page of a book |
 | `osystem_stopVO` | Stops the narrator voice |
 | `osystem_preDecodeVocPage` | VOC pre-decode cache for seamless page turns during book reading |
-| `osystem_tryGetPreDecodedVocPage` | The voice of a book page already decoded in the background, or nullptr |
 | `osystem_clearVocCache` | Forgets the voices decoded in the background |
+| `osystem_findNarrators` | The narrators with voices: the folders of Voices in the working folder |
 | `osystem_createMask` | Makes the texture of a foreground mask from its 320x200 shape |
 | `osystem_drawMask` | Draws a foreground mask of the camera over the objects behind it |
 | `osystem_startFrame` | Opens a frame of the renderer (creates its resources the first time) |
@@ -772,6 +772,22 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 
 ## Shared: Compartido por el juego y el launcher
 
+### `Shared/cdImage.h`
+
+| Función | Para qué sirve |
+| --- | --- |
+| `path` | — |
+| `fileCount` | — |
+| `tracks` | — |
+| `sectorSize` | Bytes of one raw sector (2352) or 2048 for an .iso: where a track starts |
+
+### `Shared/narrators.h`
+
+| Función | Para qué sirve |
+| --- | --- |
+| `name` | — |
+| `imagePath` | The image the voices come from, or empty (loose files) |
+
 ### `Shared/ui/launcherScreen.h`
 
 | Función | Para qué sirve |
@@ -808,8 +824,9 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `isAitd1DataFolder` | The chosen folder can be a copy of the data (LISTBOD2.PAK in it, Jack in its JACK subfolder) or a GOG or Steam installation (GAME.GOG and GAME.INS, or GAME.INST on Steam; AITD1 in INDARK, Jack in JACK; the INDARK folder itself may be chosen too). A GOG installation is never written to: aitd_remaster.cfg goes to the user folder (Shared/userFolder.h), as the game's saves and log. |
 | `isGogInstallFolder` | True if the folder is a GOG or Steam installation |
 | `hasJackData` | True if Jack in the Dark is there too (PERE.PAK) |
+| `findAitd1Narrators` | The narrators with voices in AITD1's working folder (Voices: in UserData\AITD1, or in the copy itself in debug mode; Shared/narrators.h) |
 | `setLauncherDebugMode` | Debug mode (launcher.cfg "debugMode = 1", only by hand): with a copy of the data, the game writes inside the copy; otherwise everything goes to UserData next to the launcher (Shared/userFolder.h) |
-| `prepareUserData` | Creates UserData with each game's Saves, Backgrounds, Masks and Exports folders; called when the launcher opens |
+| `prepareUserData` | Creates UserData with each game's Saves, Backgrounds, Masks and Exports folders (and AITD1's Voices); called when the launcher opens |
 | `findGameLanguages` | Language PAKs present in the data folder, in a fixed order |
 | `readGameConfig` | Language and advanced options of the data folder's aitd_remaster.cfg |
 | `writeGameConfig` | Writes the launcher's options in the game's aitd_remaster.cfg, keeping every other line |
