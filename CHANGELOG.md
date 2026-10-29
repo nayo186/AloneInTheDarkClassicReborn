@@ -4,6 +4,10 @@ Alone in the Dark: Classic Reborn started on 2026-10-23 from [Alone in the Dark:
 
 This repository was published with a single starting commit, to keep it light: the early history carried large files that are no longer part of the project. Below are the changes of each release and, after them, the changes made in this fork before it was published, newest first, one line per change. The reasons behind larger removals are explained in `docs/DESCARTADO.md` and the fixes in `docs/baseline/BUGS.md`.
 
+## v1.0.0-beta.6 (2026-10-29)
+
+- Save pictures (SAVEn.png) are kept at 320x240 instead of the screen's size: about 100 KB each instead of 2-3 MB, and a little sharper in the save list (BUGS.md C39). Old pictures are replaced when that slot is saved again
+
 ## v1.0.0-beta.5 (2026-10-29)
 
 - Linux version: ClassicReborn-<version>-linux-x64.tar.gz, for Ubuntu 22.04, Linux Mint 21, Debian 12 and newer (64-bit), with the GOG or Steam installation (Heroic, Lutris, Proton) or a copy of the game files; nothing else to install (README, On Linux)

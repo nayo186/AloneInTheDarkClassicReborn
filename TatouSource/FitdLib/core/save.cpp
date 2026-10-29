@@ -49,7 +49,48 @@ static void writePNGChunk(FILE* f, const char* type, const unsigned char* data, 
     fwrite(crcBuf, 1, 4, f);
 }
 
-static bool writePNG(const char* filename, const unsigned char* rgba, int width, int height)
+// The save list shows the picture in a 104x84 box of the 320x200 screen
+// (parseAllSaves, core/game.cpp): it is kept 320 wide, more than enough, not
+// at the screen's size (1440x1080 made 2-3 MB files). Each pixel is the
+// average of its area of the screen (RGB, the alpha is not used).
+static const int kPreviewWidth = 320;
+
+static std::vector<unsigned char> shrinkPreview(const unsigned char* rgba, int width, int height, int& outW, int& outH)
+{
+    outW = width < kPreviewWidth ? width : kPreviewWidth;
+    outH = (int)((long long)height * outW / width);
+    if (outH < 1)
+        outH = 1;
+    std::vector<unsigned char> rgb((size_t)outW * outH * 3);
+    for (int y = 0; y < outH; y++)
+    {
+        const int y0 = (int)((long long)y * height / outH);
+        const int y1 = (int)((long long)(y + 1) * height / outH);
+        for (int x = 0; x < outW; x++)
+        {
+            const int x0 = (int)((long long)x * width / outW);
+            const int x1 = (int)((long long)(x + 1) * width / outW);
+            unsigned int sum[3] = { 0, 0, 0 };
+            for (int sy = y0; sy < y1; sy++)
+            {
+                const unsigned char* p = rgba + ((size_t)sy * width + x0) * 4;
+                for (int sx = x0; sx < x1; sx++, p += 4)
+                {
+                    sum[0] += p[0];
+                    sum[1] += p[1];
+                    sum[2] += p[2];
+                }
+            }
+            const unsigned int count = (unsigned int)((y1 - y0) * (x1 - x0));
+            unsigned char* out = &rgb[((size_t)y * outW + x) * 3];
+            for (int c = 0; c < 3; c++)
+                out[c] = (unsigned char)(count ? sum[c] / count : 0);
+        }
+    }
+    return rgb;
+}
+
+static bool writePNG(const char* filename, const unsigned char* rgb, int width, int height)
 {
     FILE* f = nullptr;
     fopen_s(&f, filename, "wb");
@@ -63,10 +104,10 @@ static bool writePNG(const char* filename, const unsigned char* rgba, int width,
     ihdr[2] = (width >> 8) & 0xFF;   ihdr[3] = width & 0xFF;
     ihdr[4] = (height >> 24) & 0xFF; ihdr[5] = (height >> 16) & 0xFF;
     ihdr[6] = (height >> 8) & 0xFF;  ihdr[7] = height & 0xFF;
-    ihdr[8] = 8; ihdr[9] = 6; ihdr[10] = 0; ihdr[11] = 0; ihdr[12] = 0;
+    ihdr[8] = 8; ihdr[9] = 2; ihdr[10] = 0; ihdr[11] = 0; ihdr[12] = 0;   // 8-bit RGB
     writePNGChunk(f, "IHDR", ihdr, 13);
 
-    size_t rawSize = (size_t)height * ((size_t)width * 4 + 1);
+    size_t rawSize = (size_t)height * ((size_t)width * 3 + 1);
     unsigned char* raw = (unsigned char*)malloc(rawSize);
     if (!raw) { fclose(f); return false; }
 
@@ -74,15 +115,15 @@ static bool writePNG(const char* filename, const unsigned char* rgba, int width,
     for (int y = 0; y < height; y++)
     {
         raw[rawPos++] = 0;
-        memcpy(raw + rawPos, rgba + (size_t)y * width * 4, (size_t)width * 4);
-        rawPos += (size_t)width * 4;
+        memcpy(raw + rawPos, rgb + (size_t)y * width * 3, (size_t)width * 3);
+        rawPos += (size_t)width * 3;
     }
 
     uLongf compSize = (uLongf)(rawSize + rawSize / 100 + 64);
     unsigned char* comp = (unsigned char*)malloc(compSize);
     if (!comp) { free(raw); fclose(f); return false; }
 
-    int zret = compress2(comp, &compSize, raw, (uLong)rawSize, Z_DEFAULT_COMPRESSION);
+    int zret = compress2(comp, &compSize, raw, (uLong)rawSize, Z_BEST_COMPRESSION);
     free(raw);
     if (zret != Z_OK) { free(comp); fclose(f); return false; }
 
@@ -1194,7 +1235,9 @@ int makeSaveFile(int entry)
     int previewH = osystem_getScenePreviewHeight();
     if (previewData && previewW > 0 && previewH > 0)
     {
-        writePNG(pngPath.string().c_str(), previewData, previewW, previewH);
+        int width, height;
+        const std::vector<unsigned char> preview = shrinkPreview(previewData, previewW, previewH, width, height);
+        writePNG(pngPath.string().c_str(), preview.data(), width, height);
     }
     else
     {
