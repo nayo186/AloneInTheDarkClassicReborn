@@ -8,7 +8,7 @@
 # - Release configuration: optimised, no debug data.
 # - The zip holds only Launcher.exe, Tatou.exe, README.md and LICENSE: no
 #   launcher.cfg (debug mode stays off), no logs, no UserData, no .pdb.
-# The result goes to release\ClassicReborn-<version>-windows.zip.
+# The result goes to release\ClassicReborn-<version>-windows-x64.zip.
 
 param(
     [Parameter(Mandatory = $true)][string]$Version
@@ -20,7 +20,7 @@ $source = Join-Path $repo 'TatouSource'
 $build = Join-Path $source 'build\release'
 $output = Join-Path $build 'Fitd\Release'
 $releaseFolder = Join-Path $repo 'release'
-$name = "ClassicReborn-$Version-windows"
+$name = "ClassicReborn-$Version-windows-x64"
 
 Write-Host "== Configuring ($build)"
 cmake -G "Visual Studio 17 2022" -A x64 -S $source -B $build -DCLASSIC_REBORN_DEV_TOOLS=OFF | Out-Null

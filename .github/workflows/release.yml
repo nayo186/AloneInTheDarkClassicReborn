@@ -4,7 +4,7 @@
 # only Launcher.exe, Tatou.exe, README.md and LICENSE in the zip).
 #
 # To publish a version: create a release on GitHub with a tag like
-# v1.0.0-beta.1; the zip ClassicReborn-1.0.0-beta.1-windows.zip appears in it
+# v1.0.0-beta.1; the zip ClassicReborn-1.0.0-beta.1-windows-x64.zip appears in it
 # when the build ends. It can also be run by hand for an existing tag.
 
 name: Release zip
@@ -43,4 +43,4 @@ jobs:
         shell: pwsh
         run: |
           $version = $env:TAG.TrimStart('v')
-          gh release upload $env:TAG "release/ClassicReborn-$version-windows.zip" --clobber
+          gh release upload $env:TAG "release/ClassicReborn-$version-windows-x64.zip" --clobber
