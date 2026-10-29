@@ -385,10 +385,12 @@ static void drawAdvancedOptions(LauncherState& state, const Fonts& fonts, const 
     controlsStyle.fontScale = 1.0f;
     controlsStyle.titleColor = color(kGoldLight);
     controlsStyle.titleFont = fonts.header;
-    if (drawControlsWindow(s_controlsWindow, state.settings.controls, (int)uiLanguage(), s_gamepad, true, controlsStyle))
+    if (drawControlsWindow(s_controlsWindow, state.settings.controls, state.settings.modernStick, (int)uiLanguage(), s_gamepad,
+        true, controlsStyle))
     {
         for (int a = 0; a < kGameActionCount; a++)
             logLine("Controls: %s = %s", gameActionId((GameAction)a), bindingsToText(state.settings.controls[a]).c_str());
+        logLine("Controls: modern left stick %s", state.settings.modernStick ? "on" : "off");
     }
     if (drawAudioWindow(s_audioWindow, state.settings.musicVolume, state.settings.soundVolume, state.settings.voices,
         s_narrators, (int)uiLanguage(), true, controlsStyle))

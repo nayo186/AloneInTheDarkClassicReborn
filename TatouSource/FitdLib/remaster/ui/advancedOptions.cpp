@@ -70,6 +70,12 @@ static std::vector<std::vector<InputBinding>> s_controlBindings;
 static AudioWindowState s_audio;
 static std::vector<std::string> s_narrators;   // looked for when the audio window opens
 
+// Cheats window: shown instead of the options, like Controls and Audio;
+// changes apply at once (core/cheats.cpp reads g_settings.cheats) and are
+// saved when F1 closes
+static bool s_cheatsOpen = false;
+static bool s_cheatsJustOpened = false;
+
 static void openControlsWindow()
 {
     s_controlBindings.assign(kGameActionCount, {});
@@ -192,6 +198,51 @@ static void antialiasingCombo(float width, int& value)
     menu::helpWhenFocused(text(AdvancedText::AntialiasingHelp));
 }
 
+// The cheats window: "Enable cheats" and, under it, each cheat (greyed out
+// while cheats are off)
+static void drawCheatsWindow(float scale)
+{
+    if (!s_cheatsOpen)
+        return;
+    ImGuiIO& io = ImGui::GetIO();
+    const float width = (std::min)(460.0f * scale, io.DisplaySize.x * 0.94f);
+    ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+    ImGui::SetNextWindowSize(ImVec2(width, 0.0f), ImGuiCond_Always);
+    if (s_cheatsJustOpened)
+        ImGui::SetNextWindowFocus();
+    s_cheatsJustOpened = false;
+    if (ImGui::Begin("##cheatsWindow", nullptr, menu::kPanelFlags))
+    {
+        ImGui::PushFont(menuFonts().header);
+        ImGui::TextColored(kGoldLight, "%s", text(AdvancedText::Cheats));
+        ImGui::PopFont();
+        ImGui::Separator();
+        ImGui::Spacing();
+
+        if (ImGui::Checkbox(text(AdvancedText::CheatsEnabled), &g_settings.cheats.enabled))
+            printf(CFG_TAG "Cheats (F1): %s\n", g_settings.cheats.enabled ? "enabled" : "disabled");
+        menu::helpWhenFocused(text(AdvancedText::CheatsEnabledHelp));
+        helpMarker(text(AdvancedText::CheatsEnabledHelp));
+        ImGui::Spacing();
+
+        ImGui::BeginDisabled(!g_settings.cheats.enabled);
+        ImGui::Indent();
+        if (ImGui::Checkbox(text(AdvancedText::InfiniteLife), &g_settings.cheats.infiniteLife))
+            printf(CFG_TAG "Cheats (F1): infiniteLife=%s\n", g_settings.cheats.infiniteLife ? "true" : "false");
+        menu::helpWhenFocused(text(AdvancedText::InfiniteLifeHelp));
+        helpMarker(text(AdvancedText::InfiniteLifeHelp));
+        ImGui::Unindent();
+        ImGui::EndDisabled();
+
+        ImGui::Spacing();
+        ImGui::Separator();
+        if (ImGui::Button(text(AdvancedText::Close), ImVec2(-1.0f, 0.0f))
+            || (!ImGui::IsAnyItemActive() && ImGui::IsKeyPressed(ImGuiKey_Escape, false)))
+            s_cheatsOpen = false;
+    }
+    ImGui::End();
+}
+
 void advancedOptionsDraw()
 {
     // Save once when the window closes (F1, Esc or the button)
@@ -212,6 +263,8 @@ void advancedOptionsDraw()
             s_controls.open = false;
         else if (s_audio.open)
             s_audio.open = false;
+        else if (s_cheatsOpen)
+            s_cheatsOpen = false;
         else
             advancedOptionsClose();
     }
@@ -226,8 +279,9 @@ void advancedOptionsDraw()
             s_controls.open = false;
             s_controls.capturing = -1;
             s_controls.waitRelease = false;
-            drawControlsWindow(s_controls, s_controlBindings, textLanguage(), nullptr, false);
+            drawControlsWindow(s_controls, s_controlBindings, controlsAnalog().modernStick, textLanguage(), nullptr, false);
             s_audio.open = false;
+            s_cheatsOpen = false;
             saveSettings();
         }
         return;
@@ -260,7 +314,7 @@ void advancedOptionsDraw()
     io.FontGlobalScale = fontScale;
     ImGui::PushFont(menuFonts().text);
 
-    const bool controlsOpen = s_controls.open || s_audio.open;   // shown instead of the options
+    const bool controlsOpen = s_controls.open || s_audio.open || s_cheatsOpen;   // shown instead of the options
     if (!controlsOpen && ImGui::Begin("##advancedOptions", nullptr, menu::kPanelFlags))
     {
         ImGui::PushFont(menuFonts().header);
@@ -387,20 +441,26 @@ void advancedOptionsDraw()
 
         ImGui::Spacing();
         ImGui::Spacing();
-        // Controls, Audio and Close side by side (finger-sized after a touch)
-        const float third = (ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x * 2.0f) / 3.0f;
+        // Controls and Audio, then Cheats and Close, side by side
+        // (finger-sized after a touch)
+        const float half = (ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x) / 2.0f;
         const float buttonH = metrics.pressHeight(34.0f);
-        if (ImGui::Button(text(AdvancedText::Controls), ImVec2(third, buttonH)))
+        if (ImGui::Button(text(AdvancedText::Controls), ImVec2(half, buttonH)))
             openControlsWindow();
         ImGui::SameLine();
-        if (ImGui::Button(text(AdvancedText::Audio), ImVec2(third, buttonH)))
+        if (ImGui::Button(text(AdvancedText::Audio), ImVec2(half, buttonH)))
         {
             s_audio.open = true;
             s_audio.justOpened = true;
             s_narrators = osystem_findNarrators();
         }
+        if (ImGui::Button(text(AdvancedText::Cheats), ImVec2(half, buttonH)))
+        {
+            s_cheatsOpen = true;
+            s_cheatsJustOpened = true;
+        }
         ImGui::SameLine();
-        if (ImGui::Button(text(AdvancedText::Close), ImVec2(third, buttonH))
+        if (ImGui::Button(text(AdvancedText::Close), ImVec2(half, buttonH))
             || ImGui::IsKeyPressed(ImGuiKey_Escape, false))
         {
             advancedOptionsClose();
@@ -416,7 +476,7 @@ void advancedOptionsDraw()
     controlsStyle.titleColor = kGoldLight;
     controlsStyle.titleFont = menuFonts().header;
     SDL_Gamepad* gamepad = g_controllerState.connected ? g_controllerState.gamepad : nullptr;
-    if (drawControlsWindow(s_controls, s_controlBindings, textLanguage(), gamepad, false, controlsStyle))
+    if (drawControlsWindow(s_controls, s_controlBindings, controlsAnalog().modernStick, textLanguage(), gamepad, false, controlsStyle))
     {
         for (int a = 0; a < kGameActionCount; a++)
         {
@@ -428,6 +488,8 @@ void advancedOptionsDraw()
     if (drawAudioWindow(s_audio, g_settings.audio.musicVolume, g_settings.audio.soundVolume, voices, s_narrators,
         textLanguage(), false, controlsStyle))
         snprintf(g_settings.audio.voices, sizeof(g_settings.audio.voices), "%s", voices.c_str());
+
+    drawCheatsWindow(scale);
 
     io.FontGlobalScale = gameFontScale;
     ImGui::PopFont();

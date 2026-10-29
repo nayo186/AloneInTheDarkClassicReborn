@@ -49,6 +49,18 @@ ControlsAnalog& controlsAnalog()
     return analog;
 }
 
+static ControlsLeftStick s_leftStick;
+
+const ControlsLeftStick& controlsLeftStick()
+{
+    return s_leftStick;
+}
+
+static bool isLeftStickAxis(int axis)
+{
+    return axis == SDL_GAMEPAD_AXIS_LEFTX || axis == SDL_GAMEPAD_AXIS_LEFTY;
+}
+
 static bool isStickAxis(int axis)
 {
     return axis == SDL_GAMEPAD_AXIS_LEFTX || axis == SDL_GAMEPAD_AXIS_LEFTY ||
@@ -78,7 +90,8 @@ static bool isDirection(GameAction action)
            action == GameAction::Left || action == GameAction::Right;
 }
 
-static bool bindingHeld(const InputBinding& binding, GameAction action, const bool* keyboard, int keyCount, SDL_Gamepad* gamepad)
+static bool bindingHeld(const InputBinding& binding, GameAction action, const bool* keyboard, int keyCount, SDL_Gamepad* gamepad,
+                        bool skipLeftStick = false)
 {
     switch (binding.kind)
     {
@@ -92,7 +105,7 @@ static bool bindingHeld(const InputBinding& binding, GameAction action, const bo
             return false;
         if (isStickAxis(binding.code))
         {
-            if (isDirection(action) && !controlsAnalog().stickMovement)
+            if (skipLeftStick && isLeftStickAxis(binding.code))
                 return false;
             const float value = stickValue(gamepad, (SDL_GamepadAxis)binding.code);
             return binding.positive ? (value > kStickPressed) : (value < -kStickPressed);
@@ -118,9 +131,37 @@ bool controlsActionHeld(GameAction action, const bool* keyboard, int keyCount, S
     return actionHeld(action, keyboard, keyCount, gamepad);
 }
 
+// The JoyD direction bits of every input but the left stick
+static int directionsWithoutLeftStick(const bool* keyboard, int keyCount, SDL_Gamepad* gamepad)
+{
+    static const GameAction kDirections[4] = { GameAction::Up, GameAction::Down, GameAction::Left, GameAction::Right };
+    int bits = 0;
+    for (int d = 0; d < 4; d++)
+        for (const InputBinding& binding : controlsBindings(kDirections[d]))
+            if (bindingHeld(binding, kDirections[d], keyboard, keyCount, gamepad, true))
+                bits |= 1 << d;
+    return bits;
+}
+
+static void readLeftStick(const bool* keyboard, int keyCount, SDL_Gamepad* gamepad)
+{
+    s_leftStick = ControlsLeftStick();
+    if (!gamepad || !controlsAnalog().modernStick)
+        return;
+    const float x = stickValue(gamepad, SDL_GAMEPAD_AXIS_LEFTX);
+    const float y = stickValue(gamepad, SDL_GAMEPAD_AXIS_LEFTY);
+    if (std::sqrt(x * x + y * y) <= kStickPressed)
+        return;
+    s_leftStick.active = true;
+    s_leftStick.x = x;
+    s_leftStick.y = y;
+    s_leftStick.otherDirections = directionsWithoutLeftStick(keyboard, keyCount, gamepad);
+}
+
 void controlsUpdate(const bool* keyboard, int keyCount, SDL_Gamepad* gamepad)
 {
     auto held = [&](GameAction action) { return actionHeld(action, keyboard, keyCount, gamepad); };
+    readLeftStick(keyboard, keyCount, gamepad);
 
     // JoyD bits: 1 up, 2 down, 4 left, 8 right, 0x40 run (core/track.cpp)
     if (held(GameAction::Up))             JoyD |= 0x01;

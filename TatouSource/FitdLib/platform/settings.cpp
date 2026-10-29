@@ -45,6 +45,9 @@ static void setDefaults()
     c.audio.soundVolume = 100;
     c.audio.voices[0] = '\0';
 
+    c.cheats.enabled = false;
+    c.cheats.infiniteLife = false;
+
     c.gameData.language[0] = '\0';
 
     c.debug.enableGraphicsValidation = false;
@@ -54,6 +57,7 @@ static void setDefaults()
     c.debug.enableNativeLifeScripts = false;
 
     controlsResetDefaults();
+    controlsAnalog().modernStick = true;
 }
 
 static bool isTrue(const char* value)
@@ -140,6 +144,9 @@ void loadSettings()
         else if (strcmp(key, "audio.musicVolume") == 0) c.audio.musicVolume = atoi(value);
         else if (strcmp(key, "audio.soundVolume") == 0) c.audio.soundVolume = atoi(value);
         else if (strcmp(key, "audio.voices") == 0) copyText(c.audio.voices, sizeof(c.audio.voices), value);
+        else if (strcmp(key, "controller.modernStick") == 0) controlsAnalog().modernStick = isTrue(value);
+        else if (strcmp(key, "cheats.enabled") == 0) c.cheats.enabled = isTrue(value);
+        else if (strcmp(key, "cheats.infiniteLife") == 0) c.cheats.infiniteLife = isTrue(value);
         else if (strcmp(key, "gamedata.language") == 0) copyText(c.gameData.language, sizeof(c.gameData.language), value);
         else if (strcmp(key, "debug.graphicsValidation") == 0) c.debug.enableGraphicsValidation = isTrue(value);
         else if (strcmp(key, "debug.logLifeScripts") == 0) c.debug.logLifeScripts = isTrue(value);
@@ -200,7 +207,12 @@ void saveSettings()
     fprintf(file, "audio.voices = \"%s\"\n", c.audio.voices);
     fprintf(file, "gamedata.language = \"%s\"\n\n", c.gameData.language);
 
-    fprintf(file, "# Controls\n");
+    fprintf(file, "# Cheats (F1): enabled turns them on\n");
+    fprintf(file, "cheats.enabled = %s\n", flag(c.cheats.enabled));
+    fprintf(file, "cheats.infiniteLife = %s\n\n", flag(c.cheats.infiniteLife));
+
+    fprintf(file, "# Controls (modernStick: the left stick walks where it points, seen from the camera)\n");
+    fprintf(file, "controller.modernStick = %s\n", flag(controlsAnalog().modernStick));
     for (int a = 0; a < kGameActionCount; a++)
         fprintf(file, "controls.%s = %s\n", gameActionId((GameAction)a), bindingsToText(controlsBindings((GameAction)a)).c_str());
 

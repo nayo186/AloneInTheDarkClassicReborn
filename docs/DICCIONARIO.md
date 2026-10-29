@@ -86,7 +86,8 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `controlsBindings` | The inputs of an action (starts with the defaults) |
 | `controlsSetBindings` | Replaces the inputs of an action |
 | `controlsResetDefaults` | Puts every action back to its default inputs |
-| `controlsAnalog` | The sticks' settings (dead zone, sensitivity, inverted Y, stick movement) |
+| `controlsAnalog` | The sticks' settings (dead zone, sensitivity, inverted Y, modern left stick) |
+| `controlsLeftStick` | The left stick as read at the last controlsUpdate |
 | `controlsUpdate` | Each frame (input.cpp): sets JoyD, key and Click from the keyboard state and the controller (null when none is connected) |
 | `controlsActionHeld` | Whether any input of the action is held now (GameAction::Options: input.cpp) |
 
@@ -339,6 +340,12 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | --- | --- |
 | `GereFrappe` | Carries out the action of the current object's animation at its frame: hit, shot or throw |
 
+### `core/cheats.h`
+
+| Función | Para qué sirve |
+| --- | --- |
+| `applyCheats` | After each object's script (mainLoop.cpp): puts back the life a hit took |
+
 ### `core/common.h`
 
 | Función | Para qué sirve |
@@ -510,6 +517,13 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `waitForOptionsWindow` | The game waits while the F1 window is open (called by process_events) |
 | `rememberDarkRoom` | Rooms found dark (LM_LIGHT): entering one again is dark from its first frame, before its scripts run again (BUGS.md V23) |
 | `roomAssumedDark` | True if the current room is dark (no lamp light) |
+
+### `core/modernStick.h`
+
+| Función | Para qué sirve |
+| --- | --- |
+| `updateModernStick` | Each frame, after localJoyD is read (mainLoop.cpp): while the left stick steers the player, turns its tank directions into "forward" or a turn on the spot towards the stick, for the scripts' animations |
+| `modernStickTurn` | In processTrack for the player under manual control: turns it towards the stick and returns true, or returns false when the stick is not steering (then the tank controls turn it) |
 
 ### `core/music.h`
 

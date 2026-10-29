@@ -61,6 +61,7 @@ struct LauncherSettings
     // Game controls ("controls.<action>" lines; not part of the default
     // settings button: they are reset in their own window)
     std::vector<std::vector<InputBinding>> controls;
+    bool modernStick = true;   // controller.modernStick: the left stick walks where it points
     void restoreDefaultControls()
     {
         controls.assign(kGameActionCount, {});

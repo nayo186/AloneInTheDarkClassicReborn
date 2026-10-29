@@ -62,6 +62,8 @@ Classic Reborn is a **source port**: a hand-written reimplementation of the orig
 - **Optional effects**: edge smoothing (FXAA) on the 3D models, bloom from the painted backgrounds, film grain, ambient occlusion (SSAO), smoother animations, sharper text.
 - **Custom backgrounds**: export every background and mask of the game, enlarge or repaint them, and the game uses yours. A ready-made **HD pack** for both games is available (see [Custom backgrounds](#custom-backgrounds)).
 - **Controls**: keyboard and game controller (Xbox, PlayStation, Nintendo Switch Pro and most other USB or Bluetooth controllers), every action can be changed, several inputs per action.
+- **Modern left stick**: the character walks where you push the stick, seen from the camera, like the Resident Evil HD remasters; the D-pad and the keys stay tank controls (see [Controls](#controls)).
+- **Cheats** (F1): infinite life, behind an "Enable cheats" switch.
 - **Separate volumes** for music and for voices and effects.
 - **Narrators**: the French CD's narrator (from your own CD) or a fans' dubbing, with any text language (see [Narrators](#narrators)).
 - **Saves** in the format of the GOG edition: saves made in the GOG game load here.
@@ -82,7 +84,7 @@ Every action can be changed in **Controls** (F1 window or launcher). Defaults:
 
 | Action | Keyboard | Controller |
 | --- | --- | --- |
-| Move | Arrows or W A S D | D-pad or left stick |
+| Move | Arrows or W A S D | D-pad (tank) or left stick (modern) |
 | Run | Left Shift | L3 or right trigger |
 | Action (use, fight, take) | Space | A |
 | Confirm / inventory | Enter | Start |
@@ -100,6 +102,8 @@ Every action can be changed in **Controls** (F1 window or launcher). Defaults:
 | Back | Share / Create | − |
 | L3 (press the left stick) | L3 | Left stick press |
 | Right trigger | R2 | ZR |
+
+**Modern left stick.** With the left stick the character walks where you push it, seen from the camera: up walks away from the camera, down towards it. When the camera changes, the direction is kept until you release the stick or push it elsewhere, so you never walk back into the room you left. While **Action** is held (to fight), the stick gives the tank directions, as the attacks need them. The D-pad and the keys are always tank controls: up walks forward, left and right turn. To use the left stick as tank controls too, untick **Modern left stick** in **Controls**.
 
 The menus (launcher and F1) also work with the controller: left stick or D-pad to move, right stick to scroll, A to choose, B to go back. The mouse cursor hides while the controller is in use and comes back when the mouse moves.
 
@@ -119,7 +123,8 @@ The launcher's **Advanced options** and the in-game **F1** window share the same
 | Enhanced text | The game's letters redrawn sharp at screen resolution |
 | Custom backgrounds | Uses your pictures instead of the originals |
 | Audio | Music volume, voices and effects volume, narrator |
-| Controls | The inputs of every action |
+| Controls | The inputs of every action, modern left stick |
+| Cheats (F1 only) | **Enable cheats** turns them on or off; **Infinite life**: damage never kills you, the game's traps (deadly falls, scripted deaths) still do |
 
 ## Folders
 

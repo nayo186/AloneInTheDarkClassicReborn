@@ -60,6 +60,8 @@ enum class AdvancedText
     ControlsAdd,
     ControlsRemove,
     ControlsDefaults,
+    ModernStick,
+    ModernStickHelp,
     ActionUp,
     ActionDown,
     ActionLeft,
@@ -81,6 +83,11 @@ enum class AdvancedText
     VoicesSpanish,
     VoicesItalian,
     VoicesGerman,
+    Cheats,
+    CheatsEnabled,
+    CheatsEnabledHelp,
+    InfiniteLife,
+    InfiniteLifeHelp,
     Count
 };
 
@@ -282,6 +289,15 @@ inline const char* advancedText(AdvancedText text, int language)
         // ControlsDefaults
         { "RESTORE DEFAULT CONTROLS", "RESTAURAR CONTROLES POR DEFECTO", "RÉTABLIR LES COMMANDES PAR DÉFAUT",
           "RIPRISTINA COMANDI PREDEFINITI", "STANDARDSTEUERUNG WIEDERHERSTELLEN" },
+        // ModernStick
+        { "Modern left stick", "Stick izquierdo moderno", "Stick gauche moderne", "Levetta sinistra moderna",
+          "Moderner linker Stick" },
+        // ModernStickHelp
+        { "The character walks where you push the stick, seen from the camera. The d-pad and the keys stay tank controls.",
+          "El personaje camina hacia donde empujas el stick, según la cámara. La cruceta y el teclado siguen tipo tanque.",
+          "Le personnage marche là où vous poussez le stick, vu de la caméra. La croix et le clavier restent en mode tank.",
+          "Il personaggio cammina dove spingi la levetta, rispetto alla telecamera. Croce e tastiera restano a carro armato.",
+          "Die Figur läuft dorthin, wohin du den Stick drückst, von der Kamera aus gesehen. Steuerkreuz und Tastatur bleiben Panzersteuerung." },
         // ActionUp
         { "Forward", "Avanzar", "Avancer", "Avanti", "Vorwärts" },
         // ActionDown
@@ -336,6 +352,24 @@ inline const char* advancedText(AdvancedText text, int language)
         { "Italian", "Italiano", "Italien", "Italiano", "Italienisch" },
         // VoicesGerman
         { "German", "Alemán", "Allemand", "Tedesco", "Deutsch" },
+        // Cheats
+        { "CHEATS", "TRUCOS", "ASTUCES", "TRUCCHI", "CHEATS" },
+        // CheatsEnabled
+        { "Enable cheats", "Activar trucos", "Activer les astuces", "Attiva trucchi", "Cheats aktivieren" },
+        // CheatsEnabledHelp
+        { "Turns every cheat on or off.",
+          "Enciende o apaga todos los trucos.",
+          "Active ou désactive toutes les astuces.",
+          "Attiva o disattiva tutti i trucchi.",
+          "Schaltet alle Cheats ein oder aus." },
+        // InfiniteLife
+        { "Infinite life", "Vida infinita", "Vie infinie", "Vita infinita", "Unendliches Leben" },
+        // InfiniteLifeHelp
+        { "Damage never kills you; the game's traps still do.",
+          "El daño nunca te mata; las trampas del juego sí.",
+          "Les dégâts ne vous tuent jamais ; les pièges du jeu, si.",
+          "I danni non ti uccidono mai; le trappole del gioco sì.",
+          "Schaden tötet dich nie, die Fallen des Spiels schon." },
     };
     if (language < 0 || language >= kAdvancedTextLanguages)
         language = 0;

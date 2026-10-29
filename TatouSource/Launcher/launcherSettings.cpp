@@ -344,6 +344,8 @@ void readGameConfig(const std::string& folder, LauncherSettings& settings)
             settings.soundVolume = std::clamp(atoi(value.c_str()), 0, 100);
         else if (key == "audio.voices")
             settings.voices = value;
+        else if (key == "controller.modernStick")
+            settings.modernStick = isTrue(value);
         else if (key.compare(0, 9, "controls.") == 0)
         {
             for (int a = 0; a < kGameActionCount; a++)
@@ -393,6 +395,7 @@ bool writeGameConfig(const std::string& folder, const LauncherSettings& settings
     wanted.push_back({ "audio.musicVolume", "audio.musicVolume = " + std::to_string(settings.musicVolume), false });
     wanted.push_back({ "audio.soundVolume", "audio.soundVolume = " + std::to_string(settings.soundVolume), false });
     wanted.push_back({ "audio.voices", "audio.voices = \"" + settings.voices + "\"", false });
+    wanted.push_back({ "controller.modernStick", std::string("controller.modernStick = ") + boolText(settings.modernStick), false });
     if (settings.controls.size() == (size_t)kGameActionCount)
     {
         for (int a = 0; a < kGameActionCount; a++)

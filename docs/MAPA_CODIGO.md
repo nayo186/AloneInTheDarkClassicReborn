@@ -73,7 +73,7 @@ Cuando un archivo tiene `.cpp` y `.h`, va en una sola fila.
 | `imguiBGFX.cpp/.h` | Dear ImGui dibujado con bgfx (los menús). |
 | `menuMouse.h` | Ayudas de ratón para los menús del juego de 1992 (lista, botones, clic). |
 | `input.cpp/.h` | Teclado, ratón y mando con SDL: F11, Alt+Intro, cursor oculto con mando, bloqueo de entradas con un menú abierto. |
-| `controls.cpp/.h` | Asignaciones de controles en uso; cada imagen convierte teclado y mando en las entradas de 1992 (`JoyD`, `key`, `Click`). |
+| `controls.cpp/.h` | Asignaciones de controles en uso; cada imagen convierte teclado y mando en las entradas de 1992 (`JoyD`, `key`, `Click`) y lee el stick izquierdo para el movimiento moderno (`controlsLeftStick`, `controller.modernStick`). |
 | `settings.cpp/.h` | Las opciones (`g_settings`), guardadas en `aitd_remaster.cfg`: pantalla, efectos, animación, volumen, idioma, controles y ajustes de desarrollador. |
 | `platformHooks.cpp/.h` | Los ganchos del sistema (ver sección 1). |
 | `gameFolder.cpp/.h` | Carpetas: datos (copia o instalación de GOG/Steam), carpeta de trabajo (`UserData` o la copia en modo depuración), Jack en `JACK`. |
@@ -98,7 +98,9 @@ Cuando un archivo tiene `.cpp` y `.h`, va en una sola fila.
 | `startup.cpp` | Inicio: variables del juego (`DEFINES.ITD`), textos del idioma, paletas, cronómetro del objeto en la mano. |
 | `game.cpp` | Detección del juego, inicio de partida, pantalla de guardar y cargar (con fecha en números pequeños). |
 | `world.cpp` | Carga del mundo (objetos del mundo, variables) al empezar una partida. |
+| `cheats.cpp/.h` | Trucos de F1 (`g_settings.cheats`, ninguno actúa con los trucos apagados): vida infinita repone lo que quita un golpe (AITD1 `vars[21]`, Jack `vars[6]`); si un script pone la vida en 0 (trampa) la muerte sigue. |
 | `mainLoop.cpp/.h` | Bucle principal: cada imagen procesa objetos, scripts, cámaras, salas y dibuja. |
+| `modernStick.cpp/.h` | Stick izquierdo moderno: el personaje camina hacia donde apunta el stick según la cámara (proyecta el paso de cada ángulo con la cámara actual) y conserva la dirección al cambiar de cámara; la cruceta y el teclado siguen tipo tanque. |
 | `AITD1.cpp/.h`, `AITD1_Tatou.cpp` | Lo propio de AITD1: pantallas de introducción, elección de personaje, libros; el armadillo 3D del menú de inicio. |
 | `JACK.cpp/.h` | Lo propio de Jack in the Dark (inicio). |
 | `AITD2.cpp/.h`, `AITD3.cpp/.h` | Lo propio de AITD2 y AITD3 heredado de FITD (inicio, inventario, libros). Aún no se juegan: base para cuando se agreguen sus datos. |

@@ -4,6 +4,11 @@ Alone in the Dark: Classic Reborn started on 2026-10-23 from [Alone in the Dark:
 
 This repository was published with a single starting commit, to keep it light: the early history carried large files that are no longer part of the project. Below are the changes of each release and, after them, the changes made in this fork before it was published, newest first, one line per change. The reasons behind larger removals are explained in `docs/DESCARTADO.md` and the fixes in `docs/baseline/BUGS.md`.
 
+## v1.0.0-beta.4 (2026-10-29)
+
+- Modern left stick: the character walks where the stick points, seen from the camera, keeping the direction through camera cuts, like the Resident Evil HD remasters; the D-pad and the keys stay tank controls. Option in Controls (launcher and F1), on by default
+- Cheats window in F1: "Enable cheats" and infinite life (a hit never takes the player's life; traps still kill), for AITD1 and Jack in the Dark
+
 ## v1.0.0-beta.3 (2026-10-28)
 
 - Narrators: the French CD's narrator (from the player's own CD: voice files, .iso or .bin) or a fans' dubbing (.wav, .ogg, .voc), chosen in the Audio window, with any text language (README, Narrators)

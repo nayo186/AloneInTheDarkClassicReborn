@@ -15,6 +15,8 @@
 #include "coreHooks.h"
 #include "jobSystem.h"
 #include "menuMouse.h"
+#include "modernStick.h"
+#include "cheats.h"
 #include <set>
 
 #ifndef WIN32
@@ -203,6 +205,7 @@ void PlayWorld(int allowSystemMenu, int deltaTime)
 		localKey = key;
 		localJoyD = JoyD;
 		localClick = Click;
+		updateModernStick();
 
         if(localKey)
         {
@@ -371,7 +374,10 @@ void PlayWorld(int allowSystemMenu, int deltaTime)
                             {
                                 if(currentProcessedActorPtr->life != -1)
                                     if(currentProcessedActorPtr->lifeMode != -1)
+                                    {
                                         processLife(currentProcessedActorPtr->life, false);
+                                        applyCheats();   // a hit taken in this script is put back (infinite life)
+                                    }
                                 break;
                             }
                         }

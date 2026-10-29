@@ -48,6 +48,12 @@ struct Settings
         char voices[64];   // narrator: a folder of Voices (Shared/narrators.h), empty = the game's (English)
     } audio;
 
+    // Cheats (F1, core/cheats.cpp): none acts while enabled is off
+    struct {
+        bool enabled;
+        bool infiniteLife;   // a hit never takes the player's life
+    } cheats;
+
     // The game's language: the PAK chosen in the launcher, e.g. "ESPAGNOL"
     // (empty: the first available)
     struct {

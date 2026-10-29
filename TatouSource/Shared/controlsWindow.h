@@ -14,6 +14,7 @@
 
 #include "advancedOptionsText.h"
 #include "controlsBindings.h"
+#include "ui/menuBase.h"
 
 #include <imgui.h>
 #include <SDL3/SDL.h>
@@ -134,13 +135,14 @@ struct ControlsWindowStyle
 };
 
 // Draws the window while state.open (call every frame). bindings: one list
-// per action, edited in place. Returns true when they changed.
+// per action, edited in place; modernStick: the left stick walks where it
+// points (controller.modernStick). Returns true when either changed.
 // asPopup: a modal popup inside the caller's popup (the launcher's advanced
 // options); otherwise a window of its own (the game's F1 window, hidden
 // meanwhile so they never overlap). Never larger than the screen: the list
 // scrolls inside.
 inline bool drawControlsWindow(ControlsWindowState& state, std::vector<std::vector<InputBinding>>& bindings,
-                               int language, SDL_Gamepad* gamepad, bool asPopup,
+                               bool& modernStick, int language, SDL_Gamepad* gamepad, bool asPopup,
                                const ControlsWindowStyle& style = ControlsWindowStyle())
 {
     auto text = [language](AdvancedText t) { return advancedText(t, language); };
@@ -262,6 +264,12 @@ inline bool drawControlsWindow(ControlsWindowState& state, std::vector<std::vect
     ImGui::TextColored(style.titleColor, "%s", text(AdvancedText::Controls));
     if (style.titleFont)
         ImGui::PopFont();
+    ImGui::BeginDisabled(state.capturing >= 0 || state.waitRelease);
+    if (ImGui::Checkbox(text(AdvancedText::ModernStick), &modernStick))
+        changed = true;
+    menu::helpWhenFocused(text(AdvancedText::ModernStickHelp));
+    menu::helpMarker(text(AdvancedText::ModernStickHelp));
+    ImGui::EndDisabled();
     ImGui::TextWrapped("%s", text(AdvancedText::ControlsHelp));
     ImGui::Separator();
     if (state.capturing >= 0)
@@ -357,6 +365,7 @@ inline bool drawControlsWindow(ControlsWindowState& state, std::vector<std::vect
     {
         for (int a = 0; a < kGameActionCount; a++)
             bindings[a] = defaultBindings((GameAction)a);
+        modernStick = true;
         changed = true;
     }
     if (ImGui::Button(text(AdvancedText::Close), ImVec2(-1.0f, 0.0f))

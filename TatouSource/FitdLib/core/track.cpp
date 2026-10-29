@@ -9,6 +9,7 @@
 
 #include "common.h"
 #include "consoleLog.h"
+#include "modernStick.h"
 #include "math.h"
 
 #define	TL_INIT_COOR		0
@@ -199,10 +200,16 @@ void processTrack(void)
     {
     case 1: // manual
         {
-            GereManualRot(40); // reduced from 60 for snappier rotation during combat
+            // The modern left stick turns the player towards it (modernStick.cpp);
+            // its forward is not a double tap: turning on the spot and walking
+            // again would start running
+            const bool modernStick = modernStickTurn();
+            if (!modernStick)
+                GereManualRot(40); // reduced from 60 for snappier rotation during combat
             if(localJoyD&1) // forward
             {
-                if((localJoyD&0x40) || (timer - lastTimeForward < 10 && currentProcessedActorPtr->speed != 4)) // run button held OR double-tap forward
+                const bool doubleTap = !modernStick && timer - lastTimeForward < 10 && currentProcessedActorPtr->speed != 4;
+                if((localJoyD&0x40) || doubleTap) // run button held OR double-tap forward
                 {
                     currentProcessedActorPtr->speed = 5;
                 }
