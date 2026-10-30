@@ -6,7 +6,7 @@
 // on Windows. It opens a window that can be resized and maximised, makes the
 // fonts at the scale of the screen, gives the screen what to show and acts on
 // what the user does: choose the game, its language and the data folder, the
-// advanced options, then start Tatou.exe and close.
+// advanced options and updates, then start Tatou.exe and close.
 ///////////////////////////////////////////////////////////////////////////////
 
 #include "ui/launcherText.h"
@@ -20,6 +20,7 @@
 #include "launcherSettings.h"
 #include "folderDialog.h"
 #include "gameCover.h"
+#include "updater.h"
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
@@ -403,6 +404,82 @@ static void drawAdvancedOptions(LauncherState& state, const Fonts& fonts, const 
     ImGui::PopStyleVar();
 }
 
+// B closes the updates window (as its last button does)
+static bool s_closeUpdate = false;
+
+// Updates window: what the updater is doing, and Install / Not now when a
+// newer version was found; after installing, Accept closes the launcher
+static void drawUpdateWindow(LauncherState& state, const Fonts& fonts, const Metrics& metrics)
+{
+    ImGuiIO& io = ImGui::GetIO();
+    const float width = (std::min)(metrics.px(480.0f), io.DisplaySize.x * 0.94f);
+    ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+    ImGui::SetNextWindowSizeConstraints(ImVec2(width, 0.0f), ImVec2(width, io.DisplaySize.y * 0.94f));
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, metrics.px(24.0f, 20.0f));
+    if (!ImGui::BeginPopupModal("##updatePopup", nullptr, menu::kPanelFlags | ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        ImGui::PopStyleVar();
+        return;
+    }
+
+    ImGui::PushFont(fonts.header);
+    ImGui::TextColored(color(kGoldLight), "%s", tr(UiText::UpdateTitle));
+    ImGui::PopFont();
+    ImGui::Spacing();
+
+    const UpdateState update = updaterState();
+    const std::string latest = updaterLatestVersion();
+    char text[512] = "";
+    switch (update)
+    {
+    case UpdateState::Idle:
+    case UpdateState::Checking: snprintf(text, sizeof(text), "%s", tr(UiText::UpdateChecking)); break;
+    case UpdateState::UpToDate: snprintf(text, sizeof(text), tr(UiText::UpdateLatest), launcherVersion()); break;
+    case UpdateState::CheckFailed: snprintf(text, sizeof(text), "%s", tr(UiText::UpdateCheckFailed)); break;
+    case UpdateState::Available: snprintf(text, sizeof(text), tr(UiText::UpdateAvailable), latest.c_str(), launcherVersion()); break;
+    case UpdateState::Installing: snprintf(text, sizeof(text), tr(UiText::UpdateInstalling), latest.c_str()); break;
+    case UpdateState::Installed: snprintf(text, sizeof(text), tr(UiText::UpdateDone), latest.c_str()); break;
+    case UpdateState::InstallFailed: snprintf(text, sizeof(text), "%s", tr(UiText::UpdateFailed)); break;
+    }
+    ImGui::PushTextWrapPos(0.0f);
+    ImGui::TextColored(color(update == UpdateState::CheckFailed || update == UpdateState::InstallFailed ? kError : kText), "%s", text);
+    ImGui::PopTextWrapPos();
+    ImGui::Spacing();
+    ImGui::Spacing();
+
+    // Install and Not now side by side; otherwise one button (none while working)
+    const ImVec2 pos = ImGui::GetCursorScreenPos();
+    const float gap = metrics.px(10.0f);
+    const float full = ImGui::GetContentRegionAvail().x;
+    const float buttonH = metrics.pressHeight(40.0f);
+    const bool closing = s_closeUpdate;
+    s_closeUpdate = false;
+    if (update == UpdateState::Available)
+    {
+        const ImVec2 half((full - gap) * 0.5f, buttonH);
+        if (goldButton("##updateInstall", tr(UiText::UpdateInstall), pos, half, fonts.button, true))
+            updaterStartInstall();
+        if (darkButton("##updateLater", tr(UiText::UpdateLater), ImVec2(pos.x + half.x + gap, pos.y), half, fonts.button, true) || closing)
+            ImGui::CloseCurrentPopup();
+    }
+    else if (update == UpdateState::Installed)
+    {
+        if (goldButton("##updateAccept", tr(UiText::UpdateAccept), pos, ImVec2(full, buttonH), fonts.button, true) || closing)
+            state.quit = true;
+    }
+    else if (update != UpdateState::Checking && update != UpdateState::Installing)
+    {
+        if (darkButton("##updateClose", tr(UiText::UpdateClose), pos, ImVec2(full, buttonH), fonts.button, true) || closing)
+            ImGui::CloseCurrentPopup();
+    }
+    else
+        ImGui::Dummy(ImVec2(full, buttonH));
+    ImGui::Dummy(ImVec2(0.0f, metrics.px(4.0f)));
+
+    ImGui::EndPopup();
+    ImGui::PopStyleVar();
+}
+
 // What the screen shows, from the launcher's state
 static LauncherView makeView(const LauncherState& state, const LauncherCover& cover)
 {
@@ -413,6 +490,9 @@ static LauncherView makeView(const LauncherState& state, const LauncherCover& co
     view.isDefault = state.settings.isDefault();
     view.debugMode = state.settings.debugMode;
     view.dataFolder = state.settings.aitd1DataFolder;
+    view.canUpdate = updatesEnabled();
+    view.version = updatesEnabled() ? launcherVersion() : "";
+    view.updateAvailable = (updaterState() == UpdateState::Available);
     view.cover = &cover;
     for (int i = 0; i < (int)state.languages.size(); i++)
     {
@@ -481,6 +561,13 @@ static void handleIntent(LauncherState& state, const LauncherIntent& intent, SDL
     }
     if (intent.openAdvanced)
         ImGui::OpenPopup("##advancedPopup");
+    if (intent.update)
+    {
+        // Looks again unless a newer version is already known
+        if (updaterState() != UpdateState::Available)
+            updaterStartCheck();
+        ImGui::OpenPopup("##updatePopup");
+    }
     if (intent.browse)
     {
         // Explorer's dialog on Windows (a full path can be pasted), SDL's elsewhere
@@ -536,6 +623,11 @@ int main(int, char**)
     setLauncherDebugMode(state.settings.debugMode);
     // The portable folders exist from the first time the launcher opens
     prepareUserData();
+    // What the last update left, then a look for a newer version
+    logLine("Version %s", launcherVersion());
+    updaterCleanup();
+    updaterStartCheck();
+    bool offerUpdate = updatesEnabled();   // the window opens by itself once, if there is one
 
     // First run: use the launcher's own folder if it holds the game data
     if (state.settings.aitd1DataFolder.empty() && isAitd1DataFolder(launcherFolder()))
@@ -636,9 +728,11 @@ int main(int, char**)
         // them to the launcher screen (not while a new input is awaited)
         static BackButton back;
         const bool capturing = s_controlsWindow.capturing >= 0 || s_controlsWindow.waitRelease;
-        if (back.released(ImGui::IsPopupOpen("##advancedPopup") && !capturing))
+        if (back.released((ImGui::IsPopupOpen("##advancedPopup") && !capturing) || ImGui::IsPopupOpen("##updatePopup")))
         {
-            if (s_controlsWindow.open)
+            if (ImGui::IsPopupOpen("##updatePopup"))
+                s_closeUpdate = true;
+            else if (s_controlsWindow.open)
                 s_controlsWindow.requestClose = true;
             else if (s_audioWindow.open)
                 s_audioWindow.requestClose = true;
@@ -647,8 +741,16 @@ int main(int, char**)
         }
         const LauncherIntent intent = drawLauncherScreen(makeView(state, screenCovers[state.selectedGame]), metrics, fonts);
         handleIntent(state, intent, window);
+        // The check at start found a newer version: asked once
+        if (offerUpdate && updaterState() != UpdateState::Checking)
+        {
+            if (updaterState() == UpdateState::Available && !ImGui::IsPopupOpen("", ImGuiPopupFlags_AnyPopupId))
+                ImGui::OpenPopup("##updatePopup");
+            offerUpdate = false;
+        }
         ImGui::PushFont(fonts.text);
         drawAdvancedOptions(state, fonts, metrics);
+        drawUpdateWindow(state, fonts, metrics);
         ImGui::PopFont();
         ImGui::Render();
 
@@ -668,6 +770,7 @@ int main(int, char**)
     if (!state.launched && state.dataFolderValid)
         writeGameConfig(state.settings.aitd1DataFolder, state.settings);
 
+    updaterShutdown();
     logLine("Launcher closed");
     for (GameCover& cover : covers)
         freeGameCover(cover);

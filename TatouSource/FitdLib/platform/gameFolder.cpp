@@ -16,6 +16,12 @@
 #include <filesystem>
 #include <fstream>
 
+#ifdef _WIN32
+#define NOMINMAX
+#include <windows.h>
+#include <shellapi.h>
+#endif
+
 namespace fs = std::filesystem;
 
 extern "C" { extern char homePath[512]; }
@@ -63,8 +69,8 @@ static fs::path exeFolder()
     return base ? fs::u8path(base) : fs::path();
 }
 
-// "debugMode = true" in launcher.cfg (used when no --debug / --final)
-static bool launcherDebugMode()
+// A value of launcher.cfg, next to the exe (empty if it is not there)
+static std::string launcherSetting(const char* wanted)
 {
     std::ifstream file(exeFolder() / "launcher.cfg");
     std::string line;
@@ -78,10 +84,38 @@ static bool launcherDebugMode()
         key.erase(key.find_last_not_of(" \t") + 1);
         value.erase(0, value.find_first_not_of(" \t\""));
         value.erase(value.find_last_not_of(" \t\"\r") + 1);
-        if (key == "debugMode")
-            return value == "true" || value == "1";
+        if (key == wanted)
+            return value;
     }
-    return false;
+    return "";
+}
+
+// "debugMode = true" in launcher.cfg (used when no --debug / --final)
+static bool launcherDebugMode()
+{
+    const std::string value = launcherSetting("debugMode");
+    return value == "true" || value == "1";
+}
+
+// The folder after --data, as typed (on Windows read again from the wide
+// command line, so any letter in the path works)
+static fs::path dataArgument(int argc, char* argv[])
+{
+    for (int i = 1; i + 1 < argc; i++)
+    {
+        if (strcmp(argv[i], "--data") != 0)
+            continue;
+#ifdef _WIN32
+        int count = 0;
+        wchar_t** wide = CommandLineToArgvW(GetCommandLineW(), &count);
+        const fs::path folder = (wide && count == argc) ? fs::path(wide[i + 1]) : fs::path(argv[i + 1]);
+        LocalFree(wide);
+        return folder;
+#else
+        return fs::u8path(argv[i + 1]);
+#endif
+    }
+    return fs::path();
 }
 
 // The track list of the CD image: GAME.INS (GOG) or GAME.INST (Steam, same
@@ -126,10 +160,27 @@ void selectGameFolder(int argc, char* argv[])
     if (!debugGiven)
         s_debug = launcherDebugMode();
 
+    // The data folder: --data, or the folder Tatou was started in (the
+    // launcher starts it there), or else the one chosen in the launcher
+    // (launcher.cfg): other programs (a frontend) can start Tatou directly
     std::error_code error;
-    fs::path start = fs::current_path(error);
+    fs::path start = dataArgument(argc, argv);
+    if (start.empty())
+    {
+        start = fs::current_path(error);
+        if (error)
+            return;
+        const bool known = pathExists(start / "LISTBOD2.PAK") || isGogRoot(start) || isGogRoot(start.parent_path());
+        const std::string chosen = launcherSetting("aitd1.dataFolder");
+        if (!known && !chosen.empty())
+            start = fs::u8path(chosen);
+    }
+    fs::current_path(start, error);
     if (error)
+    {
+        s_message = std::string(MAIN_WARN "Data folder not found: ") + start.string() + CON_RESET "\n";
         return;
+    }
 
     // Started inside the GOG INDARK folder: its installation is the parent
     if (!isGogRoot(start) && isGogRoot(start.parent_path()))

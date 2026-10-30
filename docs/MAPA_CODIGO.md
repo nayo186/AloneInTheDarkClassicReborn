@@ -196,6 +196,7 @@ Cuando un archivo tiene `.cpp` y `.h`, va en una sola fila.
 | `Launcher/launcherSettings.cpp/.h` | `launcher.cfg`, las líneas que el launcher escribe en `aitd_remaster.cfg` y el arranque de `Tatou.exe`. |
 | `Launcher/gameCover.cpp/.h` | Portadas de los juegos (compiladas dentro del exe; en grises sin datos enlazados). |
 | `Launcher/folderDialog.cpp/.h` | Selector de carpeta del Explorador de Windows. |
+| `Launcher/updater.cpp/.h` | Actualizaciones: busca la última versión en GitHub y la instala (lo único que se conecta a internet). |
 | `Launcher/embedCovers.cmake`, `assets/covers/` | Mete las portadas en `Launcher.exe` al compilar. |
 | `Fitd/fitd.cpp` | Punto de entrada de `Tatou.exe`: conecta el remaster y arranca el motor. |
 | `Fitd/Tatou.rc` | Icono de `Tatou.exe`. |

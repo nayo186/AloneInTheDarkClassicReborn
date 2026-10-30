@@ -815,6 +815,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | Función | Para qué sirve |
 | --- | --- |
 | `u` | Size in pixels of `units` of the screen design |
+| `textOffset` | Text on a line with buttons, centred on them |
 
 ### `Shared/ui/menuBase.h`
 
@@ -853,3 +854,16 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `readGameConfig` | Language and advanced options of the data folder's aitd_remaster.cfg |
 | `writeGameConfig` | Writes the launcher's options in the game's aitd_remaster.cfg, keeping every other line |
 | `launchGame` | Starts Tatou.exe with the default settings and the chosen language, in the AITD1 data folder: game "aitd1", or "jack" (Tatou enters the JACK subfolder and shares the AITD1 configuration) |
+
+### `Launcher/updater.h`
+
+| Función | Para qué sirve |
+| --- | --- |
+| `launcherVersion` | This build's version ("1.0.0-beta.8"), or "dev" |
+| `updatesEnabled` | False for development builds: no checks, no update button |
+| `updaterCleanup` | Removes what the previous update left (Update folder); when the launcher opens |
+| `updaterStartCheck` | Looks for a newer release on a thread of its own |
+| `updaterStartInstall` | Downloads and installs the release found by the check |
+| `updaterState` | What the updater is doing now |
+| `updaterLatestVersion` | The newest version found ("1.0.0-beta.8"); valid from Available on |
+| `updaterShutdown` | Waits while files are being replaced (never leaves the programs half done) |

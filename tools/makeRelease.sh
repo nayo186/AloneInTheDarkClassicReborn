@@ -7,6 +7,8 @@
 # - Its own build folder (TatouSource/build/release-linux, or $BUILD_DIR).
 # - CLASSIC_REBORN_DEV_TOOLS=OFF: no item window (F9) nor object editor (F10);
 #   the visual fixes of 3D objects are still included.
+# - CLASSIC_REBORN_VERSION=<version>: the launcher shows it and compares it
+#   with the latest release to offer updates.
 # - Release configuration: optimised, no debug data. The C++ runtime goes
 #   inside the executables (as on Windows): nothing else to install.
 # - The archive holds only Launcher, Tatou, README.md, LICENSE and the menu
@@ -29,7 +31,7 @@ releaseFolder="$repo/release"
 name="ClassicReborn-$version-linux-x64"
 
 echo "== Configuring ($build)"
-cmake -G Ninja -S "$source" -B "$build" -DCMAKE_BUILD_TYPE=Release -DCLASSIC_REBORN_DEV_TOOLS=OFF \
+cmake -G Ninja -S "$source" -B "$build" -DCMAKE_BUILD_TYPE=Release -DCLASSIC_REBORN_DEV_TOOLS=OFF -DCLASSIC_REBORN_VERSION="$version" \
     -DCMAKE_EXE_LINKER_FLAGS="-static-libstdc++ -static-libgcc" > /dev/null
 
 echo "== Building Release"

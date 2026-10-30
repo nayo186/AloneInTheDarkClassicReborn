@@ -2,7 +2,10 @@
 // Alone in the Dark: Classic Reborn
 // Based on FITD by yaz0r and AloneInTheDarkReHaunted, released under GPL
 //
-// Game folders. The launcher starts Tatou in the chosen folder: a copy of the
+// Game folders. The data folder is the one after --data, else the folder
+// Tatou is started in (the launcher starts it in the chosen one), else the
+// one chosen in the launcher (aitd1.dataFolder in launcher.cfg), so other
+// programs (a frontend) can start each game directly. It can be a copy of the
 // data (AITD1 there, Jack in JACK) or a GOG or Steam installation (the same
 // edition: GAME.GOG and its track list GAME.INS, or GAME.INST on Steam;
 // AITD1 in INDARK, Jack in JACK). The game data is read through
@@ -19,8 +22,8 @@
 
 #include <string>
 
-// Called first, before the log file opens (reads --game aitd1|jack and
-// --debug / --final)
+// Called first, before the log file opens (reads --game aitd1|jack, --data
+// <folder> and --debug / --final)
 void selectGameFolder(int argc, char* argv[]);
 
 // Writes to the log what selectGameFolder found (once the log file is open)

@@ -6,6 +6,8 @@
 # - CLASSIC_REBORN_DEV_TOOLS=OFF: no item window (F9) nor object editor (F10);
 #   the visual fixes of 3D objects are still included.
 # - Release configuration: optimised, no debug data.
+# - CLASSIC_REBORN_VERSION=<version>: the launcher shows it and compares it
+#   with the latest release to offer updates.
 # - The zip holds only Launcher.exe, Tatou.exe, README.md, LICENSE and the
 #   menu font's license (Gelasio-OFL.txt; the font is inside the programs): no
 #   launcher.cfg (debug mode stays off), no logs, no UserData, no .pdb.
@@ -24,7 +26,7 @@ $releaseFolder = Join-Path $repo 'release'
 $name = "ClassicReborn-$Version-windows-x64"
 
 Write-Host "== Configuring ($build)"
-cmake -G "Visual Studio 17 2022" -A x64 -S $source -B $build -DCLASSIC_REBORN_DEV_TOOLS=OFF | Out-Null
+cmake -G "Visual Studio 17 2022" -A x64 -S $source -B $build -DCLASSIC_REBORN_DEV_TOOLS=OFF "-DCLASSIC_REBORN_VERSION=$Version" | Out-Null
 if ($LASTEXITCODE -ne 0) { throw 'CMake configuration failed' }
 
 Write-Host '== Building Release'

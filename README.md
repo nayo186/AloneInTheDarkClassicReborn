@@ -80,6 +80,22 @@ Classic Reborn is a **source port**: a hand-written reimplementation of the orig
    - or a **copy of the game files** (a folder with the `.PAK` files; Jack in the Dark in its `JACK` subfolder).
 4. Choose the language of the game and press **Play**. The GOG and Steam editions include five languages (English, French, German, Italian and Spanish), all available from the launcher. *Jack in the Dark* has its own button when its files are found.
 
+**Updates.** When it opens, the launcher asks GitHub for the latest release of this project and, if there is a newer one, offers to install it; the **Update** button next to the version (bottom right) looks again. Installing downloads the package for your system and replaces only the programs and the documents next to them: `UserData` (options, saves, backgrounds) and `launcher.cfg` are never touched. Then close the launcher and open it again. The launcher connects to the internet only for this, and the game never does.
+
+**Starting a game without the launcher** (for example from a frontend that lists your games, each one as its own entry). The simple way is enough for almost everyone: open the launcher once, choose the game folder and the language there, and set the rest in **Advanced options** (or in the game, with F1). From then on, each game only needs its name:
+
+```
+Tatou.exe --game aitd1
+Tatou.exe --game jack
+```
+
+(`./Tatou --game aitd1` on Linux; in PowerShell, with the full path in quotes, put `&` before it: `& "C:\Games\ClassicReborn\Tatou.exe" --game jack`.) The game finds the folder, the language and the options you chose by itself.
+
+Only if you want something else for one entry, add it to the line:
+
+- `--data "<folder>"`: another game folder, the same kind you would choose with **Browse** (for example `--data "C:\GOG Games\Alone in the Dark"`);
+- `--lang <language>`: another language of the game for that session (`ENGLISH`, `FRANCAIS`, `DEUTSCH`, `ESPAGNOL` or `ITALIANO`).
+
 ### On Linux
 
 1. Unpack the `.tar.gz` anywhere in your home folder (most file managers open it with a double click, or `tar -xzf ClassicReborn-<version>-linux-x64.tar.gz`).
@@ -91,7 +107,7 @@ Classic Reborn is a **source port**: a hand-written reimplementation of the orig
 
    Folders whose name starts with a dot (`.steam`) are hidden: press Ctrl+H in the folder picker to show them, or type the path.
 
-The game runs natively, without Wine or Proton: those are only needed to install the game files. Everything works as on Windows, including music and voices from the CD image and `UserData` next to the programs.
+The game runs natively, without Wine or Proton: those are only needed to install the game files. Everything works as on Windows, including music and voices from the CD image and `UserData` next to the programs. Updates from the launcher need `curl` (installed on almost every distribution; otherwise `sudo apt install curl` or your system's equivalent).
 
 **The Linux version is ready to play:** built and tested on Ubuntu, with the GOG installation and a copy of the game files, in both games. Controllers use the same code as on Windows (SDL3), so they should work too. If anything does not work on your system (a controller, the sound, the picture...), please open an [issue](https://github.com/nayo186/AloneInTheDarkClassicReborn/issues) with your distribution and what happened, and we will fix it.
 

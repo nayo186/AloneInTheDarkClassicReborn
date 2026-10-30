@@ -45,6 +45,9 @@ struct LauncherView
     bool isDefault = true;             // no advanced option changed
     bool debugMode = false;            // noted at the bottom (launcher.cfg debugMode = 1)
     bool canBrowse = true;             // a folder picker exists (not on every system)
+    std::string version;               // this build's version, shown at the bottom right
+    bool canUpdate = false;            // an Update button (Launcher.exe of a published version)
+    bool updateAvailable = false;      // a newer version was found: the button is gold
     std::string dataFolder;            // UTF-8, empty: none chosen
     std::string message;               // bottom line, empty: none
     ImU32 messageColor = menu::kTextDim;
@@ -64,6 +67,7 @@ struct LauncherIntent
     bool restoreDefaults = false;
     bool openAdvanced = false;
     bool browse = false;
+    bool update = false;
     bool exit = false;
 };
 
@@ -309,20 +313,60 @@ struct Parts
         }
         y += u(8.0f);
 
+        // Version and Update on the right of the message line (landscape) or
+        // on a line of their own (portrait)
+        const float rowEnd = versionRow(x + width, y);
+        float noteW = browseInline ? x + width - rowEnd : 0.0f;
+        if (!browseInline && rowEnd < x + width)
+            y += ImGui::GetFrameHeight() + u(8.0f);
+
         // Message on the left, the debug mode note on the right
-        float noteW = 0.0f;
         if (view.debugMode)
         {
-            noteW = ImGui::CalcTextSize(tr(UiText::DebugMode)).x;
-            ImGui::SetCursorScreenPos(ImVec2(x + width - noteW, y));
+            const float debugW = ImGui::CalcTextSize(tr(UiText::DebugMode)).x;
+            noteW += debugW + (noteW > 0.0f ? u(16.0f) : 0.0f);
+            ImGui::SetCursorScreenPos(ImVec2(x + width - noteW, y + (browseInline ? textOffset() : 0.0f)));
             ImGui::TextColored(menu::color(menu::kError), "%s", tr(UiText::DebugMode));
         }
         if (!view.message.empty())
         {
-            ImGui::SetCursorScreenPos(ImVec2(x, y));
+            ImGui::SetCursorScreenPos(ImVec2(x, y + (browseInline ? textOffset() : 0.0f)));
             menu::fittedText(view.messageColor, view.message, width - noteW - (noteW > 0.0f ? u(16.0f) : 0.0f));
         }
-        return y + lineH;
+        return y + (browseInline ? ImGui::GetFrameHeight() : lineH);
+    }
+
+    // Text on a line with buttons, centred on them
+    float textOffset() const { return ImGui::GetStyle().FramePadding.y; }
+
+    // "v1.0.0-beta.8 [Update]" ending at rightX; returns where it starts
+    float versionRow(float rightX, float y)
+    {
+        if (view.version.empty())
+            return rightX;
+        float left = rightX;
+        if (view.canUpdate)
+        {
+            const char* label = tr(UiText::Update);
+            const float buttonW = ImGui::CalcTextSize(label).x + ImGui::GetStyle().FramePadding.x * 4.0f;
+            left -= buttonW;
+            ImGui::SetCursorScreenPos(ImVec2(left, y));
+            if (view.updateAvailable)
+            {
+                ImGui::PushStyleColor(ImGuiCol_Button, menu::color(menu::kGold));
+                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.16f, 0.13f, 0.09f, 1.0f));
+            }
+            if (ImGui::Button(tr(UiText::Update), ImVec2(buttonW, m.pressHeight(ImGui::GetFrameHeight() / m.scale))))
+                intent.update = true;
+            if (view.updateAvailable)
+                ImGui::PopStyleColor(2);
+            left -= u(10.0f);
+        }
+        const std::string version = "v" + view.version;
+        left -= ImGui::CalcTextSize(version.c_str()).x;
+        ImGui::SetCursorScreenPos(ImVec2(left, y + textOffset()));
+        ImGui::TextColored(menu::color(menu::kTextDim), "%s", version.c_str());
+        return left;
     }
 };
 

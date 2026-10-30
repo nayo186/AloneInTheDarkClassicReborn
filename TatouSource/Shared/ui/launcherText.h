@@ -40,6 +40,19 @@ enum class UiText
     InstallGog,
     InstallCopy,
     DebugMode,
+    Update,
+    UpdateTitle,
+    UpdateChecking,
+    UpdateLatest,
+    UpdateCheckFailed,
+    UpdateAvailable,
+    UpdateInstall,
+    UpdateLater,
+    UpdateInstalling,
+    UpdateDone,
+    UpdateFailed,
+    UpdateAccept,
+    UpdateClose,
     Count
 };
 
@@ -142,6 +155,51 @@ static const char* const kLauncherTexts[(int)UiText::Count][(int)UiLanguage::Cou
       "Copia dei dati del gioco", "Kopie der Spieldaten" },
     // DebugMode
     { "Debug mode", "Modo depuración", "Mode débogage", "Modalità debug", "Debug-Modus" },
+    // Update
+    { "Update", "Actualizar", "Mettre à jour", "Aggiorna", "Aktualisieren" },
+    // UpdateTitle
+    { "Updates", "Actualizaciones", "Mises à jour", "Aggiornamenti", "Updates" },
+    // UpdateChecking
+    { "Looking for a new version...", "Buscando una versión nueva...", "Recherche d'une nouvelle version...",
+      "Ricerca di una nuova versione...", "Suche nach einer neuen Version..." },
+    // UpdateLatest (%s: this version)
+    { "You have the latest version (%s).", "Ya tienes la última versión (%s).", "Vous avez la dernière version (%s).",
+      "Hai già l'ultima versione (%s).", "Sie haben die neueste Version (%s)." },
+    // UpdateCheckFailed
+    { "Could not look for updates (no connection?). See launcher.log.",
+      "No se pudo buscar actualizaciones (¿sin conexión?). Ver launcher.log.",
+      "Impossible de rechercher des mises à jour (pas de connexion ?). Voir launcher.log.",
+      "Impossibile cercare aggiornamenti (nessuna connessione?). Vedi launcher.log.",
+      "Die Suche nach Updates ist fehlgeschlagen (keine Verbindung?). Siehe launcher.log." },
+    // UpdateAvailable (%s: the new version, %s: this one)
+    { "A new version is available: %s (you have %s). Install it now? Your settings, saves and backgrounds are kept.",
+      "Hay una versión nueva: %s (tienes la %s). ¿Instalarla ahora? Tus opciones, partidas y fondos se conservan.",
+      "Une nouvelle version est disponible : %s (vous avez la %s). L'installer maintenant ? Vos options, sauvegardes et décors sont conservés.",
+      "È disponibile una nuova versione: %s (hai la %s). Installarla ora? Opzioni, salvataggi e sfondi restano.",
+      "Eine neue Version ist verfügbar: %s (Sie haben %s). Jetzt installieren? Einstellungen, Spielstände und Hintergründe bleiben erhalten." },
+    // UpdateInstall
+    { "Install", "Instalar", "Installer", "Installa", "Installieren" },
+    // UpdateLater
+    { "Not now", "Ahora no", "Plus tard", "Non ora", "Nicht jetzt" },
+    // UpdateInstalling (%s: the new version)
+    { "Downloading and installing %s...", "Descargando e instalando la %s...", "Téléchargement et installation de la %s...",
+      "Download e installazione della %s...", "%s wird heruntergeladen und installiert..." },
+    // UpdateDone (%s: the new version)
+    { "Updated to %s. The launcher will close: open it again.",
+      "Actualizado a la %s. El lanzador se cerrará: vuelve a abrirlo.",
+      "Mis à jour vers la %s. Le lanceur va se fermer : ouvrez-le à nouveau.",
+      "Aggiornato alla %s. Il programma di avvio si chiuderà: riaprilo.",
+      "Auf %s aktualisiert. Der Starter wird geschlossen: öffnen Sie ihn erneut." },
+    // UpdateFailed
+    { "The update could not be installed; nothing was changed. See launcher.log.",
+      "No se pudo instalar la actualización; no se cambió nada. Ver launcher.log.",
+      "La mise à jour n'a pas pu être installée ; rien n'a été modifié. Voir launcher.log.",
+      "Impossibile installare l'aggiornamento; non è stato cambiato nulla. Vedi launcher.log.",
+      "Das Update konnte nicht installiert werden; nichts wurde geändert. Siehe launcher.log." },
+    // UpdateAccept
+    { "Accept", "Aceptar", "Accepter", "Accetta", "OK" },
+    // UpdateClose
+    { "Close", "Cerrar", "Fermer", "Chiudi", "Schließen" },
 };
 
 inline UiLanguage& currentUiLanguage()

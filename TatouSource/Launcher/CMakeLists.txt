@@ -43,6 +43,8 @@ add_executable(Launcher
     gameCover.h
     folderDialog.cpp
     folderDialog.h
+    updater.cpp
+    updater.h
     Launcher.rc
     "${COVER_DATA}"
     "${MENU_FONT_DATA}"
@@ -63,6 +65,11 @@ target_include_directories(Launcher PRIVATE
 )
 
 target_link_libraries(Launcher PRIVATE SDL3-static)
+
+# The version of this build, the release tag without its v (tools/makeRelease
+# sets it); "dev" builds never look for updates (updater.h)
+set(CLASSIC_REBORN_VERSION "dev" CACHE STRING "Version of this build (release tag without v); dev: no updates")
+target_compile_definitions(Launcher PRIVATE CLASSIC_REBORN_VERSION="${CLASSIC_REBORN_VERSION}")
 
 # A window application (no console), placed next to Tatou.exe so it can find it
 set_target_properties(Launcher PROPERTIES

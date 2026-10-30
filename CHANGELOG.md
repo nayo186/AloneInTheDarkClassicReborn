@@ -4,6 +4,12 @@ Alone in the Dark: Classic Reborn started on 2026-10-23 from [Alone in the Dark:
 
 This repository was published with a single starting commit, to keep it light: the early history carried large files that are no longer part of the project. Below are the changes of each release and, after them, the changes made in this fork before it was published, newest first, one line per change. The reasons behind larger removals are explained in `docs/DESCARTADO.md` and the fixes in `docs/baseline/BUGS.md`.
 
+## v1.0.0-beta.8 (2026-10-30)
+
+- Updates from the launcher: when it opens, it looks for a newer release on GitHub and offers to install it; the Update button next to the version (bottom right) looks again. Only the programs and documents are replaced, never UserData (options, saves, backgrounds) or launcher.cfg. The launcher connects to the internet only for this; the game never does (README, Updates)
+- The launcher shows its version at the bottom right
+- Each game can be started without the launcher, for example from a frontend: Tatou --game aitd1 or Tatou --game jack uses the folder, language and options chosen in the launcher; --data "<folder>" and --lang are optional (README, Starting a game without the launcher)
+
 ## v1.0.0-beta.7 (2026-10-30)
 
 - Cigar smoke, next to the dining room: a grey cloud turns around the cigars, grows and shrinks, and makes the player cough and lose life while inside it; the water jug puts it out, as in the original (BUGS.md C41, C42)
