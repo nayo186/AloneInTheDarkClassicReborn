@@ -193,10 +193,13 @@
 	bool osystem_canFadeScreen();
 	// Sets the screen fade (0 black, 1 normal)
 	void osystem_setScreenFade(float level);
+	// The cigar smoke's ellipse on the 320x200 screen for this frame: the image
+	// turns grey inside it (core/sceneDraw.cpp, AffSmoke)
+	void osystem_setSmokeArea(float centerX, float centerY, float radiusX, float radiusY);
 
-	// Kind of object being drawn, for the background-incrust rule: 0 = none,
-	// 1 = moving actor, 2 = incrusted (static) object. See rendererBGFX.cpp.
-	void osystem_setObjectStencilMode(int mode);
+	// Number of the 3D object being drawn (1..255, 0 = none): its masks cover
+	// only its own pixels. See rendererBGFX.cpp.
+	void osystem_setObjectStencil(int objectId);
 
 
 

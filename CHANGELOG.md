@@ -4,6 +4,15 @@ Alone in the Dark: Classic Reborn started on 2026-10-23 from [Alone in the Dark:
 
 This repository was published with a single starting commit, to keep it light: the early history carried large files that are no longer part of the project. Below are the changes of each release and, after them, the changes made in this fork before it was published, newest first, one line per change. The reasons behind larger removals are explained in `docs/DESCARTADO.md` and the fixes in `docs/baseline/BUGS.md`.
 
+## v1.0.0-beta.7 (2026-10-30)
+
+- Cigar smoke, next to the dining room: a grey cloud turns around the cigars, grows and shrinks, and makes the player cough and lose life while inside it; the water jug puts it out, as in the original (BUGS.md C41, C42)
+- Found objects: when an object does not fit in the inventory (weight or number), the game says "You cannot carry anything else" and Enter or Esc closes it, instead of a window without the Leave and Take options that let the limit be skipped (BUGS.md C40); also in Jack in the Dark
+- An object's masks (the parts of the background in front of it) cover only that object: the seated dead man in the dining room no longer disappears when the door is opened (BUGS.md C43)
+- Drawing order: objects are only ordered when they meet on screen; a door no longer cuts through the player standing next to it (BUGS.md C44)
+- Thin parts of the 3D models (chair bars) are drawn one game pixel wide instead of looking like a thin wire mesh (BUGS.md V24)
+- tatou.log notes any drawing-order contradiction ([ORDER]), to help with bug reports
+
 ## v1.0.0-beta.6 (2026-10-29)
 
 - Save pictures (SAVEn.png) are kept at 320x240 instead of the screen's size: about 100 KB each instead of 2-3 MB, and a little sharper in the save list (BUGS.md C39). Old pictures are replaced when that slot is saved again

@@ -87,6 +87,8 @@ void ScreenEffects::init(int width, int height)
     s_fxDepth = bgfx::createUniform("s_fxDepth", bgfx::UniformType::Sampler);
     u_fxComposite = bgfx::createUniform("u_fxComposite", bgfx::UniformType::Vec4);
     u_fxGrain = bgfx::createUniform("u_fxGrain", bgfx::UniformType::Vec4);
+    u_fxSmoke = bgfx::createUniform("u_fxSmoke", bgfx::UniformType::Vec4);
+    u_fxSmokeTime = bgfx::createUniform("u_fxSmokeTime", bgfx::UniformType::Vec4);
     u_fxBloom = bgfx::createUniform("u_fxBloom", bgfx::UniformType::Vec4);
     u_fxSsao = bgfx::createUniform("u_fxSsao", bgfx::UniformType::Vec4);
     u_fxCamera = bgfx::createUniform("u_fxCamera", bgfx::UniformType::Vec4);
@@ -128,6 +130,8 @@ void ScreenEffects::shutdown()
     destroyHandle(s_fxDepth);
     destroyHandle(u_fxComposite);
     destroyHandle(u_fxGrain);
+    destroyHandle(u_fxSmoke);
+    destroyHandle(u_fxSmokeTime);
     destroyHandle(u_fxBloom);
     destroyHandle(u_fxSsao);
     destroyHandle(u_fxCamera);
@@ -430,6 +434,11 @@ void ScreenEffects::renderComposite(bool bloom, bool grain, bool ambientOcclusio
         drawFullScreenAt(kViewComposite, BGFX_INVALID_HANDLE, sideX, m_outputY, (int)(fullWidth + 0.5f), outputHeight,
             windowWidth, windowHeight, m_sidesProgram, "Composite", true);
     }
+    bgfx::setUniform(u_fxSmoke, m_smoke);
+    const float smokeTime[4] = { (float)fmod(seconds, 10000.0), 0.0f, 0.0f, 0.0f };
+    bgfx::setUniform(u_fxSmokeTime, smokeTime);
     drawFullScreenAt(kViewComposite, BGFX_INVALID_HANDLE, m_outputX, m_outputY, outputWidth, outputHeight,
         windowWidth, windowHeight, m_compositeProgram, "Composite", true);
+    // The smoke is set again by the frame that still shows it (AffSmoke)
+    m_smoke[2] = m_smoke[3] = 0.0f;
 }

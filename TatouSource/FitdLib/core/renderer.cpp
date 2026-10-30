@@ -189,6 +189,18 @@ void transformPoint(float* ax, float* bx, float* cx)
     *cx = (float)Z;
 }
 
+bool projectToScreen(float x, float y, float z, float* screenX, float* screenY)
+{
+    float wx = x - translateX, wy = y - translateY, wz = z - translateZ;
+    transformPoint(&wx, &wy, &wz);
+    const float depth = wz + cameraPerspective;
+    if (depth <= 50)
+        return false;
+    *screenX = ((wx * cameraFovX) / depth) + cameraCenterX;
+    *screenY = ((wy * cameraFovY) / depth) + cameraCenterY;
+    return true;
+}
+
 void InitGroupeRot(int transX,int transY,int transZ)
 {
     if(transX)

@@ -64,6 +64,7 @@ struct Settings
     struct {
         bool enableGraphicsValidation;  // graphics API validation layers
         bool logLifeScripts;            // every script instruction in tatou.log (very verbose)
+        bool logDrawOrder;              // once a second: objects in drawing order and their masks ([DRAW])
         bool dumpLifeScripts;           // all LISTLIFE scripts written to a file at start
         bool generateNativeLifeScripts; // native C++ code generated for the scripts
         bool enableNativeLifeScripts;   // the generated C++ scripts used instead of the interpreter

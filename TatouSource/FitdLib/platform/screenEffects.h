@@ -56,6 +56,13 @@ public:
     // Brightness of the final image, 0 (black) to 1 (normal); used by fades
     void setScreenFade(float fade) { m_screenFade = fade; }
 
+    // The cigar smoke's ellipse for this frame, in texture coordinates (0..1):
+    // the image turns grey inside it; cleared after each frame
+    void setSmokeArea(float centerU, float centerV, float radiusU, float radiusV)
+    {
+        m_smoke[0] = centerU; m_smoke[1] = centerV; m_smoke[2] = radiusU; m_smoke[3] = radiusV;
+    }
+
     // The offscreen image of the scene
     bgfx::TextureHandle getMainColorTexture() const { return m_sceneColor; }
     // The framebuffer the scene is drawn into
@@ -90,6 +97,7 @@ private:
     int m_windowWidth = 0;
     int m_windowHeight = 0;
     float m_screenFade = 1.0f;
+    float m_smoke[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
     int m_suspended = 0;
     bgfx::TextureHandle m_sidePicture = BGFX_INVALID_HANDLE;
     float m_sideU0 = 0.0f;
@@ -140,6 +148,8 @@ private:
     bgfx::UniformHandle s_fxDepth = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle u_fxComposite = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle u_fxGrain = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle u_fxSmoke = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle u_fxSmokeTime = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle u_fxBloom = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle u_fxSsao = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle u_fxCamera = BGFX_INVALID_HANDLE;

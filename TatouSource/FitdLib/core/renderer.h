@@ -55,6 +55,9 @@ extern primEntryStruct primTable[];
 
 // Turns and moves a point by the camera
 void transformPoint(float* ax, float* bx, float* cx);
+// A point (coordinates of the camera's room) on the 320x200 screen; false if
+// it is behind or too near the camera
+bool projectToScreen(float x, float y, float z, float* screenX, float* screenY);
 
 // Draws a 3D model at a position and angles: projects it and sends its polygons to the renderer
 int AffObjet(int x, int y, int z, int alpha, int beta, int gamma, sBody* pBody);

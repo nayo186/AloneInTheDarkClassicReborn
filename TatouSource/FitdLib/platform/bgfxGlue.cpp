@@ -352,6 +352,13 @@ void osystem_setScreenFade(float level)
         g_screenEffects->setScreenFade(level);
 }
 
+void osystem_setSmokeArea(float centerX, float centerY, float radiusX, float radiusY)
+{
+    // From the 320x200 screen to the scene image's texture coordinates
+    if (g_screenEffects)
+        g_screenEffects->setSmokeArea(centerX / 320.0f, centerY / 200.0f, radiusX / 320.0f, radiusY / 200.0f);
+}
+
 void EndFrame()
 {
 #ifdef FITD_DEBUGGER

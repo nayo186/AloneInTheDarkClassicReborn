@@ -836,26 +836,26 @@ void osystem_clearClip()
 void osystem_stopFrame()
 {}
 
-// Background-incrust rule (Original mode). In the original engine static
-// objects (AF_BOXIFY) were drawn into the background copy that masks repaint
-// from, so a mask drawn over a moving actor never hid them (e.g. the lamp on
-// the attic table). Here they are drawn as 3D each frame, so the stencil
-// marks their pixels (3) and masks of moving actors leave those pixels alone.
-// Moving actors write 0 so their own masks still cover them.
-static int s_objectStencilMode = 0;  // 0 none, 1 moving actor, 2 incrusted
-static const int kIncrustStencil = 3;
+// An object's masks (the parts of the background in front of it) cover only
+// that object: each 3D object marks its pixels in the stencil with its own
+// number and its masks are drawn only there. In the original engine static
+// objects (AF_BOXIFY) were drawn into the background copy masks repaint from,
+// so another object's mask never hid them (the lamp on the attic table);
+// drawing masks over the whole box of the object let an opened door's wall
+// mask hide the seated dead man in front of that wall (BUGS.md C43).
+static int s_objectStencil = 0;   // 0 = none (2D objects: masks over everything)
 
-void osystem_setObjectStencilMode(int mode)
+void osystem_setObjectStencil(int objectId)
 {
-    s_objectStencilMode = mode;
+    s_objectStencil = objectId;
 }
 
 static void applyObjectStencil()
 {
-    if (s_objectStencilMode == 0)
+    if (s_objectStencil == 0)
         return;
     bgfx::setStencil(BGFX_STENCIL_TEST_ALWAYS
-        | BGFX_STENCIL_FUNC_REF(s_objectStencilMode == 2 ? kIncrustStencil : 0)
+        | BGFX_STENCIL_FUNC_REF(s_objectStencil)
         | BGFX_STENCIL_FUNC_RMASK(0xFF)
         | BGFX_STENCIL_OP_FAIL_S_KEEP
         | BGFX_STENCIL_OP_FAIL_Z_KEEP
@@ -1150,13 +1150,13 @@ void osystem_flushPendingPrimitives()
         memcpy(transientBuffer.data, g_lineVertices.data(), sizeof(polyVertex) * g_lineVertices.size());
         applyShakeToVertices(transientBuffer.data, static_cast<int>(g_lineVertices.size()), sizeof(polyVertex));
 
-        bgfx::setState(0 | BGFX_STATE_PT_LINES
+        // Lines are bands of two triangles each (osystem_draw3dLine)
+        bgfx::setState(0
             | BGFX_STATE_WRITE_RGB
             | BGFX_STATE_WRITE_A
             | BGFX_STATE_WRITE_Z
             | BGFX_STATE_DEPTH_TEST_LEQUAL
             | BGFX_STATE_MSAA
-            | BGFX_STATE_LINEAA
             | BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA)
         );
 
@@ -1501,8 +1501,33 @@ void osystem_draw3dLine(float x1, float y1, float z1, float x2, float y2, float 
     vertex1.U = vertex2.U = colorf / 15.f;
     vertex1.V = vertex2.V = bank / 15.f;
 
-    g_lineVertices.push_back(vertex1);
-    g_lineVertices.push_back(vertex2);
+    // A band one pixel of the 320x200 screen wide, as the original drew its
+    // lines (chair bars, thin parts of models); a line of one screen pixel
+    // looked like a thin wire mesh at today's resolutions (BUGS.md V24)
+    const float dx = x2 - x1;
+    const float dy = y2 - y1;
+    const float length = sqrtf(dx * dx + dy * dy);
+    float nx, ny;
+    if (length > 0.001f)
+    {
+        nx = -dy / length * 0.5f;
+        ny = dx / length * 0.5f;
+    }
+    else
+    {
+        nx = 0.5f;   // a point: a one-pixel square
+        ny = 0.0f;
+        vertex1.Y -= 0.5f;
+        vertex2.Y += 0.5f;
+    }
+    polyVertex corners[4] = { vertex1, vertex1, vertex2, vertex2 };
+    corners[0].X += nx; corners[0].Y += ny;
+    corners[1].X -= nx; corners[1].Y -= ny;
+    corners[2].X -= nx; corners[2].Y -= ny;
+    corners[3].X += nx; corners[3].Y += ny;
+    const int order[6] = { 0, 1, 2, 0, 2, 3 };
+    for (const int corner : order)
+        g_lineVertices.push_back(corners[corner]);
 }
 
 void osystem_draw3dQuad(float x1, float y1, float z1, float x2, float y2, float z2, float x3, float y3, float z3, float x4, float y4, float z4, unsigned char color, int transparency)
@@ -1816,25 +1841,15 @@ void osystem_drawMask(int roomId, int maskId)
     float fadeParams[4] = { g_fadeLevel, 0.0f, 0.0f, 0.0f };
     bgfx::setUniform(fadeLevelUniform, fadeParams);
 
-    if (s_objectStencilMode == 1)
+    if (s_objectStencil != 0)
     {
-        // Mask over a moving actor: never repaint incrusted objects
-        bgfx::setStencil(BGFX_STENCIL_TEST_NOTEQUAL
-            | BGFX_STENCIL_FUNC_REF(kIncrustStencil)
+        // Mask of a 3D object: only over that object's own pixels
+        bgfx::setStencil(BGFX_STENCIL_TEST_EQUAL
+            | BGFX_STENCIL_FUNC_REF(s_objectStencil)
             | BGFX_STENCIL_FUNC_RMASK(0xFF)
             | BGFX_STENCIL_OP_FAIL_S_KEEP
             | BGFX_STENCIL_OP_FAIL_Z_KEEP
-            | BGFX_STENCIL_OP_PASS_Z_REPLACE);
-    }
-    else if (s_objectStencilMode == 2)
-    {
-        // Mask over an incrusted object: it hides the object like in the background copy
-        bgfx::setStencil(BGFX_STENCIL_TEST_ALWAYS
-            | BGFX_STENCIL_FUNC_REF(kIncrustStencil)
-            | BGFX_STENCIL_FUNC_RMASK(0xFF)
-            | BGFX_STENCIL_OP_FAIL_S_KEEP
-            | BGFX_STENCIL_OP_FAIL_Z_KEEP
-            | BGFX_STENCIL_OP_PASS_Z_REPLACE);
+            | BGFX_STENCIL_OP_PASS_Z_KEEP);
     }
     else
     {

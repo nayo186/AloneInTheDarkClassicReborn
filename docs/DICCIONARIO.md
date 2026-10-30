@@ -213,7 +213,8 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `osystem_isSceneSnapshotLive` | True while the scene snapshot follows the game (not frozen by a menu) |
 | `osystem_canFadeScreen` | Brightness of the final image, 0 (black) to 1 (normal). Fades use it so the whole picture (background, models, masks) changes together. |
 | `osystem_setScreenFade` | Sets the screen fade (0 black, 1 normal) |
-| `osystem_setObjectStencilMode` | Kind of object being drawn, for the background-incrust rule: 0 = none, 1 = moving actor, 2 = incrusted (static) object. See rendererBGFX.cpp. |
+| `osystem_setSmokeArea` | The cigar smoke's ellipse on the 320x200 screen for this frame: the image turns grey inside it (core/sceneDraw.cpp, AffSmoke) |
+| `osystem_setObjectStencil` | Number of the 3D object being drawn (1..255, 0 = none): its masks cover only its own pixels. See rendererBGFX.cpp. |
 
 ### `platform/osystemAL.h`
 
@@ -575,6 +576,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | Función | Para qué sirve |
 | --- | --- |
 | `transformPoint` | Turns and moves a point by the camera |
+| `projectToScreen` | A point (coordinates of the camera's room) on the 320x200 screen; false if it is behind or too near the camera |
 | `AffObjet` | Draws a 3D model at a position and angles: projects it and sends its polygons to the renderer |
 | `setNextObjectSize` | Size of the next object AffObjet draws; put back ObjectSize() afterwards |
 | `setCurrentBodyNum` | The body about to be drawn (for the rules of special bodies) |

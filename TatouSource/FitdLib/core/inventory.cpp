@@ -727,9 +727,13 @@ void FoundObjet(int objIdx, int param)
 
     int choix = 1;
 
+    // Too heavy or the inventory is full: only "You cannot carry anything
+    // else" (text 10, DrawFoundWindow case 2), no take/leave choice. It was 3,
+    // which DrawFoundWindow does not draw: no options at all, and left/right
+    // brought them back and let the object be taken anyway (BUGS.md C40)
     if (objPtr->positionInTrack + weight > CVars[getCVarsIdx(MAX_WEIGHT_LOADABLE)] || numObjInInventoryTable[currentInventory] + 1 == 30)
     {
-        choix = 3;
+        choix = 2;
     }
 
     ShowBody = objPtr->foundBody;

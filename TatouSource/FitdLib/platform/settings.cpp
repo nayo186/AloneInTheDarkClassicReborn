@@ -52,6 +52,7 @@ static void setDefaults()
 
     c.debug.enableGraphicsValidation = false;
     c.debug.logLifeScripts = false;
+    c.debug.logDrawOrder = false;
     c.debug.dumpLifeScripts = false;
     c.debug.generateNativeLifeScripts = false;
     c.debug.enableNativeLifeScripts = false;
@@ -150,6 +151,7 @@ void loadSettings()
         else if (strcmp(key, "gamedata.language") == 0) copyText(c.gameData.language, sizeof(c.gameData.language), value);
         else if (strcmp(key, "debug.graphicsValidation") == 0) c.debug.enableGraphicsValidation = isTrue(value);
         else if (strcmp(key, "debug.logLifeScripts") == 0) c.debug.logLifeScripts = isTrue(value);
+        else if (strcmp(key, "debug.logDrawOrder") == 0) c.debug.logDrawOrder = isTrue(value);
         else if (strcmp(key, "debug.dumpLifeScripts") == 0) c.debug.dumpLifeScripts = isTrue(value);
         else if (strcmp(key, "debug.generateNativeLifeScripts") == 0) c.debug.generateNativeLifeScripts = isTrue(value);
         else if (strcmp(key, "debug.enableNativeLifeScripts") == 0) c.debug.enableNativeLifeScripts = isTrue(value);
@@ -220,6 +222,7 @@ void saveSettings()
     fprintf(file, "graphics.renderer = %s\n", c.graphics.rendererBackend);
     fprintf(file, "debug.graphicsValidation = %s\n", flag(c.debug.enableGraphicsValidation));
     fprintf(file, "debug.logLifeScripts = %s\n", flag(c.debug.logLifeScripts));
+    fprintf(file, "debug.logDrawOrder = %s\n", flag(c.debug.logDrawOrder));
     fprintf(file, "debug.dumpLifeScripts = %s\n", flag(c.debug.dumpLifeScripts));
     fprintf(file, "debug.generateNativeLifeScripts = %s\n", flag(c.debug.generateNativeLifeScripts));
     fprintf(file, "debug.enableNativeLifeScripts = %s\n", flag(c.debug.enableNativeLifeScripts));

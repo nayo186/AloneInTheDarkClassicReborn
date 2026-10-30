@@ -442,47 +442,22 @@ int InitSpecialObjet(int mode, int X, int Y, int Z, int stage, int room, int alp
         currentActorPtr->END_FRAME = 5; // lifetime in frames
         break;
     }
-    case 4: // smoke
+    case 4: // cigar smoke (AITD1): one cloud around its cigars, AffSmoke in core/sceneDraw.cpp
     {
-        char* flowPtr;
-        int j;
-
-        // header (color + count) + 25 points * (X,Y,Z + velocity,lifetime) * s16
-        currentActorPtr->frame = HQ_Malloc(HQ_Memory, 4 + 25 * 5 * 2);
-
-        flowPtr = HQ_PtrMalloc(HQ_Memory, currentActorPtr->frame);
-
-        if (!flowPtr)
+        // A small block: the special objects free theirs when deleted
+        currentActorPtr->frame = HQ_Malloc(HQ_Memory, 4);
+        if (!HQ_PtrMalloc(HQ_Memory, currentActorPtr->frame))
         {
             currentActorPtr->indexInWorld = -1;
             return(-1);
         }
 
         currentActorPtr->ANIM = mode;
+        // The cigars it comes from: the cloud goes when they go (put out with the jug)
+        currentActorPtr->trackNumber = currentProcessedActorPtr ? currentProcessedActorPtr->indexInWorld : -1;
 
-        *(s16*)flowPtr = 192; // gray color for smoke
-        flowPtr += 2;
-        *(s16*)flowPtr = 25; // num of points
-        flowPtr += 2;
-
-        for (j = 0; j < 25; j++)
-        {
-            *(s16*)flowPtr = randRange(-10, 10); //X
-            flowPtr += 2;
-            *(s16*)flowPtr = randRange(-10, 10); //Y
-            flowPtr += 2;
-            *(s16*)flowPtr = randRange(-10, 10); //Z
-            flowPtr += 2;
-        }
-
-        for (j = 0; j < 25; j++)
-        {
-            *(s16*)flowPtr = randRange(50, 150); // velocity
-            flowPtr += 2;
-            *(s16*)flowPtr = randRange(40, 80); // lifetime
-            flowPtr += 2;
-        }
-
+        // A small box: the engine collides with it, and the cloud must not
+        // stop the player (the cough is by distance, AffSmoke)
         currentActorPtr->zv.ZVX1 = X - 12;
         currentActorPtr->zv.ZVX2 = X + 12;
         currentActorPtr->zv.ZVY1 = Y - 12;
@@ -490,7 +465,12 @@ int InitSpecialObjet(int mode, int X, int Y, int Z, int stage, int room, int alp
         currentActorPtr->zv.ZVZ1 = Z - 12;
         currentActorPtr->zv.ZVZ2 = Z + 12;
 
-        currentActorPtr->END_FRAME = 50; // lifetime in frames
+        currentActorPtr->END_FRAME = 0;   // lasts while its cigars exist
+
+        // As the original engine did: 1 while the cloud exists, so the
+        // cigars' script (life 427) does not start another one (BUGS.md C41)
+        CVars[getCVarsIdx(FOG_FLAG)] = 1;
+        printf(LIFE_TAG "Cigar smoke started (object %d, room %d)\n", currentActorPtr->trackNumber, room);
         break;
     }
     default:
@@ -773,6 +753,7 @@ void processLife(int lifeNum, bool callFoundLife)
 
     currentLifePtr = HQR_Get(listLife, lifeNum);
     assert(currentLifePtr);
+
 
     // Run native C replacement if one is registered (safe-filter mode).
     // Scripts not registered fall through to the bytecode interpreter + patch system.

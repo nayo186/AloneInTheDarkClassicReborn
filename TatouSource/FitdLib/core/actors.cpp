@@ -47,6 +47,7 @@ void DeleteObjet(int index) // remove actor
         if (actorPtr->ANIM == 4)
         {
             CVars[getCVarsIdx(FOG_FLAG)] = 0;
+            printf(LIFE_TAG "Cigar smoke gone\n");
         }
 
         HQ_Free_Malloc(HQ_Memory, actorPtr->frame);
