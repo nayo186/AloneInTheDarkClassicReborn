@@ -109,7 +109,7 @@ Only if you want something else for one entry, add it to the line:
 
 The game runs natively, without Wine or Proton: those are only needed to install the game files. Everything works as on Windows, including music and voices from the CD image and `UserData` next to the programs. Updates from the launcher need `curl` (installed on almost every distribution; otherwise `sudo apt install curl` or your system's equivalent).
 
-**The Linux version is ready to play:** built and tested on Ubuntu, with the GOG installation and a copy of the game files, in both games. Controllers use the same code as on Windows (SDL3), so they should work too. If anything does not work on your system (a controller, the sound, the picture...), please open an [issue](https://github.com/nayo186/AloneInTheDarkClassicReborn/issues) with your distribution and what happened, and we will fix it.
+**The Linux version is ready to play:** built and tested on Ubuntu, with the GOG installation and a copy of the game files, in both games. Controllers are supported too, with the same code as on Windows (SDL3). If anything does not work on your system (a controller, the sound, the picture...), please open an issue (see [Reporting a problem](#reporting-a-problem)) and we will fix it.
 
 **From Windows (WSL).** The Linux version also runs in WSL2 with Ubuntu. WSL is not a full Linux PC, so for a smooth game it helps to:
 
@@ -132,7 +132,7 @@ Every action can be changed in **Controls** (F1 window or launcher). Defaults:
 | Options window (F1) | F1 or Home | Back |
 | Fullscreen | F11 or Alt+Enter | — |
 
-**Controllers.** Any controller SDL3 recognises works, on Windows and Linux (on Linux, please report any problem: see [On Linux](#on-linux)), connected by USB or Bluetooth, also when connected while playing: Xbox (One, Series, 360), PlayStation (DualShock 4, DualSense), Nintendo Switch Pro and most generic controllers. The table uses the Xbox names; on other controllers the buttons are in the same place:
+**Controllers.** Controllers are supported on Windows and Linux: any controller SDL3 recognises, connected by USB or Bluetooth (also while playing), such as Xbox (One, Series, 360), PlayStation (DualShock 4, DualSense), Nintendo Switch Pro and most generic controllers. If yours does not work as expected, please open an issue (see [Reporting a problem](#reporting-a-problem)) with its name. The table uses the Xbox names; on other controllers the buttons are in the same place:
 
 | Xbox | PlayStation | Switch Pro |
 | --- | --- | --- |
@@ -176,6 +176,7 @@ UserData/
 ├── AITD1/                 Alone in the Dark
 │   ├── Saves/             saves (SAVE0.ITD ... and their pictures SAVE0.png ...)
 │   ├── tatou.log          log of the last session (tatou.prev.log: the one before)
+│   ├── crash_log.txt      written if the game closes by itself
 │   ├── Backgrounds/       your backgrounds and full-screen pictures
 │   ├── Masks/             your masks
 │   ├── Exports/           what F1 exports (masks in masks/, with guides in masks_guides/)
@@ -236,6 +237,21 @@ Please share only recordings you made yourself, never the voices of the game or 
 ## Saves
 
 Saves of *Alone in the Dark* use the layout of the GOG edition: saves made in the GOG game (`cloud_saves\INDARK` in its folder) can be copied to `UserData\AITD1\Saves` and loaded. The other way round works too, except that the lamp's oil does not run out in the GOG game with a save made here (known issue). The save list shows the date and time of each save.
+
+## Reporting a problem
+
+Found a bug? Please open an [issue](https://github.com/nayo186/AloneInTheDarkClassicReborn/issues) and tell us what happened and what you were doing, in which game (*Alone in the Dark* or *Jack in the Dark*), and on which system (Windows or your Linux distribution).
+
+It helps a lot to attach these files: drag them into the issue's text box. Close the game first, so the logs are complete:
+
+- **The logs**, in `UserData\AITD1` (or `UserData\JACK`), next to `Launcher.exe`:
+  - `tatou.log`: the last session;
+  - `tatou.prev.log`: the session before it (if you opened the game again after the problem, the problem is in this one);
+  - `crash_log.txt`, if the game closed by itself;
+  - `launcher.log`, next to `Launcher.exe`, if the problem is in the launcher.
+- **A save** made just before the problem, if you can: `UserData\AITD1\Saves\SAVEn.ITD` (n is the slot). GitHub does not accept `.ITD` files, so put the save in a `.zip` first. With it we can go straight to that spot.
+
+The logs only name the game's folders and what the game did; they may show your user name inside a folder path (`C:\Users\<name>\...`). Nothing else from your PC is in them.
 
 ## Building
 
