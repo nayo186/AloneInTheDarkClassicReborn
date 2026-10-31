@@ -101,6 +101,92 @@ std::array<point3dStruct, NUM_MAX_POINT_IN_POINT_BUFFER> pointBuffer;
 s16 cameraSpaceBuffer[NUM_MAX_POINT_IN_POINT_BUFFER*3];
 s16 bonesBuffer[NUM_MAX_BONES];
 
+// Water of the caverns (BUGS.md V26): while it is on, what is below its
+// surface is not drawn. Each point of the model being drawn keeps its height
+// in the world (down is +) and its place seen from the camera, before the
+// perspective, so a polygon can be cut where it crosses the surface.
+static bool s_waterOn = false;
+static float s_waterY = 0.f;
+static float s_pointWorldY[NUM_MAX_POINT_IN_POINT_BUFFER];
+static float s_pointCamera[NUM_MAX_POINT_IN_POINT_BUFFER * 3];
+
+void setWaterSurface(bool on, int worldY)
+{
+    s_waterOn = on;
+    s_waterY = (float)worldY;
+}
+
+static bool underWater(u16 point)
+{
+    return s_pointWorldY[point] > s_waterY;
+}
+
+// Where the edge between two points crosses the surface, on the screen
+static rendererPointStruct waterCrossing(u16 a, u16 b)
+{
+    const float t = (s_waterY - s_pointWorldY[a]) / (s_pointWorldY[b] - s_pointWorldY[a]);
+    const float* pa = &s_pointCamera[a * 3];
+    const float* pb = &s_pointCamera[b * 3];
+    const float x = pa[0] + (pb[0] - pa[0]) * t;
+    const float y = pa[1] + (pb[1] - pa[1]) * t;
+    const float depth = pa[2] + (pb[2] - pa[2]) * t + cameraPerspective;
+    rendererPointStruct out;
+    out.X = ((x * cameraFovX) / depth) + cameraCenterX;
+    out.Y = ((y * cameraFovY) / depth) + cameraCenterY;
+    out.Z = depth;
+    return out;
+}
+
+static rendererPointStruct projectedPoint(u16 point)
+{
+    rendererPointStruct out;
+    out.X = renderPointList[point * 3];
+    out.Y = renderPointList[point * 3 + 1];
+    out.Z = renderPointList[point * 3 + 2];
+    return out;
+}
+
+// The part of a polygon (closed) or line (open) above the water, into out;
+// returns its number of vertices (0: all under water)
+static int cutAtWater(const std::vector<u16>& points, bool closed, rendererPointStruct* out)
+{
+    const int count = (int)points.size();
+    int kept = 0;
+    for (int i = 0; i < count; i++)
+    {
+        const u16 current = points[i];
+        if (!underWater(current) && kept < NUM_MAX_VERTEX_IN_PRIM)
+            out[kept++] = projectedPoint(current);
+        if (!closed && i == count - 1)
+            break;
+        const u16 next = points[(i + 1) % count];
+        if (underWater(current) != underWater(next) && kept < NUM_MAX_VERTEX_IN_PRIM)
+            out[kept++] = waterCrossing(current, next);
+    }
+    return kept;
+}
+
+// Applies the water to a primitive already filled with its points: false if
+// nothing of it is left above the surface
+static bool keepAboveWater(primEntryStruct* entry, const std::vector<u16>& points, bool closed)
+{
+    if (!s_waterOn)
+        return true;
+    bool anyUnder = false;
+    for (u16 point : points)
+        anyUnder |= underWater(point);
+    if (!anyUnder)
+        return true;
+    rendererPointStruct cut[NUM_MAX_VERTEX_IN_PRIM];
+    const int kept = cutAtWater(points, closed, cut);
+    if (kept < (closed ? 3 : 2))
+        return false;
+    for (int i = 0; i < kept; i++)
+        entry->vertices[i] = cut[i];
+    entry->numOfVertices = (u16)kept;
+    return true;
+}
+
 bool boneRotateX;
 bool boneRotateY;
 bool boneRotateZ;
@@ -503,6 +589,7 @@ int AnimNuage(int x,int y,int z,int alpha,int beta,int gamma, sBody* pBody)
             X += renderX;
             Y += renderY;
             Z += renderZ;
+            s_pointWorldY[i] = Y;
 
 #if defined(AITD_UE4)
             *(outPtr++) = (s16)X;
@@ -524,6 +611,9 @@ int AnimNuage(int x,int y,int z,int alpha,int beta,int gamma, sBody* pBody)
                 *(outPtr++) = (s16)X;
                 *(outPtr++) = (s16)Y;
                 *(outPtr++) = (s16)Z;
+                s_pointCamera[i * 3] = (s16)X;
+                s_pointCamera[i * 3 + 1] = (s16)Y;
+                s_pointCamera[i * 3 + 2] = (s16)Z;
             }
 #endif
         }
@@ -680,6 +770,7 @@ int RotateNuage(int x,int y,int z,int alpha,int beta,int gamma, sBody* pBody)
         X += renderX;
         Y += renderY;
         Z += renderZ;
+        s_pointWorldY[i] = Y;
 
 #if defined(AITD_UE4)
         *(outPtr++) = X;
@@ -700,6 +791,9 @@ int RotateNuage(int x,int y,int z,int alpha,int beta,int gamma, sBody* pBody)
             Y -= translateY;
 
             transformPoint(&X,&Y,&Z);
+            s_pointCamera[i * 3] = X;
+            s_pointCamera[i * 3 + 1] = Y;
+            s_pointCamera[i * 3 + 2] = Z;
 
             Z += cameraPerspective;
 
@@ -775,6 +869,9 @@ void processPrim_Line(int primType, sPrimitive* ptr, char** out)
     const int LAMP_BODY_NUM = 11;
     bool isLampBody = (g_gameId != JACK && s_currentBodyNum == LAMP_BODY_NUM);
 
+    if (!keepAboveWater(pCurrentPrimEntry, ptr->m_points, false))
+        return;
+
     if (depth > 100 || isLampBody)
 #endif
     {
@@ -827,6 +924,9 @@ void processPrim_Poly(int primType, sPrimitive* ptr, char** out, int originalPri
     const int LAMP_BODY_NUM = 11;
     bool isLampBody = (g_gameId != JACK && s_currentBodyNum == LAMP_BODY_NUM);
 
+    if (!keepAboveWater(pCurrentPrimEntry, ptr->m_points, true))
+        return;
+
     if (depth > 100 || isLampBody)
 #endif
     {
@@ -860,6 +960,9 @@ void processPrim_Point(primTypeEnum primType, sPrimitive* ptr, char** out)
     pCurrentPrimEntry->numOfVertices = 1;
     pCurrentPrimEntry->color = ptr->m_color;
     pCurrentPrimEntry->material = ptr->m_material;
+
+    if (s_waterOn && underWater(ptr->m_points[0]))
+        return;
 
     float depth = 32000.f;
     {
@@ -899,6 +1002,9 @@ void processPrim_Sphere(int primType, sPrimitive* ptr, char** out)
     pCurrentPrimEntry->color = ptr->m_color;
     pCurrentPrimEntry->material = ptr->m_material;
     pCurrentPrimEntry->size = ptr->m_size;
+
+    if (s_waterOn && underWater(ptr->m_points[0]))
+        return;
 
     float depth = 32000.f;
     {

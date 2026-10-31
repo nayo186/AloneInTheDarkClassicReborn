@@ -810,8 +810,7 @@ inline void life_Shaking(int amplitude)
 inline void life_Water(int val)
 {
     extern s16 shakeVar1;
-    shakeVar1 = val;
-    if (val > 0) setupShaking(val * 10);
+    shakeVar1 = val;   // no shake (BUGS.md V25)
 }
 
 // LM_INVENTORY

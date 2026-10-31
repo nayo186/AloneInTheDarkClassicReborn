@@ -232,7 +232,7 @@ The list only shows the folders where voices were found: if yours is missing, ch
 | **Required** | `000000` (book 0, page 0): without it the folder is not listed |
 | **Missing pages** | a page without a file is read by the English narrator; a page never mixes narrators |
 
-To know which text a page is, read the books in the game with the English narrator: each page you see is one file (`tatou.log` names each one, e.g. `Voice of book 1 page 2`). The pages of a book are the same in every text language. One book is an exception: *Story of a Louisiana Plantation* (book `10`) has 12 pages in English and 11 in French.
+To know which text a page is, read the books in the game with the English narrator: each page you see is one file (`tatou.log` names each one, e.g. `Voice of book 1 page 2`). The pages of a book are the same in every text language. **The empty page.** The 5th page of *Story of a Louisiana Plantation* (book `10`, page `04`) has no text in any language: nothing is read there. In a dubbing, simply leave out `100400` and number the other pages as the English narrator does (`100500` is the 6th page). The French CD numbers them differently (it has no number for the empty page, so its `100400` is the 6th page); the game recognises that numbering too, so a dubbing made that way also works.
 
 Please share only recordings you made yourself, never the voices of the game or of its CDs.
 

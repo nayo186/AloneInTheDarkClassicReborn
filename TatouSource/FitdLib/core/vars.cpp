@@ -21,7 +21,6 @@ int detailLevel = 0; // the pause menu's detail entry (text 49/50 of the 1992 me
 float g_shadowLightDirX = -0.3f;
 float g_shadowLightDirY = -1.0f;
 float g_shadowLightDirZ = 0.2f;
-bool g_roomIsDark = false;
 
 char* aux;
 char* aux2;

@@ -4,6 +4,16 @@ Alone in the Dark: Classic Reborn started on 2026-10-23 from [Alone in the Dark:
 
 This repository was published with a single starting commit, to keep it light: the early history carried large files that are no longer part of the project. Below are the changes of each release and, after them, the changes made in this fork before it was published, newest first, one line per change. The reasons behind larger removals are explained in `docs/DESCARTADO.md` and the fixes in `docs/baseline/BUGS.md`.
 
+## v1.0.0-beta.9 (2026-10-31)
+
+- Attic stairs: above 60 FPS (uncapped, 120/144 Hz monitors) Carnby walked back up the stairs right after going down; scripted walks now advance at the same pace at any frame rate (BUGS.md V29, issue #4)
+- Dark caverns seen from above: a circle of light follows the player, as in the original, instead of a black screen; going back to the previous room no longer turns everything red (BUGS.md V28)
+- Cavern water hides what is below its surface: the player from the hips down, and the water monster sinks into it (BUGS.md V26)
+- No more screen shake on entering the caverns (BUGS.md V25)
+- An enemy or the player reaching a wall by its corner slides along it instead of stopping: the flying enemy of the caverns flies from the start, and the water monster no longer gets stuck (BUGS.md V27)
+- French narrator: the pages of Story of a Louisiana Plantation after its empty page are read in French, with their own recording (BUGS.md C46; README, Dubbing)
+- tatou.log notes a change of screen shake once, not every frame
+
 ## v1.0.0-beta.8 (2026-10-30)
 
 - Updates from the launcher: when it opens, it looks for a newer release on GitHub and offers to install it; the Update button next to the version (bottom right) looks again. Only the programs and documents are replaced, never UserData (options, saves, backgrounds) or launcher.cfg. The launcher connects to the internet only for this; the game never does (README, Updates)

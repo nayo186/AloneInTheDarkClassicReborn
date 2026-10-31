@@ -109,7 +109,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 
 | Función | Para qué sirve |
 | --- | --- |
-| `selectGameFolder` | Called first, before the log file opens (reads --game aitd1\|jack and --debug / --final) |
+| `selectGameFolder` | Called first, before the log file opens (reads --game aitd1\|jack, --data <folder> and --debug / --final) |
 | `logGameFolder` | Writes to the log what selectGameFolder found (once the log file is open) |
 | `isDebugMode` | Debug mode: test tools on; with a copy of the data, written into the copy |
 | `configFolder` | Folder of aitd_remaster.cfg, with a trailing separator (empty: the working directory) |
@@ -160,8 +160,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `osystem_endOfFrame` | End of a game frame: draws what is pending and the text layer, and shows the frame |
 | `osystem_setPalette` | Sets the game palette (256 RGB colours) and clears the screen fade |
 | `osystem_setPalette` | Sets the game palette (256 RGB colours) and clears the screen fade |
-| `osystem_setDarkRoom` | Darkens the palette for a room without light (and back) |
-| `osystem_drawDarkness` | Dark room (lightOff): covers the scene drawn so far with black; the text layer is drawn after it and the glass of this frame is skipped |
+| `osystem_drawDarkness` | Dark room (lightOff): covers the scene drawn so far with black, except a lit circle around litX, litY (320x200) if lit; the text layer is drawn after it and the glass of this frame is skipped |
 | `osystem_flip` | Draws the 3D primitives still pending |
 | `osystem_CopyBlockPhys` | Sends a rectangle of the 320x200 screen to the graphics card |
 | `osystem_playSampleFromName` | Plays a sound effect read from a file by its name |
@@ -579,6 +578,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `projectToScreen` | A point (coordinates of the camera's room) on the 320x200 screen; false if it is behind or too near the camera |
 | `AffObjet` | Draws a 3D model at a position and angles: projects it and sends its polygons to the renderer |
 | `setNextObjectSize` | Size of the next object AffObjet draws; put back ObjectSize() afterwards |
+| `setWaterSurface` | Water of the caverns: while on, AffObjet does not draw what is below this height of the world (down is +), cutting what crosses it |
 | `setCurrentBodyNum` | The body about to be drawn (for the rules of special bodies) |
 | `computeScreenBox` | Projects a model and computes the screen rectangle it covers (BBox3D) |
 

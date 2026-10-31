@@ -57,11 +57,10 @@
 	void osystem_setPalette(unsigned byte * palette);
 	// Sets the game palette (256 RGB colours) and clears the screen fade
 	void osystem_setPalette(palette_t* palette);
-	// Darkens the palette for a room without light (and back)
-	void osystem_setDarkRoom(bool dark);
-	// Dark room (lightOff): covers the scene drawn so far with black; the
-	// text layer is drawn after it and the glass of this frame is skipped
-	void osystem_drawDarkness();
+	// Dark room (lightOff): covers the scene drawn so far with black, except
+	// a lit circle around litX, litY (320x200) if lit; the text layer is
+	// drawn after it and the glass of this frame is skipped
+	void osystem_drawDarkness(bool lit, int litX, int litY);
 	// Draws the 3D primitives still pending
 	void osystem_flip(unsigned char *videoBuffer);
 	// Sends a rectangle of the 320x200 screen to the graphics card

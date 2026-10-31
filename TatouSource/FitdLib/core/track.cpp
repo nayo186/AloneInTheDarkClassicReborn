@@ -319,6 +319,13 @@ void processTrack(void)
         }
     case 3: // track
         {
+            // One macro per tick of the game clock at most, as at 60 fps and
+            // on the 1992 PC: above 60 fps a frame without a tick ran the next
+            // macros without moving, and a track could end short of its end
+            // (the attic stairs ended in the zone that walks back up, BUGS.md V29)
+            if (ticksThisFrame == 0)
+                break;
+
             char* trackPtr = HQR_Get(listTrack,currentProcessedActorPtr->trackNumber);
             trackPtr+=currentProcessedActorPtr->positionInTrack * 2;
 

@@ -74,6 +74,10 @@ struct ObjectSize
 // Size of the next object AffObjet draws; put back ObjectSize() afterwards
 void setNextObjectSize(const ObjectSize& size);
 
+// Water of the caverns: while on, AffObjet does not draw what is below this
+// height of the world (down is +), cutting what crosses it
+void setWaterSurface(bool on, int worldY);
+
 // The body about to be drawn (for the rules of special bodies)
 void setCurrentBodyNum(int bodyNum, sBody* pBody, const std::string& hqrName);
 

@@ -70,6 +70,10 @@ int isBgOverlayRequired(int X1, int X2, int Z1, int Z2, char* data, int param)
 // tools/readLog.py reads them)
 static bool s_logDrawFrame = false;
 
+// Height of the water's surface in the caverns, in room coordinates (the
+// floor of the water rooms is at 0, the water monster stands at -1000)
+static const int kWaterSurfaceY = -1000;
+
 void drawBgOverlay(tObject* actorPtr)
 {
     char* data;
@@ -540,6 +544,11 @@ void AllRedraw(int flagFlip)
         GenereAffList();
     }
 
+    // Where the light object is on screen, if drawn this frame (off screen
+    // otherwise)
+    lightX = 4000;
+    lightY = -2000;
+
     // Painter's order (Original mode): Index is sorted far to near
     // (sortActorList); each object gets a depth slice so nearer objects stay
     // in front, as the original drew them (BUGS.md V21)
@@ -553,6 +562,23 @@ void AllRedraw(int flagFlip)
             s_lastDrawLog = timer;
             printf("[DRAW] frame: floor %d, camera %d, room %d, %d objects (far to near)\n", g_currentFloor, NumCamera, currentRoom, numDrawn);
         }
+    }
+
+    // Water of the caverns: WATER (shakeVar1, kept from FITD) is on while the
+    // player is in the caverns; what is below its surface is not drawn
+    // (BUGS.md V26). The surface is 1000 above the floor of the water rooms,
+    // given in the camera room's coordinates
+    {
+        bool water = shakeVar1 != 0;
+        int surface = 0;
+        if (water && currentCameraTargetActor >= 0 && currentCameraTargetActor < (int)ListObjets.size())
+        {
+            const tObject& target = ListObjets[currentCameraTargetActor];
+            surface = kWaterSurfaceY + target.worldY - target.roomY;
+        }
+        else
+            water = false;
+        setWaterSurface(water, surface);
     }
 
     for (int i = 0; i < NbAffObjets + NbAnim2D && i < (int)Index.size(); i++)
@@ -683,12 +709,26 @@ void AllRedraw(int flagFlip)
         }
     }
     osystem_setDepthSlice(-1);
+    setWaterSurface(false, 0);
 
     // Dark room (LIGHT, lightOff): the original turned the palette black. The
     // scene is still drawn (hit points, positions) and then covered with
-    // black; the messages and the menus stay visible (BUGS.md V23)
-    if (lightOff || roomAssumedDark())
-        osystem_drawDarkness();
+    // black; the messages and the menus stay visible (BUGS.md V23). With a
+    // light object (the lamp in the caverns) a circle around it stays lit
+    // (BUGS.md V28)
+    const bool dark = lightOff || roomAssumedDark();
+    const int lightObject = (dark && g_gameId == AITD1) ? CVars[getCVarsIdx(LIGHT_OBJECT)] : -1;
+    static int s_litObject = -1;
+    if (lightObject != s_litObject)
+    {
+        if (lightObject != -1)
+            printf("[LIGHT] Lit circle around object %d (floor %d room %d)\n", lightObject, g_currentFloor, currentRoom);
+        else
+            printf("[LIGHT] Lit circle ended (floor %d room %d)\n", g_currentFloor, currentRoom);
+        s_litObject = lightObject;
+    }
+    if (dark)
+        osystem_drawDarkness(lightObject != -1, lightX, lightY);
 
 #ifdef FITD_DEBUGGER
     {

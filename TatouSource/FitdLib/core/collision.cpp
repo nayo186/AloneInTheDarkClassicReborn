@@ -221,6 +221,32 @@ static long long overlapXZ(ZVStruct* zv, ZVStruct* fixZv)
     return (long long)overlapX * overlapZ;
 }
 
+// A move that reaches a box by its corner, diagonally: FITD stopped it, so an
+// actor whose track passes by the corner of a wall (the flying monster of the
+// caverns) stayed there for ever. Keep the part of the move along the side
+// that does not enter the box, the longer one if both are free (BUGS.md V27).
+static void slideAtCorner(ZVStruct* oldZv, ZVStruct* fixZv)
+{
+    ZVStruct onlyX = *oldZv;
+    onlyX.ZVX1 += hardColStepX;
+    onlyX.ZVX2 += hardColStepX;
+    ZVStruct onlyZ = *oldZv;
+    onlyZ.ZVZ1 += hardColStepZ;
+    onlyZ.ZVZ2 += hardColStepZ;
+    const bool xFree = hardColStepX != 0 && overlapXZ(&onlyX, fixZv) == 0;
+    const bool zFree = hardColStepZ != 0 && overlapXZ(&onlyZ, fixZv) == 0;
+
+    if (xFree && (!zFree || abs(hardColStepX) >= abs(hardColStepZ)))
+        hardColStepZ = 0;
+    else if (zFree)
+        hardColStepX = 0;
+    else
+    {
+        hardColStepX = 0;
+        hardColStepZ = 0;
+    }
+}
+
 void GereCollision(ZVStruct* oldZv, ZVStruct* animatedZv, ZVStruct* fixZv)
 {
     s32 oldpos = 0;
@@ -368,8 +394,7 @@ void GereCollision(ZVStruct* oldZv, ZVStruct* animatedZv, ZVStruct* fixZv)
             {
                 if ((type == 0) || ((type == 1) && ((pos & oldpos) == 0)))
                 {
-                    hardColStepZ = 0;
-                    hardColStepX = 0;
+                    slideAtCorner(oldZv, fixZv);
                 }
                 else
                 {

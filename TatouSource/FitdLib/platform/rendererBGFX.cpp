@@ -203,31 +203,16 @@ char RGB_Pal[256 * 4];
 unsigned int    backTexture;
 
 
-static bool s_darkRoomActive = false;
-static const float DARK_ROOM_BRIGHTNESS = 0.10f;
-
-static void uploadPaletteWithDarkening()
+static void uploadPalette()
 {
-    if (s_darkRoomActive)
-    {
-        u8 darkPal[256 * 3];
-        for (int i = 0; i < 256 * 3; i++)
-        {
-            darkPal[i] = (u8)(RGB_Pal[i] * DARK_ROOM_BRIGHTNESS);
-        }
-        bgfx::updateTexture2D(g_paletteTexture, 0, 0, 0, 0, 3, 256, bgfx::copy(darkPal, 256 * 3));
-    }
-    else
-    {
-        bgfx::updateTexture2D(g_paletteTexture, 0, 0, 0, 0, 3, 256, bgfx::copy(RGB_Pal, 256 * 3));
-    }
+    bgfx::updateTexture2D(g_paletteTexture, 0, 0, 0, 0, 3, 256, bgfx::copy(RGB_Pal, 256 * 3));
 }
 
 void osystem_setPalette(u8* palette)
 {
     osystem_setScreenFade(1.0f);
     memcpy(RGB_Pal, palette, 256 * 3);
-    uploadPaletteWithDarkening();
+    uploadPalette();
 }
 
 void osystem_setPalette(palette_t* palette)
@@ -238,13 +223,7 @@ void osystem_setPalette(palette_t* palette)
             RGB_Pal[i * 3 + j] = palette->at(i)[j];
         }
     }
-    uploadPaletteWithDarkening();
-}
-
-void osystem_setDarkRoom(bool dark)
-{
-    s_darkRoomActive = dark;
-    uploadPaletteWithDarkening();
+    uploadPalette();
 }
 
 struct s_vertexData
@@ -297,7 +276,14 @@ void submitImageBackground(bgfx::ViewId viewId)
 // Dark room: the scene of this frame is covered with black (BUGS.md V23)
 static bool s_sceneDarkThisFrame = false;
 
-void osystem_drawDarkness()
+// Lit circle of the lamp in a dark room, in 320x200 pixels: round on a 4:3
+// screen, measured on the original (BUGS.md V28)
+static const float kLitRadiusX = 36.f;
+static const float kLitRadiusY = 30.f;
+static const int kLitSegments = 64;
+static const float kPi = 3.14159265f;
+
+void osystem_drawDarkness(bool lit, int litX, int litY)
 {
     static bgfx::TextureHandle black = BGFX_INVALID_HANDLE;
     static bgfx::UniformHandle textureUniform = BGFX_INVALID_HANDLE;
@@ -315,16 +301,37 @@ void osystem_drawDarkness()
         .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
         .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
         .end();
-    bgfx::TransientVertexBuffer buffer;
-    bgfx::allocTransientVertexBuffer(&buffer, 6, layout);
     struct Vertex { float position[3]; float texcoord[2]; };
-    Vertex* v = (Vertex*)buffer.data;
-    const Vertex quad[6] = {
-        { { 0.f, 0.f, 0.f }, { 0.f, 0.f } }, { { 320.f, 200.f, 0.f }, { 1.f, 1.f } }, { { 320.f, 0.f, 0.f }, { 1.f, 0.f } },
-        { { 0.f, 0.f, 0.f }, { 0.f, 0.f } }, { { 0.f, 200.f, 0.f }, { 0.f, 1.f } }, { { 320.f, 200.f, 0.f }, { 1.f, 1.f } },
-    };
-    for (int i = 0; i < 6; i++)
-        v[i] = quad[i];
+    bgfx::TransientVertexBuffer buffer;
+    if (!lit)
+    {
+        bgfx::allocTransientVertexBuffer(&buffer, 6, layout);
+        Vertex* v = (Vertex*)buffer.data;
+        const Vertex quad[6] = {
+            { { 0.f, 0.f, 0.f }, { 0.f, 0.f } }, { { 320.f, 200.f, 0.f }, { 1.f, 1.f } }, { { 320.f, 0.f, 0.f }, { 1.f, 0.f } },
+            { { 0.f, 0.f, 0.f }, { 0.f, 0.f } }, { { 0.f, 200.f, 0.f }, { 0.f, 1.f } }, { { 320.f, 200.f, 0.f }, { 1.f, 1.f } },
+        };
+        for (int i = 0; i < 6; i++)
+            v[i] = quad[i];
+    }
+    else
+    {
+        // A ring from the circle out past the screen: black everywhere else
+        const float outer = 1000.f;
+        bgfx::allocTransientVertexBuffer(&buffer, kLitSegments * 6, layout);
+        Vertex* v = (Vertex*)buffer.data;
+        for (int i = 0; i < kLitSegments; i++)
+        {
+            const float a0 = 2.f * kPi * i / kLitSegments;
+            const float a1 = 2.f * kPi * (i + 1) / kLitSegments;
+            const Vertex in0 = { { litX + kLitRadiusX * cosf(a0), litY + kLitRadiusY * sinf(a0), 0.f }, { 0.f, 0.f } };
+            const Vertex in1 = { { litX + kLitRadiusX * cosf(a1), litY + kLitRadiusY * sinf(a1), 0.f }, { 0.f, 0.f } };
+            const Vertex out0 = { { litX + outer * cosf(a0), litY + outer * sinf(a0), 0.f }, { 0.f, 0.f } };
+            const Vertex out1 = { { litX + outer * cosf(a1), litY + outer * sinf(a1), 0.f }, { 0.f, 0.f } };
+            *v++ = in0; *v++ = out0; *v++ = out1;
+            *v++ = in0; *v++ = out1; *v++ = in1;
+        }
+    }
 
     bgfx::setState(BGFX_STATE_WRITE_RGB | BGFX_STATE_DEPTH_TEST_ALWAYS);
     bgfx::setVertexBuffer(0, &buffer);

@@ -2269,6 +2269,7 @@ void processLife(int lifeNum, bool callFoundLife)
             case LM_SHAKING: // SHAKING 
             {
                 appendFormated("LM_SHAKING ");
+                const s16 previousAmplitude = shakingAmplitude;
                 shakingAmplitude = *(s16*)(currentLifePtr);
                 currentLifePtr += 2;
 
@@ -2282,7 +2283,10 @@ void processLife(int lifeNum, bool callFoundLife)
                     setupShaking(shakingAmplitude);
                 }
 
-                printf(LIFE_TAG "LM_SHAKING set to amplitude %d\n", shakingAmplitude);
+                // Scripts repeat it every frame while a monster shakes the
+                // floor: only a change is logged
+                if (shakingAmplitude != previousAmplitude)
+                    printf(LIFE_TAG "LM_SHAKING set to amplitude %d\n", shakingAmplitude);
                 break;
             }
             case LM_PLUIE:
@@ -2293,17 +2297,11 @@ void processLife(int lifeNum, bool callFoundLife)
                 currentLifePtr += 2;
                 break;
             }
-            case LM_WATER: // water/worm attack effect with screen shake
+            case LM_WATER: // set on entering the caverns, cleared on leaving; no shake (BUGS.md V25)
             {
                 appendFormated("LM_WATER ");
                 shakeVar1 = *(s16*)(currentLifePtr);
                 currentLifePtr += 2;
-
-                // Trigger screen shake for dramatic water/worm effects
-                if (shakeVar1 > 0)
-                {
-                    setupShaking(shakeVar1 * 10); // Amplify for dramatic effect
-                }
 
                 printf(LIFE_TAG "LM_WATER set to %d\n", shakeVar1);
                 break;

@@ -1138,11 +1138,39 @@ static bool playVoiceWav(unsigned char* wav, size_t wavSize, bool owned, const c
 static std::string vocCacheKey(const NarratorVoices* narrator, int vocIndex, int page);
 static unsigned char* tryGetPreDecodedVocPage(const std::string& key, size_t* outSize);
 
+// The number of a book page in a narrator's recordings (-1: none). The
+// French CD has no recording for the 5th page of "Story of a Louisiana
+// Plantation" (book 10), empty in every language (the game's own reads it
+// silent), so its later pages are one number earlier; a narrator with that
+// book one page short is read that way (BUGS.md C46)
+static int narratorPage(const NarratorVoices* narrator, int vocIndex, int page)
+{
+    const int kShortBook = 10, kEmptyPage = 4, kLastPage = 11;
+    if (narrator && vocIndex == kShortBook && !narrator->hasPiece(kShortBook * 10000 + kLastPage * 100) &&
+        narrator->hasPiece(kShortBook * 10000 + (kLastPage - 1) * 100))
+    {
+        if (page == kEmptyPage)
+            return -1;
+        if (page > kEmptyPage)
+            return page - 1;
+    }
+    return page;
+}
+
+// First piece of a page's narration (vocIndex * 10000 + page * 100)
+static int narrationStart(const NarratorVoices* narrator, int vocIndex, int page)
+{
+    return vocIndex * 10000 + (narrator ? narratorPage(narrator, vocIndex, page) : page) * 100;
+}
+
 // The narrator of a page: the chosen one when it has that page (a page never
 // mixes narrators), else null (the game's own)
 static const NarratorVoices* pageNarrator(const std::shared_ptr<const NarratorVoices>& narrator, int vocIndex, int page)
 {
-    return (narrator && narrator->hasPiece(vocIndex * 10000 + page * 100)) ? narrator.get() : nullptr;
+    if (!narrator)
+        return nullptr;
+    const int own = narratorPage(narrator.get(), vocIndex, page);
+    return (own >= 0 && narrator->hasPiece(vocIndex * 10000 + own * 100)) ? narrator.get() : nullptr;
 }
 
 void osystem_playVocPage(int vocIndex, int page)
@@ -1161,7 +1189,7 @@ void osystem_playVocPage(int vocIndex, int page)
     unsigned char* wav = tryGetPreDecodedVocPage(vocCacheKey(narrator, vocIndex, page), &wavSize);
     const bool cached = wav && wavSize > 0;
     if (!cached)
-        wav = buildNarration(narrator, vocIndex * 10000 + page * 100, 100, &wavSize);
+        wav = buildNarration(narrator, narrationStart(narrator, vocIndex, page), 100, &wavSize);
     if (!wav)
     {
         printf(VO_WARN "No voice for book %d page %d" CON_RESET "\n", vocIndex, page);
@@ -1314,7 +1342,7 @@ void osystem_preDecodeVocPage(int vocIndex, int page)
         JobSystem::Priority::HIGH,
         [vocIndex, page, keep, cacheEntry]() {
             size_t wavSize = 0;
-            unsigned char* wav = buildNarration(keep.get(), vocIndex * 10000 + page * 100, 100, &wavSize);
+            unsigned char* wav = buildNarration(keep.get(), narrationStart(keep.get(), vocIndex, page), 100, &wavSize);
             if (!wav)
                 return;
             {

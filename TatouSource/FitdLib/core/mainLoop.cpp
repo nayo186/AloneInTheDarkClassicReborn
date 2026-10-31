@@ -302,18 +302,6 @@ void PlayWorld(int allowSystemMenu, int deltaTime)
 
         if(FlagChangeEtage == 0)
         {
-            if(g_gameId == AITD1)
-            {
-                bool isDark = (CVars[getCVarsIdx(LIGHT_OBJECT)] != -1);
-                if (isDark != g_roomIsDark)
-                {
-                    g_roomIsDark = isDark;
-                    osystem_setDarkRoom(isDark);
-                    // Reload camera to switch between normal and _DARK HD background
-                    InitView();
-                }
-            }
-
             for(currentProcessedActorIdx = 0; currentProcessedActorIdx < NUM_MAX_OBJECT; currentProcessedActorIdx++)
             {
                 currentProcessedActorPtr = &ListObjets[currentProcessedActorIdx];
@@ -399,12 +387,6 @@ void PlayWorld(int allowSystemMenu, int deltaTime)
 
         if(FlagChangeEtage)
         {
-            // Reset dark room state before loading new floor
-            if (g_roomIsDark)
-            {
-                g_roomIsDark = false;
-                osystem_setDarkRoom(false);
-            }
             LoadEtage(NewNumEtage);
         }
 
