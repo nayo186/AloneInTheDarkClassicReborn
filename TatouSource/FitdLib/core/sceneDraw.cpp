@@ -173,8 +173,13 @@ void drawBgOverlay(tObject* actorPtr)
                 int actorZ1 = actorPtr->zv.ZVZ1 / 10;
                 int actorZ2 = actorPtr->zv.ZVZ2 / 10;
 
+                if (s_logDrawFrame && actorPtr->room != currentRoom)
+                    printf("[DRAW]     room %d object %d,%d-%d,%d vs mask %d zone %d,%d-%d,%d\n", actorPtr->room, actorX1, actorZ1, actorX2, actorZ2, i, pRect->zoneX1, pRect->zoneZ1, pRect->zoneX2, pRect->zoneZ2);
+
                 if (actorX1 >= pRect->zoneX1 && actorZ1 >= pRect->zoneZ1 && actorX2 <= pRect->zoneX2 && actorZ2 <= pRect->zoneZ2)
                 {
+                    if (s_logDrawFrame)
+                        printf("[DRAW]     mask %d (room %d) clipped to %d,%d-%d,%d\n", i, actorPtr->room, clipLeft, clipTop, clipRight, clipBottom);
                     osystem_setClip(clipLeft, clipTop, clipRight, clipBottom);
                     osystem_drawMask(relativeCameraIndex, i);
                     osystem_clearClip();

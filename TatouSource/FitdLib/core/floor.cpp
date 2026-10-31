@@ -414,6 +414,22 @@ void LoadEtage(int floorNumber)
                     }
                 }
 
+                // Boxes of the viewed room this camera sees (BUGS.md J4)
+                if (g_gameId >= JACK && pCurrentCameraViewedRoom->offsetCamOptims)
+                {
+                    unsigned char* pOptimData = backupDataPtr + pCurrentCameraViewedRoom->offsetCamOptims;
+                    int numBoxes = READ_LE_U16(pOptimData); pOptimData += 2;
+                    pCurrentCameraViewedRoom->seenBoxes.reserve(numBoxes);
+                    for (int j = 0; j < numBoxes; j++)
+                    {
+                        auto& box = pCurrentCameraViewedRoom->seenBoxes.emplace_back();
+                        box.zoneX1 = READ_LE_S16(pOptimData); pOptimData += 2;
+                        box.zoneZ1 = READ_LE_S16(pOptimData); pOptimData += 2;
+                        box.zoneX2 = READ_LE_S16(pOptimData); pOptimData += 2;
+                        box.zoneZ2 = READ_LE_S16(pOptimData); pOptimData += 2;
+                    }
+                }
+
                 if(g_gameId == AITD1)
                     currentCameraData+=0x0C;
                 else

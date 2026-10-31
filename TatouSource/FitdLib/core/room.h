@@ -80,6 +80,10 @@ struct cameraViewedRoomStruct
   std::vector<cameraMaskStruct> masks;
   std::vector<cameraZoneEntryStruct> coverZones;
   std::vector<cameraHybridStruct> hybrids;
+  // Jack and later (offsetCamOptims): the parts of the viewed room the camera
+  // sees, in the room's coordinates; an object of another room outside them
+  // is not drawn (BUGS.md J4)
+  std::vector<rectTestStruct> seenBoxes;
 };
 
 struct cameraDataStruct

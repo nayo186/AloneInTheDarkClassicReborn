@@ -210,8 +210,17 @@ void playSound(int num)
 	// Skip re-triggering the same sample if it is still playing.
 	// Life script opcodes (LM_SAMPLE, LM_ANIM_SAMPLE) fire every game tick,
 	// so without this guard the sound restarts from the beginning each frame.
+	// Logged once per sample, not on every pass it keeps being asked for
+	static int s_lastSkipped = -1;
 	if(num == LastSample && osystem_isSamplePlaying())
+	{
+		if (num != s_lastSkipped)
+		{
+			logSample("Sample skipped (still playing)", num);
+			s_lastSkipped = num;
+		}
 		return;
+	}
 
 	char sampleFileName[256] = "";
 	if (g_gameId == TIMEGATE)
@@ -225,14 +234,22 @@ void playSound(int num)
 
 	int size = getPakSize(sampleFileName,num);
 	if(!size)
+	{
+		logSample("Sample missing", num);
 		return;
+	}
 
 	char* ptr = HQR_Get(listSamp,num);
 	if(!ptr)
+	{
+		logSample("Sample missing", num);
 		return;
+	}
 
 	osystem_playSample(ptr, size);
 	LastSample = num;
+	s_lastSkipped = -1;
+	logSample("Sample", num);
 }
 
 // Looping sample asked by a script in this pass of the game loop, and in how

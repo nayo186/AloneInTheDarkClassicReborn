@@ -60,9 +60,34 @@ SoLoud::handle osystemAL_playMusicSource(SoLoud::AudioSource& source)
     return s_musicBus ? s_musicBus->play(source) : gSoloud->play(source);
 }
 
+// Track active SFX handles and sources so multiple sounds can overlap
+struct ActiveSfx
+{
+    SoLoud::handle handle;
+    SoLoud::AudioSource* source;
+    bool looping;
+};
+static std::vector<ActiveSfx> g_activeSfx;
+
 static SoLoud::handle playAudioSource(SoLoud::AudioSource& source)
 {
+    // Past the active voice limit SoLoud silences the quietest sounds
+    if (gSoloud->getActiveVoiceCount() >= gSoloud->getMaxActiveVoiceCount())
+        printf(AL_TAG "[SOUND] Voice limit reached (%u active): a sound may be cut\n", gSoloud->getActiveVoiceCount());
     return s_audioBus ? s_audioBus->play(source) : gSoloud->play(source);
+}
+
+// How many of the active samples are still sounding, for the stop lines of
+// tatou.log
+static int countPlayingSfx(bool loopingOnly)
+{
+    int count = 0;
+    for (auto& sfx : g_activeSfx)
+    {
+        if ((!loopingOnly || sfx.looping) && gSoloud->isValidVoiceHandle(sfx.handle))
+            count++;
+    }
+    return count;
 }
 
 // Music stream state (declared here so closeAudioArchive can clean them up)
@@ -390,14 +415,6 @@ SoLoud::AudioSourceInstance* ITD_AudioSource::createInstance()
    return new ITD_AudioInstance(this);
 }
 
-// Track active SFX handles and sources so multiple sounds can overlap
-struct ActiveSfx
-{
-    SoLoud::handle handle;
-    SoLoud::AudioSource* source;
-    bool looping;
-};
-static std::vector<ActiveSfx> g_activeSfx;
 
 // Remove finished sounds from the active list and free their AudioSource memory.
 static void reapFinishedSfx()
@@ -505,6 +522,8 @@ void osystem_playSample(char* samplePtr,int size)
 void osystem_stopSample()
 {
     if (!gSoloud) return;
+    if (int playing = countPlayingSfx(false))
+        printf(AL_TAG "[SOUND] Stopped %d sounds\n", playing);
     for (auto& sfx : g_activeSfx)
     {
         gSoloud->stop(sfx.handle);
@@ -517,6 +536,8 @@ void osystem_stopSample()
 void osystem_stopLoopingSamples()
 {
     if (!gSoloud) return;
+    if (int playing = countPlayingSfx(true))
+        printf(AL_TAG "[SOUND] Stopped %d looping sounds\n", playing);
     for (size_t i = 0; i < g_activeSfx.size(); )
     {
         if (g_activeSfx[i].looping)
@@ -550,6 +571,8 @@ void osystem_playLoopingSample(char* samplePtr, int size, float volume)
 
     // Stop previous looping sounds (only one ambient loop at a time)
     // but let one-shot SFX keep playing.
+    if (int playing = countPlayingSfx(true))
+        printf(AL_TAG "[SOUND] New looping sound replaces %d\n", playing);
     for (size_t i = 0; i < g_activeSfx.size(); )
     {
         if (g_activeSfx[i].looping)

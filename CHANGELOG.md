@@ -4,6 +4,12 @@ Alone in the Dark: Classic Reborn started on 2026-10-23 from [Alone in the Dark:
 
 This repository was published with a single starting commit, to keep it light: the early history carried large files that are no longer part of the project. Below are the changes of each release and, after them, the changes made in this fork before it was published, newest first, one line per change. The reasons behind larger removals are explained in `docs/DESCARTADO.md` and the fixes in `docs/baseline/BUGS.md`.
 
+## v1.0.1 (2026-10-31)
+
+- Jack in the Dark, ending: Santa waving goodbye plays again (PERE.PAK), followed by the closing pictures; animated sequences run at the same speed at any frame rate (BUGS.md J2)
+- Jack in the Dark: objects of a neighbouring room no longer show through the walls, like the dolls guarding the cell seen from the toy chest's room (BUGS.md J4)
+- tatou.log notes every sound that starts, is skipped or is stopped, to find sounds that cut out
+
 ## v1.0.0 (2026-10-31)
 
 - Ending: the burning tree plays again (END_SEQUENCE, ENDSEQ.PAK): the tree in fire colours, its flames and the screen filling with yellow, orange and red; a SHAKING lasts until SHAKING(0), as in the original, so the ground keeps shaking until the player gets away; the cavern water no longer disappears when a shake stops; the sorcerer's scream is louder (BUGS.md C50)

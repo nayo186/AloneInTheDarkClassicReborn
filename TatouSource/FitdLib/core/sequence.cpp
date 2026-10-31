@@ -148,6 +148,8 @@ void unapckSequenceFrame(unsigned char* source,unsigned char* dest)
 
 extern "C" { extern char homePath[512]; }
 
+static const int kSequenceFrameTicks = 4;
+
 void playSequence(int sequenceIdx, int fadeStart, int fadeOutVar)
 {
 
@@ -167,10 +169,21 @@ void playSequence(int sequenceIdx, int fadeStart, int fadeOutVar)
     {
         sprintf_s(buffer, sizeof(buffer), "AN%d", sequenceIdx);
     }
+    else
+    {
+        // Jack's only sequence: Santa ("le Père Noël") at the end (BUGS.md J2)
+        strcpy(buffer, "PERE");
+    }
 
     printf(SEQ_TAG "Playing sequence: %s" CON_RESET "\n", buffer);
 
     int numMaxFrames = PAK_getNumFiles(buffer);
+
+    // Compose every frame, there is no 3D; without it the last camera stayed
+    // on screen and Jack's Santa was never seen (BUGS.md J2)
+    const bool savedMenuActive = g_menuActive;
+    g_menuActive = true;
+    bool skipped = false;
 
     while(!quitPlayback)
     {
@@ -215,9 +228,10 @@ void playSequence(int sequenceIdx, int fadeStart, int fadeOutVar)
                     flipOtherPalette(palette);
                     } */
 
-                    osystem_setPalette(&seqPalette);
+                    setPalette(seqPalette);
                     copyPalette(seqPalette,currentGamePalette);
                 }
+                coreScreenPictureShown(buffer, 0);
             }
             else // not first frame
             {
@@ -252,14 +266,19 @@ void playSequence(int sequenceIdx, int fadeStart, int fadeOutVar)
 
             currentFrameId++;
 
-			for(int i=0;i<5;i++) // display the frame 5 times (original seems to wait 5 sync)
+			// The original waited 5 screen syncs (70 Hz) per frame: about 4
+			// ticks of the game clock, whatever the FPS
+			int frameTicks = 0;
+			while (frameTicks < kSequenceFrameTicks && !key)
 			{
 				process_events();
+				frameTicks += ticksThisFrame;
 			}
 
 			if(key)
 			{
 				//stopSample();
+				skipped = true;
 				quitPlayback = 1;
 				break;
 			}
@@ -274,6 +293,8 @@ void playSequence(int sequenceIdx, int fadeStart, int fadeOutVar)
         }
     }
 
+    printf(SEQ_TAG "Sequence %s: %d of %d frames shown%s\n", buffer, frames, numMaxFrames, skipped ? ", skipped with a key" : "");
+    g_menuActive = savedMenuActive;
 	FlagInitView = 2;
 }
 

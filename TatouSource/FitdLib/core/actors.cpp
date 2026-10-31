@@ -520,6 +520,32 @@ int checkActorInRoom(int room)
     return(0);
 }
 
+// Jack: an object of another room is seen only inside the boxes the camera
+// keeps for that room. Outside them it was drawn over the walls, as the cell's
+// dolls over the toy chest's room (BUGS.md J4)
+static bool isActorInSeenPart(tObject* actorPtr)
+{
+    if (g_gameId < JACK || actorPtr->room == currentRoom)
+        return true;
+
+    for (int i = 0; i < cameraDataTable[NumCamera]->numViewedRooms; i++)
+    {
+        const cameraViewedRoomStruct& viewedRoom = cameraDataTable[NumCamera]->viewedRoomTable[i];
+        if (viewedRoom.viewedRoomIdx != actorPtr->room)
+            continue;
+        if (viewedRoom.seenBoxes.empty())
+            return true;
+        for (const rectTestStruct& box : viewedRoom.seenBoxes)
+        {
+            if (actorPtr->zv.ZVX2 >= box.zoneX1 && actorPtr->zv.ZVX1 <= box.zoneX2
+                && actorPtr->zv.ZVZ2 >= box.zoneZ1 && actorPtr->zv.ZVZ1 <= box.zoneZ2)
+                return true;
+        }
+        return false;
+    }
+    return true;
+}
+
 void GenereAffList()
 {
     NbAffObjets = 0;
@@ -529,7 +555,7 @@ void GenereAffList()
         tObject* actorPtr = &ListObjets[i];
         if (actorPtr->indexInWorld != -1 && actorPtr->bodyNum != -1)
         {
-            if (checkActorInRoom(actorPtr->room))
+            if (checkActorInRoom(actorPtr->room) && isActorInSeenPart(actorPtr))
             {
                 Index[NbAffObjets] = i;
                 if (!(actorPtr->objectType & (AF_SPECIAL | AF_ANIMATED)))

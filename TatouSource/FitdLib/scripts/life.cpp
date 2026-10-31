@@ -2469,11 +2469,22 @@ void processLife(int lifeNum, bool callFoundLife)
                 sequenceIdx = *(u16*)(currentLifePtr);
                 currentLifePtr += 2;
 
-                fadeEntry = *(u16*)(currentLifePtr);
-                currentLifePtr += 2;
+                if (g_gameId == JACK)
+                {
+                    // Jack's PLAY_SEQUENCE only has the sequence: reading
+                    // three arguments ate the PICTUREs that follow (Santa at
+                    // the end, BUGS.md J2). Played once, without fades
+                    fadeEntry = 0;
+                    fadeOut = 1;
+                }
+                else
+                {
+                    fadeEntry = *(u16*)(currentLifePtr);
+                    currentLifePtr += 2;
 
-                fadeOut = *(u16*)(currentLifePtr);
-                currentLifePtr += 2;
+                    fadeOut = *(u16*)(currentLifePtr);
+                    currentLifePtr += 2;
+                }
 
                 playSequence(sequenceIdx, fadeEntry, fadeOut);
 
