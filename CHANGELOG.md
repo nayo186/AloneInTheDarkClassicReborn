@@ -4,6 +4,10 @@ Alone in the Dark: Classic Reborn started on 2026-10-23 from [Alone in the Dark:
 
 This repository was published with a single starting commit, to keep it light: the early history carried large files that are no longer part of the project. Below are the changes of each release and, after them, the changes made in this fork before it was published, newest first, one line per change. The reasons behind larger removals are explained in `docs/DESCARTADO.md` and the fixes in `docs/baseline/BUGS.md`.
 
+## v1.0.0-beta.10 (2026-10-31)
+
+- Library: the talisman's looping sound stops when the player leaves the library or takes the talisman, instead of playing on in every room; a looping sound a script keeps asking for stops when it no longer asks (BUGS.md C47)
+
 ## v1.0.0-beta.9 (2026-10-31)
 
 - Attic stairs: above 60 FPS (uncapped, 120/144 Hz monitors) Carnby walked back up the stairs right after going down; scripted walks now advance at the same pace at any frame rate (BUGS.md V29, issue #4)

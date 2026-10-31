@@ -30,6 +30,8 @@ void playSoundLooping(int num);
 void playSoundThen(int num, int next);
 // Starts the sound effect waiting after the current one (playSoundThen)
 void updateNextSample();
+// Stops a looping sound effect that the scripts no longer ask for
+void updateLoopingSample();
 // Moves the camera towards a position and angles in `time` ticks
 void setCameraTarget(int x,int y,int z,int alpha,int beta,int gamma,int time);
 

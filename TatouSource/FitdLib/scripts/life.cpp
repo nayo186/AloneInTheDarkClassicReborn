@@ -2146,6 +2146,7 @@ void processLife(int lifeNum, bool callFoundLife)
                     readNextArgument();
                 }
 
+                printf(LIFE_TAG "[SOUND] Stop samples by object %d (life %d)\n", currentProcessedActorIdx, currentLifeNum);
                 osystem_stopSample();
 
                 break;

@@ -192,6 +192,13 @@ void setCameraTarget(int x,int y,int z,int alpha,int beta,int gamma,int time)
     SetAngleCamera(alpha,beta,gamma);
 }
 
+// Who asked for a sample, for the [SOUND] lines of tatou.log
+static void logSample(const char* what, int num)
+{
+    printf(MAIN_TAG "[SOUND] %s %d by object %d (life %d), floor %d room %d, tick %u\n",
+        what, num, currentProcessedActorIdx, currentLifeNum, g_currentFloor, currentRoom, timer);
+}
+
 void playSound(int num)
 {
 	if(num == -1)
@@ -228,7 +235,12 @@ void playSound(int num)
 	LastSample = num;
 }
 
-void playSoundLooping(int num)
+// Looping sample asked by a script in this pass of the game loop, and in how
+// many passes in a row (updateLoopingSample)
+static bool s_loopRequested = false;
+static int s_loopPasses = 0;
+
+static void startLoopingSample(int num)
 {
 	if(num == -1)
 		return;
@@ -261,7 +273,37 @@ void playSoundLooping(int num)
 
 	osystem_playLoopingSample(ptr, size);
 	s_lastLoopingSample = num;
-	printf(MAIN_TAG "Sound: looping sample %d\n", num);
+	logSample("Looping sample", num);
+}
+
+void playSoundLooping(int num)
+{
+	s_loopRequested = true;
+	startLoopingSample(num);
+}
+
+// Called once per pass of the game loop, after the scripts. A loop that a
+// script asks for in every pass (the library talisman, the shaking monster)
+// stops when the script stops asking: the original had a single sample
+// channel and the next sample (a footstep) cut it, here it played on in
+// every room and after taking the talisman (BUGS.md C47). A loop asked for
+// only once (a scene) keeps playing.
+void updateLoopingSample()
+{
+	if (s_loopRequested)
+	{
+		s_loopPasses++;
+	}
+	else
+	{
+		if (s_loopPasses >= 2)
+		{
+			printf(MAIN_TAG "[SOUND] Looping sample no longer asked for: stopped\n");
+			osystem_stopLoopingSamples();
+		}
+		s_loopPasses = 0;
+	}
+	s_loopRequested = false;
 }
 
 // LM_SAMPLE_THEN / LM_SAMPLE_THEN_REPEAT: play a sample, then the next one
@@ -289,7 +331,7 @@ void updateNextSample()
 
 	printf(MAIN_TAG "Sound: queued sample %d starts%s\n", num, repeat ? " (looping)" : "");
 	if (repeat)
-		playSoundLooping(num);
+		startLoopingSample(num);
 	else
 		playSound(num);
 }

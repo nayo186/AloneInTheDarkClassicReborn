@@ -640,6 +640,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `playSoundLooping` | Plays sound effect number `num` in a loop |
 | `playSoundThen` | Plays a sound effect and then another one |
 | `updateNextSample` | Starts the sound effect waiting after the current one (playSoundThen) |
+| `updateLoopingSample` | Stops a looping sound effect that the scripts no longer ask for |
 | `setCameraTarget` | Moves the camera towards a position and angles in `time` ticks |
 | `startChrono` | Starts a chronometer (keeps the current time) |
 | `evalChrono` | Ticks passed since startChrono |

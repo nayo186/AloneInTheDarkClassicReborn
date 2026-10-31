@@ -474,6 +474,7 @@ void PlayWorld(int allowSystemMenu, int deltaTime)
 
         AllRedraw(flagRedraw);
 
+        updateLoopingSample();
         updateNextSample();
 
         updatePendingEvents();
