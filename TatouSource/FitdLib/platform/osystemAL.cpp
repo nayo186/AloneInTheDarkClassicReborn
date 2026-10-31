@@ -543,7 +543,7 @@ bool osystem_isSamplePlaying()
     return false;
 }
 
-void osystem_playLoopingSample(char* samplePtr, int size)
+void osystem_playLoopingSample(char* samplePtr, int size, float volume)
 {
     if (!gSoloud || !samplePtr || size <= 0)
         return;
@@ -601,6 +601,7 @@ void osystem_playLoopingSample(char* samplePtr, int size)
     }
 
     pWav->setLooping(true);
+    pWav->setVolume(volume);
     h = playAudioSource(*pWav);
 
     ActiveSfx sfx = { h, pWav, true };

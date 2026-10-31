@@ -69,8 +69,9 @@
 	void osystem_playSampleFromName(char* sampleName);
 	// Plays a sound effect from memory (the game's VOC data)
 	void osystem_playSample(char* samplePtr,int size);
-	// Plays a sound effect in a loop (ambient sound; one at a time)
-	void osystem_playLoopingSample(char* samplePtr, int size);
+	// Plays a sound effect in a loop (ambient sound; one at a time), at
+	// `volume` times its level
+	void osystem_playLoopingSample(char* samplePtr, int size, float volume = 1.0f);
 	// Stops every sound effect
 	void osystem_stopSample();
 	// Stops the looping sound effects

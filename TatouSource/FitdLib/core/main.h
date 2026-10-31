@@ -16,6 +16,8 @@ extern int AntiRebond;
 void menuWaitVSync();
 // Draws sprite number `param` of `gfx` at (x, y), skipping its colour 0 (transparent)
 void AffSpfI(int x, int y, int param, char* gfx);
+// Width and height of sprite number `index` of `gfx`
+void SizeSpf(int index, char* gfx, int* width, int* height);
 // The scenery zones the current object stands in: room change, floor change and other zone triggers
 void GereDec();
 // Runs the script of an object when it is found ("found" life of the world object)
@@ -64,6 +66,8 @@ void drawProjectedBox(int x1,int x2,int y1,int y2,int z1,int z2, int color, int 
 
 // Plays an animated sequence (cinematic) with its fades
 void playSequence(int sequenceIdx, int fadeStart, int fadeOutVar);
+// AITD1 ending: the burning tree of ENDSEQ.PAK, then the screen turns red (END_SEQUENCE)
+void playEndSequence();
 
 // True if the file exists (path as given)
 bool fileExists(const char* name);

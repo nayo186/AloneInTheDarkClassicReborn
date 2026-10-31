@@ -900,9 +900,10 @@ inline void life_GameOver()
     FlagGameOver = 1;
 }
 
-// LM_END_SEQUENCE
+// LM_END_SEQUENCE: AITD1 ending, the tree burns (BUGS.md C50)
 inline void life_EndSequence()
 {
+    playEndSequence();
 }
 
 //////////////////////////////////////////////////////////////////////////////

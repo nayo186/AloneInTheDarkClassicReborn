@@ -150,7 +150,7 @@ int Lire(int index, int startx, int top, int endx, int bottom, int demoMode, int
             while (true) {
                 while (*ptrt == '#')
                 {
-                    //char* var_1BE = var_1C2;
+                    u8* commandStart = ptrt;
                     ptrt++;
 
                     switch (*(ptrt++))
@@ -176,8 +176,10 @@ int Lire(int index, int startx, int top, int endx, int bottom, int demoMode, int
                         line_type |= 8;
                         break;
                     }
-                    case 'G': // print number
+                    case 'G': // illustration (sprite of ITD_RESS 9), centred
                     {
+                        // Was left unwritten (an assert), so books showed no
+                        // illustration, like the sacrificial dagger (BUGS.md C48)
                         currentTextIdx = 0;
 
                         while (*ptrt >= '0' && *ptrt <= '9')
@@ -188,21 +190,20 @@ int Lire(int index, int startx, int top, int endx, int bottom, int demoMode, int
 
                         if (LoadPak("ITD_RESS", 9, aux2))
                         {
-                            assert(0); // when is this used?
-                            /*  var_C = printTextSub3(currentTextIdx,aux2);
-                            var_A = printTextSub4(currentTextIdx,aux2);
+                            int pictureWidth;
+                            int pictureHeight;
+                            SizeSpf(currentTextIdx, aux2, &pictureWidth, &pictureHeight);
+                            printf(MAIN_TAG "Book: illustration %d (%dx%d) at y %d\n", currentTextIdx, pictureWidth, pictureHeight, currentTextY);
 
-                            if(currentTextY + var_A > bottom)
+                            if (currentTextY + pictureHeight > bottom && currentTextY > top)
                             {
-                            var_1C2 = var_1BE;
-
-                            goto pageChange;
+                                // Does not fit: it starts the next page
+                                ptrt = commandStart;
+                                goto pageChange;
                             }
-                            else
-                            {
-                            printTextSub5((((right-left)/2)+left)-var_C, currentTextY, currentTextIdx, aux2);
-                            currentTextY = var_A;
-                            }*/
+
+                            AffSpfI(((endx - startx) / 2) + startx - pictureWidth / 2, currentTextY, currentTextIdx, aux2);
+                            currentTextY += pictureHeight;
                         }
 
                         break;

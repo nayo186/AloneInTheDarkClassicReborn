@@ -484,7 +484,7 @@ extern s16 rndFreqModulation; // Random frequency modulation for sound effects (
 void updateShaking();
 // Stops the screen shake
 void stopShaking();
-// Starts a screen shake (script instruction SHAKING)
+// Starts a screen shake that lasts until stopShaking (script instruction SHAKING)
 void setupShaking(int amplitude);
 // Removes the shake offset while paused
 void pauseShaking();

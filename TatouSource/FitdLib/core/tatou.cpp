@@ -271,7 +271,10 @@ static void startLoopingSample(int num)
 	if(!ptr)
 		return;
 
-	osystem_playLoopingSample(ptr, size);
+	// AITD1: the sorcerer's scream as the tree burns (sample 90) was hidden
+	// under the music; louder than in the original (BUGS.md C50)
+	const float volume = (g_gameId == AITD1 && num == 90) ? 2.0f : 1.0f;
+	osystem_playLoopingSample(ptr, size, volume);
 	s_lastLoopingSample = num;
 	logSample("Looping sample", num);
 }

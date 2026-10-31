@@ -4,6 +4,12 @@ Alone in the Dark: Classic Reborn started on 2026-10-23 from [Alone in the Dark:
 
 This repository was published with a single starting commit, to keep it light: the early history carried large files that are no longer part of the project. Below are the changes of each release and, after them, the changes made in this fork before it was published, newest first, one line per change. The reasons behind larger removals are explained in `docs/DESCARTADO.md` and the fixes in `docs/baseline/BUGS.md`.
 
+## v1.0.0 (2026-10-31)
+
+- Ending: the burning tree plays again (END_SEQUENCE, ENDSEQ.PAK): the tree in fire colours, its flames and the screen filling with yellow, orange and red; a SHAKING lasts until SHAKING(0), as in the original, so the ground keeps shaking until the player gets away; the cavern water no longer disappears when a shake stops; the sorcerer's scream is louder (BUGS.md C50)
+- Books and notes draw their illustrations (#G, ITD_RESS 9): the sacrificial dagger, the plantation map and others (BUGS.md C48)
+- Messages ("The lamp is empty", "This room is dark"...) stay on screen one second longer and last the same at any frame rate (BUGS.md C49)
+
 ## v1.0.0-beta.10 (2026-10-31)
 
 - Library: the talisman's looping sound stops when the player leaves the library or takes the talisman, instead of playing on in every room; a looping sound a script keeps asking for stops when it no longer asks (BUGS.md C47)

@@ -25,6 +25,9 @@ void LoadEtage(int floorNumber)
     // (one-shot sounds end on their own; the new floor's scripts start their
     // own loops) (BUGS.md C21)
     osystem_stopLoopingSamples();
+    // A shake lasts until SHAKING(0) (BUGS.md C50); the new floor's scripts
+    // start their own
+    stopShaking();
 
     if(g_currentFloorCameraRawData)
     {

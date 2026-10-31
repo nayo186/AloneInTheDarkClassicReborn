@@ -2572,10 +2572,10 @@ void processLife(int lifeNum, bool callFoundLife)
 
                 break;
             }
-            case LM_END_SEQUENCE: // ends a scripted cinematic sequence, game continues
+            case LM_END_SEQUENCE: // AITD1 ending: the tree burns (BUGS.md C50)
             {
                 appendFormated("LM_END_SEQUENCE ");
-                printf(LIFE_TAG "LM_END_SEQUENCE - Ending cinematic sequence, gameplay continues\n");
+                playEndSequence();
 
                 break;
             }

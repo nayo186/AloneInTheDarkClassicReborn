@@ -37,32 +37,20 @@ extern void playMenuSound(const char* soundName);
 
 
 // Shake state - only triggers via life script LM_SHAKING opcode
-static int s_shakeFramesRemaining = 0;
 static int s_shakeMaxAmplitude = 0;
 
+// SHAKING(n) shakes the screen until SHAKING(0), as in the original: the
+// remaster stopped it after one second, so the shaking of the ending (one
+// SHAKING(1) when the tree burns, SHAKING(0) once escaped) ended at once
+// (BUGS.md C50). Also stopped on a floor change and on leaving the game
 void updateShaking()
 {
-    // Only update shake if it was triggered by a life script (via setupShaking)
-    if (s_shakeFramesRemaining > 0 && s_shakeMaxAmplitude > 0)
+    if (s_shakeMaxAmplitude > 0)
     {
-        // Calculate current amplitude (fades out over time)
-        float progress = (float)s_shakeFramesRemaining / 60.0f; // 60 ticks (1 second) max duration
-        float currentAmplitude = (float)s_shakeMaxAmplitude * progress;
-
-        // Generate random shake offsets - scale to visible pixel displacement
-        // For amplitude 1, this gives ~5 pixel max displacement (visible shake)
-        // For amplitude 10, this gives ~50 pixel displacement (dramatic shake)
-        g_shakeOffsetX = ((float)(rand() % 200) - 100.0f) / 100.0f * currentAmplitude * 2.0f;
-        g_shakeOffsetY = ((float)(rand() % 200) - 100.0f) / 100.0f * currentAmplitude * 2.0f;
-
-        // Counted in ticks of the game clock, not frames (BUGS.md V19)
-        s_shakeFramesRemaining -= ticksThisFrame;
-
-        // Stop shaking when duration expires
-        if (s_shakeFramesRemaining <= 0)
-        {
-            stopShaking();
-        }
+        // Random offsets: amplitude 1 moves the screen up to ~2 pixels
+        const float amplitude = (float)s_shakeMaxAmplitude;
+        g_shakeOffsetX = ((float)(rand() % 200) - 100.0f) / 100.0f * amplitude * 2.0f;
+        g_shakeOffsetY = ((float)(rand() % 200) - 100.0f) / 100.0f * amplitude * 2.0f;
     }
     else
     {
@@ -75,10 +63,8 @@ void updateShaking()
 void stopShaking()
 {
     shakingAmplitude = 0;
-    shakeVar1 = 0;
     g_shakeOffsetX = 0.f;
     g_shakeOffsetY = 0.f;
-    s_shakeFramesRemaining = 0;
     s_shakeMaxAmplitude = 0;
 }
 
@@ -91,7 +77,6 @@ void setupShaking(int amplitude)
     {
         shakingAmplitude = amplitude;
         s_shakeMaxAmplitude = amplitude;
-        s_shakeFramesRemaining = 60; // Shake for ~1 second (60 frames at 60fps)
     }
 }
 

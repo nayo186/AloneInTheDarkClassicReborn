@@ -149,19 +149,28 @@ int drawTextOverlay(void)
                     BBox3D3 = Y;
                 }
 
-                if ((currentMessage->time++) > 55)
+                // Counted in ticks of the game clock: the original counted
+                // drawn frames, so a message lasted less the higher the FPS
+                // (under a second at 60). It now stays one second longer
+                // before fading out (BUGS.md C49)
+                const int kMessageFullTicks = 26 + 60;
+                const int kMessageFadeTicks = 30;
+
+                currentMessage->time += ticksThisFrame;
+
+                if (currentMessage->time > kMessageFullTicks + kMessageFadeTicks)
                 {
                     currentMessage->string = NULL;
                 }
                 else
                 {
-                    if (currentMessage->time < 26)
+                    if (currentMessage->time < kMessageFullTicks)
                     {
                         SetFont(PtrFont, 16);
                     }
                     else
                     {
-                        SetFont(PtrFont, 16 + (currentMessage->time - 26) / 2);
+                        SetFont(PtrFont, 16 + (currentMessage->time - kMessageFullTicks) / 2);
                     }
 
                     PrintFont(X, var_10 + 1, logicalScreen, currentMessage->string->textPtr);

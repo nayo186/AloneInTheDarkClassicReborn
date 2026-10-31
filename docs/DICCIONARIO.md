@@ -165,7 +165,6 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `osystem_CopyBlockPhys` | Sends a rectangle of the 320x200 screen to the graphics card |
 | `osystem_playSampleFromName` | Plays a sound effect read from a file by its name |
 | `osystem_playSample` | Plays a sound effect from memory (the game's VOC data) |
-| `osystem_playLoopingSample` | Plays a sound effect in a loop (ambient sound; one at a time) |
 | `osystem_stopSample` | Stops every sound effect |
 | `osystem_stopLoopingSamples` | Stops the looping sound effects |
 | `osystem_isSamplePlaying` | True while a sound effect is playing |
@@ -447,6 +446,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | --- | --- |
 | `menuWaitVSync` | Empty: the original waited for the screen refresh between menu frames |
 | `AffSpfI` | Draws sprite number `param` of `gfx` at (x, y), skipping its colour 0 (transparent) |
+| `SizeSpf` | Width and height of sprite number `index` of `gfx` |
 | `GereDec` | The scenery zones the current object stands in: room change, floor change and other zone triggers |
 | `executeFoundLife` | Runs the script of an object when it is found ("found" life of the world object) |
 | `resetFoundObjectChronos` | The chronometers of the objects run from the hand start again (after a load) |
@@ -470,6 +470,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `cleanupAndExit` | Closes everything (controller, sound, music, graphics) and ends the program |
 | `drawProjectedBox` | Debug: draws a 3D box as six projected faces |
 | `playSequence` | Plays an animated sequence (cinematic) with its fades |
+| `playEndSequence` | AITD1 ending: the burning tree of ENDSEQ.PAK, then the screen turns red (END_SEQUENCE) |
 | `fileExists` | True if the file exists (path as given) |
 | `dataFileExists` | in the game data folder (homePath) |
 | `OpenProgram` | Program start of the original: screen, resources, texts, palette |
@@ -659,7 +660,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `readNextArgument` | Reads the next 16-bit value of the running script |
 | `updateShaking` | Advances the screen shake |
 | `stopShaking` | Stops the screen shake |
-| `setupShaking` | Starts a screen shake (script instruction SHAKING) |
+| `setupShaking` | Starts a screen shake that lasts until stopShaking (script instruction SHAKING) |
 | `pauseShaking` | Removes the shake offset while paused |
 
 ### `core/zv.h`

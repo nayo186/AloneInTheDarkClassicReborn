@@ -62,6 +62,13 @@ void AffSpf(int left, int top, int index, char* gfxData)
     }
 }
 
+void SizeSpf(int index, char* gfxData, int* width, int* height)
+{
+    char* inPtr = gfxData + READ_LE_U16(index * 2 + gfxData) + 4;
+    *width = READ_LE_U16(inPtr);
+    *height = READ_LE_U16(inPtr + 2);
+}
+
 void AffSpfI(int left, int top, int index, char* gfxData)
 {
 	char* outPtr;
