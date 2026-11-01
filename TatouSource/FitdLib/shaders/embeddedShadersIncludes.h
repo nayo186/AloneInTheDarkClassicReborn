@@ -90,6 +90,11 @@ SHADER_DATA_FALLBACK
 #else
 SHADER_DATA_FALLBACK
 #endif
+#if __has_include("shaders/generated/spirv/sprite_ps.sc.bin.h")
+#include "shaders/generated/spirv/sprite_ps.sc.bin.h"
+#else
+SHADER_DATA_FALLBACK
+#endif
 #if __has_include("shaders/generated/spirv/effectsSides_ps.sc.bin.h")
 #include "shaders/generated/spirv/effectsSides_ps.sc.bin.h"
 #else
@@ -225,6 +230,11 @@ SHADER_DATA_FALLBACK
 #endif
 #if __has_include("shaders/generated/metal/customMask_ps.sc.bin.h")
 #include "shaders/generated/metal/customMask_ps.sc.bin.h"
+#else
+SHADER_DATA_FALLBACK
+#endif
+#if __has_include("shaders/generated/metal/sprite_ps.sc.bin.h")
+#include "shaders/generated/metal/sprite_ps.sc.bin.h"
 #else
 SHADER_DATA_FALLBACK
 #endif
@@ -366,6 +376,11 @@ SHADER_DATA_FALLBACK
 #else
 SHADER_DATA_FALLBACK
 #endif
+#if __has_include("shaders/generated/glsl/sprite_ps.sc.bin.h")
+#include "shaders/generated/glsl/sprite_ps.sc.bin.h"
+#else
+SHADER_DATA_FALLBACK
+#endif
 #if __has_include("shaders/generated/glsl/effectsSides_ps.sc.bin.h")
 #include "shaders/generated/glsl/effectsSides_ps.sc.bin.h"
 #else
@@ -501,6 +516,11 @@ SHADER_DATA_FALLBACK
 #endif
 #if __has_include("shaders/generated/dx11/customMask_ps.sc.bin.h")
 #include "shaders/generated/dx11/customMask_ps.sc.bin.h"
+#else
+SHADER_DATA_FALLBACK
+#endif
+#if __has_include("shaders/generated/dx11/sprite_ps.sc.bin.h")
+#include "shaders/generated/dx11/sprite_ps.sc.bin.h"
 #else
 SHADER_DATA_FALLBACK
 #endif

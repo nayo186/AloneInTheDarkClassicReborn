@@ -109,7 +109,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 
 | Función | Para qué sirve |
 | --- | --- |
-| `selectGameFolder` | Called first, before the log file opens (reads --game aitd1\|jack, --data <folder> and --debug / --final) |
+| `selectGameFolder` | Called first, before the log file opens (reads --game aitd1\|jack\|aitd2, --data <folder> and --debug / --final) |
 | `logGameFolder` | Writes to the log what selectGameFolder found (once the log file is open) |
 | `isDebugMode` | Debug mode: test tools on; with a copy of the data, written into the copy |
 | `configFolder` | Folder of aitd_remaster.cfg, with a trailing separator (empty: the working directory) |
@@ -177,6 +177,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `osystem_findNarrators` | The narrators with voices: the folders of Voices in the working folder |
 | `osystem_createMask` | Makes the texture of a foreground mask from its 320x200 shape |
 | `osystem_drawMask` | Draws a foreground mask of the camera over the objects behind it |
+| `osystem_drawSpriteLayer` | Draws a 2D drawing (AITD2's sprites) at the current depth slice: `layer` is 320x200 pairs of colour and covered (1) |
 | `osystem_startFrame` | Opens a frame of the renderer (creates its resources the first time) |
 | `osystem_stopFrame` | Empty: the renderer needs nothing at the end of a frame |
 | `osystem_setClip` | Sets the drawing clip rectangle (320x200 coordinates) |
@@ -211,6 +212,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `osystem_isSceneSnapshotLive` | True while the scene snapshot follows the game (not frozen by a menu) |
 | `osystem_canFadeScreen` | Brightness of the final image, 0 (black) to 1 (normal). Fades use it so the whole picture (background, models, masks) changes together. |
 | `osystem_setScreenFade` | Sets the screen fade (0 black, 1 normal) |
+| `osystem_getScreenFade` | The screen fade now (0 black, 1 normal) |
 | `osystem_setSmokeArea` | The cigar smoke's ellipse on the 320x200 screen for this frame: the image turns grey inside it (core/sceneDraw.cpp, AffSmoke) |
 | `osystem_setObjectStencil` | Number of the 3D object being drawn (1..255, 0 = none): its masks cover only its own pixels. See rendererBGFX.cpp. |
 
@@ -254,6 +256,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `endScene` | Applies the enabled effects and draws the result on the screen. modelsDrawn: 3D models were drawn this frame (ambient occlusion from their depth). frozenImageDrawn: the frame shows the last image again (BUGS.md V14, menus): its ambient occlusion is reused. Neither: none. |
 | `suspend` | Screens that must look plain (title armadillo, intro screens, books) suspend the effects; nested calls are counted. The player's options in g_settings are never changed for this (they were, and a save or the F1 window during those screens lost them, BUGS.md C15). |
 | `setScreenFade` | Brightness of the final image, 0 (black) to 1 (normal); used by fades |
+| `screenFade` | — |
 | `getMainColorTexture` | The offscreen image of the scene |
 | `getSceneFrameBuffer` | The framebuffer the scene is drawn into |
 | `getSceneCopy` | Copy of the scene the glass reads (rendererBGFX.cpp, osystem_drawDeferredGlass) |
@@ -364,6 +367,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | --- | --- |
 | `g_onCameraBackgroundReady` | A camera background was loaded: the picture (320x200 palette indexes) and where it comes from (PAK name and index). Custom backgrounds use it. |
 | `g_onScreenPictureShown` | A full-screen picture (title, book page, character choice...) is about to be shown; the core loads and draws it as always. Custom backgrounds use it. |
+| `g_onSequenceFrameShown` | A frame of an animated sequence (Jack, AITD2) is about to be shown: its PAK, its number and the 320x200 picture. Custom backgrounds replace it. |
 | `g_onStartMenuDrawn` | A frame of the start menu was drawn (the controller help goes over it). |
 | `g_onGameLoopTick` | Once per loop of the game, on the game thread, before the objects' scripts (debug cheats act here). |
 | `g_onObjectDraw` | An object of the camera is about to be drawn at this position (world units), rotation (1024 = a full turn) and size (renderer.h); listIndex is its place in ListObjets. A listener may change how it is drawn (a visual fix: the game keeps the real position) and returns false to skip drawing it this frame. |
@@ -425,7 +429,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `readEntites` | Reads the entities of a hybrid object (AITD2 and later) |
 | `readSprites` | Reads the sprites of a hybrid object |
 | `readAnimations` | Reads the animations of a hybrid object |
-| `AffHyb` | Draws entity `index` of a hybrid object at (X, Y) |
+| `AffHyb` | Draws entity `index` of a hybrid object at (X, Y), on its own layer at the current depth slice |
 
 ### `core/inventory.h`
 
@@ -470,6 +474,8 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `cleanupAndExit` | Closes everything (controller, sound, music, graphics) and ends the program |
 | `drawProjectedBox` | Debug: draws a 3D box as six projected faces |
 | `playSequence` | Plays an animated sequence (cinematic) with its fades |
+| `sequenceName` | The PAK of sequence `index` of this game (Jack: PERE; AITD2: its list; AITD3: ANn), nullptr if there is none (AITD1: its ending is playEndSequence) |
+| `unapckSequenceFrame` | Draws one packed sequence frame (the PAK entry after its 4-byte size) over the 320x200 picture `dest`: only the pixels that change |
 | `playEndSequence` | AITD1 ending: the burning tree of ENDSEQ.PAK, then the screen turns red (END_SEQUENCE) |
 | `fileExists` | True if the file exists (path as given) |
 | `dataFileExists` | in the game data folder (homePath) |
@@ -611,7 +617,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | Función | Para qué sirve |
 | --- | --- |
 | `read` | Reads the sprites of a hybrid object's data |
-| `AffSpr` | Draws a sprite at (X, Y) on a screen |
+| `AffSpr` | Draws a sprite at (X, Y) on a 320x200 layer of colour and covered (1) |
 
 ### `core/startupMenu.h`
 
@@ -746,6 +752,10 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `customBackgroundsExportStart` | Exports every camera background in a background thread; progress through customBackgroundsExportState (0 idle, 1 working, 2 done, 3 failed) |
 | `customBackgroundsExportState` | State of the background export (0 idle, 1 working, 2 done, 3 failed) |
 | `customBackgroundsExportCount` | Number of backgrounds exported |
+| `customBackgroundsHasSequences` | True if the game has animated sequences (Jack, AITD2) |
+| `customBackgroundsExportSequencesStart` | Exports every frame of every sequence (sequences/<NAME>/000.png...) in a background thread |
+| `customBackgroundsExportSequencesState` | State of the sequence export (0 idle, 1 working, 2 done, 3 failed) |
+| `customBackgroundsExportSequencesCount` | Number of sequence frames exported |
 
 ### `remaster/graphics/objectFixes.h`
 
@@ -759,7 +769,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `objectFixesSeen` | The objects drawn lately, by their place in ListObjets (NUM_MAX_OBJECT) |
 | `objectFixesSetBlinking` | The object (place in ListObjets) that blinks to be found, -1 none |
 | `objectFixesSave` | Writes the fixes into the project's file for this game (the next build compiles them in); returns false if it cannot |
-| `objectFixesFileName` | Name of the fixes file of the current game (aitd1.cfg or jack.cfg) |
+| `objectFixesFileName` | Name of the fixes file of the current game (aitd1.cfg, jack.cfg or aitd2.cfg) |
 
 ### `remaster/ui/advancedOptions.h`
 
@@ -846,7 +856,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `logLine` | Writes a line to launcher.log |
 | `loadLauncherSettings` | Reads launcher.cfg |
 | `saveLauncherSettings` | Writes launcher.cfg |
-| `isAitd1DataFolder` | The chosen folder can be a copy of the data (LISTBOD2.PAK in it, Jack in its JACK subfolder) or a GOG or Steam installation (GAME.GOG and GAME.INS, or GAME.INST on Steam; AITD1 in INDARK, Jack in JACK; the INDARK folder itself may be chosen too). A GOG installation is never written to: aitd_remaster.cfg goes to the user folder (Shared/userFolder.h), as the game's saves and log. |
+| `dataFolderGame` | The chosen folder can be a copy of the data (LISTBOD2.PAK in it for AITD1, Jack in its JACK subfolder; MER.PAK for AITD2) or a GOG or Steam installation (GAME.GOG and GAME.INS, or GAME.INST on Steam; AITD1 in INDARK, Jack in JACK, AITD2 in INDARK2; that folder itself may be chosen too). A GOG installation is never written to: aitd_remaster.cfg goes to the user folder (Shared/userFolder.h), as the game's saves and log. The game of the folder: 0 AITD1, 1 AITD2, -1 none |
 | `isGogInstallFolder` | True if the folder is a GOG or Steam installation |
 | `hasJackData` | True if Jack in the Dark is there too (PERE.PAK) |
 | `findAitd1Narrators` | The narrators with voices in AITD1's working folder (Voices: in UserData\AITD1, or in the copy itself in debug mode; Shared/narrators.h) |
@@ -855,7 +865,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `findGameLanguages` | Language PAKs present in the data folder, in a fixed order |
 | `readGameConfig` | Language and advanced options of the data folder's aitd_remaster.cfg |
 | `writeGameConfig` | Writes the launcher's options in the game's aitd_remaster.cfg, keeping every other line |
-| `launchGame` | Starts Tatou.exe with the default settings and the chosen language, in the AITD1 data folder: game "aitd1", or "jack" (Tatou enters the JACK subfolder and shares the AITD1 configuration) |
+| `launchGame` | Starts Tatou.exe with the default settings and the chosen language, in the game's data folder: game "aitd1", "jack" (Tatou enters the JACK subfolder and shares the AITD1 configuration) or "aitd2" |
 
 ### `Launcher/updater.h`
 

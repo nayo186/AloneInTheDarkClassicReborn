@@ -107,8 +107,17 @@ void sHybrid::readAnimations(uint8_t* buffer, int size) {
     }
 }
 
+// A drawing on its own layer (colour, covered), not on the 320x200 screen:
+// that screen only reached the display now and then and never over a
+// player's picture, and every 3D object was in front: AITD2's gate at the
+// start came and went and the characters walked in front of it (BUGS.md A4)
+static std::array<u8, 320 * 200 * 2> s_hybridLayer;
+
 void AffHyb(int index, int X, int Y, sHybrid* pHybrid) {
+    if (index < 0 || index >= (int)pHybrid->entities.size())
+        return;
     auto& entity = pHybrid->entities[index];
+    s_hybridLayer.fill(0);
     for (int i = 0; i < entity.parts.size(); i++) {
         auto& part = entity.parts[i];
         switch (part.id) {
@@ -116,7 +125,7 @@ void AffHyb(int index, int X, int Y, sHybrid* pHybrid) {
         {
             int spriteNumber = part.cout + (((int)part.cin) << 8);
             // TODO: dx/dy
-            AffSpr(spriteNumber, part.XY[0][0] + X, part.XY[0][1] + Y + 1, logicalScreen, pHybrid->sprites);
+            AffSpr(spriteNumber, part.XY[0][0] + X, part.XY[0][1] + Y + 1, s_hybridLayer.data(), pHybrid->sprites);
             break;
         }
         case 6: // line
@@ -126,4 +135,5 @@ void AffHyb(int index, int X, int Y, sHybrid* pHybrid) {
             break;
         }
     }
+    osystem_drawSpriteLayer(s_hybridLayer.data());
 }

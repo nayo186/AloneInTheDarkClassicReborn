@@ -53,9 +53,10 @@ void applyLaunchOptions()
     // g_settings stays untouched (the launcher owns it), so a config
     // save during the game never overwrites the launcher's choice.
 
-    // Game: Alone in the Dark 1, or Jack in the Dark (platform/gameFolder.cpp
+    // Game: Alone in the Dark 1, Jack in the Dark or AITD2 (platform/gameFolder.cpp
     // already entered its folder; detectGame recognises it by its files)
-    if (!g_launchOptions.game.empty() && g_launchOptions.game != "aitd1" && g_launchOptions.game != "jack")
+    if (!g_launchOptions.game.empty() && g_launchOptions.game != "aitd1" && g_launchOptions.game != "jack" &&
+        g_launchOptions.game != "aitd2")
     {
         printf(MAIN_WARN "--game %s is not supported yet, starting with the data in the working directory" CON_RESET "\n",
             g_launchOptions.game.c_str());

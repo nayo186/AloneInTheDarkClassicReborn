@@ -439,6 +439,24 @@ void advancedOptionsDraw()
         else if (maskState == 3)
             ImGui::TextColored(kGoldLight, "%s", text(AdvancedText::ExportFailed));
 
+        // Every frame of the animated sequences (Jack, AITD2), on their own:
+        // the backgrounds are often wanted without them
+        if (customBackgroundsHasSequences())
+        {
+            const int sequenceState = customBackgroundsExportSequencesState();
+            ImGui::BeginDisabled(sequenceState == 1);
+            if (ImGui::Button(text(AdvancedText::ExportSequences)))
+                customBackgroundsExportSequencesStart();
+            ImGui::EndDisabled();
+            helpMarker(text(AdvancedText::ExportSequencesHelp));
+            if (sequenceState == 1)
+                ImGui::TextColored(kGoldLight, "%s %d", text(AdvancedText::ExportWorking), customBackgroundsExportSequencesCount());
+            else if (sequenceState == 2)
+                ImGui::TextColored(kGoldLight, "%d %s", customBackgroundsExportSequencesCount(), text(AdvancedText::ExportSequencesDone));
+            else if (sequenceState == 3)
+                ImGui::TextColored(kGoldLight, "%s", text(AdvancedText::ExportFailed));
+        }
+
         ImGui::Spacing();
         ImGui::Spacing();
         // Controls and Audio, then Cheats and Close, side by side

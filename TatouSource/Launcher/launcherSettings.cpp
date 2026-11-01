@@ -13,6 +13,7 @@
 #include <cstdarg>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <ctime>
 #include <filesystem>
 #include <fstream>
@@ -114,6 +115,8 @@ void loadLauncherSettings(LauncherSettings& settings)
             settings.uiLanguage = value;
         else if (key == "aitd1.dataFolder")
             settings.aitd1DataFolder = value;
+        else if (key == "aitd2.dataFolder")
+            settings.aitd2DataFolder = value;
         else if (key == "debugMode")
             settings.debugMode = (value == "true" || value == "1");
         else if (key == "window.width")
@@ -123,8 +126,8 @@ void loadLauncherSettings(LauncherSettings& settings)
         else if (key == "window.maximized")
             settings.windowMaximized = (value == "true" || value == "1");
     }
-    logLine("Loaded launcher.cfg: ui.language=%s aitd1.dataFolder=%s",
-        settings.uiLanguage.c_str(), settings.aitd1DataFolder.c_str());
+    logLine("Loaded launcher.cfg: ui.language=%s aitd1.dataFolder=%s aitd2.dataFolder=%s",
+        settings.uiLanguage.c_str(), settings.aitd1DataFolder.c_str(), settings.aitd2DataFolder.c_str());
 }
 
 void saveLauncherSettings(const LauncherSettings& settings)
@@ -138,6 +141,7 @@ void saveLauncherSettings(const LauncherSettings& settings)
     file << "# Alone in the Dark: Classic Reborn - launcher settings\n";
     file << "ui.language = " << settings.uiLanguage << "\n";
     file << "aitd1.dataFolder = \"" << settings.aitd1DataFolder << "\"\n";
+    file << "aitd2.dataFolder = \"" << settings.aitd2DataFolder << "\"\n";
     // Only changed by hand (0 or 1): no box in the window
     file << "debugMode = " << (settings.debugMode ? 1 : 0) << "\n";
     // The window as it was left
@@ -151,11 +155,16 @@ struct GameInstall
 {
     bool valid = false;
     bool gog = false;
+    int game = -1;          // 0 AITD1 (with Jack), 1 AITD2
     fs::path root;          // the folder Tatou starts in
-    fs::path aitd1Data;     // LISTBOD2.PAK and the language PAKs
-    fs::path jackData;      // PERE.PAK
+    fs::path gameData;      // the game's PAKs, with the language PAKs
+    fs::path jackData;      // PERE.PAK (AITD1 only)
     fs::path configFolder;  // aitd_remaster.cfg
 };
+
+// Each game's folder in a GOG installation and a file only it has
+static const char* const kGogDataFolder[] = { "INDARK", "INDARK2" };
+static const char* const kGameMarker[] = { "LISTBOD2.PAK", "MER.PAK" };
 
 static bool pathExists(const fs::path& path)
 {
@@ -163,11 +172,16 @@ static bool pathExists(const fs::path& path)
     return fs::exists(path, ec);
 }
 
-// GOG (GAME.INS) or Steam (GAME.INST): the same edition and CD image
-static bool isGogRoot(const fs::path& folder)
+// GOG (GAME.INS) or Steam (GAME.INST): the same edition and CD image; the
+// game installed there, or -1
+static int gogRootGame(const fs::path& folder)
 {
-    return pathExists(folder / "GAME.GOG") && (pathExists(folder / "GAME.INS") || pathExists(folder / "GAME.INST")) &&
-        pathExists(folder / "INDARK" / "LISTBOD2.PAK");
+    if (!pathExists(folder / "GAME.GOG") || !(pathExists(folder / "GAME.INS") || pathExists(folder / "GAME.INST")))
+        return -1;
+    for (int game = 0; game < 2; game++)
+        if (pathExists(folder / kGogDataFolder[game] / kGameMarker[game]))
+            return game;
+    return -1;
 }
 
 static bool s_debugMode = false;
@@ -188,31 +202,37 @@ static GameInstall findGameInstall(const std::string& folder)
     if (folder.empty())
         return install;
     fs::path path = toPath(folder);
-    if (!isGogRoot(path) && isGogRoot(path.parent_path()))
-        path = path.parent_path();   // GOG's INDARK folder was chosen
-    if (isGogRoot(path))
+    if (gogRootGame(path) < 0 && gogRootGame(path.parent_path()) >= 0)
+        path = path.parent_path();   // GOG's INDARK (INDARK2) folder was chosen
+    const int gogGame = gogRootGame(path);
+    if (gogGame >= 0)
     {
         install.configFolder = userDataFolder();
         install.valid = install.gog = true;
+        install.game = gogGame;
         install.root = path;
-        install.aitd1Data = path / "INDARK";
+        install.gameData = path / kGogDataFolder[gogGame];
         install.jackData = path / "JACK";
         return install;
     }
-    if (pathExists(path / "LISTBOD2.PAK"))
+    for (int game = 0; game < 2; game++)
     {
+        if (!pathExists(path / kGameMarker[game]))
+            continue;
         install.valid = true;
-        install.root = install.aitd1Data = path;
+        install.game = game;
+        install.root = install.gameData = path;
         install.jackData = path / "JACK";
         // Debug mode keeps a copy's options inside it; otherwise UserData
         install.configFolder = s_debugMode ? path : userDataFolder();
+        break;
     }
     return install;
 }
 
-bool isAitd1DataFolder(const std::string& folder)
+int dataFolderGame(const std::string& folder)
 {
-    return findGameInstall(folder).valid;
+    return findGameInstall(folder).game;
 }
 
 bool isGogInstallFolder(const std::string& folder)
@@ -223,21 +243,21 @@ bool isGogInstallFolder(const std::string& folder)
 bool hasJackData(const std::string& folder)
 {
     const GameInstall install = findGameInstall(folder);
-    return install.valid && pathExists(install.jackData / "PERE.PAK");
+    return install.game == 0 && pathExists(install.jackData / "PERE.PAK");
 }
 
 std::vector<std::string> findAitd1Narrators(const std::string& folder)
 {
     const GameInstall install = findGameInstall(folder);
-    if (!install.valid)
+    if (install.game != 0)
         return {};
-    const fs::path workFolder = (!install.gog && s_debugMode) ? install.aitd1Data : userDataFolder() / "AITD1";
+    const fs::path workFolder = (!install.gog && s_debugMode) ? install.gameData : userDataFolder() / "AITD1";
     return findNarrators(workFolder / kVoicesFolder);
 }
 
 void prepareUserData()
 {
-    for (const char* game : { "AITD1", "JACK" })
+    for (const char* game : { "AITD1", "JACK", "AITD2" })
     {
         const fs::path gameFolder = userDataFolder() / game;
         std::error_code ec;
@@ -264,7 +284,7 @@ std::vector<GameLanguage> findGameLanguages(const std::string& folder)
         return found;
     for (const GameLanguage& language : all)
     {
-        if (pathExists(install.aitd1Data / (language.pakName + ".PAK")))
+        if (pathExists(install.gameData / (language.pakName + ".PAK")))
             found.push_back(language);
     }
     return found;
@@ -459,8 +479,9 @@ LaunchResult launchGame(const LauncherSettings& settings, const char* game)
         args += " --lang " + settings.gameLanguage;
     // Tatou starts in the copy's folder or the GOG installation and finds the
     // rest itself (platform/gameFolder.cpp)
-    const GameInstall install = findGameInstall(settings.aitd1DataFolder);
-    const fs::path startFolder = install.valid ? install.root : toPath(settings.aitd1DataFolder);
+    const std::string& folder = (strcmp(game, "aitd2") == 0) ? settings.aitd2DataFolder : settings.aitd1DataFolder;
+    const GameInstall install = findGameInstall(folder);
+    const fs::path startFolder = install.valid ? install.root : toPath(folder);
     logLine("Starting %s %s (working folder %s%s)", kTatouFile, args.c_str(), startFolder.u8string().c_str(),
         install.gog ? ", GOG installation" : "");
 

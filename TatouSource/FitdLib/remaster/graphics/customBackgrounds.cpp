@@ -59,6 +59,35 @@ static std::string pictureName(const char* pakName, int index)
     return name;
 }
 
+// The player's picture without its extension: "CAMERA00_000" for a PAK
+// picture, "sequences/PERE/005" for a frame of an animated sequence
+static std::string pictureBase(const char* pakName, int index, bool sequence)
+{
+    char name[64];
+    if (sequence)
+        snprintf(name, sizeof(name), "sequences/%s/%03d", pakName, index);
+    else
+        snprintf(name, sizeof(name), "%s_%03d", pakName, index);
+    return name;
+}
+
+// The player's file of that picture: PNG, or JPG (much lighter for large
+// pictures; the masks stay PNG, their edges must be exact). Upper-case
+// extensions count too (Linux tells them apart)
+static fs::path customFile(const std::string& base)
+{
+    static const char* const kExtensions[] = { ".png", ".jpg", ".jpeg", ".PNG", ".JPG", ".JPEG" };
+    const std::string start = folder(customPicturesFolder()) + base;
+    std::error_code error;
+    for (const char* extension : kExtensions)
+    {
+        const fs::path path = fs::u8path(start + extension);
+        if (fs::exists(path, error))
+            return path;
+    }
+    return fs::u8path(start + ".png");
+}
+
 // AITD1 full-screen pictures of ITD_RESS (AITD1.h): armadillo, letter, book,
 // notebook, character choice, frog, game over, title, intro background
 static const int kAitd1Screens[] = { AITD1_TATOU_MCG, AITD1_LETTRE, AITD1_LIVRE, AITD1_CARNET, AITD1_PERSO_CHOICE,
@@ -77,6 +106,7 @@ struct Picture
 {
     char pakName[16] = "";
     int index = -1;
+    bool sequence = false;                     // a frame of an animated sequence (pakName is its PAK)
     unsigned char originalPixels[320 * 200];   // palette indexes as loaded
     bgfx::TextureHandle original = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle custom = BGFX_INVALID_HANDLE;
@@ -180,7 +210,7 @@ static void prefetchRoomCameras()
     snprintf(pakName, sizeof(pakName), "CAMERA%02d", g_currentFloor);
     for (const u16 camera : roomDataTable[currentRoom].cameraIdxTable)
     {
-        const fs::path path = fs::u8path(folder(customPicturesFolder()) + pictureName(pakName, camera));
+        const fs::path path = customFile(pictureBase(pakName, camera, false));
         std::error_code error;
         const fs::file_time_type time = fs::last_write_time(path, error);
         if (!error)
@@ -203,7 +233,7 @@ static void loadCustom(Picture& picture)
     if (!picture.known())
         return;
 
-    const fs::path path = fs::u8path(folder(customPicturesFolder()) + pictureName(picture.pakName, picture.index));
+    const fs::path path = customFile(pictureBase(picture.pakName, picture.index, picture.sequence));
     std::error_code error;
     if (!fs::exists(path, error))
         return;
@@ -246,15 +276,18 @@ static void loadCustom(Picture& picture)
     // whole picture is the play area, shown in 4:3 like the original pixels
     picture.customOriginalShape = (ratio > 1.6f - 0.01f && ratio < 1.6f + 0.01f);
     if (wasReady)
-        printf(MAIN_TAG "Custom background %s (%dx%d, decoded ahead)\n", pictureName(picture.pakName, picture.index).c_str(), width, height);
+        printf(MAIN_TAG "Custom background %s%s (%dx%d, decoded ahead)\n", pictureBase(picture.pakName, picture.index, picture.sequence).c_str(),
+            path.extension().string().c_str(), width, height);
     else
-        printf(MAIN_TAG "Custom background %s (%dx%d, waited %d ms)\n", pictureName(picture.pakName, picture.index).c_str(), width, height, waitedMs);
+        printf(MAIN_TAG "Custom background %s%s (%dx%d, waited %d ms)\n", pictureBase(picture.pakName, picture.index, picture.sequence).c_str(),
+            path.extension().string().c_str(), width, height, waitedMs);
 }
 
 // Sets the picture shown; returns false when it was already this one
-static bool setPicture(Picture& picture, const char* pakName, int index, const unsigned char* pixels)
+static bool setPicture(Picture& picture, const char* pakName, int index, const unsigned char* pixels, bool sequence = false)
 {
-    const bool same = (picture.index == index && strcmp(picture.pakName, pakName) == 0);
+    const bool same = (picture.index == index && picture.sequence == sequence && strcmp(picture.pakName, pakName) == 0);
+    picture.sequence = sequence;
     strncpy(picture.pakName, pakName, sizeof(picture.pakName) - 1);
     picture.pakName[sizeof(picture.pakName) - 1] = '\0';
     picture.index = index;
@@ -279,7 +312,7 @@ static void pollCustom(Picture& picture)
 {
     if (!picture.known())
         return;
-    const fs::path path = fs::u8path(folder(customPicturesFolder()) + pictureName(picture.pakName, picture.index));
+    const fs::path path = customFile(pictureBase(picture.pakName, picture.index, picture.sequence));
     std::error_code error;
     if (!fs::exists(path, error))
     {
@@ -374,6 +407,27 @@ static void onCameraBackgroundReady(const char* pakName, int index, const unsign
 
 // A full-screen picture is shown (title, book page, character choice...):
 // the core loads and draws it as always, this only learns which one it is
+// A frame of an animated sequence is shown (core/sequence.cpp): the player's
+// picture of it (sequences/<NAME>/005.png or .jpg) is used as a full-screen
+// picture; the next frames are decoded ahead so the sequence keeps its pace
+static const int kSequenceFramesAhead = 4;
+
+static void onSequenceFrameShown(const char* pakName, int frame, const unsigned char* pixels)
+{
+    setPicture(s_screen, pakName, frame, pixels, true);
+    s_screenOnScreen = false;
+    if (!g_settings.graphics.customBackgrounds)
+        return;
+    for (int next = frame + 1; next <= frame + kSequenceFramesAhead; next++)
+    {
+        std::error_code error;
+        const fs::path path = customFile(pictureBase(pakName, next, true));
+        const fs::file_time_type time = fs::last_write_time(path, error);
+        if (!error)
+            requestDecode(path, time);
+    }
+}
+
 static void onScreenPictureShown(const char* pakName, int index)
 {
     const int size = getPakSize(pakName, index);
@@ -538,6 +592,7 @@ void customBackgroundsRegister()
 {
     g_onCameraBackgroundReady = onCameraBackgroundReady;
     g_onScreenPictureShown = onScreenPictureShown;
+    g_onSequenceFrameShown = onSequenceFrameShown;
     g_onFrameStart = update;
     g_getBackgroundPicture = backgroundPicture;
     g_getMaskPicture = maskPicture;
@@ -562,6 +617,19 @@ static bool gamePalette(palette_t& palette)
     return true;
 }
 
+// A 320x200 picture of 256 colours as a PNG
+static bool writePicturePng(const std::string& path, const unsigned char* pixels, const palette_t& colours)
+{
+    std::vector<unsigned char> rgb(320 * 200 * 3);
+    for (int i = 0; i < 320 * 200; i++)
+    {
+        rgb[i * 3 + 0] = colours[pixels[i]][0];
+        rgb[i * 3 + 1] = colours[pixels[i]][1];
+        rgb[i * 3 + 2] = colours[pixels[i]][2];
+    }
+    return stbi_write_png(path.c_str(), 320, 200, 3, rgb.data(), 320 * 3) != 0;
+}
+
 static std::atomic<int> s_exportState(0);
 static std::atomic<int> s_exportCount(0);
 
@@ -584,18 +652,56 @@ static bool exportPicture(const std::string& outFolder, const char* pakName, int
     }
 
     // The original pixels as stored, 320x200 (the game shows them in 4:3)
-    std::vector<unsigned char> rgb(320 * 200 * 3);
-    for (int i = 0; i < 320 * 200; i++)
-    {
-        const unsigned char index8 = pixels[i];
-        rgb[i * 3 + 0] = pictureColours[index8][0];
-        rgb[i * 3 + 1] = pictureColours[index8][1];
-        rgb[i * 3 + 2] = pictureColours[index8][2];
-    }
+    const bool written = writePicturePng(outFolder + pictureName(pakName, index), pixels, pictureColours);
     free(data);
+    return written;
+}
 
-    const std::string path = outFolder + pictureName(pakName, index);
-    return stbi_write_png(path.c_str(), 320, 200, 3, rgb.data(), 320 * 3) != 0;
+// Jack's and AITD2's animated sequences, every frame as a PNG in
+// sequences/<NAME>/000.png...: they can be remade (by hand, with an AI
+// upscaler) and put back. Decoded as playSequence (core/sequence.cpp) does:
+// frame 0 is the palette and the whole picture, each next one changes it
+static int exportSequences(const std::string& outFolder)
+{
+    int frames = 0;
+    for (int sequence = 0; const char* name = sequenceName(sequence); sequence++)
+    {
+        const int count = (int)PAK_getNumFiles(name);
+        if (count <= 0 || count > 4096 || getPakSize(name, 0) < 0x300 + 64000)
+            continue;
+        char* first = loadPak(name, 0);
+        if (!first)
+            continue;
+        palette_t colours;
+        copyPalette(first, colours);
+        convertPaletteIfRequired(colours);
+        std::vector<unsigned char> picture((unsigned char*)first + 0x300, (unsigned char*)first + 0x300 + 64000);
+        free(first);
+
+        const std::string sequenceFolder = outFolder + "sequences/" + name + "/";
+        std::error_code error;
+        fs::create_directories(fs::u8path(sequenceFolder), error);
+        for (int frame = 0; frame < count; frame++)
+        {
+            if (frame > 0)
+            {
+                char* data = loadPak(name, frame);
+                if (!data)
+                    break;
+                if (READ_LE_U32(data) < 64000)
+                    unapckSequenceFrame((unsigned char*)data + 4, picture.data());
+                else
+                    memcpy(picture.data(), data, 64000);
+                free(data);
+            }
+            char file[16];
+            snprintf(file, sizeof(file), "%03d.png", frame);
+            if (writePicturePng(sequenceFolder + file, picture.data(), colours))
+                frames++;
+        }
+        printf(MAIN_TAG "Background export: sequence %s, %d frames\n", name, count);
+    }
+    return frames;
 }
 
 static void exportAll(int gameId)
@@ -656,7 +762,7 @@ static void exportAll(int gameId)
                 s_exportCount++;
         }
     }
-    else if (gameId == JACK)
+    else if (gameId == JACK || gameId == AITD2)
     {
         // Full-screen pictures (book, outside view...): every ITD_RESS entry
         // the size of a picture (exportPicture skips the rest)
@@ -677,6 +783,38 @@ void customBackgroundsExportStart()
     s_exportCount = 0;
     s_exportState = 1;
     std::thread(exportAll, (int)g_gameId).detach();
+}
+
+bool customBackgroundsHasSequences()
+{
+    return sequenceName(0) != nullptr;
+}
+
+static std::atomic<int> s_sequenceExportState(0);
+static std::atomic<int> s_sequenceExportCount(0);
+
+void customBackgroundsExportSequencesStart()
+{
+    if (s_sequenceExportState == 1)
+        return;
+    s_sequenceExportCount = 0;
+    s_sequenceExportState = 1;
+    std::thread([]() {
+        const int frames = exportSequences(folder(exportsFolder()));
+        s_sequenceExportCount = frames;
+        printf(MAIN_OK "Sequence export: %d frames in %ssequences/\n", frames, exportsFolder());
+        s_sequenceExportState = frames > 0 ? 2 : 3;
+    }).detach();
+}
+
+int customBackgroundsExportSequencesState()
+{
+    return s_sequenceExportState;
+}
+
+int customBackgroundsExportSequencesCount()
+{
+    return s_sequenceExportCount;
 }
 
 int customBackgroundsExportState()
@@ -818,7 +956,7 @@ static int specialCameraPicture(int floor, int camera)
     return -1;
 }
 
-// The masks of one Jack in the Dark camera (MASKnn entry), built as loadMask
+// The masks of one Jack in the Dark or AITD2 camera (MASKnn entry), built as loadMask
 // (core/camera.cpp) builds them: per viewed room, per mask, a box and its
 // rows as runs of skipped and covered pixels. The entry describes itself
 // (each table starts with the offset of its first item).
@@ -892,8 +1030,8 @@ static void exportAllMasks()
         return;
     }
 
-    // Jack in the Dark: its masks are in MASKnn, one entry per camera
-    for (int floor = 0; g_gameId == JACK && floor < 32; floor++)
+    // Jack in the Dark and AITD2: the masks are in MASKnn, one entry per camera
+    for (int floor = 0; (g_gameId == JACK || g_gameId == AITD2) && floor < 32; floor++)
     {
         char maskPak[16], cameraPak[16];
         snprintf(maskPak, sizeof(maskPak), "MASK%02d", floor);
@@ -952,9 +1090,9 @@ void customBackgroundsExportMasksStart()
 {
     if (s_maskExportState == 1)
         return;
-    if (g_gameId != AITD1 && g_gameId != JACK)
+    if (g_gameId != AITD1 && g_gameId != JACK && g_gameId != AITD2)
     {
-        printf(MAIN_WARN "Mask export: only Alone in the Dark 1 and Jack in the Dark\n");
+        printf(MAIN_WARN "Mask export: only Alone in the Dark 1 and 2 and Jack in the Dark\n");
         s_maskExportState = 3;
         return;
     }
@@ -975,5 +1113,5 @@ int customBackgroundsExportMasksCount()
 
 bool customBackgroundsExportBusy()
 {
-    return s_maskExportState == 1 || customBackgroundsExportState() == 1;
+    return s_maskExportState == 1 || customBackgroundsExportState() == 1 || s_sequenceExportState == 1;
 }

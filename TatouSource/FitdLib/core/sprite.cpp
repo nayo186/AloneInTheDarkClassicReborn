@@ -36,7 +36,7 @@ void sHybrid_Sprite::read(uint8_t* buffer, int bufferSize) {
     }
 }
 
-void AffSpr(int spriteNumber, int X, int Y, char* screen, std::vector<sHybrid_Sprite>& sprites) {
+void AffSpr(int spriteNumber, int X, int Y, u8* layer, std::vector<sHybrid_Sprite>& sprites) {
     if (spriteNumber < 0 || spriteNumber >= (int)sprites.size())
         return;
 
@@ -50,18 +50,20 @@ void AffSpr(int spriteNumber, int X, int Y, char* screen, std::vector<sHybrid_Sp
 
         auto& lineData = sprite.lines[y];
 
-        int lineOffset = screenY * 320 + X;
-        char* lineStart = screen + lineOffset;
+        int currentOffset = screenY * 320 + X;
         for (int i = 0; i < lineData.blocks.size(); i++) {
             auto& block = lineData.blocks[i];
-            lineStart += block.unk0;
-            int currentOffset = (int)(lineStart - screen);
+            currentOffset += block.unk0;
             int blockSize = (int)block.data.size();
             if (currentOffset >= 0 && currentOffset + blockSize <= 64000)
             {
-                memcpy(lineStart, block.data.data(), blockSize);
+                for (int k = 0; k < blockSize; k++)
+                {
+                    layer[(currentOffset + k) * 2] = block.data[k];
+                    layer[(currentOffset + k) * 2 + 1] = 1;
+                }
             }
-            lineStart += blockSize;
+            currentOffset += blockSize;
         }
     }
 }

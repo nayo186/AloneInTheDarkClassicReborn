@@ -111,24 +111,37 @@ struct LauncherState
     bool jackFound = false;     // Jack in the Dark is there too (PERE.PAK)
     bool gogInstall = false;    // a GOG installation (never written to)
     std::string message;        // error shown at the bottom
-    int selectedGame = 0;       // 0 = Alone in the Dark (AITD2/AITD3 later)
+    int selectedGame = 0;       // 0 AITD1 (with Jack), 1 AITD2 (AITD3 later)
     bool quit = false;
     bool launched = false;      // Tatou.exe started (it saved the options already)
 };
 
+// The data folder of the selected game (AITD3 has none yet)
+static std::string& dataFolder(LauncherState& state)
+{
+    static std::string none;
+    none.clear();
+    if (state.selectedGame == 0)
+        return state.settings.aitd1DataFolder;
+    if (state.selectedGame == 1)
+        return state.settings.aitd2DataFolder;
+    return none;
+}
+
 static void refreshDataFolder(LauncherState& state)
 {
-    state.dataFolderValid = isAitd1DataFolder(state.settings.aitd1DataFolder);
-    state.jackFound = state.dataFolderValid && hasJackData(state.settings.aitd1DataFolder);
-    state.gogInstall = state.dataFolderValid && isGogInstallFolder(state.settings.aitd1DataFolder);
+    const std::string& folder = dataFolder(state);
+    state.dataFolderValid = !folder.empty() && dataFolderGame(folder) == state.selectedGame;
+    state.jackFound = state.dataFolderValid && hasJackData(folder);
+    state.gogInstall = state.dataFolderValid && isGogInstallFolder(folder);
     state.languages.clear();
     if (!state.dataFolderValid)
     {
-        logLine("Data folder not valid: '%s'", state.settings.aitd1DataFolder.c_str());
+        logLine("Game %d: data folder not valid: '%s'", state.selectedGame + 1, folder.c_str());
         return;
     }
-    readGameConfig(state.settings.aitd1DataFolder, state.settings);
-    state.languages = findGameLanguages(state.settings.aitd1DataFolder);
+    readGameConfig(folder, state.settings);
+    state.languages = findGameLanguages(folder);
 
     // Keep the saved language if it exists here, otherwise the first one
     bool found = false;
@@ -136,7 +149,7 @@ static void refreshDataFolder(LauncherState& state)
         found |= (language.pakName == state.settings.gameLanguage);
     if (!found)
         state.settings.gameLanguage = state.languages.empty() ? "" : state.languages[0].pakName;
-    logLine("Data folder OK: %s (%s, %d languages, Jack in the Dark %s)", state.settings.aitd1DataFolder.c_str(),
+    logLine("Game %d: data folder OK: %s (%s, %d languages, Jack in the Dark %s)", state.selectedGame + 1, folder.c_str(),
         state.gogInstall ? "GOG installation" : "copy of the data", (int)state.languages.size(),
         state.jackFound ? "found" : "not found");
 }
@@ -369,14 +382,14 @@ static void drawAdvancedOptions(LauncherState& state, const Fonts& fonts, const 
     {
         s_audioWindow.open = true;
         s_audioWindow.justOpened = true;
-        s_narrators = findAitd1Narrators(state.settings.aitd1DataFolder);
+        s_narrators = findAitd1Narrators(dataFolder(state));
     }
     if (darkButton("##closeAdvanced", advText(AdvancedText::Close), ImVec2(pos.x + (third + gap) * 2.0f, pos.y), buttonSize,
         fonts.button, true) || s_closeAdvanced)
     {
         s_closeAdvanced = false;
         // Saved now, not only when playing (they were lost by leaving with EXIT)
-        writeGameConfig(state.settings.aitd1DataFolder, state.settings);
+        writeGameConfig(dataFolder(state), state.settings);
         ImGui::CloseCurrentPopup();
     }
     ImGui::Dummy(ImVec2(0.0f, metrics.px(4.0f)));
@@ -481,7 +494,7 @@ static void drawUpdateWindow(LauncherState& state, const Fonts& fonts, const Met
 }
 
 // What the screen shows, from the launcher's state
-static LauncherView makeView(const LauncherState& state, const LauncherCover& cover)
+static LauncherView makeView(LauncherState& state, const LauncherCover& cover)
 {
     LauncherView view;
     view.selectedGame = state.selectedGame;
@@ -489,7 +502,7 @@ static LauncherView makeView(const LauncherState& state, const LauncherCover& co
     view.jackFound = state.jackFound;
     view.isDefault = state.settings.isDefault();
     view.debugMode = state.settings.debugMode;
-    view.dataFolder = state.settings.aitd1DataFolder;
+    view.dataFolder = dataFolder(state);
     view.canUpdate = updatesEnabled();
     view.version = updatesEnabled() ? launcherVersion() : "";
     view.updateAvailable = (updaterState() == UpdateState::Available);
@@ -502,18 +515,17 @@ static LauncherView makeView(const LauncherState& state, const LauncherCover& co
     }
 
     // Bottom line: an error, a folder that is not valid, or what it is
-    const bool isAitd1 = (state.selectedGame == 0);
     if (!state.message.empty())
     {
         view.message = state.message;
         view.messageColor = kError;
     }
-    else if (isAitd1 && !state.settings.aitd1DataFolder.empty() && !state.dataFolderValid)
+    else if (!view.dataFolder.empty() && !state.dataFolderValid)
     {
         view.message = tr(UiText::DataFolderInvalid);
         view.messageColor = kError;
     }
-    else if (isAitd1 && state.dataFolderValid)
+    else if (state.dataFolderValid)
     {
         view.message = tr(state.gogInstall ? UiText::InstallGog : UiText::InstallCopy);
         view.messageColor = kTextDim;
@@ -524,7 +536,7 @@ static LauncherView makeView(const LauncherState& state, const LauncherCover& co
 // Saves the settings (shared by AITD1 and Jack) and starts the game
 static void startGame(LauncherState& state, const char* game)
 {
-    if (!writeGameConfig(state.settings.aitd1DataFolder, state.settings))
+    if (!writeGameConfig(dataFolder(state), state.settings))
     {
         state.message = tr(UiText::LaunchFailed);
         return;
@@ -542,8 +554,15 @@ static void startGame(LauncherState& state, const char* game)
 
 static void handleIntent(LauncherState& state, const LauncherIntent& intent, SDL_Window* window)
 {
-    if (intent.selectGame >= 0)
+    if (intent.selectGame >= 0 && intent.selectGame != state.selectedGame)
+    {
+        // Each game reads its own folder's options: keep the ones of the game left
+        if (state.dataFolderValid)
+            writeGameConfig(dataFolder(state), state.settings);
         state.selectedGame = intent.selectGame;
+        state.message.clear();
+        refreshDataFolder(state);
+    }
     if (intent.uiLanguage >= 0)
     {
         setUiLanguage((UiLanguage)intent.uiLanguage);
@@ -571,7 +590,7 @@ static void handleIntent(LauncherState& state, const LauncherIntent& intent, SDL
     if (intent.browse)
     {
         // Explorer's dialog on Windows (a full path can be pasted), SDL's elsewhere
-        const std::string& folder = state.settings.aitd1DataFolder;
+        const std::string folder = dataFolder(state);
         std::string chosen;
         if (chooseFolderNative(window, folder, tr(UiText::DataFolder), chosen))
         {
@@ -584,7 +603,7 @@ static void handleIntent(LauncherState& state, const LauncherIntent& intent, SDL
 #endif
     }
     if (intent.play)
-        startGame(state, "aitd1");
+        startGame(state, state.selectedGame == 1 ? "aitd2" : "aitd1");
     else if (intent.playJack)
         startGame(state, "jack");
     if (intent.exit)
@@ -630,7 +649,7 @@ int main(int, char**)
     bool offerUpdate = updatesEnabled();   // the window opens by itself once, if there is one
 
     // First run: use the launcher's own folder if it holds the game data
-    if (state.settings.aitd1DataFolder.empty() && isAitd1DataFolder(launcherFolder()))
+    if (state.settings.aitd1DataFolder.empty() && dataFolderGame(launcherFolder()) == 0)
         state.settings.aitd1DataFolder = launcherFolder();
     refreshDataFolder(state);
 
@@ -690,7 +709,7 @@ int main(int, char**)
         SDL_LockMutex(s_dialogMutex);
         if (s_dialogHasResult)
         {
-            state.settings.aitd1DataFolder = s_dialogResult;
+            dataFolder(state) = s_dialogResult;
             s_dialogHasResult = false;
             state.message.clear();
             refreshDataFolder(state);
@@ -768,7 +787,7 @@ int main(int, char**)
 
     // Leaving without playing (EXIT or the window): keep the options chosen
     if (!state.launched && state.dataFolderValid)
-        writeGameConfig(state.settings.aitd1DataFolder, state.settings);
+        writeGameConfig(dataFolder(state), state.settings);
 
     updaterShutdown();
     logLine("Launcher closed");

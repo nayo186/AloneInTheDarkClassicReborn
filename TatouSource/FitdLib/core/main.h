@@ -66,6 +66,12 @@ void drawProjectedBox(int x1,int x2,int y1,int y2,int z1,int z2, int color, int 
 
 // Plays an animated sequence (cinematic) with its fades
 void playSequence(int sequenceIdx, int fadeStart, int fadeOutVar);
+// The PAK of sequence `index` of this game (Jack: PERE; AITD2: its list;
+// AITD3: ANn), nullptr if there is none (AITD1: its ending is playEndSequence)
+const char* sequenceName(int index);
+// Draws one packed sequence frame (the PAK entry after its 4-byte size) over
+// the 320x200 picture `dest`: only the pixels that change
+void unapckSequenceFrame(unsigned char* source, unsigned char* dest);
 // AITD1 ending: the burning tree of ENDSEQ.PAK, then the screen turns red (END_SEQUENCE)
 void playEndSequence();
 

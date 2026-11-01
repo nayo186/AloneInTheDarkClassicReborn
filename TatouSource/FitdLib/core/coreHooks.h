@@ -23,6 +23,10 @@ extern void (*g_onCameraBackgroundReady)(const char* pakName, int index, const u
 // be shown; the core loads and draws it as always. Custom backgrounds use it.
 extern void (*g_onScreenPictureShown)(const char* pakName, int index);
 
+// A frame of an animated sequence (Jack, AITD2) is about to be shown: its
+// PAK, its number and the 320x200 picture. Custom backgrounds replace it.
+extern void (*g_onSequenceFrameShown)(const char* pakName, int frame, const unsigned char* pixels);
+
 // A frame of the start menu was drawn (the controller help goes over it).
 extern void (*g_onStartMenuDrawn)();
 
@@ -49,4 +53,11 @@ inline void coreScreenPictureShown(const char* pakName, int index)
 {
     if (g_onScreenPictureShown)
         g_onScreenPictureShown(pakName, index);
+}
+
+// A frame of an animated sequence is about to be shown
+inline void coreSequenceFrameShown(const char* pakName, int frame, const unsigned char* pixels)
+{
+    if (g_onSequenceFrameShown)
+        g_onSequenceFrameShown(pakName, frame, pixels);
 }

@@ -40,7 +40,7 @@ struct LauncherCover
 struct LauncherView
 {
     int selectedGame = 0;              // 0 AITD1, 1 AITD2, 2 AITD3
-    bool dataFolderValid = false;      // AITD1's data folder is usable
+    bool dataFolderValid = false;      // the selected game's data folder is usable
     bool jackFound = false;            // Jack in the Dark is in it (JACK\PERE.PAK)
     bool isDefault = true;             // no advanced option changed
     bool debugMode = false;            // noted at the bottom (launcher.cfg debugMode = 1)
@@ -152,6 +152,7 @@ struct Parts
     LauncherIntent& intent;
     ImDrawList* draw;
     bool isAitd1;
+    bool hasFolder;     // a game that can be played (AITD1 with Jack, AITD2)
     bool linked;
 
     // Size in pixels of `units` of the screen design
@@ -207,7 +208,7 @@ struct Parts
         if (menu::goldButton("##play", tr(playTexts[view.selectedGame]), ImVec2(x, y), ImVec2(width, playH), fonts.button, linked))
             intent.play = true;
         if (!linked)
-            tooltipWhenHovered(tr(isAitd1 ? UiText::DataFolderMissing : UiText::ComingSoon));
+            tooltipWhenHovered(tr(hasFolder ? UiText::DataFolderMissing : UiText::ComingSoon));
         y += playH + u(10.0f);
         if (isAitd1)
         {
@@ -291,7 +292,7 @@ struct Parts
             pathY = y + lineH + u(4.0f);
         }
         ImGui::SetCursorScreenPos(ImVec2(pathX, pathY));
-        if (isAitd1)
+        if (hasFolder)
             menu::fittedText(view.dataFolderValid ? menu::kText : menu::kError,
                 view.dataFolder.empty() ? std::string(tr(UiText::DataFolderMissing)) : view.dataFolder, pathEnd - pathX);
         else
@@ -301,7 +302,7 @@ struct Parts
         {
             const ImVec2 browsePos = browseInline ? ImVec2(x + width - browseW, y) : ImVec2(x, pathY + lineH + u(8.0f));
             ImGui::SetCursorScreenPos(browsePos);
-            ImGui::BeginDisabled(!isAitd1);
+            ImGui::BeginDisabled(!hasFolder);
             if (ImGui::Button(tr(UiText::Browse), ImVec2(browseW, browseH)))
                 intent.browse = true;
             ImGui::EndDisabled();
@@ -469,8 +470,9 @@ inline LauncherIntent drawLauncherScreen(const LauncherView& view, const menu::M
             intent.selectGame = (view.selectedGame + 1) % 3;
     }
 
-    launcherScreen::Parts parts{ view, metrics, fonts, intent, ImGui::GetWindowDrawList(), view.selectedGame == 0, false };
-    parts.linked = parts.isAitd1 && view.dataFolderValid;
+    launcherScreen::Parts parts{ view, metrics, fonts, intent, ImGui::GetWindowDrawList(), view.selectedGame == 0,
+        view.selectedGame <= 1, false };
+    parts.linked = parts.hasFolder && view.dataFolderValid;
     if (metrics.portrait())
         launcherScreen::portrait(parts, origin, area);
     else

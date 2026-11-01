@@ -21,6 +21,7 @@
 // The fixes compiled in (objectFixesData.cpp, made by embedObjectFixes.cmake)
 extern const char* const kObjectFixes_aitd1;
 extern const char* const kObjectFixes_jack;
+extern const char* const kObjectFixes_aitd2;
 
 static std::mutex s_mutex;
 static std::vector<ObjectFix> s_fixes;
@@ -34,7 +35,7 @@ void objectFixesSetBlinking(int listIndex) { s_blinking.store(listIndex); }
 
 const char* objectFixesFileName()
 {
-    return (g_gameId == JACK) ? "jack.cfg" : "aitd1.cfg";
+    return (g_gameId == JACK) ? "jack.cfg" : (g_gameId == AITD2) ? "aitd2.cfg" : "aitd1.cfg";
 }
 
 bool objectFixIsEmpty(const ObjectFix& fix)
@@ -152,6 +153,6 @@ static bool onObjectDraw(int listIndex, int* x, int* y, int* z, int* alpha, int*
 void objectFixesRegister()
 {
     g_onObjectDraw = onObjectDraw;
-    parseFixes((g_gameId == JACK) ? kObjectFixes_jack : kObjectFixes_aitd1);
+    parseFixes((g_gameId == JACK) ? kObjectFixes_jack : (g_gameId == AITD2) ? kObjectFixes_aitd2 : kObjectFixes_aitd1);
     printf(MAIN_OK "Object fixes: %d for this game\n", (int)s_fixes.size());
 }

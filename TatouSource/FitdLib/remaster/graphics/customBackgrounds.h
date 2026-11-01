@@ -50,3 +50,12 @@ void customBackgroundsExportStart();
 int customBackgroundsExportState();
 // Number of backgrounds exported
 int customBackgroundsExportCount();
+// True if the game has animated sequences (Jack, AITD2)
+bool customBackgroundsHasSequences();
+// Exports every frame of every sequence (sequences/<NAME>/000.png...) in a
+// background thread
+void customBackgroundsExportSequencesStart();
+// State of the sequence export (0 idle, 1 working, 2 done, 3 failed)
+int customBackgroundsExportSequencesState();
+// Number of sequence frames exported
+int customBackgroundsExportSequencesCount();

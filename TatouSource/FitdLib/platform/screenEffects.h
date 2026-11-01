@@ -55,6 +55,7 @@ public:
 
     // Brightness of the final image, 0 (black) to 1 (normal); used by fades
     void setScreenFade(float fade) { m_screenFade = fade; }
+    float screenFade() const { return m_screenFade; }
 
     // The cigar smoke's ellipse for this frame, in texture coordinates (0..1):
     // the image turns grey inside it; cleared after each frame

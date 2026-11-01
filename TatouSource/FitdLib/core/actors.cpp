@@ -525,7 +525,9 @@ int checkActorInRoom(int room)
 // dolls over the toy chest's room (BUGS.md J4)
 static bool isActorInSeenPart(tObject* actorPtr)
 {
-    if (g_gameId < JACK || actorPtr->room == currentRoom)
+    // A 2D object has no zone of its own (its body number is an animation):
+    // tested, AITD2's gate came and went (BUGS.md A4)
+    if (g_gameId < JACK || actorPtr->room == currentRoom || (actorPtr->objectType & AF_OBJ_2D))
         return true;
 
     for (int i = 0; i < cameraDataTable[NumCamera]->numViewedRooms; i++)

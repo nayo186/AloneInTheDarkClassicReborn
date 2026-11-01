@@ -2406,6 +2406,12 @@ void processLife(int lifeNum, bool callFoundLife)
 
                 LoadPak("ITD_RESS", pictureIndex, aux);
 
+                // The texts on screen belong to the scene, not to the picture
+                // ("Two days later..." stayed over every credit, BUGS.md A2)
+                for (messageStruct& message : messageTable)
+                    message.string = NULL;
+                uiLayer.fill(0);
+
                 if (g_gameId > AITD1)
                 {
                     FadeOutPhys(0x10, 0);
@@ -2420,6 +2426,14 @@ void processLife(int lifeNum, bool callFoundLife)
                 osystem_CopyBlockPhys((unsigned char*)frontBuffer, 0, 0, 320, 200);
                 osystem_drawBackground();
 
+                // The picture comes up from black as it goes; setting its
+                // palette ended the fade and it appeared at once (AITD2's
+                // credits, BUGS.md A2). g_menuActive: the fades show the
+                // picture, not the 3D scene behind it
+                g_menuActive = true;
+                if (g_gameId > AITD1)
+                    FadeInPhys(0x10, 0);
+
                 unsigned int chrono;
                 startChrono(&chrono);
 
@@ -2428,7 +2442,6 @@ void processLife(int lifeNum, bool callFoundLife)
 
                 //soundFunc(0);
 
-                g_menuActive = true;
                 do
                 {
                     unsigned int time;
@@ -2444,7 +2457,6 @@ void processLife(int lifeNum, bool callFoundLife)
                     if (time > (unsigned int)delay)
                         break;
                 } while (!key && !Click);
-                g_menuActive = false;
 
                 RestoreTimerAnim();
 
@@ -2452,9 +2464,8 @@ void processLife(int lifeNum, bool callFoundLife)
                 FlagInitView = 1;
 
                 if (g_gameId > AITD1)
-                {
                     FadeOutPhys(0x10, 0);
-                }
+                g_menuActive = false;
                 break;
             }
             case LM_PLAY_SEQUENCE: // sequence

@@ -32,7 +32,9 @@ void FastCopyScreen(void* source, void* dest)
 // is on screen its snapshot is shown during the fade.
 static void fadeScreen(bool fadeIn, int step)
 {
-    const bool useSnapshot = g_playWorldActive && osystem_isSceneSnapshotLive();
+    // Not over a full-screen picture (g_menuActive): the snapshot is the 3D
+    // scene behind it, and AITD2's credits flickered between both (BUGS.md A2)
+    const bool useSnapshot = g_playWorldActive && !g_menuActive && osystem_isSceneSnapshotLive();
     const bool savedMenuActive = g_menuActive;
     g_menuActive = true;  // compose every fade frame, even without new 3D
 
@@ -51,8 +53,10 @@ static void fadeScreen(bool fadeIn, int step)
     // One step per tick of the game clock, as at 60 frames per second (the
     // original stepped once per frame, BUGS.md V19)
     int i = fadeIn ? 0 : 256;
+    int frames = 0, ticks = 0;
     while (fadeIn ? (i < 256) : (i >= 0))
     {
+        frames++;
         osystem_setScreenFade(i / 256.0f);
         if (useSnapshot)
         {
@@ -63,9 +67,11 @@ static void fadeScreen(bool fadeIn, int step)
             osystem_drawBackground();
         }
         process_events();
+        ticks += ticksThisFrame;
         i += (fadeIn ? step : -step) * ticksThisFrame;
     }
     osystem_setScreenFade(fadeIn ? 1.0f : 0.0f);
+    printf("[FADE] %s: %d frames, %d ticks%s\n", fadeIn ? "in" : "out", frames, ticks, useSnapshot ? ", over the 3D scene" : "");
 
     if (useSnapshot)
         osystem_unfreezeSceneForMenu();
@@ -104,7 +110,14 @@ void FadeOutPhys(int step, int var2)
 {
     SaveTimerAnim();
 
-    if (osystem_canFadeScreen())
+    // Already black: nothing to do, as a palette fade in DOS. Started again
+    // it lit the screen first: AITD2's Infogrames logo went black and then
+    // flashed before the cliff (MER), and so did each credit (BUGS.md A2)
+    if (osystem_canFadeScreen() && osystem_getScreenFade() <= 0.0f)
+    {
+        printf("[FADE] out: already black\n");
+    }
+    else if (osystem_canFadeScreen())
     {
         fadeScreen(false, step);
     }

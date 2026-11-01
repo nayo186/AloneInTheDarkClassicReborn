@@ -105,6 +105,9 @@
 	void osystem_createMask(const std::array<u8, 320 * 200>& mask, int roomId, int maskId, int actualRoomNumber, int maskX1, int maskY1, int maskX2, int maskY2);
 	// Draws a foreground mask of the camera over the objects behind it
 	void osystem_drawMask(int roomId, int maskId);
+	// Draws a 2D drawing (AITD2's sprites) at the current depth slice: `layer`
+	// is 320x200 pairs of colour and covered (1)
+	void osystem_drawSpriteLayer(const u8* layer);
 
 	// Opens a frame of the renderer (creates its resources the first time)
 	void osystem_startFrame();
@@ -193,6 +196,8 @@
 	bool osystem_canFadeScreen();
 	// Sets the screen fade (0 black, 1 normal)
 	void osystem_setScreenFade(float level);
+	// The screen fade now (0 black, 1 normal)
+	float osystem_getScreenFade();
 	// The cigar smoke's ellipse on the 320x200 screen for this frame: the image
 	// turns grey inside it (core/sceneDraw.cpp, AffSmoke)
 	void osystem_setSmokeArea(float centerX, float centerY, float radiusX, float radiusY);

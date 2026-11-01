@@ -5,7 +5,7 @@
 // Visual fixes of 3D objects: an object drawn moved, turned or resized where
 // the original data leaves a gap or a wrong shape. Only how it is drawn
 // changes; collisions and scripts keep the real position. The fixes are part
-// of the project (assets/objectFixes/aitd1.cfg and jack.cfg), compiled into
+// of the project (assets/objectFixes/aitd1.cfg, jack.cfg, aitd2.cfg), compiled into
 // Tatou.exe (embedObjectFixes.cmake), so every player gets them. They are
 // made with the object editor (remaster/ui/objectEditor.cpp), which only
 // exists in development builds.
@@ -64,5 +64,5 @@ void objectFixesSetBlinking(int listIndex);
 // Writes the fixes into the project's file for this game (the next build
 // compiles them in); returns false if it cannot
 bool objectFixesSave();
-// Name of the fixes file of the current game (aitd1.cfg or jack.cfg)
+// Name of the fixes file of the current game (aitd1.cfg, jack.cfg or aitd2.cfg)
 const char* objectFixesFileName();

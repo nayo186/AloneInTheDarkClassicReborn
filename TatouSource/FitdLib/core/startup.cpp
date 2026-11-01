@@ -649,16 +649,12 @@ void loadPalette(void)
 {
     palette_t localPalette;
 
-    if (g_gameId == AITD2)
-    {
-        //loadPakToPtr("ITD_RESS",59,aux);
-        return; // palette data not loaded for AITD2 yet
-    }
-    else
-    {
-        LoadPak("ITD_RESS", 3, aux);
-    }
+    // AITD2's own palette is ITD_RESS 59 (768 bytes, colours only); without
+    // it its menus took the colours of the last picture (BUGS.md A3)
+    LoadPak("ITD_RESS", (g_gameId == AITD2) ? 59 : 3, aux);
     copyPalette(aux, currentGamePalette);
+    if (g_gameId == AITD2)
+        convertPaletteIfRequired(currentGamePalette);
 
     copyPalette(currentGamePalette, localPalette);
     //  fadeInSub1(localPalette);

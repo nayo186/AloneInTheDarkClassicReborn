@@ -3,7 +3,7 @@
 // Based on FITD by yaz0r, Re-haunted is released under GPL
 //
 // Launch options: command-line parameters passed by the launcher
-//   --game aitd1|jack   --lang ENGLISH|FRANCAIS|ITALIANO|ESPAGNOL|DEUTSCH
+//   --game aitd1|jack|aitd2   --lang ENGLISH|FRANCAIS|ITALIANO|ESPAGNOL|DEUTSCH
 // Anything missing falls back to aitd_remaster.cfg.
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -13,7 +13,7 @@
 
 struct LaunchOptions
 {
-    std::string game;      // "aitd1", "jack" or empty
+    std::string game;      // "aitd1", "jack", "aitd2" or empty
     std::string language;  // language PAK name (e.g. "ESPAGNOL") or empty
 };
 

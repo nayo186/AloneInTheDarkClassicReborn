@@ -31,5 +31,5 @@ struct sHybrid_Sprite {
     void read(uint8_t* buffer, int bufferSize);
 };
 
-// Draws a sprite at (X, Y) on a screen
-void AffSpr(int spriteNumber, int X, int Y, char* screen, std::vector<sHybrid_Sprite>& sprites);
+// Draws a sprite at (X, Y) on a 320x200 layer of colour and covered (1)
+void AffSpr(int spriteNumber, int X, int Y, u8* layer, std::vector<sHybrid_Sprite>& sprites);

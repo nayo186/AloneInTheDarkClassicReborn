@@ -113,6 +113,7 @@ addShaderProgram(flat_vs flat_ps flat.varying.def)
 addShaderProgram(flat_vs glass_ps flat.varying.def)
 addShaderProgram(background_vs customBackground_ps background.varying.def)
 addShaderProgram(maskBackground_vs customMask_ps maskBackground.varying.def)
+addShaderProgram(maskBackground_vs sprite_ps maskBackground.varying.def)
 addShaderProgram(effects_vs effectsSides_ps effects.varying.def)
 addShaderProgram(noise_vs noise_ps noise.varying.def)
 addShaderProgram(ramp_vs ramp_ps ramp.varying.def)
@@ -148,6 +149,7 @@ endif()
 set(OBJECT_FIXES_FILES
     "${CMAKE_CURRENT_SOURCE_DIR}/assets/objectFixes/aitd1.cfg"
     "${CMAKE_CURRENT_SOURCE_DIR}/assets/objectFixes/jack.cfg"
+    "${CMAKE_CURRENT_SOURCE_DIR}/assets/objectFixes/aitd2.cfg"
 )
 set(OBJECT_FIXES_DATA "${CMAKE_CURRENT_BINARY_DIR}/objectFixesData.cpp")
 add_custom_command(

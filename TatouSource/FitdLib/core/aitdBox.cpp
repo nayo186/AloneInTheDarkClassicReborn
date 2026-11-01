@@ -127,6 +127,72 @@ void AffSpfI(int left, int top, int index, char* gfxData)
 	}
 }
 
+// One piece of AITD2's frame: colour 0 is see-through, and so is colour 11,
+// a stray column at the edge of its left side (and all of piece 8): drawn,
+// it made a cyan line inside every frame (BUGS.md A1). Pixels from x
+// `clipRight` and y `clipBottom` on are left out
+static void affCadrePiece(int left, int top, int index, int clipRight = 320, int clipBottom = 200)
+{
+    int width, height;
+    SizeSpf(index, PtrCadre, &width, &height);
+    const unsigned char* pixels = (const unsigned char*)PtrCadre + READ_LE_U16(index * 2 + PtrCadre) + 8;
+    if (clipRight > 320) clipRight = 320;
+    if (clipBottom > 200) clipBottom = 200;
+    for (int y = 0; y < height; y++)
+    {
+        for (int x = 0; x < width; x++)
+        {
+            const unsigned char colour = pixels[y * width + x];
+            if (colour != 0 && colour != 11 && left + x >= 0 && left + x < clipRight && top + y >= 0 && top + y < clipBottom)
+                logicalScreen[(top + y) * 320 + left + x] = colour;
+        }
+    }
+}
+
+// AITD2's frame: its corners are taller than its sides, so each piece is
+// placed from its own edge; drawn as in AITD1 the right side ended above
+// the bottom corner, with a gap (BUGS.md A1)
+static void affCadreAITD2(int left, int top, int right, int bottom)
+{
+    int cornerWidth[4], cornerHeight[4];
+    for (int i = 0; i < 4; i++)
+        SizeSpf(i, PtrCadre, &cornerWidth[i], &cornerHeight[i]);
+    int barWidth, topHeight, bottomHeight, leftWidth, sideHeight, rightWidth, unused;
+    SizeSpf(4, PtrCadre, &barWidth, &topHeight);
+    SizeSpf(5, PtrCadre, &unused, &bottomHeight);
+    SizeSpf(6, PtrCadre, &leftWidth, &sideHeight);
+    SizeSpf(7, PtrCadre, &rightWidth, &unused);
+
+    WindowX1 = left + leftWidth;
+    WindowY1 = top + topHeight;
+    WindowX2 = right - rightWidth - 1;
+    WindowY2 = bottom - bottomHeight - 1;
+    AffRect(WindowX1, WindowY1, WindowX2, WindowY2, 0);  // the corners reach inside
+
+    const int barsEnd = right - cornerWidth[1];
+    for (int x = left + cornerWidth[0]; x < barsEnd; x += barWidth)
+    {
+        affCadrePiece(x, top, 4, barsEnd);
+        affCadrePiece(x, bottom - bottomHeight, 5, barsEnd);
+    }
+    const int sidesEnd = bottom - cornerHeight[2];
+    for (int y = top + cornerHeight[0]; y < sidesEnd; y += sideHeight)
+    {
+        affCadrePiece(left, y, 6, 320, sidesEnd);
+        affCadrePiece(right - rightWidth, y, 7, 320, sidesEnd);
+    }
+
+    affCadrePiece(left, top, 0);
+    affCadrePiece(right - cornerWidth[1], top, 1);
+    affCadrePiece(left, bottom - cornerHeight[2], 2);
+    affCadrePiece(right - cornerWidth[3], bottom - cornerHeight[3], 3);
+
+    SetClip(WindowX1, WindowY1, WindowX2, WindowY2);
+}
+
+// The frame of menus and messages, made of the CADRE pieces: corners 0-3,
+// top and bottom bars 4-5, sides 6-7 and "in the dark" 8 (AITD1 and Jack:
+// 20 pixel corners, 8 pixel bars)
 void AffBigCadre(int x, int y, int width, int height)
 {
     int top;
@@ -150,6 +216,12 @@ void AffBigCadre(int x, int y, int width, int height)
 
     right = x + halfWidth;
     bottom = y + halfHeight;
+
+    if (g_gameId >= AITD2)
+    {
+        affCadreAITD2(left, top, right, bottom);
+        return;
+    }
 
     AffSpf(currentLeftPosition,currentTopPosition,0,PtrCadre); // draw top left corner
 

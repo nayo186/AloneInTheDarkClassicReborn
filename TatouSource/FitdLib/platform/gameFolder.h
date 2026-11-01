@@ -4,11 +4,12 @@
 //
 // Game folders. The data folder is the one after --data, else the folder
 // Tatou is started in (the launcher starts it in the chosen one), else the
-// one chosen in the launcher (aitd1.dataFolder in launcher.cfg), so other
+// one chosen in the launcher (aitd1.dataFolder or aitd2.dataFolder in
+// launcher.cfg), so other
 // programs (a frontend) can start each game directly. It can be a copy of the
-// data (AITD1 there, Jack in JACK) or a GOG or Steam installation (the same
+// data (AITD1 or AITD2 there, Jack in JACK) or a GOG or Steam installation (the same
 // edition: GAME.GOG and its track list GAME.INS, or GAME.INST on Steam;
-// AITD1 in INDARK, Jack in JACK). The game data is read through
+// AITD1 in INDARK, Jack in JACK, AITD2 in INDARK2). The game data is read through
 // homePath; the working directory is the folder written to:
 // - normally the portable UserData folder next to Tatou.exe
 //   (Shared/userFolder.h): the data is never written to;
@@ -22,7 +23,7 @@
 
 #include <string>
 
-// Called first, before the log file opens (reads --game aitd1|jack, --data
+// Called first, before the log file opens (reads --game aitd1|jack|aitd2, --data
 // <folder> and --debug / --final)
 void selectGameFolder(int argc, char* argv[]);
 

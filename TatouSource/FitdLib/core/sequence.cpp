@@ -55,6 +55,24 @@ const char* sequenceListAITD2[]=
     "LAST"
 };
 
+const char* sequenceName(int index)
+{
+    static char name[16];
+    if (index < 0)
+        return nullptr;
+    if (g_gameId == AITD2)
+        return index < (int)(sizeof(sequenceListAITD2) / sizeof(sequenceListAITD2[0])) ? sequenceListAITD2[index] : nullptr;
+    if (g_gameId == AITD3)
+    {
+        snprintf(name, sizeof(name), "AN%d", index);
+        return name;
+    }
+    // Jack's only sequence: Santa ("le Père Noël") at the end (BUGS.md J2)
+    if (g_gameId == JACK)
+        return index == 0 ? "PERE" : nullptr;
+    return nullptr;
+}
+
 void unapckSequenceFrame(unsigned char* source,unsigned char* dest)
 {
     unsigned char byteCode;
@@ -161,23 +179,27 @@ void playSequence(int sequenceIdx, int fadeStart, int fadeOutVar)
     palette_t seqPalette;           // Palette at outer scope for dump/load access
 
     char buffer[256];
-    if (g_gameId == AITD2)
+    const char* name = sequenceName(sequenceIdx);
+    if (!name)
     {
-        strcpy(buffer, sequenceListAITD2[sequenceIdx]);
+        printf(SEQ_TAG "No sequence %d in this game\n", sequenceIdx);
+        return;
     }
-    else if (g_gameId == AITD3)
-    {
-        sprintf_s(buffer, sizeof(buffer), "AN%d", sequenceIdx);
-    }
-    else
-    {
-        // Jack's only sequence: Santa ("le Père Noël") at the end (BUGS.md J2)
-        strcpy(buffer, "PERE");
-    }
+    strcpy(buffer, name);
 
-    printf(SEQ_TAG "Playing sequence: %s" CON_RESET "\n", buffer);
+    printf(SEQ_TAG "Playing sequence: %s (fade %d, times %d)" CON_RESET "\n", buffer, fadeStart, fadeOutVar);
 
     int numMaxFrames = PAK_getNumFiles(buffer);
+
+    // Fade flag 1: what is on screen goes to black first. Before composing
+    // only pictures: AITD2's Infogrames logo is a camera, and without its
+    // scene the fade had nothing to show (BUGS.md A2)
+    if (fadeStart & 1)
+        FadeOutPhys(0x10, 0);
+
+    // Fade flags 2 and 4: the first frame comes up from black (2 is the
+    // cliff after the logo, MER; 4 the rest of AITD2's intro)
+    const bool fadeInFirstFrame = (fadeStart & (2 | 4)) != 0;
 
     // Compose every frame, there is no 3D; without it the last camera stayed
     // on screen and Jack's Santa was never seen (BUGS.md J2)
@@ -217,21 +239,9 @@ void playSequence(int sequenceIdx, int fadeStart, int fadeOutVar)
 
                 if(var_4 != 0)
                 {
-                    /*      if(fadeStart & 1)
-                    {
-                    fadeOut(0x10,0);
-                    }
-                    if(fadeStart & 4)
-                    {
-                    //memset(palette,0,0); // fade from black
-                    fadeInSub1(seqPalette);
-                    flipOtherPalette(palette);
-                    } */
-
                     setPalette(seqPalette);
                     copyPalette(seqPalette,currentGamePalette);
                 }
-                coreScreenPictureShown(buffer, 0);
             }
             else // not first frame
             {
@@ -257,12 +267,18 @@ void playSequence(int sequenceIdx, int fadeStart, int fadeOutVar)
                 }
             }
 
-			// TODO: here, timming management
-			// TODO: fade management
-
+			// A remade frame of the player replaces it (customBackgrounds.cpp)
+			coreSequenceFrameShown(buffer, currentFrameId, (const unsigned char*)aux);
 			osystem_CopyBlockPhys((unsigned char*)aux,0,0,320,200);
 
+			// setPalette left the screen lit: not one bright frame before the fade
+			if (fadeInFirstFrame && frames == 1)
+				osystem_setScreenFade(0.0f);
+
 			osystem_drawBackground();
+
+			if (fadeInFirstFrame && frames == 1)
+				FadeInPhys(0x10, 0);
 
             currentFrameId++;
 

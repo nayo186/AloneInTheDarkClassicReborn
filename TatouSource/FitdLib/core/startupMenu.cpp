@@ -39,6 +39,11 @@ static u32 s_mainMenuSelTime = 0;
 // Helper function to play menu navigation sounds (defined in systemMenu.cpp)
 extern void playMenuSound(const char* soundName);
 
+// The three entries: from y 76 every 16 pixels; AITD2's, as in its own
+// menu, every line of its font (14) and centred in the frame (BUGS.md A3)
+static int menuTop() { return (g_gameId == AITD2) ? 100 - (3 * fontHeight) / 2 : 76; }
+static int menuStep() { return (g_gameId == AITD2) ? fontHeight : 16; }
+
 void DrawMenu(int selectedEntry)
 {
     if (g_gameId == AITD3) {
@@ -48,7 +53,7 @@ void DrawMenu(int selectedEntry)
         AffBigCadre(160, 100, 320, 80);
     }
 
-    int currentY = 76;
+    int currentY = menuTop();
 
     for(int i=0; i<3; i++)
     {
@@ -67,14 +72,15 @@ void DrawMenu(int selectedEntry)
                     if (t < 1.0f)
                         pop = (int)(sinf(t * 3.14159f) * 6.0f);
                 }
-                int x1, x2;
-                {
-                    x1 = 10 - pop;
-                    x2 = 309 + pop;
-                    if (x1 < 8) x1 = 8;
-                    if (x2 > 311) x2 = 311;
-                }
-                AffRect(x1, currentY, x2, currentY+16, color);
+                // AITD2: inside its frame (WindowX1-2), wider than AITD1's
+                const bool insideFrame = g_gameId == AITD2;
+                int x1 = (insideFrame ? WindowX1 : 10) - pop;
+                int x2 = (insideFrame ? WindowX2 : 309) + pop;
+                const int leftmost = insideFrame ? WindowX1 : 8;
+                const int rightmost = insideFrame ? WindowX2 : 311;
+                if (x1 < leftmost) x1 = leftmost;
+                if (x2 > rightmost) x2 = rightmost;
+                AffRect(x1, currentY, x2, currentY + menuStep(), color);
                 SelectedMessage(160, currentY, i + 11, 15, 4);
             }
         }
@@ -83,7 +89,7 @@ void DrawMenu(int selectedEntry)
             SimpleMessage(160,currentY,i+11,4);
         }
 
-        currentY+=16; // next line
+        currentY += menuStep(); // next line
     }
 }
 
@@ -99,8 +105,10 @@ int MainMenu(void)
 
     flushScreen();
 
-    if (g_gameId == AITD3) {
-        LoadPak("ITD_RESS", 47, aux);
+    // AITD2 and 3: the menu's own colours, not those of the intro's last
+    // picture (AITD2: ITD_RESS 59, BUGS.md A3)
+    if (g_gameId == AITD2 || g_gameId == AITD3) {
+        LoadPak("ITD_RESS", (g_gameId == AITD2) ? 59 : 47, aux);
 
         palette_t lpalette;
         copyPalette(aux, lpalette);
@@ -147,8 +155,7 @@ int MainMenu(void)
 			ImVec2 gm = menuGetGameMouse();
 			if (menuMouseMoved(s_mainMenuMouse, JoyD || key))
 			{
-				// 3 items starting at Y=76, 16px each
-				int hit = menuMouseHitList(gm.x, gm.y, 8, 311, 76, 16, 3);
+				int hit = menuMouseHitList(gm.x, gm.y, 8, 311, menuTop(), menuStep(), 3);
 				if (hit >= 0 && hit != currentSelectedEntry)
 				{
 					currentSelectedEntry = hit;
@@ -158,7 +165,7 @@ int MainMenu(void)
 			}
 			if (menuMouseClicked())
 			{
-				int hit = menuMouseHitList(gm.x, gm.y, 8, 311, 76, 16, 3);
+				int hit = menuMouseHitList(gm.x, gm.y, 8, 311, menuTop(), menuStep(), 3);
 				if (hit >= 0)
 				{
 					playMenuSound("Select.wav");

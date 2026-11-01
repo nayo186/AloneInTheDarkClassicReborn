@@ -56,5 +56,6 @@ private:
 
 extern hqrEntryStruct<sHybrid>* HQ_Hybrides;
 
-// Draws entity `index` of a hybrid object at (X, Y)
+// Draws entity `index` of a hybrid object at (X, Y), on its own layer at the
+// current depth slice
 void AffHyb(int index, int X, int Y, sHybrid* pHybrid);

@@ -154,6 +154,12 @@ int numUsedTransparentVertices = 0;
 static float s_depthSlice[4] = { 0.0f, 1.0f, 0.0f, 0.0f };  // slice, slice size, active
 static bool s_depthSlicedThisFrame = false;
 
+// The 2D drawings of AITD2 and later (core/hybrid.cpp) in the painter's
+// order: each one on its own texture of the frame (bgfx reads a texture when
+// the frame is drawn, so one texture for several would show the last)
+static std::vector<bgfx::TextureHandle> s_spriteLayerTextures;
+static int s_spriteLayersThisFrame = 0;
+
 // Glass polygons of this frame (Original mode), drawn after the scene
 static std::vector<polyVertex> s_deferredGlass;
 
@@ -679,6 +685,7 @@ void osystem_startFrame()
 
     g_3dFlushedThisFrame = false;
     s_depthSlicedThisFrame = false;
+    s_spriteLayersThisFrame = 0;
     s_deferredGlass.clear();
     s_sceneDarkThisFrame = false;
 
@@ -1903,6 +1910,57 @@ void osystem_drawMask(int roomId, int maskId)
     {
         bgfx::submit(gameViewId, getMaskBackgroundShader());
     }
+}
+
+void osystem_drawSpriteLayer(const u8* layer)
+{
+    if (s_spriteLayersThisFrame >= (int)s_spriteLayerTextures.size())
+        s_spriteLayerTextures.push_back(bgfx::createTexture2D(320, 200, false, 1, bgfx::TextureFormat::RG8U));
+    const bgfx::TextureHandle texture = s_spriteLayerTextures[s_spriteLayersThisFrame++];
+    bgfx::updateTexture2D(texture, 0, 0, 0, 0, 320, 200, bgfx::copy(layer, 320 * 200 * 2));
+
+    static bgfx::ProgramHandle spriteProgram = BGFX_INVALID_HANDLE;
+    static bgfx::UniformHandle spriteTextureUniform = BGFX_INVALID_HANDLE;
+    static bgfx::UniformHandle paletteTextureUniform = BGFX_INVALID_HANDLE;
+    if (!bgfx::isValid(spriteProgram))
+    {
+        spriteProgram = loadBgfxProgram("maskBackground_vs", "sprite_ps");
+        spriteTextureUniform = bgfx::createUniform("s_spriteTexture", bgfx::UniformType::Sampler);
+        paletteTextureUniform = bgfx::createUniform("s_paletteTexture", bgfx::UniformType::Sampler);
+    }
+
+    // What was drawn before (farther) goes first
+    osystem_flushPendingPrimitives();
+
+    bgfx::VertexLayout layout;
+    layout
+        .begin()
+        .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
+        .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
+        .end();
+    bgfx::TransientVertexBuffer buffer;
+    bgfx::allocTransientVertexBuffer(&buffer, 4, layout);
+    struct sVertice { float position[3]; float texcoord[2]; };
+    sVertice* v = (sVertice*)buffer.data;
+    const float x1 = g_shakeOffsetX, x2 = 320.f + g_shakeOffsetX;
+    const float y1 = g_shakeOffsetY, y2 = 200.f + g_shakeOffsetY;
+    v[0] = { {x1, y2, 0.f}, {0.f, 1.f} };
+    v[1] = { {x1, y1, 0.f}, {0.f, 0.f} };
+    v[2] = { {x2, y2, 0.f}, {1.f, 1.f} };
+    v[3] = { {x2, y1, 0.f}, {1.f, 0.f} };
+    bgfx::setVertexBuffer(0, &buffer);
+
+    // In front of its slice, like a mask: over what is farther, under what
+    // is nearer (their depth is smaller)
+    bgfx::setState(0 | BGFX_STATE_WRITE_RGB
+        | BGFX_STATE_WRITE_Z
+        | BGFX_STATE_DEPTH_TEST_ALWAYS
+        | BGFX_STATE_MSAA
+        | BGFX_STATE_PT_TRISTRIP);
+    bgfx::setTexture(0, spriteTextureUniform, texture);
+    bgfx::setTexture(1, paletteTextureUniform, g_paletteTexture);
+    applyDepthSlice();
+    bgfx::submit(gameViewId, spriteProgram);
 }
 
 // ============================================================================

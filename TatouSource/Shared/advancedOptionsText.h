@@ -38,6 +38,9 @@ enum class AdvancedText
     ExportMasks,
     ExportMasksHelp,
     ExportMasksDone,
+    ExportSequences,
+    ExportSequencesHelp,
+    ExportSequencesDone,
     Effects,
     FilmGrain,
     FilmGrainHelp,
@@ -210,6 +213,20 @@ inline const char* advancedText(AdvancedText text, int language)
           "masques exportés",
           "maschere esportate",
           "Masken exportiert" },
+        // ExportSequences
+        { "Export sequences", "Exportar secuencias", "Exporter les séquences", "Esporta sequenze", "Sequenzen exportieren" },
+        // ExportSequencesHelp
+        { "Saves every frame of the animated scenes as a PNG, to remake them.",
+          "Guarda cada imagen de las escenas animadas en PNG, para rehacerlas.",
+          "Enregistre chaque image des scènes animées en PNG, pour les refaire.",
+          "Salva ogni immagine delle scene animate in PNG, per rifarle.",
+          "Speichert jedes Bild der animierten Szenen als PNG zum Neugestalten." },
+        // ExportSequencesDone
+        { "frames exported",
+          "imágenes exportadas",
+          "images exportées",
+          "immagini esportate",
+          "Bilder exportiert" },
         // Effects
         { "Effects", "Efectos", "Effets", "Effetti", "Effekte" },
         // FilmGrain

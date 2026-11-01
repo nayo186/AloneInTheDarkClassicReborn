@@ -597,9 +597,6 @@ void AllRedraw(int flagFlip)
             SetClip(0, 0, 319, 199);
             int num = currentDrawActor & 0x7FFF;
             AffHyb(TabAnim2d[num].pAnim->id, 0, 0, PtrAnim2D);
-
-            // TODO: Clipping stuff
-            osystem_CopyBlockPhys((unsigned char*)logicalScreen, 0, 0, 320, 200);
         }
         else {
             tObject* actorPtr = &ListObjets[currentDrawActor];
@@ -625,7 +622,12 @@ void AllRedraw(int flagFlip)
                             }
                         }
 
-                        // TODO: bounding volume
+                        // No box of its own: without one it took the previous
+                        // object's and its masks (BUGS.md A4)
+                        BBox3D1 = 320;
+                        BBox3D2 = 200;
+                        BBox3D3 = -1;
+                        BBox3D4 = -1;
                     }
                     else
                     {
