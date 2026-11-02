@@ -126,7 +126,7 @@ Only if you want something else for one entry, add it to the line:
 
 The game runs natively, without Wine or Proton: those are only needed to install the game files. Everything works as on Windows, including music and voices from the CD image and `UserData` next to the programs. Updates from the launcher need `curl` (installed on almost every distribution; otherwise `sudo apt install curl` or your system's equivalent).
 
-**The Linux version is ready to play:** built and tested on Ubuntu, with the GOG installation and a copy of the game files, in *Alone in the Dark* and *Jack in the Dark*. *Alone in the Dark 2* uses the same code and is built for Linux too, but it has been tested less there: reports are very welcome. Controllers are supported too, with the same code as on Windows (SDL3). If anything does not work on your system (a controller, the sound, the picture...), please open an issue (see [Reporting a problem](#reporting-a-problem)) and we will fix it.
+**The Linux version is ready to play:** built and tested on Ubuntu, with the GOG installation and a copy of the game files, in *Alone in the Dark* and *Jack in the Dark*. *Alone in the Dark 2* uses the same code and is built for Linux too. Reports from Linux players are very welcome, to keep improving it. Controllers are supported too, with the same code as on Windows (SDL3). If anything does not work on your system (a controller, the sound, the picture...), please open an issue (see [Reporting a problem](#reporting-a-problem)) and we will fix it.
 
 **From Windows (WSL).** The Linux version also runs in WSL2 with Ubuntu. WSL is not a full Linux PC, so for a smooth game it helps to:
 
