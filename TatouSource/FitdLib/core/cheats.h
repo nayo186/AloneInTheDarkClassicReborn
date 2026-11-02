@@ -4,7 +4,7 @@
 //
 // Cheats chosen in F1 (g_settings.cheats): none acts while cheats are off.
 // Infinite life: the player's life never goes down from a hit; a script
-// that sets it to 0 (a trap: a deadly fall, a scripted death) still kills.
+// death (a trap, a deadly fall or item) still kills.
 ///////////////////////////////////////////////////////////////////////////////
 
 #pragma once

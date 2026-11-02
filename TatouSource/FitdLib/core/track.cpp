@@ -33,6 +33,7 @@
 #define	TL_GOTO_3DZ		18
 #define	TL_ANGLE		19
 #define	TL_CLOSE		20
+#define	TL_WAIT			21 // AITD2+: stays until the life script's CONTINUE_TRACK
 
 // AITD2+ has removed a few entries, so covert the enum to match
 s16 convertTrackMacro(s16 inTrackMacro) {
@@ -47,7 +48,7 @@ s16 convertTrackMacro(s16 inTrackMacro) {
         return inTrackMacro + 3;
 
     assert(inTrackMacro == 5);
-    return TL_STOP;
+    return TL_WAIT;
 }
 
 int makeProportional(int x1, int x2, int y1, int y2)
@@ -546,6 +547,11 @@ void processTrack(void)
                 {
                     currentProcessedActorPtr->speed = 0;
                     currentProcessedActorPtr->positionInTrack++;
+                    break;
+                }
+            case TL_WAIT:
+                {
+                    currentProcessedActorPtr->speed = 0;
                     break;
                 }
             case TL_BACK:

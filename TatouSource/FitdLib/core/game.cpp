@@ -253,6 +253,9 @@ int parseAllSaves(int arg)
 
         AffBigCadre(160, 100, 280, 180);
 
+        // AITD2's frame has wider sides: the list starts inside it (BUGS.md A22)
+        const int listX = (g_gameId == AITD2) ? WindowX1 + 2 : 28;
+
 
         // Draw title (use existing text messages if available, otherwise draw slots)
         int startY = 30;
@@ -286,28 +289,39 @@ int parseAllSaves(int arg)
                 }
                 // Pulsing highlight color
                 char color = (char)(100 + (int)(fabsf(sinf((float)now * 0.004f)) * 8.0f));
-                AffRect(28, yPos - 1 - pop / 2, 160 + pop * 2, yPos + 14 + pop, color);
+                AffRect(listX, yPos - 1 - pop / 2, 160 + pop * 2, yPos + 14 + pop, color);
 
                 // Draw text with highlight
                 SetFont(PtrFont, 15);
-                PrintFont(30, yPos, logicalScreen, (u8*)buffer);
+                PrintFont(listX + 2, yPos, logicalScreen, (u8*)buffer);
             }
             else
             {
                 // Draw normal text
                 SetFont(PtrFont, 4);
-                PrintFont(30, yPos, logicalScreen, (u8*)buffer);
+                PrintFont(listX + 2, yPos, logicalScreen, (u8*)buffer);
             }
 
             // Date and time of the save, small, right after "Slot N": at the end
             // of the line the preview's frame (from x=175) covered it
             if (saveExists[i] && !saveDates[i].empty())
-                drawTinyText(30 + ExtGetSizeFont((u8*)buffer) + 8, yPos + 5, saveDates[i].c_str(),
+                drawTinyText(listX + 2 + ExtGetSizeFont((u8*)buffer) + 8, yPos + 5, saveDates[i].c_str(),
                     (i == currentSelectedSlot) ? 15 : 4);
         }
 
         // Draw preview box on the right side
         AffBigCadre(235, 80, 120, 90);
+
+        // AITD2's frame: the inside it leaves, its bottom bar starts higher
+        // than AITD1's (BUGS.md A22)
+        int previewX1 = 183, previewY1 = 43, previewX2 = 286, previewY2 = 126;
+        if (g_gameId == AITD2)
+        {
+            previewX1 = WindowX1;
+            previewY1 = WindowY1;
+            previewX2 = WindowX2;
+            previewY2 = WindowY2;
+        }
 
         if (previewImageData && previewImageW > 0 && previewImageH > 0)
         {
@@ -315,13 +329,13 @@ int parseAllSaves(int arg)
             // just before the bottom bar sprite at y=127. This covers the 10-pixel black
             // gap that exists between WindowY2=116 and the visible bottom golden bar.
             // Corner sprites live at x=175-182 / x=287+ so x=183-286 is clear to overwrite.
-            fillSavePreviewToFrame(183, 43, 286, 126, previewImageData, previewImageW, previewImageH);
+            fillSavePreviewToFrame(previewX1, previewY1, previewX2, previewY2, previewImageData, previewImageW, previewImageH);
         }
         else
         {
             // Fill preview area with black to prevent stale framebuffer content
-            for (int py = 43; py <= 126; py++)
-                for (int px = 183; px <= 286; px++)
+            for (int py = previewY1; py <= previewY2; py++)
+                for (int px = previewX1; px <= previewX2; px++)
                     logicalScreen[py * 320 + px] = 0;
             SetFont(PtrFont, 4);
             PrintFont(185, 70, logicalScreen, (u8*)"No Preview");

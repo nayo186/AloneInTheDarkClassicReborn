@@ -139,6 +139,29 @@ int CheckObjectCol(int actorIdx, ZVStruct* zvPtr)
     return(currentCollisionSlot);
 }
 
+int findTouchingObject(int actorIdx)
+{
+    const tObject& actor = ListObjets[actorIdx];
+
+    for (int i = 0; i < NUM_MAX_OBJECT; i++)
+    {
+        const tObject& other = ListObjets[i];
+        if (other.indexInWorld == -1 || i == actorIdx)
+            continue;
+
+        ZVStruct zv = actor.zv;
+        if (other.room != actor.room)
+            AdjustZV(&zv, actor.room, other.room);
+
+        // Boxes that meet face to face touch too
+        if (zv.ZVX1 <= other.zv.ZVX2 && other.zv.ZVX1 <= zv.ZVX2 &&
+            zv.ZVY1 <= other.zv.ZVY2 && other.zv.ZVY1 <= zv.ZVY2 &&
+            zv.ZVZ1 <= other.zv.ZVZ2 && other.zv.ZVZ1 <= zv.ZVZ2)
+            return i;
+    }
+    return -1;
+}
+
 void take(int objIdx)
 {
     tWorldObject* objPtr = &ListWorldObjets[objIdx];
@@ -757,9 +780,18 @@ void GereDec()
 
                     int life = ListWorldObjets[idxW].floorLife;
 
+                    // No climb: AITD2.EXE goes on with the other zones, which
+                    // keep marking the foot of the ladder (HARD_DEC) for the
+                    // script that takes the climb away (BUGS.md A19)
                     if (life == -1)
+                    {
+                        if (g_gameId == AITD2)
+                            break;
                         return;
+                    }
 
+                    if (life != currentProcessedActorPtr->life)
+                        printf(MAIN_TAG "Stage zone %d: object %d life %d -> %d\n", (int)pCurrentZone->parameter, idxW, currentProcessedActorPtr->life, life);
                     currentProcessedActorPtr->life = life;
 
                     currentProcessedActorPtr->HARD_DEC = (short)pCurrentZone->parameter;

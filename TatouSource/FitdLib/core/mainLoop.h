@@ -20,4 +20,12 @@ void waitForOptionsWindow();
 void rememberDarkRoom();
 // True if the current room is dark (no lamp light)
 bool roomAssumedDark();
+// AITD2: whether the object's animation ended (or its key frame changed)
+// since the running script last ran, as it would have seen it every frame
+// (BUGS.md A20)
+bool aitd2EndAnimSeen(int actorIdx);
+bool aitd2EndFrameSeen(int actorIdx);
+// Forgets those events of an object that starts a new animation, or of a
+// slot a new object takes (newObject: its script then sees only what comes)
+void aitd2ForgetEvents(int actorIdx, bool newObject);
 

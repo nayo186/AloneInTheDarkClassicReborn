@@ -140,18 +140,67 @@ unsigned int currentSaveEntrySize;
 // Save layout (BUGS.md C28). AITD1 saves are written as the original game
 // (GOG) writes them, so they load in either: one inventory, the start time
 // of each moving value in 16 bits, and an 80x50 picture after the header.
+// AITD2 saves are written as its original (GOG) too (BUGS.md A6): the picture
+// and the palette, the world and the variables ciphered, room for 400 world
+// objects, inventories of 50 and objects with fields AITD1 has not.
 // Older saves of this engine (two inventories, 32-bit times, no picture) and
-// the other games keep the engine's layout. loadSave works out which one a
-// file uses from the size of its blocks.
+// Jack keep the engine's layout. loadSave works out which one a file uses
+// from its header and the size of its blocks.
 struct SaveLayout
 {
     int inventories;     // AITD1 has one; the engine writes NUM_MAX_INVENTORY
     int memoTicksSize;   // 2 (original) or 4 bytes
     bool stageFirst;     // objects: the original saves the floor before the room
+    bool aitd2;          // AITD2's original layout
 };
-static SaveLayout s_layout = { NUM_MAX_INVENTORY, 4, false };
-static const SaveLayout kOriginalLayout = { 1, 2, true };
-static const SaveLayout kEngineLayout = { NUM_MAX_INVENTORY, 4, false };
+static SaveLayout s_layout = { NUM_MAX_INVENTORY, 4, false, false };
+static const SaveLayout kOriginalLayout = { 1, 2, true, false };
+static const SaveLayout kOriginalAITD2Layout = { NUM_MAX_INVENTORY, 2, true, true };
+static const SaveLayout kEngineLayout = { NUM_MAX_INVENTORY, 4, false, false };
+
+// AITD2's original: every byte of the world and of the variables is xored
+// with 0x35; room for 400 world objects (27 values each, the last one MARK);
+// 50 objects per inventory; the first 4 bytes of the picture hold where the
+// objects start
+static const u8 kAITD2Cipher = 0x35;
+static const int kAITD2WorldSlots = 400;
+static const int kAITD2WorldObjectSize = 27 * 2;
+static const int kAITD2InventorySize = 50;
+static const u32 kAITD2PaletteOffset = 20 + 80 * 50;
+
+// The cipher of the bytes read and written now (0: plain)
+static u8 s_cipher = 0;
+
+static size_t saveRead(void* data, size_t size, size_t count, FILE* fHandle)
+{
+    const size_t read = fread(data, size, count, fHandle);
+    if (s_cipher)
+        for (size_t i = 0; i < size * count; i++)
+            ((u8*)data)[i] ^= s_cipher;
+    return read;
+}
+
+static size_t saveWrite(const void* data, size_t size, size_t count, FILE* fHandle)
+{
+    if (!s_cipher)
+        return fwrite(data, size, count, fHandle);
+    std::vector<u8> ciphered((const u8*)data, (const u8*)data + size * count);
+    for (u8& value : ciphered)
+        value ^= s_cipher;
+    return fwrite(ciphered.data(), size, count, fHandle);
+}
+
+// A value of AITD2's original whose use is unknown: skipped when loading,
+// written as the original has it in a free object
+static void skipValue(FILE* fHandle)
+{
+    s16 unknown;
+    saveRead(&unknown, 2, 1, fHandle);
+}
+static void writeValue(s16 value, FILE* fHandle)
+{
+    saveWrite(&value, 2, 1, fHandle);
+}
 
 // The original's picture of the save (its save menu shows it): 80x50 palette
 // indexes, then 32 bytes that change between saves without a pattern (left
@@ -168,13 +217,13 @@ static u32 swapBytes(u32 value)
 void loadInterpolatedValue(RealValue* pRotateStruct, FILE* fHandle)
 {
     ASSERT(sizeof(pRotateStruct->startValue) == 2);
-    fread(&pRotateStruct->startValue,2,1,fHandle);
+    saveRead(&pRotateStruct->startValue,2,1,fHandle);
 
     ASSERT(sizeof(pRotateStruct->endValue) == 2);
-    fread(&pRotateStruct->endValue,2,1,fHandle);
+    saveRead(&pRotateStruct->endValue,2,1,fHandle);
 
     ASSERT(sizeof(pRotateStruct->numSteps) == 2);
-    fread(&pRotateStruct->numSteps,2,1,fHandle);
+    saveRead(&pRotateStruct->numSteps,2,1,fHandle);
 
     ASSERT(sizeof(pRotateStruct->memoTicks) == 4);
     if (s_layout.memoTicksSize == 2)
@@ -182,32 +231,32 @@ void loadInterpolatedValue(RealValue* pRotateStruct, FILE* fHandle)
         // Only the low 16 bits were saved: the same time ago from the
         // restored clock (timer is read before the objects)
         u16 memo16 = 0;
-        fread(&memo16, 2, 1, fHandle);
+        saveRead(&memo16, 2, 1, fHandle);
         pRotateStruct->memoTicks = timer - (u16)((u16)timer - memo16);
     }
     else
-        fread(&pRotateStruct->memoTicks,4,1,fHandle);
+        saveRead(&pRotateStruct->memoTicks,4,1,fHandle);
 }
 
 void saveInterpolatedValue(RealValue* pRotateStruct, FILE* fHandle)
 {
     ASSERT(sizeof(pRotateStruct->startValue) == 2);
-    fwrite(&pRotateStruct->startValue,2,1,fHandle);
+    saveWrite(&pRotateStruct->startValue,2,1,fHandle);
 
     ASSERT(sizeof(pRotateStruct->endValue) == 2);
-    fwrite(&pRotateStruct->endValue,2,1,fHandle);
+    saveWrite(&pRotateStruct->endValue,2,1,fHandle);
 
     ASSERT(sizeof(pRotateStruct->numSteps) == 2);
-    fwrite(&pRotateStruct->numSteps,2,1,fHandle);
+    saveWrite(&pRotateStruct->numSteps,2,1,fHandle);
 
     ASSERT(sizeof(pRotateStruct->memoTicks) == 4);
     if (s_layout.memoTicksSize == 2)
     {
         const u16 memo16 = (u16)pRotateStruct->memoTicks;
-        fwrite(&memo16, 2, 1, fHandle);
+        saveWrite(&memo16, 2, 1, fHandle);
     }
     else
-        fwrite(&pRotateStruct->memoTicks,4,1,fHandle);
+        saveWrite(&pRotateStruct->memoTicks,4,1,fHandle);
 }
 
 int loadSave(int saveNumber)
@@ -234,6 +283,7 @@ int loadSave(int saveNumber)
 
     LoadWorld();
     initVars();
+    s_cipher = 0;
 
     // Which layout (s_layout): AITD1 saves come in two. The data block holds
     // the room, 300 objects, the variables, the inventories and the clock;
@@ -243,7 +293,7 @@ int loadSave(int saveNumber)
     if (g_gameId == AITD1)
     {
         u32 offsets[5] = {};
-        fread(offsets, 4, 5, fHandle);
+        saveRead(offsets, 4, 5, fHandle);
         fseek(fHandle, 0, SEEK_END);
         const long fileSize = ftell(fHandle);
         const long dataSize = (long)swapBytes(offsets[3]) - (long)swapBytes(offsets[2]);
@@ -255,32 +305,46 @@ int loadSave(int saveNumber)
         printf(MAIN_TAG "Save %d: %s layout (%d inventory, %d-byte times)\n", saveNumber,
             s_layout.inventories == 1 ? "original (GOG)" : "older engine", s_layout.inventories, s_layout.memoTicksSize);
     }
+    // AITD2's original starts with the picture (at 20) and the palette after it
+    else if (g_gameId == AITD2)
+    {
+        u32 offsets[2] = {};
+        saveRead(offsets, 4, 2, fHandle);
+        if (swapBytes(offsets[0]) == 20 && swapBytes(offsets[1]) == kAITD2PaletteOffset)
+            s_layout = kOriginalAITD2Layout;
+        printf(MAIN_TAG "Save %d: %s layout\n", saveNumber, s_layout.aitd2 ? "original (GOG)" : "older engine");
+    }
 
-    fseek(fHandle,8,SEEK_SET);
+    // The header: where the data, the variables and the objects start (AITD2's
+    // original has its palette before and the objects right after the variables)
+    const int headerShift = s_layout.aitd2 ? 4 : 0;
 
-    fread(&var28,4,1,fHandle);
+    fseek(fHandle,8 + headerShift,SEEK_SET);
+
+    saveRead(&var28,4,1,fHandle);
 
     var28 = ((var28 & 0xFF) << 24) | ((var28 & 0xFF00) << 8) | (( var28 & 0xFF0000) >> 8) | ((var28 & 0xFF000000) >> 24);
 
     fseek(fHandle,var28,SEEK_SET);
+    s_cipher = s_layout.aitd2 ? kAITD2Cipher : 0;
 
     ASSERT(sizeof(currentRoom) == 2);
-    fread(&currentRoom,2,1,fHandle);
+    saveRead(&currentRoom,2,1,fHandle);
 
     ASSERT(sizeof(g_currentFloor) == 2);
-    fread(&g_currentFloor,2,1,fHandle);
+    saveRead(&g_currentFloor,2,1,fHandle);
 
     ASSERT(sizeof(NumCamera) == 2);
-    fread(&NumCamera,2,1,fHandle);
+    saveRead(&NumCamera,2,1,fHandle);
 
     ASSERT(sizeof(currentWorldTarget) == 2);
-    fread(&currentWorldTarget,2,1,fHandle);
+    saveRead(&currentWorldTarget,2,1,fHandle);
 
     ASSERT(sizeof(currentCameraTargetActor) == 2);
-    fread(&currentCameraTargetActor,2,1,fHandle);
+    saveRead(&currentCameraTargetActor,2,1,fHandle);
 
     ASSERT(sizeof(maxObjects) == 2);
-    fread(&maxObjects,2,1,fHandle);
+    saveRead(&maxObjects,2,1,fHandle);
 
     if(g_gameId == AITD1)
     {
@@ -292,83 +356,88 @@ int loadSave(int saveNumber)
     for(i=0;i<maxObjects;i++)
     {
         ASSERT(sizeof(ListWorldObjets[i].objIndex) == 2);
-        fread(&ListWorldObjets[i].objIndex,2,1,fHandle);
+        saveRead(&ListWorldObjets[i].objIndex,2,1,fHandle);
 
         ASSERT(sizeof(ListWorldObjets[i].body) == 2);
-        fread(&ListWorldObjets[i].body,2,1,fHandle);
+        saveRead(&ListWorldObjets[i].body,2,1,fHandle);
 
         ASSERT(sizeof(ListWorldObjets[i].flags) == 2);
-        fread(&ListWorldObjets[i].flags,2,1,fHandle);
+        saveRead(&ListWorldObjets[i].flags,2,1,fHandle);
 
         ASSERT(sizeof(ListWorldObjets[i].typeZV) == 2);
-        fread(&ListWorldObjets[i].typeZV,2,1,fHandle);
+        saveRead(&ListWorldObjets[i].typeZV,2,1,fHandle);
 
         ASSERT(sizeof(ListWorldObjets[i].foundBody) == 2);
-        fread(&ListWorldObjets[i].foundBody,2,1,fHandle);
+        saveRead(&ListWorldObjets[i].foundBody,2,1,fHandle);
 
         ASSERT(sizeof(ListWorldObjets[i].foundName) == 2);
-        fread(&ListWorldObjets[i].foundName,2,1,fHandle);
+        saveRead(&ListWorldObjets[i].foundName,2,1,fHandle);
 
         ASSERT(sizeof(ListWorldObjets[i].foundFlag) == 2);
-        fread(&ListWorldObjets[i].foundFlag,2,1,fHandle);
+        saveRead(&ListWorldObjets[i].foundFlag,2,1,fHandle);
 
         ASSERT(sizeof(ListWorldObjets[i].foundLife) == 2);
-        fread(&ListWorldObjets[i].foundLife,2,1,fHandle);
+        saveRead(&ListWorldObjets[i].foundLife,2,1,fHandle);
 
         ASSERT(sizeof(ListWorldObjets[i].x) == 2);
-        fread(&ListWorldObjets[i].x,2,1,fHandle);
+        saveRead(&ListWorldObjets[i].x,2,1,fHandle);
 
         ASSERT(sizeof(ListWorldObjets[i].y) == 2);
-        fread(&ListWorldObjets[i].y,2,1,fHandle);
+        saveRead(&ListWorldObjets[i].y,2,1,fHandle);
 
         ASSERT(sizeof(ListWorldObjets[i].z) == 2);
-        fread(&ListWorldObjets[i].z,2,1,fHandle);
+        saveRead(&ListWorldObjets[i].z,2,1,fHandle);
 
         ASSERT(sizeof(ListWorldObjets[i].alpha) == 2);
-        fread(&ListWorldObjets[i].alpha,2,1,fHandle);
+        saveRead(&ListWorldObjets[i].alpha,2,1,fHandle);
 
         ASSERT(sizeof(ListWorldObjets[i].beta) == 2);
-        fread(&ListWorldObjets[i].beta,2,1,fHandle);
+        saveRead(&ListWorldObjets[i].beta,2,1,fHandle);
 
         ASSERT(sizeof(ListWorldObjets[i].gamma) == 2);
-        fread(&ListWorldObjets[i].gamma,2,1,fHandle);
+        saveRead(&ListWorldObjets[i].gamma,2,1,fHandle);
 
         ASSERT(sizeof(ListWorldObjets[i].stage) == 2);
-        fread(&ListWorldObjets[i].stage,2,1,fHandle);
+        saveRead(&ListWorldObjets[i].stage,2,1,fHandle);
 
         ASSERT(sizeof(ListWorldObjets[i].room) == 2);
-        fread(&ListWorldObjets[i].room,2,1,fHandle);
+        saveRead(&ListWorldObjets[i].room,2,1,fHandle);
 
         ASSERT(sizeof(ListWorldObjets[i].lifeMode) == 2);
-        fread(&ListWorldObjets[i].lifeMode,2,1,fHandle);
+        saveRead(&ListWorldObjets[i].lifeMode,2,1,fHandle);
 
         ASSERT(sizeof(ListWorldObjets[i].life) == 2);
-        fread(&ListWorldObjets[i].life,2,1,fHandle);
+        saveRead(&ListWorldObjets[i].life,2,1,fHandle);
 
         ASSERT(sizeof(ListWorldObjets[i].floorLife) == 2);
-        fread(&ListWorldObjets[i].floorLife,2,1,fHandle);
+        saveRead(&ListWorldObjets[i].floorLife,2,1,fHandle);
 
         ASSERT(sizeof(ListWorldObjets[i].anim) == 2);
-        fread(&ListWorldObjets[i].anim,2,1,fHandle);
+        saveRead(&ListWorldObjets[i].anim,2,1,fHandle);
 
         ASSERT(sizeof(ListWorldObjets[i].frame) == 2);
-        fread(&ListWorldObjets[i].frame,2,1,fHandle);
+        saveRead(&ListWorldObjets[i].frame,2,1,fHandle);
 
         ASSERT(sizeof(ListWorldObjets[i].animType) == 2);
-        fread(&ListWorldObjets[i].animType,2,1,fHandle);
+        saveRead(&ListWorldObjets[i].animType,2,1,fHandle);
 
         ASSERT(sizeof(ListWorldObjets[i].animInfo) == 2);
-        fread(&ListWorldObjets[i].animInfo,2,1,fHandle);
+        saveRead(&ListWorldObjets[i].animInfo,2,1,fHandle);
 
         ASSERT(sizeof(ListWorldObjets[i].trackMode) == 2);
-        fread(&ListWorldObjets[i].trackMode,2,1,fHandle);
+        saveRead(&ListWorldObjets[i].trackMode,2,1,fHandle);
 
         ASSERT(sizeof(ListWorldObjets[i].trackNumber) == 2);
-        fread(&ListWorldObjets[i].trackNumber,2,1,fHandle);
+        saveRead(&ListWorldObjets[i].trackNumber,2,1,fHandle);
 
         ASSERT(sizeof(ListWorldObjets[i].positionInTrack) == 2);
-        fread(&ListWorldObjets[i].positionInTrack,2,1,fHandle);
+        saveRead(&ListWorldObjets[i].positionInTrack,2,1,fHandle);
+
+        if (s_layout.aitd2)
+            saveRead(&ListWorldObjets[i].mark,2,1,fHandle);
     }
+    if (s_layout.aitd2)
+        fseek(fHandle, (kAITD2WorldSlots - maxObjects) * kAITD2WorldObjectSize, SEEK_CUR);
 
     if(g_gameId == AITD1)
     {
@@ -383,22 +452,35 @@ int loadSave(int saveNumber)
     for(i=0;i< CVars.size();i++)
     {
         ASSERT(sizeof(CVars[i]) == 2);
-        fread(&CVars[i], 2, 1, fHandle);
+        saveRead(&CVars[i], 2, 1, fHandle);
     }
-	
+
 	// AITD1 uses one inventory: the second (AITD2/3) stays empty
 	for(int inventoryId=s_layout.inventories; inventoryId<NUM_MAX_INVENTORY; inventoryId++)
 	{
 		inHandTable[inventoryId] = -1;
 		numObjInInventoryTable[inventoryId] = 0;
 	}
-	for(int inventoryId=0; inventoryId<s_layout.inventories; inventoryId++)
+	// AITD2's original: both objects in hand, both counts, then both lists
+	if (s_layout.aitd2)
+	{
+		saveRead(inHandTable, 2, NUM_MAX_INVENTORY, fHandle);
+		saveRead(numObjInInventoryTable, 2, NUM_MAX_INVENTORY, fHandle);
+		for(int inventoryId=0; inventoryId<NUM_MAX_INVENTORY; inventoryId++)
+		{
+			saveRead(inventoryTable[inventoryId], 2, INVENTORY_SIZE, fHandle);
+			fseek(fHandle, (kAITD2InventorySize - INVENTORY_SIZE) * 2, SEEK_CUR);
+			if (numObjInInventoryTable[inventoryId] > INVENTORY_SIZE)
+				numObjInInventoryTable[inventoryId] = INVENTORY_SIZE;
+		}
+	}
+	else for(int inventoryId=0; inventoryId<s_layout.inventories; inventoryId++)
 	{
 		ASSERT(sizeof(inHandTable[inventoryId]) == 2);
-		fread(&inHandTable[inventoryId],2,1,fHandle);
+		saveRead(&inHandTable[inventoryId],2,1,fHandle);
 
 		ASSERT(sizeof(numObjInInventoryTable[inventoryId]) == 2);
-		fread(&numObjInInventoryTable[inventoryId],2,1,fHandle);
+		saveRead(&numObjInInventoryTable[inventoryId],2,1,fHandle);
 
 		if(g_gameId == AITD1)
 		{
@@ -408,37 +490,40 @@ int loadSave(int saveNumber)
 		for(i=0;i<INVENTORY_SIZE;i++)
 		{
 			ASSERT(sizeof(inventoryTable[inventoryId][i]) == 2);
-			fread(&inventoryTable[inventoryId][i],2,1,fHandle);
+			saveRead(&inventoryTable[inventoryId][i],2,1,fHandle);
 		}
 	}
 
     ASSERT(sizeof(statusScreenAllowed) == 2);
-    fread(&statusScreenAllowed,2,1,fHandle);
+    saveRead(&statusScreenAllowed,2,1,fHandle);
 
     ASSERT(sizeof(FlagGameOver) == 2);
-    fread(&FlagGameOver,2,1,fHandle);
+    saveRead(&FlagGameOver,2,1,fHandle);
 
     ASSERT(sizeof(lightOff) == 2);
-    fread(&lightOff,2,1,fHandle);
+    saveRead(&lightOff,2,1,fHandle);
 
     ASSERT(sizeof(shakingAmplitude) == 2);
-    fread(&shakingAmplitude,2,1,fHandle);
+    saveRead(&shakingAmplitude,2,1,fHandle);
 
     ASSERT(sizeof(shakeVar1) == 2);
-    fread(&shakeVar1,2,1,fHandle);
+    saveRead(&shakeVar1,2,1,fHandle);
+
+    if (s_layout.aitd2)
+        skipValue(fHandle);
 
     ASSERT(sizeof(timer) == 4);
-    fread(&timer,4,1,fHandle);
+    saveRead(&timer,4,1,fHandle);
     // The clock itself, not only its copy: process_events sets timer from
     // timeGlobal every frame, which wiped the saved time (BUGS.md C29)
     setGameClock(timer);
     resetFoundObjectChronos();   // the lamp in hand counts again from now
 
     ASSERT(sizeof(timerFreeze1) == 4);
-    fread(&timerFreeze1,4,1,fHandle);
+    saveRead(&timerFreeze1,4,1,fHandle);
 
     ASSERT(sizeof(currentMusic) == 2);
-    fread(&currentMusic,2,1,fHandle);
+    saveRead(&currentMusic,2,1,fHandle);
 
     //timerFreeze = 1;
 
@@ -451,12 +536,13 @@ int loadSave(int saveNumber)
     currentMusic = -1;
     playMusic(var_16);
 
-    fseek(fHandle,12,SEEK_SET);
-    fread(&offsetToVars,4,1,fHandle);
+    s_cipher = 0;
+    fseek(fHandle,12 + headerShift,SEEK_SET);
+    saveRead(&offsetToVars,4,1,fHandle);
     offsetToVars = ((offsetToVars & 0xFF) << 24) | ((offsetToVars & 0xFF00) << 8) | (( offsetToVars & 0xFF0000) >> 8) | ((offsetToVars & 0xFF000000) >> 24);
     fseek(fHandle,offsetToVars,SEEK_SET);
 
-    fread(&tempVarSize,2,1,fHandle);
+    saveRead(&tempVarSize,2,1,fHandle);
     {
         int savedVarSize = varSize; // varSize set by LoadWorld from VARS.ITD
         varSize = tempVarSize;
@@ -464,7 +550,9 @@ int loadSave(int saveNumber)
             varSize = savedVarSize; // clamp to allocated buffer size
     }
 
-    fread(vars,varSize,1,fHandle);
+    s_cipher = s_layout.aitd2 ? kAITD2Cipher : 0;
+    saveRead(vars,varSize,1,fHandle);
+    s_cipher = 0;
 
     if(g_gameId == AITD1)
     {
@@ -479,228 +567,258 @@ int loadSave(int saveNumber)
 		*/
     }
 
-    fseek(fHandle,16,SEEK_SET);
-    fread(&offsetToActors,4,1,fHandle);
-    offsetToActors = ((offsetToActors & 0xFF) << 24) | ((offsetToActors & 0xFF00) << 8) | (( offsetToActors & 0xFF0000) >> 8) | ((offsetToActors & 0xFF000000) >> 24);
+    if (s_layout.aitd2)
+        offsetToActors = offsetToVars + 2 + tempVarSize;
+    else
+    {
+        fseek(fHandle,16,SEEK_SET);
+        saveRead(&offsetToActors,4,1,fHandle);
+        offsetToActors = ((offsetToActors & 0xFF) << 24) | ((offsetToActors & 0xFF00) << 8) | (( offsetToActors & 0xFF0000) >> 8) | ((offsetToActors & 0xFF000000) >> 24);
+    }
     fseek(fHandle,offsetToActors,SEEK_SET);
 
     for(i=0;i<NUM_MAX_OBJECT;i++)
     {
         ASSERT(sizeof(ListObjets[i].indexInWorld) == 2);
-        fread(&ListObjets[i].indexInWorld,2,1,fHandle);
+        saveRead(&ListObjets[i].indexInWorld,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].bodyNum) == 2);
-        fread(&ListObjets[i].bodyNum,2,1,fHandle);
+        saveRead(&ListObjets[i].bodyNum,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].objectType) == 2);
-        fread(&ListObjets[i].objectType,2,1,fHandle);
+        saveRead(&ListObjets[i].objectType,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].dynFlags) == 2);
-        fread(&ListObjets[i].dynFlags,2,1,fHandle);
+        saveRead(&ListObjets[i].dynFlags,2,1,fHandle);
 
         //    ASSERT(sizeof(actorTable[i].zv.ZVX1) == 2);
-        fread(&ListObjets[i].zv.ZVX1,2,1,fHandle);
+        saveRead(&ListObjets[i].zv.ZVX1,2,1,fHandle);
         ListObjets[i].zv.ZVX1 = (s16)ListObjets[i].zv.ZVX1;
 
         //    ASSERT(sizeof(actorTable[i].zv.ZVX2) == 2);
-        fread(&ListObjets[i].zv.ZVX2,2,1,fHandle);
+        saveRead(&ListObjets[i].zv.ZVX2,2,1,fHandle);
         ListObjets[i].zv.ZVX2 = (s16)ListObjets[i].zv.ZVX2;
 
         //    ASSERT(sizeof(actorTable[i].zv.ZVY1) == 2);
-        fread(&ListObjets[i].zv.ZVY1,2,1,fHandle);
+        saveRead(&ListObjets[i].zv.ZVY1,2,1,fHandle);
         ListObjets[i].zv.ZVY1 = (s16)ListObjets[i].zv.ZVY1;
 
         //    ASSERT(sizeof(actorTable[i].zv.ZVY2) == 2);
-        fread(&ListObjets[i].zv.ZVY2,2,1,fHandle);
+        saveRead(&ListObjets[i].zv.ZVY2,2,1,fHandle);
         ListObjets[i].zv.ZVY2 = (s16)ListObjets[i].zv.ZVY2;
 
         //    ASSERT(sizeof(actorTable[i].zv.ZVZ1) == 2);
-        fread(&ListObjets[i].zv.ZVZ1,2,1,fHandle);
+        saveRead(&ListObjets[i].zv.ZVZ1,2,1,fHandle);
         ListObjets[i].zv.ZVZ1 = (s16)ListObjets[i].zv.ZVZ1;
 
         //    ASSERT(sizeof(actorTable[i].zv.ZVZ2) == 2);
-        fread(&ListObjets[i].zv.ZVZ2,2,1,fHandle);
+        saveRead(&ListObjets[i].zv.ZVZ2,2,1,fHandle);
         ListObjets[i].zv.ZVZ2 = (s16)ListObjets[i].zv.ZVZ2;
 
         ASSERT(sizeof(ListObjets[i].screenXMin) == 2);
-        fread(&ListObjets[i].screenXMin,2,1,fHandle);
+        saveRead(&ListObjets[i].screenXMin,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].screenYMin) == 2);
-        fread(&ListObjets[i].screenYMin,2,1,fHandle);
+        saveRead(&ListObjets[i].screenYMin,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].screenXMax) == 2);
-        fread(&ListObjets[i].screenXMax,2,1,fHandle);
+        saveRead(&ListObjets[i].screenXMax,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].screenYMax) == 2);
-        fread(&ListObjets[i].screenYMax,2,1,fHandle);
+        saveRead(&ListObjets[i].screenYMax,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].roomX) == 2);
-        fread(&ListObjets[i].roomX,2,1,fHandle);
+        saveRead(&ListObjets[i].roomX,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].roomY) == 2);
-        fread(&ListObjets[i].roomY,2,1,fHandle);
+        saveRead(&ListObjets[i].roomY,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].roomZ) == 2);
-        fread(&ListObjets[i].roomZ,2,1,fHandle);
+        saveRead(&ListObjets[i].roomZ,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].worldX) == 2);
-        fread(&ListObjets[i].worldX,2,1,fHandle);
+        saveRead(&ListObjets[i].worldX,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].worldY) == 2);
-        fread(&ListObjets[i].worldY,2,1,fHandle);
+        saveRead(&ListObjets[i].worldY,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].worldZ) == 2);
-        fread(&ListObjets[i].worldZ,2,1,fHandle);
+        saveRead(&ListObjets[i].worldZ,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].alpha) == 2);
-        fread(&ListObjets[i].alpha,2,1,fHandle);
+        saveRead(&ListObjets[i].alpha,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].beta) == 2);
-        fread(&ListObjets[i].beta,2,1,fHandle);
+        saveRead(&ListObjets[i].beta,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].gamma) == 2);
-        fread(&ListObjets[i].gamma,2,1,fHandle);
+        saveRead(&ListObjets[i].gamma,2,1,fHandle);
 
         // The original saves the floor first (s_layout.stageFirst)
         if (s_layout.stageFirst)
         {
-            fread(&ListObjets[i].stage,2,1,fHandle);
-            fread(&ListObjets[i].room,2,1,fHandle);
+            saveRead(&ListObjets[i].stage,2,1,fHandle);
+            saveRead(&ListObjets[i].room,2,1,fHandle);
         }
         else
         {
-            fread(&ListObjets[i].room,2,1,fHandle);
-            fread(&ListObjets[i].stage,2,1,fHandle);
+            saveRead(&ListObjets[i].room,2,1,fHandle);
+            saveRead(&ListObjets[i].stage,2,1,fHandle);
         }
 
         ASSERT(sizeof(ListObjets[i].lifeMode) == 2);
-        fread(&ListObjets[i].lifeMode,2,1,fHandle);
+        saveRead(&ListObjets[i].lifeMode,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].life) == 2);
-        fread(&ListObjets[i].life,2,1,fHandle);
+        saveRead(&ListObjets[i].life,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].CHRONO) == 4);
-        fread(&ListObjets[i].CHRONO,4,1,fHandle);
+        saveRead(&ListObjets[i].CHRONO,4,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].ROOM_CHRONO) == 4);
-        fread(&ListObjets[i].ROOM_CHRONO,4,1,fHandle);
+        saveRead(&ListObjets[i].ROOM_CHRONO,4,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].ANIM) == 2);
-        fread(&ListObjets[i].ANIM,2,1,fHandle);
+        saveRead(&ListObjets[i].ANIM,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].animType) == 2);
-        fread(&ListObjets[i].animType,2,1,fHandle);
+        saveRead(&ListObjets[i].animType,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].animInfo) == 2);
-        fread(&ListObjets[i].animInfo,2,1,fHandle);
+        saveRead(&ListObjets[i].animInfo,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].newAnim) == 2);
-        fread(&ListObjets[i].newAnim,2,1,fHandle);
+        saveRead(&ListObjets[i].newAnim,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].newAnimType) == 2);
-        fread(&ListObjets[i].newAnimType,2,1,fHandle);
+        saveRead(&ListObjets[i].newAnimType,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].newAnimInfo) == 2);
-        fread(&ListObjets[i].newAnimInfo,2,1,fHandle);
+        saveRead(&ListObjets[i].newAnimInfo,2,1,fHandle);
+
+        if (s_layout.aitd2)
+        {
+            skipValue(fHandle);
+            skipValue(fHandle);
+        }
 
         ASSERT(sizeof(ListObjets[i].frame) == 2);
-        fread(&ListObjets[i].frame,2,1,fHandle);
+        saveRead(&ListObjets[i].frame,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].numOfFrames) == 2);
-        fread(&ListObjets[i].numOfFrames,2,1,fHandle);
+        saveRead(&ListObjets[i].numOfFrames,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].END_FRAME) == 2);
-        fread(&ListObjets[i].END_FRAME,2,1,fHandle);
+        saveRead(&ListObjets[i].END_FRAME,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].flagEndAnim) == 2);
-        fread(&ListObjets[i].flagEndAnim,2,1,fHandle);
+        saveRead(&ListObjets[i].flagEndAnim,2,1,fHandle);
+
+        if (s_layout.aitd2)
+            saveRead(&ListObjets[i].memoTicks,4,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].trackMode) == 2);
-        fread(&ListObjets[i].trackMode,2,1,fHandle);
+        saveRead(&ListObjets[i].trackMode,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].trackNumber) == 2);
-        fread(&ListObjets[i].trackNumber,2,1,fHandle);
+        saveRead(&ListObjets[i].trackNumber,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].MARK) == 2);
-        fread(&ListObjets[i].MARK,2,1,fHandle);
+        saveRead(&ListObjets[i].MARK,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].positionInTrack) == 2);
-        fread(&ListObjets[i].positionInTrack,2,1,fHandle);
+        saveRead(&ListObjets[i].positionInTrack,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].stepX) == 2);
-        fread(&ListObjets[i].stepX,2,1,fHandle);
+        saveRead(&ListObjets[i].stepX,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].stepY) == 2);
-        fread(&ListObjets[i].stepY,2,1,fHandle);
+        saveRead(&ListObjets[i].stepY,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].stepZ) == 2); // 45
-        fread(&ListObjets[i].stepZ,2,1,fHandle);
+        saveRead(&ListObjets[i].stepZ,2,1,fHandle);
+
+        if (s_layout.aitd2)
+        {
+            saveRead(&ListObjets[i].animNegX,2,1,fHandle);
+            saveRead(&ListObjets[i].animNegY,2,1,fHandle);
+            saveRead(&ListObjets[i].animNegZ,2,1,fHandle);
+        }
 
         loadInterpolatedValue(&ListObjets[i].YHandler,fHandle);
 
         ASSERT(sizeof(ListObjets[i].falling) == 2);
-        fread(&ListObjets[i].falling,2,1,fHandle);
+        saveRead(&ListObjets[i].falling,2,1,fHandle);
 
         loadInterpolatedValue(&ListObjets[i].rotate,fHandle);
 
         ASSERT(sizeof(ListObjets[i].direction) == 2); 
-        fread(&ListObjets[i].direction,2,1,fHandle);
+        saveRead(&ListObjets[i].direction,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].speed) == 2);
-        fread(&ListObjets[i].speed,2,1,fHandle);
+        saveRead(&ListObjets[i].speed,2,1,fHandle);
 
         loadInterpolatedValue(&ListObjets[i].speedChange,fHandle);
 
         ASSERT(sizeof(ListObjets[i].COL[0]) == 2);
-        fread(&ListObjets[i].COL[0],2,1,fHandle);
+        saveRead(&ListObjets[i].COL[0],2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].COL[1]) == 2);
-        fread(&ListObjets[i].COL[1],2,1,fHandle);
+        saveRead(&ListObjets[i].COL[1],2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].COL[2]) == 2);
-        fread(&ListObjets[i].COL[2],2,1,fHandle);
+        saveRead(&ListObjets[i].COL[2],2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].COL_BY) == 2);
-        fread(&ListObjets[i].COL_BY,2,1,fHandle);
+        saveRead(&ListObjets[i].COL_BY,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].HARD_DEC) == 2);
-        fread(&ListObjets[i].HARD_DEC,2,1,fHandle);
+        saveRead(&ListObjets[i].HARD_DEC,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].HARD_COL) == 2);
-        fread(&ListObjets[i].HARD_COL,2,1,fHandle);
+        saveRead(&ListObjets[i].HARD_COL,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].HIT) == 2);
-        fread(&ListObjets[i].HIT,2,1,fHandle);
+        saveRead(&ListObjets[i].HIT,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].HIT_BY) == 2);
-        fread(&ListObjets[i].HIT_BY,2,1,fHandle);
+        saveRead(&ListObjets[i].HIT_BY,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].animActionType) == 2);
-        fread(&ListObjets[i].animActionType,2,1,fHandle);
+        saveRead(&ListObjets[i].animActionType,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].animActionANIM) == 2);
-        fread(&ListObjets[i].animActionANIM,2,1,fHandle);
+        saveRead(&ListObjets[i].animActionANIM,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].animActionFRAME) == 2);
-        fread(&ListObjets[i].animActionFRAME,2,1,fHandle);
+        saveRead(&ListObjets[i].animActionFRAME,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].animActionParam) == 2);
-        fread(&ListObjets[i].animActionParam,2,1,fHandle);
+        saveRead(&ListObjets[i].animActionParam,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].hitForce) == 2);
-        fread(&ListObjets[i].hitForce,2,1,fHandle);
+        saveRead(&ListObjets[i].hitForce,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].hotPointID) == 2);
-        fread(&ListObjets[i].hotPointID,2,1,fHandle);
+        saveRead(&ListObjets[i].hotPointID,2,1,fHandle);
+
+        if (s_layout.aitd2)
+            skipValue(fHandle);
 
         ASSERT(sizeof(ListObjets[i].hotPoint.x) == 2);
-        fread(&ListObjets[i].hotPoint.x,2,1,fHandle);
+        saveRead(&ListObjets[i].hotPoint.x,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].hotPoint.y) == 2);
-        fread(&ListObjets[i].hotPoint.y,2,1,fHandle);
+        saveRead(&ListObjets[i].hotPoint.y,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].hotPoint.z) == 2);
-        fread(&ListObjets[i].hotPoint.z,2,1,fHandle);
+        saveRead(&ListObjets[i].hotPoint.z,2,1,fHandle);
+
+        if (s_layout.aitd2)
+        {
+            saveRead(&ListObjets[i].hardMat,2,1,fHandle);
+            skipValue(fHandle);
+        }
     }
     fclose(fHandle);
 
@@ -765,22 +883,13 @@ int makeSaveFile(int entry)
     int temp;
     int oldNumMaxObj;
 
-	if(g_gameId == AITD1)
-	{
-        // For safety, destroy special objects before mallocs
-		for(i=0;i<NUM_MAX_OBJECT;i++)
-		{
-            if (ListObjets[i].indexInWorld == -2) // Special objects
-            {
-                ListObjets[i].indexInWorld = -1;
-                if (ListObjets[i].ANIM == 4)
-                {
-                    CVars[getCVarsIdx(FOG_FLAG)] = 0;
-                    HQ_Free_Malloc(HQ_Memory, ListObjets[i].frame);
-                }
-            }
-		}
-	}
+    // Special objects (smoke, sparks...) are not saved: their data lives in
+    // memory that a load does not bring back (all games, BUGS.md A7)
+    for(i=0;i<NUM_MAX_OBJECT;i++)
+    {
+        if (ListObjets[i].indexInWorld == -2)
+            DeleteObjet(i);
+    }
 
     std::error_code folderError;
     if (savesFolder()[0])
@@ -792,16 +901,21 @@ int makeSaveFile(int entry)
     if(!fHandle)
         return 0;
 
-    s_layout = (g_gameId == AITD1) ? kOriginalLayout : kEngineLayout;
-    if (g_gameId == AITD1)
+    s_cipher = 0;
+    s_layout = (g_gameId == AITD1) ? kOriginalLayout : (g_gameId == AITD2) ? kOriginalAITD2Layout : kEngineLayout;
+    const int headerShift = s_layout.aitd2 ? 4 : 0;
+    if (g_gameId == AITD1 || s_layout.aitd2)
     {
-        // As the original: the picture, its padding, then the data; the
-        // offsets of the variables and the objects are filled in below
+        // As the original: the picture, (AITD2: its palette,) its padding,
+        // then the data; the offsets of the variables (and, in AITD1, of the
+        // objects) are filled in below
         const u32 pictureOffset = 20;
-        const u32 paddingOffset = pictureOffset + kThumbnailWidth * kThumbnailHeight;
+        const u32 paletteOffset = pictureOffset + kThumbnailWidth * kThumbnailHeight;
+        const u32 paddingOffset = s_layout.aitd2 ? paletteOffset + 768 : paletteOffset;
         const u32 dataOffset = paddingOffset + kThumbnailPadding;
-        const u32 header[5] = { swapBytes(pictureOffset), swapBytes(paddingOffset), swapBytes(dataOffset), 0, 0 };
-        fwrite(header, 4, 5, fHandle);
+        const u32 header[5] = { swapBytes(pictureOffset), swapBytes(s_layout.aitd2 ? paletteOffset : paddingOffset),
+            swapBytes(s_layout.aitd2 ? paddingOffset : dataOffset), s_layout.aitd2 ? swapBytes(dataOffset) : 0, 0 };
+        saveWrite(header, 4, 5, fHandle);
 
         // The camera picture, a pixel out of every 4x4 (palette indexes)
         unsigned char thumbnail[kThumbnailWidth * kThumbnailHeight] = {};
@@ -809,41 +923,51 @@ int makeSaveFile(int entry)
             for (int y = 0; y < kThumbnailHeight; y++)
                 for (int x = 0; x < kThumbnailWidth; x++)
                     thumbnail[y * kThumbnailWidth + x] = (unsigned char)aux[(y * 4) * 320 + x * 4];
-        fwrite(thumbnail, sizeof(thumbnail), 1, fHandle);
+        saveWrite(thumbnail, sizeof(thumbnail), 1, fHandle);
+        // AITD2: the palette of the picture, in the game's 6-bit colours
+        if (s_layout.aitd2)
+        {
+            u8 palette[768];
+            for (int i = 0; i < 256; i++)
+                for (int c = 0; c < 3; c++)
+                    palette[i * 3 + c] = currentGamePalette[i][c] >> 2;
+            saveWrite(palette, sizeof(palette), 1, fHandle);
+        }
         const unsigned char padding[kThumbnailPadding] = {};
-        fwrite(padding, sizeof(padding), 1, fHandle);
+        saveWrite(padding, sizeof(padding), 1, fHandle);
+        s_cipher = s_layout.aitd2 ? kAITD2Cipher : 0;
     }
     else
     {
-        fwrite(&var28,4,1,fHandle);
-        fwrite(&var28,4,1,fHandle);
+        saveWrite(&var28,4,1,fHandle);
+        saveWrite(&var28,4,1,fHandle);
 
         var28 = ftell(fHandle)+12;
         var28 = swapBytes((u32)var28);
 
-        fwrite(&var28,4,1,fHandle);
+        saveWrite(&var28,4,1,fHandle);
 
-        fwrite(&var28,4,1,fHandle);
-        fwrite(&var28,4,1,fHandle);
+        saveWrite(&var28,4,1,fHandle);
+        saveWrite(&var28,4,1,fHandle);
     }
 
     ASSERT(sizeof(currentRoom) == 2);
-    fwrite(&currentRoom,2,1,fHandle);
+    saveWrite(&currentRoom,2,1,fHandle);
 
     ASSERT(sizeof(g_currentFloor) == 2);
-    fwrite(&g_currentFloor,2,1,fHandle);
+    saveWrite(&g_currentFloor,2,1,fHandle);
 
     ASSERT(sizeof(NumCamera) == 2);
-    fwrite(&NumCamera,2,1,fHandle);
+    saveWrite(&NumCamera,2,1,fHandle);
 
     ASSERT(sizeof(currentWorldTarget) == 2);
-    fwrite(&currentWorldTarget,2,1,fHandle);
+    saveWrite(&currentWorldTarget,2,1,fHandle);
 
     ASSERT(sizeof(currentCameraTargetActor) == 2);
-    fwrite(&currentCameraTargetActor,2,1,fHandle);
+    saveWrite(&currentCameraTargetActor,2,1,fHandle);
 
     ASSERT(sizeof(maxObjects) == 2);
-    fwrite(&maxObjects,2,1,fHandle);
+    saveWrite(&maxObjects,2,1,fHandle);
 
     if(g_gameId == AITD1)
     {
@@ -855,82 +979,90 @@ int makeSaveFile(int entry)
     for(i=0;i<maxObjects;i++)
     {
         ASSERT(sizeof(ListWorldObjets[i].objIndex) == 2);
-        fwrite(&ListWorldObjets[i].objIndex,2,1,fHandle);
+        saveWrite(&ListWorldObjets[i].objIndex,2,1,fHandle);
 
         ASSERT(sizeof(ListWorldObjets[i].body) == 2);
-        fwrite(&ListWorldObjets[i].body,2,1,fHandle);
+        saveWrite(&ListWorldObjets[i].body,2,1,fHandle);
 
         ASSERT(sizeof(ListWorldObjets[i].flags) == 2);
-        fwrite(&ListWorldObjets[i].flags,2,1,fHandle);
+        saveWrite(&ListWorldObjets[i].flags,2,1,fHandle);
 
         ASSERT(sizeof(ListWorldObjets[i].typeZV) == 2);
-        fwrite(&ListWorldObjets[i].typeZV,2,1,fHandle);
+        saveWrite(&ListWorldObjets[i].typeZV,2,1,fHandle);
 
         ASSERT(sizeof(ListWorldObjets[i].foundBody) == 2);
-        fwrite(&ListWorldObjets[i].foundBody,2,1,fHandle);
+        saveWrite(&ListWorldObjets[i].foundBody,2,1,fHandle);
 
         ASSERT(sizeof(ListWorldObjets[i].foundName) == 2);
-        fwrite(&ListWorldObjets[i].foundName,2,1,fHandle);
+        saveWrite(&ListWorldObjets[i].foundName,2,1,fHandle);
 
         ASSERT(sizeof(ListWorldObjets[i].foundFlag) == 2);
-        fwrite(&ListWorldObjets[i].foundFlag,2,1,fHandle);
+        saveWrite(&ListWorldObjets[i].foundFlag,2,1,fHandle);
 
         ASSERT(sizeof(ListWorldObjets[i].foundLife) == 2);
-        fwrite(&ListWorldObjets[i].foundLife,2,1,fHandle);
+        saveWrite(&ListWorldObjets[i].foundLife,2,1,fHandle);
 
         ASSERT(sizeof(ListWorldObjets[i].x) == 2);
-        fwrite(&ListWorldObjets[i].x,2,1,fHandle);
+        saveWrite(&ListWorldObjets[i].x,2,1,fHandle);
 
         ASSERT(sizeof(ListWorldObjets[i].y) == 2);
-        fwrite(&ListWorldObjets[i].y,2,1,fHandle);
+        saveWrite(&ListWorldObjets[i].y,2,1,fHandle);
 
         ASSERT(sizeof(ListWorldObjets[i].z) == 2);
-        fwrite(&ListWorldObjets[i].z,2,1,fHandle);
+        saveWrite(&ListWorldObjets[i].z,2,1,fHandle);
 
         ASSERT(sizeof(ListWorldObjets[i].alpha) == 2);
-        fwrite(&ListWorldObjets[i].alpha,2,1,fHandle);
+        saveWrite(&ListWorldObjets[i].alpha,2,1,fHandle);
 
         ASSERT(sizeof(ListWorldObjets[i].beta) == 2);
-        fwrite(&ListWorldObjets[i].beta,2,1,fHandle);
+        saveWrite(&ListWorldObjets[i].beta,2,1,fHandle);
 
         ASSERT(sizeof(ListWorldObjets[i].gamma) == 2);
-        fwrite(&ListWorldObjets[i].gamma,2,1,fHandle);
+        saveWrite(&ListWorldObjets[i].gamma,2,1,fHandle);
 
         ASSERT(sizeof(ListWorldObjets[i].stage) == 2);
-        fwrite(&ListWorldObjets[i].stage,2,1,fHandle);
+        saveWrite(&ListWorldObjets[i].stage,2,1,fHandle);
 
         ASSERT(sizeof(ListWorldObjets[i].room) == 2);
-        fwrite(&ListWorldObjets[i].room,2,1,fHandle);
+        saveWrite(&ListWorldObjets[i].room,2,1,fHandle);
 
         ASSERT(sizeof(ListWorldObjets[i].lifeMode) == 2);
-        fwrite(&ListWorldObjets[i].lifeMode,2,1,fHandle);
+        saveWrite(&ListWorldObjets[i].lifeMode,2,1,fHandle);
 
         ASSERT(sizeof(ListWorldObjets[i].life) == 2);
-        fwrite(&ListWorldObjets[i].life,2,1,fHandle);
+        saveWrite(&ListWorldObjets[i].life,2,1,fHandle);
 
         ASSERT(sizeof(ListWorldObjets[i].floorLife) == 2);
-        fwrite(&ListWorldObjets[i].floorLife,2,1,fHandle);
+        saveWrite(&ListWorldObjets[i].floorLife,2,1,fHandle);
 
         ASSERT(sizeof(ListWorldObjets[i].anim) == 2);
-        fwrite(&ListWorldObjets[i].anim,2,1,fHandle);
+        saveWrite(&ListWorldObjets[i].anim,2,1,fHandle);
 
         ASSERT(sizeof(ListWorldObjets[i].frame) == 2);
-        fwrite(&ListWorldObjets[i].frame,2,1,fHandle);
+        saveWrite(&ListWorldObjets[i].frame,2,1,fHandle);
 
         ASSERT(sizeof(ListWorldObjets[i].animType) == 2);
-        fwrite(&ListWorldObjets[i].animType,2,1,fHandle);
+        saveWrite(&ListWorldObjets[i].animType,2,1,fHandle);
 
         ASSERT(sizeof(ListWorldObjets[i].animInfo) == 2);
-        fwrite(&ListWorldObjets[i].animInfo,2,1,fHandle);
+        saveWrite(&ListWorldObjets[i].animInfo,2,1,fHandle);
 
         ASSERT(sizeof(ListWorldObjets[i].trackMode) == 2);
-        fwrite(&ListWorldObjets[i].trackMode,2,1,fHandle);
+        saveWrite(&ListWorldObjets[i].trackMode,2,1,fHandle);
 
         ASSERT(sizeof(ListWorldObjets[i].trackNumber) == 2);
-        fwrite(&ListWorldObjets[i].trackNumber,2,1,fHandle);
+        saveWrite(&ListWorldObjets[i].trackNumber,2,1,fHandle);
 
         ASSERT(sizeof(ListWorldObjets[i].positionInTrack) == 2);
-        fwrite(&ListWorldObjets[i].positionInTrack,2,1,fHandle);
+        saveWrite(&ListWorldObjets[i].positionInTrack,2,1,fHandle);
+
+        if (s_layout.aitd2)
+            saveWrite(&ListWorldObjets[i].mark,2,1,fHandle);
+    }
+    if (s_layout.aitd2)
+    {
+        const std::vector<u8> emptySlots((kAITD2WorldSlots - maxObjects) * kAITD2WorldObjectSize, 0);
+        saveWrite(emptySlots.data(), 1, emptySlots.size(), fHandle);
     }
 
     if(g_gameId == AITD1)
@@ -946,16 +1078,28 @@ int makeSaveFile(int entry)
     for(i=0;i< CVars.size();i++)
     {
         ASSERT(sizeof(CVars[i]) == 2);
-        fwrite(&CVars[i], 2, 1, fHandle);
+        saveWrite(&CVars[i], 2, 1, fHandle);
     }
 
-	for(int inventoryId = 0; inventoryId<s_layout.inventories; inventoryId++)
+	// AITD2's original: both objects in hand, both counts, then both lists
+	if (s_layout.aitd2)
+	{
+		saveWrite(inHandTable, 2, NUM_MAX_INVENTORY, fHandle);
+		saveWrite(numObjInInventoryTable, 2, NUM_MAX_INVENTORY, fHandle);
+		const s16 emptyEntries[kAITD2InventorySize - INVENTORY_SIZE] = {};
+		for(int inventoryId=0; inventoryId<NUM_MAX_INVENTORY; inventoryId++)
+		{
+			saveWrite(inventoryTable[inventoryId], 2, INVENTORY_SIZE, fHandle);
+			saveWrite(emptyEntries, 2, kAITD2InventorySize - INVENTORY_SIZE, fHandle);
+		}
+	}
+	else for(int inventoryId = 0; inventoryId<s_layout.inventories; inventoryId++)
 	{
 		ASSERT(sizeof(inHandTable[inventoryId]) == 2);
-		fwrite(&inHandTable[inventoryId],2,1,fHandle);
+		saveWrite(&inHandTable[inventoryId],2,1,fHandle);
 
 		ASSERT(sizeof(numObjInInventoryTable[inventoryId]) == 2);
-		fwrite(&numObjInInventoryTable[inventoryId],2,1,fHandle);
+		saveWrite(&numObjInInventoryTable[inventoryId],2,1,fHandle);
 
 		if(g_gameId == AITD1)
 		{
@@ -965,265 +1109,309 @@ int makeSaveFile(int entry)
 		for(i=0;i<INVENTORY_SIZE;i++)
 		{
 			ASSERT(sizeof(inventoryTable[inventoryId][i]) == 2);
-			fwrite(&inventoryTable[inventoryId][i],2,1,fHandle);
+			saveWrite(&inventoryTable[inventoryId][i],2,1,fHandle);
 		}
 	}
 
     ASSERT(sizeof(statusScreenAllowed) == 2);
-    fwrite(&statusScreenAllowed,2,1,fHandle);
+    saveWrite(&statusScreenAllowed,2,1,fHandle);
 
     ASSERT(sizeof(FlagGameOver) == 2);
-    fwrite(&FlagGameOver,2,1,fHandle);
+    saveWrite(&FlagGameOver,2,1,fHandle);
 
     ASSERT(sizeof(lightOff) == 2);
-    fwrite(&lightOff,2,1,fHandle);
+    saveWrite(&lightOff,2,1,fHandle);
 
     ASSERT(sizeof(shakingAmplitude) == 2);
-    fwrite(&shakingAmplitude,2,1,fHandle);
+    saveWrite(&shakingAmplitude,2,1,fHandle);
 
     ASSERT(sizeof(shakeVar1) == 2);
-    fwrite(&shakeVar1,2,1,fHandle);
+    saveWrite(&shakeVar1,2,1,fHandle);
+
+    if (s_layout.aitd2)
+        writeValue(0, fHandle);
 
     // The time the game stopped at, not the one running inside the menu
     const unsigned int savedClock = gameClockForSave();
-    fwrite(&savedClock,4,1,fHandle);
+    saveWrite(&savedClock,4,1,fHandle);
 
     ASSERT(sizeof(timerFreeze1) == 4);
-    fwrite(&timerFreeze1,4,1,fHandle);
+    saveWrite(&timerFreeze1,4,1,fHandle);
 
     ASSERT(sizeof(currentMusic) == 2);
-    fwrite(&currentMusic,2,1,fHandle);
+    saveWrite(&currentMusic,2,1,fHandle);
 
     //timerFreeze = 1;
 
+    s_cipher = 0;
     var28 = ftell(fHandle);
     temp = var28;
-    fseek(fHandle,12,SEEK_SET);
+    fseek(fHandle,12 + headerShift,SEEK_SET);
     var28 = ((var28 & 0xFF) << 24) | ((var28 & 0xFF00) << 8) | (( var28 & 0xFF0000) >> 8) | ((var28 & 0xFF000000) >> 24);
-    fwrite(&var28,4,1,fHandle);
+    saveWrite(&var28,4,1,fHandle);
     fseek(fHandle,temp,SEEK_SET);
 
-    fwrite(&varSize,2,1,fHandle);
-    fwrite(vars,varSize,1,fHandle);
+    saveWrite(&varSize,2,1,fHandle);
+    s_cipher = s_layout.aitd2 ? kAITD2Cipher : 0;
+    saveWrite(vars,varSize,1,fHandle);
+    s_cipher = 0;
 
-    var28 = ftell(fHandle);
-    temp = var28;
-    fseek(fHandle,16,SEEK_SET);
-    var28 = ((var28 & 0xFF) << 24) | ((var28 & 0xFF00) << 8) | (( var28 & 0xFF0000) >> 8) | ((var28 & 0xFF000000) >> 24);
-    fwrite(&var28,4,1,fHandle);
-    fseek(fHandle,temp,SEEK_SET);
+    // AITD2's original: the objects right after the variables, and where they
+    // start in the first 4 bytes of the picture (GOG reads it from there)
+    if (s_layout.aitd2)
+    {
+        const u32 actorsOffset = swapBytes((u32)ftell(fHandle));
+        temp = ftell(fHandle);
+        fseek(fHandle, 20, SEEK_SET);
+        saveWrite(&actorsOffset, 4, 1, fHandle);
+        fseek(fHandle, temp, SEEK_SET);
+    }
+    else
+    {
+        var28 = ftell(fHandle);
+        temp = var28;
+        fseek(fHandle,16,SEEK_SET);
+        var28 = ((var28 & 0xFF) << 24) | ((var28 & 0xFF00) << 8) | (( var28 & 0xFF0000) >> 8) | ((var28 & 0xFF000000) >> 24);
+        saveWrite(&var28,4,1,fHandle);
+        fseek(fHandle,temp,SEEK_SET);
+    }
 
     for(i=0;i<NUM_MAX_OBJECT;i++)
     {
         ASSERT(sizeof(ListObjets[i].indexInWorld) == 2);
-        fwrite(&ListObjets[i].indexInWorld,2,1,fHandle);
+        saveWrite(&ListObjets[i].indexInWorld,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].bodyNum) == 2);
-        fwrite(&ListObjets[i].bodyNum,2,1,fHandle);
+        saveWrite(&ListObjets[i].bodyNum,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].objectType) == 2);
-        fwrite(&ListObjets[i].objectType,2,1,fHandle);
+        saveWrite(&ListObjets[i].objectType,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].dynFlags) == 2);
-        fwrite(&ListObjets[i].dynFlags,2,1,fHandle);
+        saveWrite(&ListObjets[i].dynFlags,2,1,fHandle);
 
         //    ASSERT(sizeof(actorTable[i].zv.ZVX1) == 2);
-        fwrite(&ListObjets[i].zv.ZVX1,2,1,fHandle);
+        saveWrite(&ListObjets[i].zv.ZVX1,2,1,fHandle);
 
         //    ASSERT(sizeof(actorTable[i].zv.ZVX2) == 2);
-        fwrite(&ListObjets[i].zv.ZVX2,2,1,fHandle);
+        saveWrite(&ListObjets[i].zv.ZVX2,2,1,fHandle);
 
         //    ASSERT(sizeof(actorTable[i].zv.ZVY1) == 2);
-        fwrite(&ListObjets[i].zv.ZVY1,2,1,fHandle);
+        saveWrite(&ListObjets[i].zv.ZVY1,2,1,fHandle);
 
         //    ASSERT(sizeof(actorTable[i].zv.ZVY2) == 2);
-        fwrite(&ListObjets[i].zv.ZVY2,2,1,fHandle);
+        saveWrite(&ListObjets[i].zv.ZVY2,2,1,fHandle);
 
         //    ASSERT(sizeof(actorTable[i].zv.ZVZ1) == 2);
-        fwrite(&ListObjets[i].zv.ZVZ1,2,1,fHandle);
+        saveWrite(&ListObjets[i].zv.ZVZ1,2,1,fHandle);
 
         //    ASSERT(sizeof(actorTable[i].zv.ZVZ2) == 2);
-        fwrite(&ListObjets[i].zv.ZVZ2,2,1,fHandle);
+        saveWrite(&ListObjets[i].zv.ZVZ2,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].screenXMin) == 2);
-        fwrite(&ListObjets[i].screenXMin,2,1,fHandle);
+        saveWrite(&ListObjets[i].screenXMin,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].screenYMin) == 2);
-        fwrite(&ListObjets[i].screenYMin,2,1,fHandle);
+        saveWrite(&ListObjets[i].screenYMin,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].screenXMax) == 2);
-        fwrite(&ListObjets[i].screenXMax,2,1,fHandle);
+        saveWrite(&ListObjets[i].screenXMax,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].screenYMax) == 2);
-        fwrite(&ListObjets[i].screenYMax,2,1,fHandle);
+        saveWrite(&ListObjets[i].screenYMax,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].roomX) == 2);
-        fwrite(&ListObjets[i].roomX,2,1,fHandle);
+        saveWrite(&ListObjets[i].roomX,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].roomY) == 2);
-        fwrite(&ListObjets[i].roomY,2,1,fHandle);
+        saveWrite(&ListObjets[i].roomY,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].roomZ) == 2);
-        fwrite(&ListObjets[i].roomZ,2,1,fHandle);
+        saveWrite(&ListObjets[i].roomZ,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].worldX) == 2);
-        fwrite(&ListObjets[i].worldX,2,1,fHandle);
+        saveWrite(&ListObjets[i].worldX,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].worldY) == 2);
-        fwrite(&ListObjets[i].worldY,2,1,fHandle);
+        saveWrite(&ListObjets[i].worldY,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].worldZ) == 2);
-        fwrite(&ListObjets[i].worldZ,2,1,fHandle);
+        saveWrite(&ListObjets[i].worldZ,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].alpha) == 2);
-        fwrite(&ListObjets[i].alpha,2,1,fHandle);
+        saveWrite(&ListObjets[i].alpha,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].beta) == 2);
-        fwrite(&ListObjets[i].beta,2,1,fHandle);
+        saveWrite(&ListObjets[i].beta,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].gamma) == 2);
-        fwrite(&ListObjets[i].gamma,2,1,fHandle);
+        saveWrite(&ListObjets[i].gamma,2,1,fHandle);
 
         // The original saves the floor first (s_layout.stageFirst)
         if (s_layout.stageFirst)
         {
-            fwrite(&ListObjets[i].stage,2,1,fHandle);
-            fwrite(&ListObjets[i].room,2,1,fHandle);
+            saveWrite(&ListObjets[i].stage,2,1,fHandle);
+            saveWrite(&ListObjets[i].room,2,1,fHandle);
         }
         else
         {
-            fwrite(&ListObjets[i].room,2,1,fHandle);
-            fwrite(&ListObjets[i].stage,2,1,fHandle);
+            saveWrite(&ListObjets[i].room,2,1,fHandle);
+            saveWrite(&ListObjets[i].stage,2,1,fHandle);
         }
 
         ASSERT(sizeof(ListObjets[i].lifeMode) == 2);
-        fwrite(&ListObjets[i].lifeMode,2,1,fHandle);
+        saveWrite(&ListObjets[i].lifeMode,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].life) == 2);
-        fwrite(&ListObjets[i].life,2,1,fHandle);
+        saveWrite(&ListObjets[i].life,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].CHRONO) == 4);
-        fwrite(&ListObjets[i].CHRONO,4,1,fHandle);
+        saveWrite(&ListObjets[i].CHRONO,4,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].ROOM_CHRONO) == 4);
-        fwrite(&ListObjets[i].ROOM_CHRONO,4,1,fHandle);
+        saveWrite(&ListObjets[i].ROOM_CHRONO,4,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].ANIM) == 2);
-        fwrite(&ListObjets[i].ANIM,2,1,fHandle);
+        saveWrite(&ListObjets[i].ANIM,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].animType) == 2);
-        fwrite(&ListObjets[i].animType,2,1,fHandle);
+        saveWrite(&ListObjets[i].animType,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].animInfo) == 2);
-        fwrite(&ListObjets[i].animInfo,2,1,fHandle);
+        saveWrite(&ListObjets[i].animInfo,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].newAnim) == 2);
-        fwrite(&ListObjets[i].newAnim,2,1,fHandle);
+        saveWrite(&ListObjets[i].newAnim,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].newAnimType) == 2);
-        fwrite(&ListObjets[i].newAnimType,2,1,fHandle);
+        saveWrite(&ListObjets[i].newAnimType,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].newAnimInfo) == 2);
-        fwrite(&ListObjets[i].newAnimInfo,2,1,fHandle);
+        saveWrite(&ListObjets[i].newAnimInfo,2,1,fHandle);
+
+        if (s_layout.aitd2)
+        {
+            writeValue(0, fHandle);
+            writeValue(-1, fHandle);
+        }
 
         ASSERT(sizeof(ListObjets[i].frame) == 2);
-        fwrite(&ListObjets[i].frame,2,1,fHandle);
+        saveWrite(&ListObjets[i].frame,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].numOfFrames) == 2);
-        fwrite(&ListObjets[i].numOfFrames,2,1,fHandle);
+        saveWrite(&ListObjets[i].numOfFrames,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].END_FRAME) == 2);
-        fwrite(&ListObjets[i].END_FRAME,2,1,fHandle);
+        saveWrite(&ListObjets[i].END_FRAME,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].flagEndAnim) == 2);
-        fwrite(&ListObjets[i].flagEndAnim,2,1,fHandle);
+        saveWrite(&ListObjets[i].flagEndAnim,2,1,fHandle);
+
+        if (s_layout.aitd2)
+            saveWrite(&ListObjets[i].memoTicks,4,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].trackMode) == 2);
-        fwrite(&ListObjets[i].trackMode,2,1,fHandle);
+        saveWrite(&ListObjets[i].trackMode,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].trackNumber) == 2);
-        fwrite(&ListObjets[i].trackNumber,2,1,fHandle);
+        saveWrite(&ListObjets[i].trackNumber,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].MARK) == 2);
-        fwrite(&ListObjets[i].MARK,2,1,fHandle);
+        saveWrite(&ListObjets[i].MARK,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].positionInTrack) == 2);
-        fwrite(&ListObjets[i].positionInTrack,2,1,fHandle);
+        saveWrite(&ListObjets[i].positionInTrack,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].stepX) == 2);
-        fwrite(&ListObjets[i].stepX,2,1,fHandle);
+        saveWrite(&ListObjets[i].stepX,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].stepY) == 2);
-        fwrite(&ListObjets[i].stepY,2,1,fHandle);
+        saveWrite(&ListObjets[i].stepY,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].stepZ) == 2); // 45
-        fwrite(&ListObjets[i].stepZ,2,1,fHandle);
+        saveWrite(&ListObjets[i].stepZ,2,1,fHandle);
+
+        if (s_layout.aitd2)
+        {
+            saveWrite(&ListObjets[i].animNegX,2,1,fHandle);
+            saveWrite(&ListObjets[i].animNegY,2,1,fHandle);
+            saveWrite(&ListObjets[i].animNegZ,2,1,fHandle);
+        }
 
         saveInterpolatedValue(&ListObjets[i].YHandler,fHandle);
 
         ASSERT(sizeof(ListObjets[i].falling) == 2);
-        fwrite(&ListObjets[i].falling,2,1,fHandle);
+        saveWrite(&ListObjets[i].falling,2,1,fHandle);
 
         saveInterpolatedValue(&ListObjets[i].rotate,fHandle);
 
         ASSERT(sizeof(ListObjets[i].direction) == 2); 
-        fwrite(&ListObjets[i].direction,2,1,fHandle);
+        saveWrite(&ListObjets[i].direction,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].speed) == 2);
-        fwrite(&ListObjets[i].speed,2,1,fHandle);
+        saveWrite(&ListObjets[i].speed,2,1,fHandle);
 
         saveInterpolatedValue(&ListObjets[i].speedChange,fHandle);
 
         ASSERT(sizeof(ListObjets[i].COL[0]) == 2);
-        fwrite(&ListObjets[i].COL[0],2,1,fHandle);
+        saveWrite(&ListObjets[i].COL[0],2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].COL[1]) == 2);
-        fwrite(&ListObjets[i].COL[1],2,1,fHandle);
+        saveWrite(&ListObjets[i].COL[1],2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].COL[2]) == 2);
-        fwrite(&ListObjets[i].COL[2],2,1,fHandle);
+        saveWrite(&ListObjets[i].COL[2],2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].COL_BY) == 2);
-        fwrite(&ListObjets[i].COL_BY,2,1,fHandle);
+        saveWrite(&ListObjets[i].COL_BY,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].HARD_DEC) == 2);
-        fwrite(&ListObjets[i].HARD_DEC,2,1,fHandle);
+        saveWrite(&ListObjets[i].HARD_DEC,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].HARD_COL) == 2);
-        fwrite(&ListObjets[i].HARD_COL,2,1,fHandle);
+        saveWrite(&ListObjets[i].HARD_COL,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].HIT) == 2);
-        fwrite(&ListObjets[i].HIT,2,1,fHandle);
+        saveWrite(&ListObjets[i].HIT,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].HIT_BY) == 2);
-        fwrite(&ListObjets[i].HIT_BY,2,1,fHandle);
+        saveWrite(&ListObjets[i].HIT_BY,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].animActionType) == 2);
-        fwrite(&ListObjets[i].animActionType,2,1,fHandle);
+        saveWrite(&ListObjets[i].animActionType,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].animActionANIM) == 2);
-        fwrite(&ListObjets[i].animActionANIM,2,1,fHandle);
+        saveWrite(&ListObjets[i].animActionANIM,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].animActionFRAME) == 2);
-        fwrite(&ListObjets[i].animActionFRAME,2,1,fHandle);
+        saveWrite(&ListObjets[i].animActionFRAME,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].animActionParam) == 2);
-        fwrite(&ListObjets[i].animActionParam,2,1,fHandle);
+        saveWrite(&ListObjets[i].animActionParam,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].hitForce) == 2);
-        fwrite(&ListObjets[i].hitForce,2,1,fHandle);
+        saveWrite(&ListObjets[i].hitForce,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].hotPointID) == 2);
-        fwrite(&ListObjets[i].hotPointID,2,1,fHandle);
+        saveWrite(&ListObjets[i].hotPointID,2,1,fHandle);
+
+        if (s_layout.aitd2)
+            writeValue(0, fHandle);
 
         ASSERT(sizeof(ListObjets[i].hotPoint.x) == 2);
-        fwrite(&ListObjets[i].hotPoint.x,2,1,fHandle);
+        saveWrite(&ListObjets[i].hotPoint.x,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].hotPoint.y) == 2);
-        fwrite(&ListObjets[i].hotPoint.y,2,1,fHandle);
+        saveWrite(&ListObjets[i].hotPoint.y,2,1,fHandle);
 
         ASSERT(sizeof(ListObjets[i].hotPoint.z) == 2);
-        fwrite(&ListObjets[i].hotPoint.z,2,1,fHandle);
+        saveWrite(&ListObjets[i].hotPoint.z,2,1,fHandle);
+
+        if (s_layout.aitd2)
+        {
+            saveWrite(&ListObjets[i].hardMat,2,1,fHandle);
+            writeValue(0, fHandle);
+        }
     }
 
     fclose(fHandle);

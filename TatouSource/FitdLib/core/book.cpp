@@ -394,6 +394,9 @@ int Lire(int index, int startx, int top, int endx, int bottom, int demoMode, int
         osystem_drawBackground();
         printf(MAIN_TAG "Book: page %d shown%s\n", page, lastPageReached ? " (last)" : "");
 
+        if (g_gameId == AITD2)
+            AITD2_playBookVoice(index, page);
+
         // Play per-page voice-over: concatenate all line VOCs for this page
         // VOC naming: BBSSLL.VOC where BB=vocIndex, SS=page, LL=line
         if (vocIndex >= 0 && vocLinesOnPage > 0)

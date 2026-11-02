@@ -734,6 +734,8 @@ int evalVar2(const char* name)
                     }
                 case 0x6:
                     {
+                        if (g_gameId == AITD2 && aitd2EndAnimSeen(actorIdx))
+                            return 1;
                         return(actorPtr->flagEndAnim);
                         break;
                     }
@@ -744,6 +746,8 @@ int evalVar2(const char* name)
                     }
                 case 0x8:
                     {
+                        if (g_gameId == AITD2 && aitd2EndFrameSeen(actorIdx))
+                            return 1;
                         return(actorPtr->END_FRAME);
                         break;
                     }
@@ -809,10 +813,16 @@ int evalVar2(const char* name)
                     }
                 case 0xF: // COL_BY
                     {
-                        if(actorPtr->COL_BY == -1)
+                        int colBy = actorPtr->COL_BY;
+                        // Pushed or pushing, the objects only overlap in
+                        // frames with a move; one that touches counts too
+                        // (BUGS.md A20)
+                        if(colBy == -1 && g_gameId == AITD2)
+                            colBy = findTouchingObject(actorIdx);
+                        if(colBy == -1)
                             return(-1);
                         else
-                            return(ListObjets[actorPtr->COL_BY].indexInWorld);
+                            return(ListObjets[colBy].indexInWorld);
                         break;
                     }
                 case 0x10: // found
@@ -874,6 +884,12 @@ int evalVar2(const char* name)
                         if(temp1 == -1)
 						{
 							temp1 = actorPtr->COL_BY;
+							// While pushing, the pushed object only overlaps
+							// in frames where the actor moves: at 60 FPS many
+							// moves round to 0. An object that touches it
+							// counts too, at any FPS (BUGS.md A20)
+							if(temp1 == -1 && g_gameId == AITD2)
+								temp1 = findTouchingObject(actorIdx);
 							if(temp1 == -1)
 								return -1;
 						}

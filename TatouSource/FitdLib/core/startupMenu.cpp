@@ -218,7 +218,9 @@ int MainMenu(void)
         FadeOutPhys(16,0);
     }
 
-    while(JoyD)
+    // Enter or the action button that chose the entry must not reach the game:
+    // AITD2's new game began with Enter down and opened the inventory (BUGS.md A26)
+    while(JoyD || key || Click)
     {
         process_events();
     }

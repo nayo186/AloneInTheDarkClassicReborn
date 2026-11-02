@@ -116,6 +116,8 @@ static SoLoud::WavStream* s_voStream = nullptr;
 static SoLoud::DiskFile*  s_voFile   = nullptr;
 static unsigned char*      s_voBuf    = nullptr;
 static SoLoud::handle      s_voHandle = 0;
+// A voice that is a track of GOG's CD image (AITD2's books)
+static SoLoud::AudioSource* s_voTrack = nullptr;
 
 float g_voPitchMultiplier = 1.0f;
 
@@ -126,17 +128,7 @@ void closeAudioArchive()
     // Stop CD audio if playing
     stopCDAudio();
 
-    // Stop and clean up any active VO stream
-    if (s_voStream)
-    {
-        if (gSoloud) gSoloud->stop(s_voHandle);
-        s_voStream->stop();
-        delete s_voStream;
-        s_voStream = nullptr;
-    }
-    if (s_voFile)  { delete s_voFile;  s_voFile  = nullptr; }
-    if (s_voBuf)   { delete[] s_voBuf; s_voBuf   = nullptr; }
-    s_voHandle = 0;
+    osystem_stopVO();
 
     // Stop and clean up any active music stream before closing the archive.
     // The WavStream may be reading from s_musicArchiveBuf, so destroy it first.
@@ -300,17 +292,7 @@ void osystemAL_init()
 
 void osystemAL_deinit()
 {
-    // Stop VO playback
-    if (s_voStream)
-    {
-        if (gSoloud) gSoloud->stop(s_voHandle);
-        s_voStream->stop();
-        delete s_voStream;
-        s_voStream = nullptr;
-    }
-    if (s_voFile)  { delete s_voFile;  s_voFile  = nullptr; }
-    if (s_voBuf)   { delete[] s_voBuf; s_voBuf   = nullptr; }
-    s_voHandle = 0;
+    osystem_stopVO();
 
     stopCDAudio();
     osystemAL_adlibStop();
@@ -655,6 +637,24 @@ int osystemAL_getSampleRate()
 }
 
 
+// The file of a CD track: NN.ogg, .wav or .mp3, numbered from 01 for the
+// first audio track (CD track 2: track 1 is the data one); null if none
+static FILE* openTrackFile(int trackId)
+{
+    if (trackId < 2)
+        return nullptr;
+    for (const char* ext : { "ogg", "wav", "mp3" })
+    {
+        char filename[32];
+        sprintf_s(filename, sizeof(filename), "%02d.%s", trackId - 1, ext);
+        FILE* fHandle = nullptr;
+        fopen_s(&fHandle, filename, "rb");
+        if (fHandle)
+            return fHandle;
+    }
+    return nullptr;
+}
+
 int osystem_playTrack(int trackId)
 {
     if (!gSoloud)
@@ -689,35 +689,7 @@ int osystem_playTrack(int trackId)
     if (playCDAudioTrack(trackId))
         return 1;
 
-    // MP3/audio files are numbered from 01 for the first audio track, but trackId
-    // uses CD track numbers where track 1 is the data track and audio starts at 2.
-    // Subtract 1 so CD track 2 (first audio) maps to "01.mp3", etc.
-    int fileTrackId = trackId - 1;
-    if (fileTrackId < 1)
-        return 0;
-
-    // Filesystem fallback
-    char filename[256];
-    FILE* fHandle = NULL;
-
-    // Try OGG first  
-    sprintf_s(filename, sizeof(filename), "%02d.ogg", fileTrackId);
-    fopen_s(&fHandle, filename, "rb");
-
-    // Fall back to WAV if OGG not found
-    if (fHandle == NULL)
-    {
-        sprintf_s(filename, sizeof(filename), "%02d.wav", fileTrackId);
-        fopen_s(&fHandle, filename, "rb");
-    }
-
-    // Fall back to MP3 if WAV not found
-    if (fHandle == NULL)
-    {
-        sprintf_s(filename, sizeof(filename), "%02d.mp3", fileTrackId);
-        fopen_s(&fHandle, filename, "rb");
-    }
-    
+    FILE* fHandle = openTrackFile(trackId);
     if (fHandle == NULL)
     {
         // GOG installation: the track straight from GAME.GOG
@@ -774,6 +746,53 @@ void osystem_stopVO()
     if (s_voStream) { s_voStream->stop(); delete s_voStream; s_voStream = nullptr; }
     if (s_voFile)   { delete s_voFile;   s_voFile   = nullptr; }
     if (s_voBuf)    { delete[] s_voBuf;  s_voBuf    = nullptr; }
+    if (s_voTrack)  { s_voTrack->stop(); delete s_voTrack; s_voTrack = nullptr; }
+}
+
+// Plays a voice in a standard audio format (OGG, WAV, MP3) from an open file,
+// which it keeps
+static bool playVoStream(FILE* fh, const char* label)
+{
+    s_voFile   = new SoLoud::DiskFile(fh);
+    s_voStream = new SoLoud::WavStream();
+    SoLoud::result res = s_voStream->loadFile(s_voFile);
+    if (res == SoLoud::SO_NO_ERROR)
+    {
+        s_voHandle = playAudioSource(*s_voStream);
+        printf(VO_OK "Playing VO: %s" CON_RESET "\n", label);
+        return true;
+    }
+
+    delete s_voStream; s_voStream = nullptr;
+    delete s_voFile;   s_voFile   = nullptr;
+    return false;
+}
+
+void osystem_playVoiceTrack(int trackId, int seconds)
+{
+    if (!gSoloud) return;
+
+    osystem_stopVO();
+
+    char label[32];
+    sprintf_s(label, sizeof(label), "CD track %d", trackId);
+    if (FILE* fh = openTrackFile(trackId))
+    {
+        if (!playVoStream(fh, label))
+            return;
+    }
+    else if ((s_voTrack = gogImageCreateTrack(trackId)))
+    {
+        s_voHandle = playAudioSource(*s_voTrack);
+        printf(VO_OK "Playing VO: %s from the GOG image" CON_RESET "\n", label);
+    }
+    else
+    {
+        printf(VO_WARN "No voice: %s not found" CON_RESET "\n", label);
+        return;
+    }
+    // Only as long as the original lets it play
+    gSoloud->scheduleStop(s_voHandle, seconds);
 }
 
 // Try to decode a VOC buffer and play it.  Returns true on success.
@@ -841,19 +860,7 @@ static bool tryPlayVoFile(const char* path, const char* label)
     }
 
     // Standard audio formats ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â let SoLoud handle directly
-    s_voFile   = new SoLoud::DiskFile(fh);
-    s_voStream = new SoLoud::WavStream();
-    SoLoud::result res = s_voStream->loadFile(s_voFile);
-    if (res == SoLoud::SO_NO_ERROR)
-    {
-        s_voHandle = playAudioSource(*s_voStream);
-        printf(VO_OK "Playing VO: %s" CON_RESET "\n", label);
-        return true;
-    }
-
-    delete s_voStream; s_voStream = nullptr;
-    delete s_voFile;   s_voFile   = nullptr;
-    return false;
+    return playVoStream(fh, label);
 }
 
 static std::shared_ptr<const NarratorVoices> currentNarrator();

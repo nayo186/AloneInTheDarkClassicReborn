@@ -36,6 +36,8 @@ void GenereAffList();
 void AllRedraw(int mode);
 // Finds the objects whose collision box touches zvPtr (up to 3); returns how many
 int CheckObjectCol(int actorIdx, ZVStruct* zvPtr);
+// The first object whose box touches the actor's, even only face to face; -1 none
+int findTouchingObject(int actorIdx);
 // Moves a box along a line from (X, Y, Z) at angle beta and returns the first object it hits (-1 none, -2 a wall)
 int checkLineProjectionWithActors( int actorIdx, int X, int Y, int Z, int beta, int room, int param );
 // Counts the fixed collision boxes of the room that touch zvPtr (fills hardColTable)

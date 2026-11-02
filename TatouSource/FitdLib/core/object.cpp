@@ -30,6 +30,7 @@ int InitObjet(int body, int typeZv, int hardZvIdx, s16 objectType, int x, int y,
 
     currentProcessedActorPtr = actorPtr;
     currentProcessedActorIdx = i;
+    aitd2ForgetEvents(i, true);
 
     actorPtr->bodyNum = body;
     actorPtr->objectType = objectType;
@@ -80,6 +81,7 @@ int InitObjet(int body, int typeZv, int hardZvIdx, s16 objectType, int x, int y,
     if(g_gameId != AITD1)
     {
         actorPtr->hardMat = -1;
+        actorPtr->emitModel = -1;
     }
 
     actorPtr->rotate.startValue = 0;

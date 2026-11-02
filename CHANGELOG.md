@@ -4,6 +4,23 @@ Alone in the Dark: Classic Reborn started on 2026-10-23 from [Alone in the Dark:
 
 This repository was published with a single starting commit, to keep it light: the early history carried large files that are no longer part of the project. Below are the changes of each release and, after them, the changes made in this fork before it was published, newest first, one line per change. The reasons behind larger removals are explained in `docs/DESCARTADO.md` and the fixes in `docs/baseline/BUGS.md`.
 
+## v1.1.0 (2026-11-02)
+
+**Alone in the Dark 2 is playable**, with the same engine, launcher and options as the first game.
+
+- Alone in the Dark 2: its own launcher tab, data folder (GOG or Steam installation, or a copy of the files) and saves (UserData\AITD2), in the GOG edition's format: saves cross between both ways (BUGS.md A6)
+- Alone in the Dark 2: menus, message and book frames, the intro's fades and text colours, the opening gate, the house front's windows; its animated sequences and pictures can be exported and replaced like the backgrounds (BUGS.md A1-A4, A10)
+- Alone in the Dark 2, books and letters: the narrator reads them from the CD's tracks, as the CD version did, and each kind of paper uses its own text area (BUGS.md A18)
+- Alone in the Dark 2, gameplay: the weapon in hand is the one chosen; no red bubbles on wounds; the muzzle flash; infinite life (F1); a weapon lost in the cave cannot be fired; the cave elevator works; the capture in the garden corner goes on (BUGS.md A7-A9, A11, A12, A14, A15)
+- Alone in the Dark 2, drawing: the waterfall of the cave no longer covers Carnby; a pirate of another corridor of the hedge maze no longer shows over the hedges; Carnby is seen climbing the hall stairs (BUGS.md A13, A16, A25)
+- Alone in the Dark 2: the scripts of the other characters run at the same pace at any frame rate, so the maze pirates no longer fire too often; they still see every event of the frames they skip, so the intro's scenes and the chest that hides the Jack of diamonds work (BUGS.md A17, A20, A27)
+- Alone in the Dark 2: a closed trapdoor can no longer be climbed through; the chest scrapes when pushed (BUGS.md A19, A20)
+- Alone in the Dark 2: ESC ends the intro scene, as Enter does, instead of opening the pause menu inside it (BUGS.md A21)
+- Alone in the Dark 2: the save list and the pause menu fit the game's frames (BUGS.md A22)
+- All games: loading a game from the pause menu (ESC), or starting or loading one from the main menu, no longer opens the inventory at once (BUGS.md A23, A24, A26)
+- README: Alone in the Dark 2 in every section, its screenshots, its HD pack and how to dub its narrator
+- tatou.log notes when the inventory opens and each life change of an object
+
 ## v1.0.1 (2026-10-31)
 
 - Jack in the Dark, ending: Santa waving goodbye plays again (PERE.PAK), followed by the closing pictures; animated sequences run at the same speed at any frame rate (BUGS.md J2)

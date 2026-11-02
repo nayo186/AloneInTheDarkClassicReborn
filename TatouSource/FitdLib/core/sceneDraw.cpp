@@ -339,6 +339,61 @@ static void AffSmoke(int actorIdx)
     }
 }
 
+// Sparks where a shot hits (AITD2, special object 5, BUGS.md A7): each one
+// flies from the hit point, falls and shrinks; three yellows from the brightest
+static void AffShotSparks(tObject* actorPtr, s16* data, int ticks)
+{
+    const u8 firstColour = (u8)data[0];
+    const int numSparks = data[1];
+    s16* sparks = data + 2;
+
+    for (int tick = 0; tick < ticks; tick++)
+        for (int i = 0; i < numSparks; i++)
+        {
+            s16* spark = sparks + i * 6;
+            spark[0] += spark[3];
+            spark[1] += spark[4];
+            spark[2] += spark[5];
+            spark[4] += 1; // gravity (Y grows downward)
+        }
+
+    const float lifeRatio = 1.0f - (float)actorPtr->numOfFrames / (float)actorPtr->END_FRAME;
+    const float pointSize = 3.f + 7.f * lifeRatio;
+
+    // Its box on screen, for the masks in front of it
+    BBox3D1 = 32000;
+    BBox3D2 = 32000;
+    BBox3D3 = -32000;
+    BBox3D4 = -32000;
+
+    for (int i = 0; i < numSparks; i++)
+    {
+        const s16* spark = sparks + i * 6;
+        float wx = (float)(actorPtr->worldX + spark[0]) - translateX;
+        float wy = (float)(actorPtr->worldY + spark[1]) - translateY;
+        float wz = (float)(actorPtr->worldZ + spark[2]) - translateZ;
+
+        transformPoint(&wx, &wy, &wz);
+
+        const float depth = wz + cameraPerspective;
+        if (depth <= 50)
+            continue;
+
+        const float sx = ((wx * cameraFovX) / depth) + cameraCenterX;
+        const float sy = ((wy * cameraFovY) / depth) + cameraCenterY;
+
+        if (sx < BBox3D1) BBox3D1 = (int)sx;
+        if (sx > BBox3D3) BBox3D3 = (int)sx;
+        if (sy < BBox3D2) BBox3D2 = (int)sy;
+        if (sy > BBox3D4) BBox3D4 = (int)sy;
+
+        const float transformedSize = (pointSize * (float)cameraFovX) / depth;
+        osystem_drawPoint(sx, sy, depth, (u8)(firstColour + i % 3), 0, transformedSize);
+    }
+
+    osystem_flushPendingPrimitives();
+}
+
 void AffSpecialObjet(int actorIdx) // draw flow
 {
     tObject* actorPtr = &ListObjets[actorIdx];
@@ -365,6 +420,24 @@ void AffSpecialObjet(int actorIdx) // draw flow
     if (actorPtr->END_FRAME <= 0)
     {
         DeleteObjet(actorIdx);
+        return;
+    }
+
+    // AITD2's flash: the weapon's emit model at the emit point, turned as the
+    // shooter (none if the weapon has none, as the original, BUGS.md A9)
+    if (mode == 3 && g_gameId >= AITD2)
+    {
+        BBox3D1 = 320;
+        BBox3D2 = 200;
+        BBox3D3 = -1;
+        BBox3D4 = -1;
+
+        sBody* bodyPtr = actorPtr->bodyNum >= 0 ? HQR_Get(HQ_Bodys, actorPtr->bodyNum) : nullptr;
+        if (bodyPtr)
+        {
+            setCurrentBodyNum(actorPtr->bodyNum, bodyPtr, HQ_Bodys->string);
+            AffObjet(actorPtr->worldX, actorPtr->worldY, actorPtr->worldZ, actorPtr->alpha, actorPtr->beta, actorPtr->gamma, bodyPtr);
+        }
         return;
     }
 
@@ -400,11 +473,17 @@ void AffSpecialObjet(int actorIdx) // draw flow
         return;
     }
 
-    // modes 0 (evaporate/bubble) and 1 (blood) have particle data in HQ_Memory
+    // modes 0 (evaporate/bubble), 1 (blood) and 5 (sparks) have particle data in HQ_Memory
     char* data = HQ_PtrMalloc(HQ_Memory, actorPtr->frame);
     if (!data)
     {
         DeleteObjet(actorIdx);
+        return;
+    }
+
+    if (mode == 5)
+    {
+        AffShotSparks(actorPtr, (s16*)data, ticks);
         return;
     }
 

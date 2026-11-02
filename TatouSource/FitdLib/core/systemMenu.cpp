@@ -58,17 +58,13 @@ static int menuEntryY(int entry)
     return WindowY1 + ((WindowY2 - WindowY1) / 2) - (menuEntryCount() * SIZE_FONT) / 2 + (menuRowOf(entry) * SIZE_FONT);
 }
 
-// Scale down the game screen and draw it to the preview box
-// destX, destY = top-left corner of the AffBigCadre box
-void scaleDownImage(int destX, int destY, char* sourceBuffer)
+// Scale down the game screen and draw it to the preview box x1,y1-x2,y2
+void scaleDownImage(int x1, int y1, int x2, int y2, char* sourceBuffer)
 {
-    // Preview box is created at position (80,55) with size (120x70)
-    // Account for frame border (approximately 3 pixels on each side)
-    int frameThickness = 3;
-    int previewWidth = 120 - (frameThickness * 2);   // 114 pixels
-    int previewHeight = 75 - (frameThickness * 2);   // 64 pixels
-    int previewStartX = destX + frameThickness;
-    int previewStartY = destY + frameThickness;
+    int previewWidth = x2 - x1 + 1;
+    int previewHeight = y2 - y1 + 1;
+    if (previewWidth <= 0 || previewHeight <= 0)
+        return;
 
     // Source dimensions: 320x200 pixels (game screen)
     float scaleX = 320.0f / (float)previewWidth;
@@ -89,8 +85,8 @@ void scaleDownImage(int destX, int destY, char* sourceBuffer)
                 char pixel = sourceBuffer[srcY * 320 + srcX];
 
                 // Write to destination position in logicalScreen
-                int dstX = previewStartX + x;
-                int dstY = previewStartY + y;
+                int dstX = x1 + x;
+                int dstY = y1 + y;
 
                 if(dstX >= 0 && dstX < 320 && dstY >= 0 && dstY < 200)
                 {
@@ -115,8 +111,46 @@ void AffOption(int n, int num, int selected)
     }
 }
 
+// The text numbers of the menu's entries, in their order
+static void menuTexts(int texts[7])
+{
+    const int list[7] = { 48, 45, 46, 42 - musicEnabled, 43 + soundEnabled, 49 + detailLevel, 47 };
+    for (int i = 0; i < 7; i++)
+        texts[i] = list[i];
+}
+
+// AITD2: the preview goes in the top left corner, in a frame that ends
+// before the widest entry (its font is bigger than AITD1's) and keeps the
+// screen's shape; the picture fills only the inside of the frame (BUGS.md A22)
+static void affPreviewAITD2()
+{
+    int texts[7];
+    menuTexts(texts);
+    int textLeft = 160;
+    for (int text : texts)
+    {
+        textEntryStruct* entry = getTextFromIdx(text);
+        if (entry && 160 - entry->width / 2 < textLeft)
+            textLeft = 160 - entry->width / 2;
+    }
+
+    const int left = WindowX1 + 2;
+    const int top = WindowY1 + 2;
+    const int width = textLeft - 6 - left;
+    if (width < 40)
+        return;
+    const int height = width * 10 / 16;
+
+    AffBigCadre(left + width / 2, top + height / 2, width, height);
+    scaleDownImage(WindowX1, WindowY1, WindowX2, WindowY2, aux2);
+}
+
 void AffOptionList(int selectedStringNumber)
 {
+    // AITD2's frame pieces are not solid: the menu is drawn on black
+    if (g_gameId == AITD2)
+        AffRect(0, 0, 319, 199, 0);
+
     AffBigCadre(160,100,320,200);
 
     int backupTop = WindowY1;
@@ -124,12 +158,17 @@ void AffOptionList(int selectedStringNumber)
     int backupLeft = WindowX1;
     int backupRight = WindowX2;
 
+    if (g_gameId == AITD2)
     {
-        // Draw preview box: center (80,55), size 120x70
-        // This means top-left corner is at (80-60, 55-35) = (20, 20)
+        affPreviewAITD2();
+    }
+    else
+    {
+        // Draw preview box: center (80,55), size 120x70; the picture starts
+        // 3 pixels inside its top-left corner (20, 20)
         AffBigCadre(80,55,120,70);
 
-        scaleDownImage(20, 20, aux2);
+        scaleDownImage(23, 23, 136, 91, aux2);
     }
 
     WindowY1 = backupTop;
@@ -139,14 +178,10 @@ void AffOptionList(int selectedStringNumber)
 
     SetClip(WindowX1,WindowY1,WindowX2,WindowY2);
 
-    AffOption(0,48,selectedStringNumber);
-    AffOption(1,45,selectedStringNumber);
-    AffOption(2,46,selectedStringNumber);
-    AffOption(3,42-musicEnabled,selectedStringNumber);
-    AffOption(4,43+soundEnabled,selectedStringNumber);
-    AffOption(5,49+detailLevel,selectedStringNumber);
-
-    AffOption(9,47,selectedStringNumber);
+    int texts[7];
+    menuTexts(texts);
+    for (int row = 0; row < menuEntryCount(); row++)
+        AffOption(menuEntryAt(row), texts[row], selectedStringNumber);
 
     menuWaitVSync();
 }

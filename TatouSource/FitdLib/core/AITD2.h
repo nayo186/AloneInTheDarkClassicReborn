@@ -15,5 +15,7 @@ void drawInventoryAITD2();
 void redrawInventorySpriteAITD2();
 // Opens a book or letter of AITD2
 void AITD2_ReadBook(int index, int type);
+// The narrator reads one page of a text, if it has a voice (CD version)
+void AITD2_playBookVoice(int index, int page);
 
 extern int AITD2MusicToTrackMapping[21];

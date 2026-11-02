@@ -85,6 +85,8 @@
 	void osystem_playVocByIndex(int vocIndex);
 	// Plays the narrator voice of one page of a book
 	void osystem_playVocPage(int vocIndex, int page);
+	// Plays a CD track as the narrator voice for `seconds` (AITD2's books)
+	void osystem_playVoiceTrack(int trackId, int seconds);
 	// Stops the narrator voice
 	void osystem_stopVO();
 

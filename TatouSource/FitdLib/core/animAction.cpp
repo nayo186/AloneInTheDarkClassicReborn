@@ -126,15 +126,18 @@ void GereFrappe(void)
             int y = currentProcessedActorPtr->roomY + currentProcessedActorPtr->hotPoint.y + currentProcessedActorPtr->stepY;
             int z = currentProcessedActorPtr->roomZ + currentProcessedActorPtr->hotPoint.z + currentProcessedActorPtr->stepZ;
 
-            // Create muzzle flash at fire point
-            InitSpecialObjet( 3,
+            // Create muzzle flash at fire point; AITD2: the weapon's emit model
+            // (LM_FIRE), turned as the shooter (BUGS.md A9)
+            const int flash = InitSpecialObjet( 3,
                 x, y, z,
                 currentProcessedActorPtr->stage,
                 currentProcessedActorPtr->room,
-                0,
+                g_gameId >= AITD2 ? currentProcessedActorPtr->alpha : 0,
                 currentProcessedActorPtr->beta,
-                0,
+                g_gameId >= AITD2 ? currentProcessedActorPtr->gamma : 0,
                 NULL);
+            if (flash >= 0 && g_gameId >= AITD2)
+                ListObjets[flash].bodyNum = currentProcessedActorPtr->emitModel;
 
             // Instant raycast along aim direction
             touchedActor = checkLineProjectionWithActors(
@@ -155,8 +158,9 @@ void GereFrappe(void)
 
                 playSound(CVars[getCVarsIdx((enumCVars)SAMPLE_CHOC)]);
 
-                // Create impact effect at the hit position (returned in animMoveX/Y/Z)
-                InitSpecialObjet( 0,
+                // Create impact effect at the hit position (returned in animMoveX/Y/Z);
+                // AITD2: small sparks (the big bubbles covered the body, BUGS.md A7)
+                InitSpecialObjet( g_gameId >= AITD2 ? 5 : 0,
                     animMoveX, animMoveY, animMoveZ,
                     currentProcessedActorPtr->stage,
                     currentProcessedActorPtr->room,

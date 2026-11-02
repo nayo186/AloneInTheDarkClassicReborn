@@ -178,13 +178,95 @@ static void waitFrozenLive()
     printf(MLOOP_TAG "Game running again\n");
 }
 
+// AITD2: the scripts of the objects other than the player run 10 times a
+// second, as the original did in DOSBox and on the PCs of its time. Some
+// count their runs (a pirate fires after three): at 60 fps or more they
+// went faster, and their speed depended on the FPS (BUGS.md A17)
+static const unsigned int kAITD2ScriptTicks = 6;
+
+// Whether the current object's script runs in this frame: the player's
+// always; the others' on their 10 Hz tick, or when something they read
+// happens to them (a key frame, the end of an animation, a hit), which lasts
+// one frame: the original saw every such event
+static bool aitd2ScriptRuns(bool scriptTick)
+{
+    const tObject* actorPtr = currentProcessedActorPtr;
+    if (scriptTick || currentProcessedActorIdx == currentCameraTargetActor)
+        return true;
+    if ((actorPtr->objectType & AF_ANIMATED) && (actorPtr->END_FRAME || actorPtr->flagEndAnim))
+        return true;
+    return actorPtr->HIT_BY != -1 || actorPtr->HIT != -1;
+}
+
+// What a script that skips frames would miss of the other objects: the end of
+// an animation and a key frame change last one frame. The frame of each is
+// kept, and a script sees those after its own last run (BUGS.md A20)
+static unsigned int s_frameNumber = 0;
+static std::array<unsigned int, NUM_MAX_OBJECT> s_endAnimFrame{};
+static std::array<unsigned int, NUM_MAX_OBJECT> s_endFrameFrame{};
+static std::array<unsigned int, NUM_MAX_OBJECT> s_scriptRunFrame{};
+static unsigned int s_scriptSeesAfter = 0;      // frame after which the running script sees events
+static const unsigned int kAITD2StaleFrames = 120;   // an older run belongs to another object in that slot
+
+static void recordAITD2Events()
+{
+    s_frameNumber++;
+    s_scriptSeesAfter = s_frameNumber - 1;
+    for (int i = 0; i < NUM_MAX_OBJECT; i++)
+    {
+        const tObject& actor = ListObjets[i];
+        if (actor.indexInWorld < 0)
+            continue;
+        if (actor.flagEndAnim)
+            s_endAnimFrame[i] = s_frameNumber;
+        if (actor.END_FRAME)
+            s_endFrameFrame[i] = s_frameNumber;
+    }
+}
+
+// Runs the current object's script, seeing the events since its last run
+static void runAITD2Script()
+{
+    const unsigned int lastRun = s_scriptRunFrame[currentProcessedActorIdx];
+    s_scriptSeesAfter = s_frameNumber - lastRun <= kAITD2StaleFrames ? lastRun : s_frameNumber - 1;
+    processLife(currentProcessedActorPtr->life, false);
+    s_scriptRunFrame[currentProcessedActorIdx] = s_frameNumber;
+    s_scriptSeesAfter = s_frameNumber - 1;
+}
+
+bool aitd2EndAnimSeen(int actorIdx)
+{
+    return actorIdx >= 0 && actorIdx < NUM_MAX_OBJECT && s_endAnimFrame[actorIdx] > s_scriptSeesAfter;
+}
+
+bool aitd2EndFrameSeen(int actorIdx)
+{
+    return actorIdx >= 0 && actorIdx < NUM_MAX_OBJECT && s_endFrameFrame[actorIdx] > s_scriptSeesAfter;
+}
+
+// Kept by slot, these events belonged to the previous animation or to the
+// object that had the slot before: the woman of the intro, put in a slot
+// just freed, saw an end of animation and the camera left her at once
+// (BUGS.md A27)
+void aitd2ForgetEvents(int actorIdx, bool newObject)
+{
+    if (actorIdx < 0 || actorIdx >= NUM_MAX_OBJECT)
+        return;
+    s_endAnimFrame[actorIdx] = 0;
+    s_endFrameFrame[actorIdx] = 0;
+    if (newObject)
+        s_scriptRunFrame[actorIdx] = s_frameNumber;
+}
+
 void PlayWorld(int allowSystemMenu, int deltaTime)
 {
     g_playWorldActive = true;
     bool bLoop = true;
+    unsigned int framesSinceStart = 0;   // since the game began or the pause menu closed, for tatou.log
 
     while(bLoop)
 	{
+        framesSinceStart++;
 		// Process pending job callbacks from background threads
 		JobSystem::instance().processPendingCallbacks();
 
@@ -209,6 +291,18 @@ void PlayWorld(int allowSystemMenu, int deltaTime)
 
         if(localKey)
         {
+            // AITD2's intro (the scene on the ship) ends with ESC as with
+            // Enter: the pause menu let a game be loaded inside the intro,
+            // which then went back to the main menu (BUGS.md A21)
+            if(localKey == 0x1B && g_gameId == AITD2 && allowSystemMenu == 0)
+            {
+                while(key==0x1B)
+                {
+                    process_events();
+                }
+                break;
+            }
+
             if(localKey == 0x1B)
             {
                 // g_playWorldActive = false;
@@ -241,9 +335,12 @@ void PlayWorld(int allowSystemMenu, int deltaTime)
                 while(key==0x1B || key == 0x1C)
                 {
                     process_events();
-                    localKey = key;
                 }
+                // The menu leaves its own last key (Enter) in localKey: a
+                // game loaded there opened the inventory at once (BUGS.md A24)
+                localKey = key;
                 printf(MLOOP_TAG "Back to the game after the pause menu\n");
+                framesSinceStart = 0;
             }
 
             if(localKey == 0x1C || localKey == 0x17)
@@ -263,6 +360,8 @@ void PlayWorld(int allowSystemMenu, int deltaTime)
 
                     // Ensure cursor is visible in inventory
                     menuRestoreCursorForMenu();
+
+                    printf(MLOOP_TAG "Inventory opened by key 0x%02X, frame %u of play\n", localKey, framesSinceStart);
 
 
                     processInventory();
@@ -322,7 +421,13 @@ void PlayWorld(int allowSystemMenu, int deltaTime)
                 {
                     int flag = currentProcessedActorPtr->objectType;
 
-                    if((flag & AF_ANIMATED) || (g_gameId >= AITD2 && flag & 0x200))
+                    // 2D objects (AITD2+) play their hybrid's frames, not a
+                    // 3D animation (BUGS.md A15)
+                    if(g_gameId >= AITD2 && (flag & AF_OBJ_2D))
+                    {
+                        animObjet2d();
+                    }
+                    else if(flag & AF_ANIMATED)
                     {
                         GereAnim();
                     }
@@ -339,6 +444,18 @@ void PlayWorld(int allowSystemMenu, int deltaTime)
             }
 
             
+            // AITD2's 10 Hz tick for the scripts (aitd2ScriptRuns); the
+            // clock goes back when a game is loaded
+            static unsigned int s_lastScriptTick = 0;
+            bool scriptTick = true;
+            if (g_gameId == AITD2)
+            {
+                scriptTick = timer - s_lastScriptTick >= kAITD2ScriptTicks || timer < s_lastScriptTick;
+                if (scriptTick)
+                    s_lastScriptTick = timer;
+                recordAITD2Events();
+            }
+
             for(currentProcessedActorIdx = 0; currentProcessedActorIdx < NUM_MAX_OBJECT; currentProcessedActorIdx++)
             {
                 currentProcessedActorPtr = &ListObjets[currentProcessedActorIdx];
@@ -354,7 +471,16 @@ void PlayWorld(int allowSystemMenu, int deltaTime)
                             {
                                 if(currentProcessedActorPtr->lifeMode&3)
                                     if(!(currentProcessedActorPtr->lifeMode&4))
+                                    if(g_gameId != AITD2)
+                                    {
                                         processLife(currentProcessedActorPtr->life, false);
+                                        applyCheats();   // a hit taken in this script is put back (infinite life)
+                                    }
+                                    else if(aitd2ScriptRuns(scriptTick))
+                                    {
+                                        runAITD2Script();
+                                        applyCheats();
+                                    }
                                 break;
                             }
 						case JACK:

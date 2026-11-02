@@ -187,6 +187,7 @@ struct tObject // used to read data from file too
 
     // aitd2
     s16 hardMat;
+    s16 emitModel; // body drawn at the gun's emit point when it fires (LM_FIRE, -1: none)
 
     // Remaster: set when actor is on stairs (YHandler active), cleared when stair interpolation ends
 };

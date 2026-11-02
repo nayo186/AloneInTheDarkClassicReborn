@@ -171,6 +171,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `osystem_playVO` | Plays a narrator voice by its file name (loose file or GAME.GOG) |
 | `osystem_playVocByIndex` | Plays the narrator voice of a book or message by its number |
 | `osystem_playVocPage` | Plays the narrator voice of one page of a book |
+| `osystem_playVoiceTrack` | Plays a CD track as the narrator voice for `seconds` (AITD2's books) |
 | `osystem_stopVO` | Stops the narrator voice |
 | `osystem_preDecodeVocPage` | VOC pre-decode cache for seamless page turns during book reading |
 | `osystem_clearVocCache` | Forgets the voices decoded in the background |
@@ -293,6 +294,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `drawInventoryAITD2` | Draws AITD2's inventory frame |
 | `redrawInventorySpriteAITD2` | Redraws the picture of AITD2's inventory |
 | `AITD2_ReadBook` | Opens a book or letter of AITD2 |
+| `AITD2_playBookVoice` | The narrator reads one page of a text, if it has a voice (CD version) |
 
 ### `core/AITD3.h`
 
@@ -341,6 +343,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `load2dAnims` | Loads the 2D animations of a camera (ANIMnn.PAK) |
 | `startAnim2d` | Starts a 2D animation |
 | `handleAnim2d` | Advances and draws the 2D animations |
+| `animObjet2d` | Advances the 2D animation of the current object (AF_OBJ_2D); a one-shot one ends with no animation (-1), what scripts wait for |
 
 ### `core/animAction.h`
 
@@ -460,6 +463,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `GenereAffList` | Builds the list of objects to draw (NbAffObjets, Index) and puts it in drawing order |
 | `AllRedraw` | Redraws the whole screen: background, objects, masks and texts |
 | `CheckObjectCol` | Finds the objects whose collision box touches zvPtr (up to 3); returns how many |
+| `findTouchingObject` | The first object whose box touches the actor's, even only face to face; -1 none |
 | `checkLineProjectionWithActors` | Moves a box along a line from (X, Y, Z) at angle beta and returns the first object it hits (-1 none, -2 a wall) |
 | `AsmCheckListCol` | Counts the fixed collision boxes of the room that touch zvPtr (fills hardColTable) |
 | `DeleteInventoryObjet` | Takes an object out of the inventory |
@@ -530,6 +534,9 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `waitForOptionsWindow` | The game waits while the F1 window is open (called by process_events) |
 | `rememberDarkRoom` | Rooms found dark (LM_LIGHT): entering one again is dark from its first frame, before its scripts run again (BUGS.md V23) |
 | `roomAssumedDark` | True if the current room is dark (no lamp light) |
+| `aitd2EndAnimSeen` | AITD2: whether the object's animation ended (or its key frame changed) since the running script last ran, as it would have seen it every frame (BUGS.md A20) |
+| `aitd2EndFrameSeen` | — |
+| `aitd2ForgetEvents` | Forgets those events of an object that starts a new animation, or of a slot a new object takes (newObject: its script then sees only what comes) |
 
 ### `core/modernStick.h`
 
@@ -631,7 +638,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | Función | Para qué sirve |
 | --- | --- |
 | `processSystemMenu` | The 1992 pause menu: continue, save, load, music, sound, detail, quit |
-| `scaleDownImage` | Shrinks a 320x200 picture into the save preview box |
+| `scaleDownImage` | Shrinks a 320x200 picture into the rectangle x1,y1-x2,y2 (the menu's preview box) |
 
 ### `core/tatou.h`
 

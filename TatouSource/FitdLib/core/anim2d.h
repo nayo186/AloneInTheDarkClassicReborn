@@ -35,3 +35,6 @@ void load2dAnims(int cameraIdx);
 void startAnim2d(int index);
 // Advances and draws the 2D animations
 void handleAnim2d();
+// Advances the 2D animation of the current object (AF_OBJ_2D); a one-shot
+// one ends with no animation (-1), what scripts wait for
+void animObjet2d();

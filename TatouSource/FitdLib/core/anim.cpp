@@ -306,6 +306,7 @@ void GereAnim(void)
 
             currentProcessedActorPtr->flagEndAnim = 0;
             currentProcessedActorPtr->frame = 0;
+            aitd2ForgetEvents(currentProcessedActorIdx, false);   // the end of the previous animation is no more
 
             {
                 sAnimation* pAnim = HQR_Get(HQ_Anims, newAnim);

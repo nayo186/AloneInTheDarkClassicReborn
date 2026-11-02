@@ -31,6 +31,22 @@ void load2dAnims(int cameraIdx) {
     free(rawAnim2D);
 }
 
+// An object of the current room inside one of the animation's zones (its
+// box seen from above, as masks test it) is behind the animation
+static bool isBehindAnim2d(int actorIdx, const cameraHybridStruct& hybrid)
+{
+    const tObject& actor = ListObjets[actorIdx];
+    if (actor.room != currentRoom)
+        return false;
+    for (const rectTestStruct& rect : hybrid.rects)
+    {
+        if (actor.zv.ZVX1 / 10 >= rect.zoneX1 && actor.zv.ZVZ1 / 10 >= rect.zoneZ1 &&
+            actor.zv.ZVX2 / 10 <= rect.zoneX2 && actor.zv.ZVZ2 / 10 <= rect.zoneZ2)
+            return true;
+    }
+    return false;
+}
+
 void handleAnim2d() {
 
     std::array<int, NUM_MAX_OBJECT> Index2 = Index;
@@ -49,10 +65,11 @@ void handleAnim2d() {
             anim.time = timer;
         }
 
+        // Drawn right after the nearest object behind it: the ones in front
+        // cover it (BUGS.md A13)
         int j;
         for (j = NbAffObjets + i - 1; j >= 0; j--) {
-            if (!(Index2[j] & 0x8000)) {
-                //TODO: test rects
+            if (!(Index2[j] & 0x8000) && isBehindAnim2d(Index2[j], currentCameraZoneList[NumCamera]->hybrids[i])) {
                 break;
             }
         }
@@ -62,6 +79,34 @@ void handleAnim2d() {
     }
 
     Index = Index2;
+}
+
+void animObjet2d() {
+    tObject* actorPtr = currentProcessedActorPtr;
+    actorPtr->flagEndAnim = 0;
+    if (actorPtr->ANIM == -1 || actorPtr->bodyNum < 0)
+        return;
+
+    sHybrid* pHybrid = HQR_Get(HQ_Hybrides, actorPtr->ANIM);
+    if (!pHybrid || actorPtr->bodyNum >= (int)pHybrid->animations.size())
+        return;
+    const auto& frames = pHybrid->animations[actorPtr->bodyNum].anims;
+    if (frames.empty() || actorPtr->frame >= (int)frames.size())
+        return;
+
+    // Each frame shows for its own number of ticks, as the cameras' ones
+    if (timer - actorPtr->memoTicks < frames[actorPtr->frame].flag)
+        return;
+    actorPtr->memoTicks = timer;
+    actorPtr->frame++;
+    if (actorPtr->frame < (int)frames.size())
+        return;
+
+    actorPtr->flagEndAnim = 1;
+    actorPtr->frame = 0;
+    if (!(actorPtr->animType & ANIM_REPEAT))
+        actorPtr->ANIM = -1;
+    FlagGenereAffList = 1;
 }
 
 void resetAnim2D() {

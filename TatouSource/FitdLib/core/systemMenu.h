@@ -12,8 +12,8 @@
 
 // The 1992 pause menu: continue, save, load, music, sound, detail, quit
 void processSystemMenu(void);
-// Shrinks a 320x200 picture into the save preview box
-void scaleDownImage(int destX, int destY, char* sourceBuffer);
+// Shrinks a 320x200 picture into the rectangle x1,y1-x2,y2 (the menu's preview box)
+void scaleDownImage(int x1, int y1, int x2, int y2, char* sourceBuffer);
 
 #endif
 

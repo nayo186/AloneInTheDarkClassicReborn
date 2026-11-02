@@ -525,9 +525,20 @@ int checkActorInRoom(int room)
 // dolls over the toy chest's room (BUGS.md J4)
 static bool isActorInSeenPart(tObject* actorPtr)
 {
-    // A 2D object has no zone of its own (its body number is an animation):
-    // tested, AITD2's gate came and went (BUGS.md A4)
-    if (g_gameId < JACK || actorPtr->room == currentRoom || (actorPtr->objectType & AF_OBJ_2D))
+    // A 2D object is a drawing for one camera's screen: it is tested in its
+    // own room too, and by its position (its zone means nothing, its body
+    // number is an animation: the gate came and went, BUGS.md A4). Untested,
+    // the windows lit on the house front showed in the sky of the side
+    // camera (BUGS.md A10)
+    // AITD2 tests the current room too: the hedge maze is one room and a
+    // pirate in a corridor the camera does not see showed over the hedges
+    // (BUGS.md A16)
+    // The player is always seen: the camera is chosen for him, and on the hall
+    // stairs he left the zones the camera lists while climbing (BUGS.md A25)
+    const bool drawing2D = (actorPtr->objectType & AF_OBJ_2D) != 0;
+    if (g_gameId < JACK || (g_gameId == JACK && actorPtr->room == currentRoom && !drawing2D))
+        return true;
+    if (g_gameId == AITD2 && currentCameraTargetActor >= 0 && actorPtr == &ListObjets[currentCameraTargetActor])
         return true;
 
     for (int i = 0; i < cameraDataTable[NumCamera]->numViewedRooms; i++)
@@ -539,13 +550,19 @@ static bool isActorInSeenPart(tObject* actorPtr)
             return true;
         for (const rectTestStruct& box : viewedRoom.seenBoxes)
         {
-            if (actorPtr->zv.ZVX2 >= box.zoneX1 && actorPtr->zv.ZVX1 <= box.zoneX2
+            if (drawing2D)
+            {
+                if (actorPtr->roomX >= box.zoneX1 && actorPtr->roomX <= box.zoneX2
+                    && actorPtr->roomZ >= box.zoneZ1 && actorPtr->roomZ <= box.zoneZ2)
+                    return true;
+            }
+            else if (actorPtr->zv.ZVX2 >= box.zoneX1 && actorPtr->zv.ZVX1 <= box.zoneX2
                 && actorPtr->zv.ZVZ2 >= box.zoneZ1 && actorPtr->zv.ZVZ1 <= box.zoneZ2)
                 return true;
         }
         return false;
     }
-    return true;
+    return !drawing2D;
 }
 
 void GenereAffList()
@@ -776,6 +793,12 @@ void DeleteInventoryObjet(int objIdx)
 
         numObjInInventoryTable[currentInventory]--;
     }
+
+    // AITD2: an object taken away (a script puts it somewhere else) leaves
+    // the hand empty; its life went on running and the player still fired a
+    // weapon he no longer had (BUGS.md A14)
+    if (g_gameId >= AITD2 && inHandTable[currentInventory] == objIdx)
+        inHandTable[currentInventory] = -1;
 
     ListWorldObjets[objIdx].foundFlag &= 0x7FFF;
 }

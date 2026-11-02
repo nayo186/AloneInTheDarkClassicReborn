@@ -234,6 +234,13 @@ void startAITD2()
 			{
 				if(restoreSave(12,0))
 				{
+					// The Enter that chose the game is still down: it opened
+					// the inventory as the game began (BUGS.md A23, as C29)
+					while(key || JoyD || Click)
+					{
+						process_events();
+					}
+
 					updateShaking();
 
 					FlagInitView = 2;
@@ -293,14 +300,74 @@ void redrawInventorySpriteAITD2()
 	AffSpfI(TabXSprite[inventoryType], TabYSprite[inventoryType], inventoryType, pAITD2InventorySprite);
 }
 
+// The narrator of the CD version: each page of a text plays a CD track for
+// some seconds (table of AITD2.EXE, by text and page; BUGS.md A18)
+struct BookVoice { u8 track; u8 seconds; };
+struct BookVoices { int text; BookVoice pages[9]; };
+static const BookVoices s_bookVoices[] = {
+	{  1, { {44, 12}, {47, 39}, {48, 27}, {49, 41}, {50, 28}, {55, 31}, {56, 19}, {57, 40}, {58, 10} } },
+	{  3, { {29, 29} } },
+	{ 22, { {23, 5}, {24, 44}, {25, 45}, {26, 28} } },
+	{ 23, { {44, 12}, {51, 41}, {52, 11} } },
+	{ 24, { {39, 27} } },
+	{ 37, { {40, 11}, {41, 35}, {42, 38}, {43, 38} } },
+	{ 38, { {33, 11}, {34, 27}, {35, 28}, {36, 28} } },
+	{ 39, { {63, 19} } },
+	{ 41, { {27, 53}, {28, 13} } },
+	{ 42, { {37, 35}, {38, 8} } },
+	{ 43, { {44, 12}, {45, 37}, {46, 22} } },
+	{ 44, { {59, 9}, {60, 43}, {61, 42}, {62, 26} } },
+	{ 46, { {30, 4}, {31, 45}, {32, 38} } },
+	{ 48, { {44, 12}, {53, 39}, {54, 15} } },
+};
+
+// A text with a voice was read: its voice took the CD from the music
+static bool s_bookVoicePlayed = false;
+
+void AITD2_playBookVoice(int index, int page)
+{
+	for (const BookVoices& voices : s_bookVoices)
+	{
+		if (voices.text != index)
+			continue;
+		if (!s_bookVoicePlayed)
+		{
+			osystem_stopTrack();
+			s_bookVoicePlayed = true;
+		}
+		const BookVoice voice = page < 9 ? voices.pages[page] : BookVoice{};
+		if (voice.track)
+			osystem_playVoiceTrack(voice.track, voice.seconds);
+		else
+			osystem_stopVO();
+		return;
+	}
+}
+
+// Silences the voice of the book and gives the CD back to the music
+static void endBookVoice()
+{
+	if (!s_bookVoicePlayed)
+		return;
+	s_bookVoicePlayed = false;
+	osystem_stopVO();
+	const int music = currentMusic;
+	if (music >= 0)
+	{
+		currentMusic = -1;
+		playMusic(music);
+	}
+}
+
 void AITD2_ReadBook(int index, int type)
 {
-	int resIdx;
+	// Each kind of paper has its own text area, as in AITD2.EXE (BUGS.md A18)
+	int resIdx, left, top, right, bottom;
 	switch(type)
 	{
-	case 0: resIdx = AITD2_LETTRE; turnPageFlag = 0; break;
-	case 1: resIdx = AITD2_LIVRE;  turnPageFlag = 1; break;
-	case 2: resIdx = AITD2_CARNET; turnPageFlag = 0; break;
+	case 0: resIdx = AITD2_LETTRE; turnPageFlag = 0; left = 60; top = 10; right = 245; bottom = 190; break;
+	case 1: resIdx = AITD2_LIVRE;  turnPageFlag = 1; left = 48; top = 2;  right = 260; bottom = 197; break;
+	case 2: resIdx = AITD2_CARNET; turnPageFlag = 0; left = 50; top = 20; right = 250; bottom = 199; break;
 	default: assert(0); return;
 	}
 
@@ -313,5 +380,6 @@ void AITD2_ReadBook(int index, int type)
 	copyPalette(lpalette,currentGamePalette);
 	setPalette(lpalette);
 	osystem_CopyBlockPhys((unsigned char*)aux,0,0,320,200);
-	Lire(index, 60, 10, 245, 190, 0, 124, 124);
+	Lire(index, left, top, right, bottom, 0, 124, 124);
+	endBookVoice();
 }

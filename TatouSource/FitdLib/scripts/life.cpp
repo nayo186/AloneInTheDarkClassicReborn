@@ -21,6 +21,9 @@
 int groundLevel;
 s16 specialTable[4] = { 144, 192, 48, 112 };
 
+// Sparks of a shot that hits (special object 5)
+static const int kShotSparks = 10;
+
 static const char* getLifeMacroName(int macro)
 {
     switch (macro)
@@ -471,6 +474,41 @@ int InitSpecialObjet(int mode, int X, int Y, int Z, int stage, int room, int alp
         // cigars' script (life 427) does not start another one (BUGS.md C41)
         CVars[getCVarsIdx(FOG_FLAG)] = 1;
         printf(LIFE_TAG "Cigar smoke started (object %d, room %d)\n", currentActorPtr->trackNumber, room);
+        break;
+    }
+    case 5: // sparks where a shot hits (AITD2; the original shows nothing, BUGS.md A7)
+    {
+        // header (colour + count), then each spark's position and speed
+        currentActorPtr->frame = HQ_Malloc(HQ_Memory, 4 + kShotSparks * 6 * 2);
+        char* flowPtr = HQ_PtrMalloc(HQ_Memory, currentActorPtr->frame);
+        if (!flowPtr)
+        {
+            currentActorPtr->indexInWorld = -1;
+            return(-1);
+        }
+
+        currentActorPtr->ANIM = mode;
+
+        s16* sparks = (s16*)flowPtr;
+        sparks[0] = 112; // the brightest yellow of AITD2's palette
+        sparks[1] = kShotSparks;
+        for (int j = 0; j < kShotSparks; j++)
+        {
+            s16* spark = sparks + 2 + j * 6;
+            spark[0] = spark[1] = spark[2] = 0;     // from the hit point
+            spark[3] = randRange(-12, 13);          // outward
+            spark[4] = randRange(-14, -4);          // and up (Y grows downward)
+            spark[5] = randRange(-12, 13);
+        }
+
+        currentActorPtr->zv.ZVX1 = X - 5;
+        currentActorPtr->zv.ZVX2 = X + 5;
+        currentActorPtr->zv.ZVY1 = Y - 5;
+        currentActorPtr->zv.ZVY2 = Y + 5;
+        currentActorPtr->zv.ZVZ1 = Z - 5;
+        currentActorPtr->zv.ZVZ2 = Z + 5;
+
+        currentActorPtr->END_FRAME = 18; // a third of a second
         break;
     }
     default:
@@ -1050,18 +1088,6 @@ void processLife(int lifeNum, bool callFoundLife)
 
                 ListWorldObjets[currentProcessedActorPtr->indexInWorld].body = lifeTempVar1;
 
-                // AITD2: Override player body to body 18 (atlas-compatible gun stance body)
-                // Only swap bodies with matching skeleton (same group count) to avoid replacing car/special bodies
-                if (g_gameId == AITD2 && currentProcessedActorIdx == currentCameraTargetActor && lifeTempVar1 != 18)
-                {
-                    sBody* requestedBody = HQR_Get(HQ_Bodys, lifeTempVar1);
-                    sBody* body18 = HQR_Get(HQ_Bodys, 18);
-                    if (requestedBody && body18 && (requestedBody->m_flags & INFO_ANIM) && requestedBody->m_groups.size() == body18->m_groups.size())
-                    {
-                        lifeTempVar1 = 18;
-                    }
-                }
-
                 if (currentProcessedActorPtr->bodyNum != lifeTempVar1)
                 {
                     currentProcessedActorPtr->bodyNum = lifeTempVar1;
@@ -1106,17 +1132,6 @@ void processLife(int lifeNum, bool callFoundLife)
 
                 ListWorldObjets[currentProcessedActorPtr->indexInWorld].body = param1;
                 ListWorldObjets[currentProcessedActorPtr->indexInWorld].anim = param2;
-
-                // AITD2: Override player body to body 18 (atlas-compatible gun stance body)
-                if (g_gameId == AITD2 && currentProcessedActorIdx == currentCameraTargetActor && param1 != 18)
-                {
-                    sBody* requestedBody = HQR_Get(HQ_Bodys, param1);
-                    sBody* body18 = HQR_Get(HQ_Bodys, 18);
-                    if (requestedBody && body18 && (requestedBody->m_flags & INFO_ANIM) && requestedBody->m_groups.size() == body18->m_groups.size())
-                    {
-                        param1 = 18;
-                    }
-                }
 
                 currentProcessedActorPtr->bodyNum = param1;
 
@@ -1434,7 +1449,10 @@ void processLife(int lifeNum, bool callFoundLife)
                     hitForce = readNextArgument("Force");
                     nextAnim = evalVar();
 
-                    fire(fireAnim, shootFrame, emitPoint, zvSize, hitForce, nextAnim); // todo: implement emit model
+                    fire(fireAnim, shootFrame, emitPoint, zvSize, hitForce, nextAnim);
+                    // The flash shown at the emit point when the shot leaves (DO_TIR, BUGS.md A9)
+                    currentProcessedActorPtr->emitModel = emitModel;
+                    printf(LIFE_TAG "  -> emit model %d\n", emitModel);
                 }
 
                 break;
@@ -1678,7 +1696,10 @@ void processLife(int lifeNum, bool callFoundLife)
             case LM_LIFE: // LIFE
             {
                 appendFormated("LM_LIFE ");
-                currentProcessedActorPtr->life = readNextArgument("newLife");
+                lifeTempVar1 = readNextArgument("newLife");
+                if (lifeTempVar1 != currentProcessedActorPtr->life)
+                    printf(LIFE_TAG "Object %d: life %d -> %d (script %d)\n", currentProcessedActorPtr->indexInWorld, currentProcessedActorPtr->life, lifeTempVar1, currentLifeNum);
+                currentProcessedActorPtr->life = lifeTempVar1;
                 break;
             }
             case LM_STAGE_LIFE:
