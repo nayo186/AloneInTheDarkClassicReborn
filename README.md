@@ -94,7 +94,7 @@ It is not a static recompilation: a static recompilation translates the machine 
 3. Choose the game's tab (**Alone in the Dark** or **Alone in the Dark 2**), press **Browse** and choose your game folder:
    - a **GOG or Steam installation**: the folder with `GAME.GOG` (or its `INDARK` subfolder; `INDARK2` for *Alone in the Dark 2*). Music and voices are read straight from the CD image; nothing is extracted or written there;
    - or a **copy of the game files** (a folder with the `.PAK` files; Jack in the Dark in its `JACK` subfolder).
-4. Choose the language of the game and press **Play**. The GOG and Steam editions include five languages (English, French, German, Italian and Spanish), all available from the launcher. *Jack in the Dark* has its own button, in the *Alone in the Dark* tab, when its files are found.
+4. Choose the language of the game and press **Play** (see [Languages](#languages)). *Jack in the Dark* has its own button, in the *Alone in the Dark* tab, when its files are found.
 
 **Updates.** When it opens, the launcher asks GitHub for the latest release of this project and, if there is a newer one, offers to install it; the **Update** button next to the version (bottom right) looks again. Installing downloads the package for your system and replaces only the programs and the documents next to them: `UserData` (options, saves, backgrounds) and `launcher.cfg` are never touched. Then close the launcher and open it again. The launcher connects to the internet only for this, and the game never does.
 
@@ -112,6 +112,24 @@ Only if you want something else for one entry, add it to the line:
 
 - `--data "<folder>"`: another game folder, the same kind you would choose with **Browse** (for example `--data "C:\GOG Games\Alone in the Dark"` or `--data "C:\GOG Games\Alone in the Dark 2"`);
 - `--lang <language>`: another language of the game for that session (`ENGLISH`, `FRANCAIS`, `DEUTSCH`, `ESPAGNOL` or `ITALIANO`).
+
+### Languages
+
+GOG and Steam sell the same edition of each game, with the same languages:
+
+| Game | Text | Narrator |
+|---|---|---|
+| *Alone in the Dark* | English, French, German, Italian, Spanish | English |
+| *Jack in the Dark* | English, French, German, Italian, Spanish | none (it never had voices) |
+| *Alone in the Dark 2* | English, French, German, Italian, Spanish | English |
+
+The narrator reads with any text language. A French narrator only came on the old French CD of *Alone in the Dark* (1993), not in GOG or Steam; if you own it, see [Narrators](#narrators).
+
+**Changing them** takes a click:
+
+- **Game language:** the **Game language** list on each game's page of the launcher. It is kept for next time.
+- **Menu language** (launcher and F1): **Interface**, at the top right of the launcher.
+- **Narrator**, if you added extra voices: the **Narrator** list of the **Audio** window, in the launcher's **Advanced options** or in the game with **F1**.
 
 ### On Linux
 
