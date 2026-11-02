@@ -1015,6 +1015,101 @@ void PutAtObjet(int objIdx, int objIdxToPutAt)
     }
 }
 
+// The most world objects one camera of a room shows (rooms it sees, same floor)
+static int mostObjectsInRoomCameras(int stage, int room)
+{
+    int most = 0;
+    const roomDataStruct& roomData = roomDataTable[room];
+    for (u32 i = 0; i < roomData.numCameraInRoom; i++)
+    {
+        const u16 cameraIdx = roomData.cameraIdxTable[i];   // among the floor's cameras
+        if (cameraIdx >= g_currentFloorCameraData.size())
+            continue;
+        const cameraDataStruct* camera = &g_currentFloorCameraData[cameraIdx];
+        int count = 0;
+        for (int j = 0; j < camera->numViewedRooms; j++)
+        {
+            const int viewedRoom = camera->viewedRoomTable[j].viewedRoomIdx;
+            for (const tWorldObject& object : ListWorldObjets)
+                if (object.stage == stage && object.room == viewedRoom)
+                    count++;
+        }
+        if (count > most)
+            most = count;
+    }
+    return most;
+}
+
+// Where the box of an object fits beside an actor (to its side, further
+// each try): clear of the actor, the walls and every object that is not a
+// loose item. False: there is no room
+static bool findDropPlace(tObject* actor, int body, int& x, int& y, int& z)
+{
+    sBody* bodyPtr = HQR_Get(HQ_Bodys, body);
+    if (!bodyPtr)
+        return false;
+    ZVStruct bodyZv;
+    GiveZVObjet(bodyPtr, &bodyZv);
+
+    ZVStruct zv;
+    bool clearOfActor = false;
+    for (int distance = 0; distance <= 1500 && !clearOfActor; distance += 10)
+    {
+        int stepZ, stepX;
+        Rotate(actor->beta - 0x100, distance, 0, &stepZ, &stepX);
+        x = actor->roomX + stepX;
+        y = actor->roomY;
+        z = actor->roomZ + stepZ;
+        zv = bodyZv;
+        zv.ZVX1 += x; zv.ZVX2 += x;
+        zv.ZVY1 += y; zv.ZVY2 += y;
+        zv.ZVZ1 += z; zv.ZVZ2 += z;
+        clearOfActor = !CubeIntersect(&zv, &actor->zv);
+    }
+    if (!clearOfActor || AsmCheckListCol(&zv, &roomDataTable[actor->room]))
+        return false;
+
+    for (tObject& other : ListObjets)
+    {
+        if (other.indexInWorld == -1 || (other.objectType & AF_FOUNDABLE))
+            continue;
+        ZVStruct otherRoomZv = zv;
+        if (other.room != actor->room)
+            AdjustZV(&otherRoomZv, actor->room, other.room);
+        if (CubeIntersect(&otherRoomZv, &other.zv))
+            return false;
+    }
+    return true;
+}
+
+void dropAITD2(int objIdx, int objIdxDropping)
+{
+    tWorldObject* objPtr = &ListWorldObjets[objIdx];
+    const int actorIdx = ListWorldObjets[objIdxDropping].objIndex;
+    if (actorIdx == -1)
+        return;
+    tObject* actor = &ListObjets[actorIdx];
+    int x, y, z;
+    if (mostObjectsInRoomCameras(actor->stage, actor->room) > 46 || !findDropPlace(actor, objPtr->body, x, y, z))
+    {
+        printf(MAIN_TAG "Drop: no room for world object %d by object %d\n", objIdx, objIdxDropping);
+        return;
+    }
+
+    DeleteInventoryObjet(objIdx);
+    printf(MAIN_TAG "Drop: world object %d by object %d at x=%d y=%d z=%d room=%d\n", objIdx, objIdxDropping, x, y, z, actor->room);
+    objPtr->x = x;
+    objPtr->y = y;
+    objPtr->z = z;
+    objPtr->foundFlag |= 0x4000;
+    objPtr->flags = AF_FOUNDABLE | AF_DRAWABLE | AF_FALLABLE;
+    objPtr->alpha = 0;
+    objPtr->beta = 0;
+    objPtr->gamma = 0;
+    objPtr->stage = actor->stage;
+    objPtr->room = actor->room;
+}
+
 void throwStoppedAt(int x, int z)
 {
     int x2;

@@ -53,6 +53,12 @@ enum class UiText
     UpdateFailed,
     UpdateAccept,
     UpdateClose,
+    About,
+    AboutText,
+    AboutAuthor,
+    AboutCredits,
+    AboutThanks,
+    AboutGithub,
     Count
 };
 
@@ -200,6 +206,30 @@ static const char* const kLauncherTexts[(int)UiText::Count][(int)UiLanguage::Cou
     { "Accept", "Aceptar", "Accepter", "Accetta", "OK" },
     // UpdateClose
     { "Close", "Cerrar", "Fermer", "Chiudi", "Schließen" },
+    // About
+    { "About", "Acerca de", "À propos", "Informazioni", "Über" },
+    // AboutText
+    { "A source port of the Alone in the Dark trilogy and Jack in the Dark for modern PCs, with fixes and new options.",
+      "Un port del motor de la trilogía Alone in the Dark y de Jack in the Dark para PCs modernos, con arreglos y opciones nuevas.",
+      "Un portage du moteur de la trilogie Alone in the Dark et de Jack in the Dark pour les PC modernes, avec des corrections et de nouvelles options.",
+      "Un port del motore della trilogia Alone in the Dark e di Jack in the Dark per PC moderni, con correzioni e nuove opzioni.",
+      "Eine Portierung der Engine der Alone-in-the-Dark-Trilogie und von Jack in the Dark für moderne PCs, mit Korrekturen und neuen Optionen." },
+    // AboutAuthor (%s: the author's alias)
+    { "Created by %s", "Creado por %s", "Créé par %s", "Creato da %s", "Erstellt von %s" },
+    // AboutCredits
+    { "Built on FITD by yaz0r, the reimplementation of the original engine that makes this project possible, with parts of Alone in the Dark Re-Haunted. Free software under the GPL v2. The games belong to their owners: you need your own copy.",
+      "Basado en FITD de yaz0r, la reimplementación del motor original que hace posible este proyecto, con partes de Alone in the Dark Re-Haunted. Software libre con licencia GPL v2. Los juegos son de sus dueños: necesitas tu propia copia.",
+      "Basé sur FITD de yaz0r, la réimplémentation du moteur original qui rend ce projet possible, avec des parties d'Alone in the Dark Re-Haunted. Logiciel libre sous licence GPL v2. Les jeux appartiennent à leurs propriétaires : il vous faut votre propre copie.",
+      "Basato su FITD di yaz0r, la reimplementazione del motore originale che rende possibile questo progetto, con parti di Alone in the Dark Re-Haunted. Software libero con licenza GPL v2. I giochi appartengono ai loro proprietari: serve una copia propria.",
+      "Basiert auf FITD von yaz0r, der Neuimplementierung der Original-Engine, die dieses Projekt möglich macht, mit Teilen von Alone in the Dark Re-Haunted. Freie Software unter der GPL v2. Die Spiele gehören ihren Eigentümern: Sie brauchen eine eigene Kopie." },
+    // AboutThanks
+    { "Thank you to everyone who tests it and reports problems: every version is better thanks to you.",
+      "Gracias a todos los que lo prueban y reportan errores: cada versión mejora gracias a vosotros.",
+      "Merci à tous ceux qui le testent et signalent des problèmes : chaque version s'améliore grâce à vous.",
+      "Grazie a tutti quelli che lo provano e segnalano problemi: ogni versione migliora grazie a voi.",
+      "Danke an alle, die es testen und Fehler melden: Jede Version wird dank euch besser." },
+    // AboutGithub
+    { "Open GitHub", "Abrir GitHub", "Ouvrir GitHub", "Apri GitHub", "GitHub öffnen" },
 };
 
 inline UiLanguage& currentUiLanguage()

@@ -494,6 +494,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `hit` | Starts a hit: plays the animation and sets the frame, range and force of the blow |
 | `CubeIntersect` | True if two collision boxes overlap |
 | `PutAtObjet` | Puts an object at another object's position (room, floor and coordinates) |
+| `dropAITD2` | AITD2's DROP: puts an object beside the one dropping it where its box fits; with no room it stays in the inventory |
 | `SetClip` | Sets the drawing clip rectangle on the 320x200 screen |
 | `drawZv` | Debug: draws a collision box as projected lines |
 | `drawZv` | Debug builds (FITD_DEBUGGER): an object's box and a room's zones (debugDraw.cpp) |
@@ -536,7 +537,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `roomAssumedDark` | True if the current room is dark (no lamp light) |
 | `aitd2EndAnimSeen` | AITD2: whether the object's animation ended (or its key frame changed) since the running script last ran, as it would have seen it every frame (BUGS.md A20) |
 | `aitd2EndFrameSeen` | — |
-| `aitd2ForgetEvents` | Forgets those events of an object that starts a new animation, or of a slot a new object takes (newObject: its script then sees only what comes) |
+| `aitd2ForgetEvents` | Forgets those events of an object that starts a new animation (but those of the last frame), or of a slot a new object takes (newObject: all; its script then sees only what comes) |
 
 ### `core/modernStick.h`
 

@@ -214,7 +214,11 @@ void put(int x, int y, int z, int room, int stage, int alpha, int beta, int gamm
 
 void drop(int worldIdx, int worldSource)
 {
-    PutAtObjet(worldIdx, worldSource);
+    // AITD2 looks for room first: the card over the maze's flagstone stays in the inventory (BUGS.md A28)
+    if (g_gameId == AITD2)
+        dropAITD2(worldIdx, worldSource);
+    else
+        PutAtObjet(worldIdx, worldSource);
 }
 
 void fire(int fireAnim, int X, int Y, int Z, int hitForce, int nextAnim)

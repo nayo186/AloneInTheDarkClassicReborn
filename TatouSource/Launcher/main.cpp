@@ -493,6 +493,64 @@ static void drawUpdateWindow(LauncherState& state, const Fonts& fonts, const Met
     ImGui::PopStyleVar();
 }
 
+// B closes the about window
+static bool s_closeAbout = false;
+
+// About window: what the project is, its author and credits, thanks to the
+// testers and a button that opens the repository in the browser
+static void drawAboutWindow(const Fonts& fonts, const Metrics& metrics)
+{
+    ImGuiIO& io = ImGui::GetIO();
+    const float width = (std::min)(metrics.px(480.0f), io.DisplaySize.x * 0.94f);
+    ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+    ImGui::SetNextWindowSizeConstraints(ImVec2(width, 0.0f), ImVec2(width, io.DisplaySize.y * 0.94f));
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, metrics.px(24.0f, 20.0f));
+    if (!ImGui::BeginPopupModal("##aboutPopup", nullptr, menu::kPanelFlags | ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        ImGui::PopStyleVar();
+        return;
+    }
+
+    ImGui::PushFont(fonts.header);
+    ImGui::TextColored(color(kGoldLight), "Alone in the Dark: Classic Reborn");
+    ImGui::PopFont();
+    if (updatesEnabled())
+        ImGui::TextColored(color(kTextDim), "v%s", launcherVersion());
+    ImGui::Spacing();
+
+    char author[96];
+    snprintf(author, sizeof(author), tr(UiText::AboutAuthor), "nayo186");
+    ImGui::PushTextWrapPos(0.0f);
+    ImGui::TextColored(color(kText), "%s", tr(UiText::AboutText));
+    ImGui::Spacing();
+    ImGui::TextColored(color(kGold), "%s", author);
+    ImGui::Spacing();
+    ImGui::TextColored(color(kTextDim), "%s", tr(UiText::AboutCredits));
+    ImGui::Spacing();
+    ImGui::TextColored(color(kText), "%s", tr(UiText::AboutThanks));
+    ImGui::PopTextWrapPos();
+    ImGui::Spacing();
+    ImGui::Spacing();
+
+    // Open GitHub and Close side by side
+    const ImVec2 pos = ImGui::GetCursorScreenPos();
+    const float gap = metrics.px(10.0f);
+    const ImVec2 half((ImGui::GetContentRegionAvail().x - gap) * 0.5f, metrics.pressHeight(40.0f));
+    if (goldButton("##aboutGithub", tr(UiText::AboutGithub), pos, half, fonts.button, true))
+    {
+        if (!SDL_OpenURL("https://github.com/nayo186/AloneInTheDarkClassicReborn"))
+            logLine("Could not open GitHub: %s", SDL_GetError());
+    }
+    const bool closing = s_closeAbout;
+    s_closeAbout = false;
+    if (darkButton("##aboutClose", tr(UiText::UpdateClose), ImVec2(pos.x + half.x + gap, pos.y), half, fonts.button, true) || closing)
+        ImGui::CloseCurrentPopup();
+    ImGui::Dummy(ImVec2(0.0f, metrics.px(4.0f)));
+
+    ImGui::EndPopup();
+    ImGui::PopStyleVar();
+}
+
 // What the screen shows, from the launcher's state
 static LauncherView makeView(LauncherState& state, const LauncherCover& cover)
 {
@@ -587,6 +645,8 @@ static void handleIntent(LauncherState& state, const LauncherIntent& intent, SDL
             updaterStartCheck();
         ImGui::OpenPopup("##updatePopup");
     }
+    if (intent.about)
+        ImGui::OpenPopup("##aboutPopup");
     if (intent.browse)
     {
         // Explorer's dialog on Windows (a full path can be pasted), SDL's elsewhere
@@ -747,10 +807,13 @@ int main(int, char**)
         // them to the launcher screen (not while a new input is awaited)
         static BackButton back;
         const bool capturing = s_controlsWindow.capturing >= 0 || s_controlsWindow.waitRelease;
-        if (back.released((ImGui::IsPopupOpen("##advancedPopup") && !capturing) || ImGui::IsPopupOpen("##updatePopup")))
+        if (back.released((ImGui::IsPopupOpen("##advancedPopup") && !capturing) || ImGui::IsPopupOpen("##updatePopup")
+            || ImGui::IsPopupOpen("##aboutPopup")))
         {
             if (ImGui::IsPopupOpen("##updatePopup"))
                 s_closeUpdate = true;
+            else if (ImGui::IsPopupOpen("##aboutPopup"))
+                s_closeAbout = true;
             else if (s_controlsWindow.open)
                 s_controlsWindow.requestClose = true;
             else if (s_audioWindow.open)
@@ -770,6 +833,7 @@ int main(int, char**)
         ImGui::PushFont(fonts.text);
         drawAdvancedOptions(state, fonts, metrics);
         drawUpdateWindow(state, fonts, metrics);
+        drawAboutWindow(fonts, metrics);
         ImGui::PopFont();
         ImGui::Render();
 

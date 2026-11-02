@@ -134,7 +134,9 @@ int Lire(int index, int startx, int top, int endx, int bottom, int demoMode, int
         lastPageReached = false;
         int vocLinesOnPage = 0;
 
-        while (currentTextY <= bottom - 16)
+        // Lines as tall as the font: 16 in AITD1 and Jack, 14 in AITD2, which
+        // fit one more per page (BUGS.md A29)
+        while (currentTextY <= bottom - fontHeight)
         {
             int line_type = 1;
             int lineWidth = 0;
@@ -294,12 +296,12 @@ int Lire(int index, int startx, int top, int endx, int bottom, int demoMode, int
             vocLinesOnPage++;
 
 
-            if (line_type & 2) // font size
+            if (line_type & 2) // blank line after a paragraph: half a line
             {
-                currentTextY += 8;
+                currentTextY += fontHeight / 2;
             }
 
-            currentTextY += 16;
+            currentTextY += fontHeight;
 
             if (lastPageReached)
                 break;

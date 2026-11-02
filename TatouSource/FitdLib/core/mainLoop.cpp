@@ -247,13 +247,17 @@ bool aitd2EndFrameSeen(int actorIdx)
 // Kept by slot, these events belonged to the previous animation or to the
 // object that had the slot before: the woman of the intro, put in a slot
 // just freed, saw an end of animation and the camera left her at once
-// (BUGS.md A27)
+// (BUGS.md A27). A new animation keeps the events of the last frame: the end
+// of the one before, which the original showed to every script; the door
+// pushed with the key waits for it (BUGS.md A30)
 void aitd2ForgetEvents(int actorIdx, bool newObject)
 {
     if (actorIdx < 0 || actorIdx >= NUM_MAX_OBJECT)
         return;
-    s_endAnimFrame[actorIdx] = 0;
-    s_endFrameFrame[actorIdx] = 0;
+    if (newObject || s_endAnimFrame[actorIdx] != s_frameNumber)
+        s_endAnimFrame[actorIdx] = 0;
+    if (newObject || s_endFrameFrame[actorIdx] != s_frameNumber)
+        s_endFrameFrame[actorIdx] = 0;
     if (newObject)
         s_scriptRunFrame[actorIdx] = s_frameNumber;
 }

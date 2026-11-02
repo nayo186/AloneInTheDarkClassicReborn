@@ -102,6 +102,8 @@ void hit(int animNumber,int arg_2,int arg_4,int arg_6,int hitForce,int arg_A);
 int CubeIntersect(ZVStruct* zvPtr1,ZVStruct* zvPtr2);
 // Puts an object at another object's position (room, floor and coordinates)
 void PutAtObjet(int objIdx, int objIdxToPutAt);
+// AITD2's DROP: puts an object beside the one dropping it where its box fits; with no room it stays in the inventory
+void dropAITD2(int objIdx, int objIdxDropping);
 // Sets the drawing clip rectangle on the 320x200 screen
 void SetClip(int left, int top, int right, int bottom);
 

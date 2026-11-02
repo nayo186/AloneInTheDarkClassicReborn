@@ -25,7 +25,8 @@ bool roomAssumedDark();
 // (BUGS.md A20)
 bool aitd2EndAnimSeen(int actorIdx);
 bool aitd2EndFrameSeen(int actorIdx);
-// Forgets those events of an object that starts a new animation, or of a
-// slot a new object takes (newObject: its script then sees only what comes)
+// Forgets those events of an object that starts a new animation (but those of
+// the last frame), or of a slot a new object takes (newObject: all; its
+// script then sees only what comes)
 void aitd2ForgetEvents(int actorIdx, bool newObject);
 

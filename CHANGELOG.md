@@ -4,6 +4,15 @@ Alone in the Dark: Classic Reborn started on 2026-10-23 from [Alone in the Dark:
 
 This repository was published with a single starting commit, to keep it light: the early history carried large files that are no longer part of the project. Below are the changes of each release and, after them, the changes made in this fork before it was published, newest first, one line per change. The reasons behind larger removals are explained in `docs/DESCARTADO.md` and the fixes in `docs/baseline/BUGS.md`.
 
+## v1.1.1 (2026-11-02)
+
+Fixes for *Alone in the Dark 2* found by players, and an About window in the launcher.
+
+- Alone in the Dark 2: an object is only dropped where it fits, as in the original ("There's no room" otherwise): the Jack of diamonds no longer falls to the ground in the maze (BUGS.md A28)
+- Alone in the Dark 2: books, letters and notebooks fit as many lines per page as in the original (BUGS.md A29)
+- Alone in the Dark 2: the door opened with the key no longer gets stuck before opening (BUGS.md A30)
+- Launcher: an About button (bottom right) with the project, its author, credits, thanks to the testers and a link to GitHub
+
 ## v1.1.0 (2026-11-02)
 
 **Alone in the Dark 2 is playable**, with the same engine, launcher and options as the first game.

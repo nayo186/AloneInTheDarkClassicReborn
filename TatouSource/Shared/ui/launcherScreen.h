@@ -68,6 +68,7 @@ struct LauncherIntent
     bool openAdvanced = false;
     bool browse = false;
     bool update = false;
+    bool about = false;
     bool exit = false;
 };
 
@@ -340,25 +341,32 @@ struct Parts
     // Text on a line with buttons, centred on them
     float textOffset() const { return ImGui::GetStyle().FramePadding.y; }
 
-    // "v1.0.0-beta.8 [Update]" ending at rightX; returns where it starts
+    // A small button ending at rightX; returns where it starts
+    float smallButton(UiText text, float rightX, float y, bool& pressed)
+    {
+        const char* label = tr(text);
+        const float buttonW = ImGui::CalcTextSize(label).x + ImGui::GetStyle().FramePadding.x * 4.0f;
+        ImGui::SetCursorScreenPos(ImVec2(rightX - buttonW, y));
+        if (ImGui::Button(label, ImVec2(buttonW, m.pressHeight(ImGui::GetFrameHeight() / m.scale))))
+            pressed = true;
+        return rightX - buttonW;
+    }
+
+    // "v1.0.0-beta.8 [Update] [About]" ending at rightX; returns where it starts
     float versionRow(float rightX, float y)
     {
+        float left = smallButton(UiText::About, rightX, y, intent.about);
         if (view.version.empty())
-            return rightX;
-        float left = rightX;
+            return left;
+        left -= u(10.0f);
         if (view.canUpdate)
         {
-            const char* label = tr(UiText::Update);
-            const float buttonW = ImGui::CalcTextSize(label).x + ImGui::GetStyle().FramePadding.x * 4.0f;
-            left -= buttonW;
-            ImGui::SetCursorScreenPos(ImVec2(left, y));
             if (view.updateAvailable)
             {
                 ImGui::PushStyleColor(ImGuiCol_Button, menu::color(menu::kGold));
                 ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.16f, 0.13f, 0.09f, 1.0f));
             }
-            if (ImGui::Button(tr(UiText::Update), ImVec2(buttonW, m.pressHeight(ImGui::GetFrameHeight() / m.scale))))
-                intent.update = true;
+            left = smallButton(UiText::Update, left, y, intent.update);
             if (view.updateAvailable)
                 ImGui::PopStyleColor(2);
             left -= u(10.0f);
