@@ -227,6 +227,62 @@ int manageFall(int actorIdx, ZVStruct* zvPtr)
 	return(fallResult);
 }
 
+// True if the box goes in one step from one side of the object to the other
+// without touching it: across X while it meets the object in Z, or across Z
+// while it meets it in X
+static bool jumpsOver(const ZVStruct& oldZv, const ZVStruct& newZv, const ZVStruct& obj)
+{
+	if(newZv.ZVY1 >= obj.ZVY2 || obj.ZVY1 >= newZv.ZVY2)
+		return false;
+
+	bool crossX = (oldZv.ZVX2 <= obj.ZVX1 && newZv.ZVX1 >= obj.ZVX2) || (oldZv.ZVX1 >= obj.ZVX2 && newZv.ZVX2 <= obj.ZVX1);
+	bool crossZ = (oldZv.ZVZ2 <= obj.ZVZ1 && newZv.ZVZ1 >= obj.ZVZ2) || (oldZv.ZVZ1 >= obj.ZVZ2 && newZv.ZVZ2 <= obj.ZVZ1);
+	bool meetsX = (oldZv.ZVX1 < obj.ZVX2 && obj.ZVX1 < oldZv.ZVX2) || (newZv.ZVX1 < obj.ZVX2 && obj.ZVX1 < newZv.ZVX2);
+	bool meetsZ = (oldZv.ZVZ1 < obj.ZVZ2 && obj.ZVZ1 < oldZv.ZVZ2) || (newZv.ZVZ1 < obj.ZVZ2 && obj.ZVZ1 < newZv.ZVZ2);
+
+	return (crossX && meetsZ) || (crossZ && meetsX);
+}
+
+// Stops the moving actor before an object it would jump over in one step.
+// Against an object the step of a frame is only cut, not lost (pushing in
+// AITD1 needs it back on the next frame), so it grows while the actor is
+// stopped; running, it got longer than a thin object and the actor came out
+// on the other side (the AITD2 card door, BUGS.md A31)
+static void stopJumpOverObjects(ZVStruct* zvPtr, int& stepX, int& stepZ)
+{
+	for(int i = 0; i < NUM_MAX_OBJECT; i++)
+	{
+		tObject& other = ListObjets[i];
+		if(other.indexInWorld == -1 || i == currentProcessedActorIdx || (other.objectType & (AF_FOUNDABLE | AF_MOVABLE)))
+			continue;
+
+		ZVStruct otherZv;
+		CopyZV(&other.zv, &otherZv);
+		if(other.room != currentProcessedActorPtr->room)
+		{
+			AdjustZV(&otherZv, other.room, currentProcessedActorPtr->room);
+		}
+
+		ZVStruct newZv;
+		CopyZV(zvPtr, &newZv);
+		newZv.ZVX1 += stepX;
+		newZv.ZVX2 += stepX;
+		newZv.ZVZ1 += stepZ;
+		newZv.ZVZ2 += stepZ;
+
+		if(!jumpsOver(*zvPtr, newZv, otherZv))
+			continue;
+
+		hardColStepX = stepX;
+		hardColStepZ = stepZ;
+
+		GereCollision(zvPtr, &newZv, &otherZv);
+
+		stepX = hardColStepX;
+		stepZ = hardColStepZ;
+	}
+}
+
 void GereAnim(void)
 {
 	int oldStepZ=0;
@@ -622,6 +678,11 @@ void GereAnim(void)
 				}
 			}
 		} // end of actor/actor collision
+
+		if((currentProcessedActorPtr->dynFlags & 1) && (stepX || stepZ))
+		{
+			stopJumpOverObjects(zvPtr, stepX, stepZ);
+		}
 
 		currentProcessedActorPtr->stepX = stepX + oldStepX;
 		currentProcessedActorPtr->stepY = stepY + oldStepY;

@@ -4,6 +4,12 @@ Alone in the Dark: Classic Reborn started on 2026-10-23 from [Alone in the Dark:
 
 This repository was published with a single starting commit, to keep it light: the early history carried large files that are no longer part of the project. Below are the changes of each release and, after them, the changes made in this fork before it was published, newest first, one line per change. The reasons behind larger removals are explained in `docs/DESCARTADO.md` and the fixes in `docs/baseline/BUGS.md`.
 
+## v1.1.2 (2026-11-02)
+
+A fix for *Alone in the Dark 2* found by players.
+
+- Alone in the Dark 2: running no longer goes through the closed door of the card room before the four diamonds are set (BUGS.md A31)
+
 ## v1.1.1 (2026-11-02)
 
 Fixes for *Alone in the Dark 2* found by players, and an About window in the launcher.
