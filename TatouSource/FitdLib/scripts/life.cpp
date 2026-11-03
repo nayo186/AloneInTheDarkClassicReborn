@@ -1455,7 +1455,7 @@ void processLife(int lifeNum, bool callFoundLife)
                     nextAnim = evalVar();
 
                     fire(fireAnim, shootFrame, emitPoint, zvSize, hitForce, nextAnim);
-                    // The flash shown at the emit point when the shot leaves (DO_TIR, BUGS.md A9)
+                    // The kind of flash shown at the emit point when the shot leaves (DO_TIR, BUGS.md A9, A44)
                     currentProcessedActorPtr->emitModel = emitModel;
                     printf(LIFE_TAG "  -> emit model %d\n", emitModel);
                 }

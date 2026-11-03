@@ -206,6 +206,23 @@ static void antialiasingCombo(int& value, float column)
     menu::helpWhenFocused(advText(AdvancedText::AntialiasingHelp));
 }
 
+// Under Scanlines, indented: their darkness in 4 steps (grey while they are off)
+static void scanlineLevelSlider(bool enabled, int& level, float column)
+{
+    ImGui::BeginDisabled(!enabled);
+    ImGui::Indent();
+    ImGui::AlignTextToFramePadding();
+    ImGui::TextColored(color(kText), "%s", advText(AdvancedText::ScanlineLevel));
+    helpMarker(advText(AdvancedText::ScanlineLevelHelp));
+    comboColumn(column);
+    ImGui::SetNextItemWidth(-1.0f);
+    if (ImGui::SliderInt("##scanlineLevel", &level, 1, 4, "%d", ImGuiSliderFlags_AlwaysClamp))
+        logLine("Advanced option: scanlineLevel=%d", level);
+    menu::helpWhenFocused(advText(AdvancedText::ScanlineLevelHelp));
+    ImGui::Unindent();
+    ImGui::EndDisabled();
+}
+
 // The first connected controller, for setting controls with it
 static SDL_Gamepad* s_gamepad = nullptr;
 
@@ -355,6 +372,8 @@ static void drawAdvancedOptions(LauncherState& state, const Fonts& fonts, const 
     ImGui::TextColored(color(kGold), "%s", advText(AdvancedText::Effects));
     ImGui::Separator();
     optionCheckbox(AdvancedText::FilmGrain, AdvancedText::FilmGrainHelp, &state.settings.filmGrain, "filmGrain");
+    optionCheckbox(AdvancedText::Scanlines, AdvancedText::ScanlinesHelp, &state.settings.scanlines, "scanlines");
+    scanlineLevelSlider(state.settings.scanlines, state.settings.scanlineLevel, column);
     optionCheckbox(AdvancedText::Bloom, AdvancedText::BloomHelp, &state.settings.bloom, "bloom");
     optionCheckbox(AdvancedText::Ssao, AdvancedText::SsaoHelp, &state.settings.ssao, "ssao");
     antialiasingCombo(state.settings.antialiasing, column);

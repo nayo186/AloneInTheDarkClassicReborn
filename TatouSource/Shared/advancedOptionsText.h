@@ -44,6 +44,10 @@ enum class AdvancedText
     Effects,
     FilmGrain,
     FilmGrainHelp,
+    Scanlines,
+    ScanlinesHelp,
+    ScanlineLevel,
+    ScanlineLevelHelp,
     Bloom,
     BloomHelp,
     Ssao,
@@ -237,6 +241,22 @@ inline const char* advancedText(AdvancedText text, int language)
           "Bruit fin et animé sur l'image, comme un vieux film.",
           "Rumore fine e animato sull'immagine, come una vecchia pellicola.",
           "Feines, bewegtes Rauschen über dem Bild, wie bei einem alten Film." },
+        // Scanlines
+        { "Scanlines", "Scanlines", "Lignes de balayage", "Linee di scansione", "Scanlines" },
+        // ScanlinesHelp
+        { "Thin dark lines over the image, like an old CRT screen.",
+          "Líneas finas y oscuras sobre la imagen, como una pantalla CRT antigua.",
+          "Fines lignes sombres sur l'image, comme un vieil écran cathodique.",
+          "Sottili linee scure sull'immagine, come un vecchio schermo a tubo catodico.",
+          "Feine dunkle Linien über dem Bild, wie bei einem alten Röhrenbildschirm." },
+        // ScanlineLevel
+        { "Intensity", "Intensidad", "Intensité", "Intensità", "Stärke" },
+        // ScanlineLevelHelp
+        { "How dark the scanlines are, from 1 (soft) to 4 (strong).",
+          "Lo oscuras que son las scanlines, de 1 (suaves) a 4 (marcadas).",
+          "L'intensité des lignes, de 1 (douces) à 4 (marquées).",
+          "Quanto sono scure le linee, da 1 (leggere) a 4 (marcate).",
+          "Wie dunkel die Linien sind, von 1 (sanft) bis 4 (kräftig)." },
         // Bloom
         { "Bloom", "Bloom", "Bloom", "Bloom", "Bloom" },
         // BloomHelp

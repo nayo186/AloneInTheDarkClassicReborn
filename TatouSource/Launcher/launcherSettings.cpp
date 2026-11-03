@@ -10,6 +10,7 @@
 #include "narrators.h"
 
 #include <SDL3/SDL.h>
+#include <algorithm>
 #include <cstdarg>
 #include <cstdio>
 #include <cstdlib>
@@ -346,6 +347,10 @@ void readGameConfig(const std::string& folder, LauncherSettings& settings)
             settings.fullscreen = isTrue(value);
         else if (key == "postprocessing.filmGrain")
             settings.filmGrain = isTrue(value);
+        else if (key == "postprocessing.scanlines")
+            settings.scanlines = isTrue(value);
+        else if (key == "postprocessing.scanlineLevel")
+            settings.scanlineLevel = std::clamp(atoi(value.c_str()), 1, 4);
         else if (key == "postprocessing.bloom")
             settings.bloom = isTrue(value);
         else if (key == "postprocessing.ssao")
@@ -373,9 +378,9 @@ void readGameConfig(const std::string& folder, LauncherSettings& settings)
                     settings.controls[a] = bindingsFromText(value);
         }
     }
-    logLine("Game config: language=%s frameLimit=%d vsync=%d filmGrain=%d bloom=%d ssao=%d animationSmoothing=%d",
+    logLine("Game config: language=%s frameLimit=%d vsync=%d filmGrain=%d scanlines=%d bloom=%d ssao=%d animationSmoothing=%d",
         settings.gameLanguage.empty() ? "(first available)" : settings.gameLanguage.c_str(),
-        settings.frameLimit, settings.vsync, settings.filmGrain, settings.bloom, settings.ssao,
+        settings.frameLimit, settings.vsync, settings.filmGrain, settings.scanlines, settings.bloom, settings.ssao,
         settings.animationSmoothing);
 }
 
@@ -405,6 +410,8 @@ bool writeGameConfig(const std::string& folder, const LauncherSettings& settings
         { "graphics.resolution", "graphics.resolution = " + std::to_string(settings.resolution), false },
         { "graphics.fullscreen", std::string("graphics.fullscreen = ") + boolText(settings.fullscreen), false },
         { "postprocessing.filmGrain", std::string("postprocessing.filmGrain = ") + boolText(settings.filmGrain), false },
+        { "postprocessing.scanlines", std::string("postprocessing.scanlines = ") + boolText(settings.scanlines), false },
+        { "postprocessing.scanlineLevel", "postprocessing.scanlineLevel = " + std::to_string(settings.scanlineLevel), false },
         { "postprocessing.bloom", std::string("postprocessing.bloom = ") + boolText(settings.bloom), false },
         { "postprocessing.ssao", std::string("postprocessing.ssao = ") + boolText(settings.ssao), false },
         { "postprocessing.antialiasing", "postprocessing.antialiasing = " + std::to_string(settings.antialiasing), false },

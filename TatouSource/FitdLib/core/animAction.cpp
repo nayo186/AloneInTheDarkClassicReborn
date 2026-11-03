@@ -24,6 +24,18 @@
 #define		THROW_OBJECT		9
 #define		WAIT_FRAPPE_FRAME	10
 
+// AITD2: the body of a shot's flash. FIRE gives a kind of flash, 3 to 8, and
+// each draws the body a variable of the game holds (AITD2.EXE, 11990): the
+// small cannon fires pepper (7, POIVRE); drawn as body 7, it was Carnby, for
+// an instant next to Grace (BUGS.md A44). Any other kind has none
+static int flashBody(int kind)
+{
+    static const int kFlashBodies[] = { BODY_FLAMME, JET_SARBACANE, TIR_CANON, JET_SCALPEL, POIVRE, POIGNARD };
+    if (kind < 3 || kind > 8)
+        return -1;
+    return CVars[getCVarsIdx((enumCVars)kFlashBodies[kind - 3])];
+}
+
 void GereFrappe(void)
 {
     switch(currentProcessedActorPtr->animActionType)
@@ -126,8 +138,8 @@ void GereFrappe(void)
             int y = currentProcessedActorPtr->roomY + currentProcessedActorPtr->hotPoint.y + currentProcessedActorPtr->stepY;
             int z = currentProcessedActorPtr->roomZ + currentProcessedActorPtr->hotPoint.z + currentProcessedActorPtr->stepZ;
 
-            // Create muzzle flash at fire point; AITD2: the weapon's emit model
-            // (LM_FIRE), turned as the shooter (BUGS.md A9)
+            // Create muzzle flash at fire point; AITD2: the body of the kind of
+            // flash LM_FIRE gives, turned as the shooter (BUGS.md A9, A44)
             const int flash = InitSpecialObjet( 3,
                 x, y, z,
                 currentProcessedActorPtr->stage,
@@ -137,7 +149,7 @@ void GereFrappe(void)
                 g_gameId >= AITD2 ? currentProcessedActorPtr->gamma : 0,
                 NULL);
             if (flash >= 0 && g_gameId >= AITD2)
-                ListObjets[flash].bodyNum = currentProcessedActorPtr->emitModel;
+                ListObjets[flash].bodyNum = flashBody(currentProcessedActorPtr->emitModel);
 
             // Instant raycast along aim direction
             touchedActor = checkLineProjectionWithActors(

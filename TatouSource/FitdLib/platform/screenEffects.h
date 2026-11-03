@@ -87,7 +87,7 @@ private:
     // Makes the bloom: bright parts of the painted backgrounds, blurred down and up
     void renderBloom();
     // Copies the scene to the screen with the chosen effects and the fade
-    void renderComposite(bool bloom, bool grain, bool ambientOcclusion);
+    void renderComposite(bool bloom, bool grain, bool scanlines, bool ambientOcclusion);
 
     int m_width = 0;
     int m_height = 0;

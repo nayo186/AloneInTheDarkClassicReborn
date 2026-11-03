@@ -10,6 +10,7 @@
 #include "controls.h"
 #include "gameFolder.h"
 
+#include <algorithm>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -36,6 +37,8 @@ static void setDefaults()
 
     c.postProcessing.enableBloom = false;
     c.postProcessing.enableFilmGrain = false;
+    c.postProcessing.enableScanlines = false;
+    c.postProcessing.scanlineLevel = 2;
     c.postProcessing.enableSSAO = false;
     c.postProcessing.antialiasing = 0;
 
@@ -139,6 +142,8 @@ void loadSettings()
         else if (strcmp(key, "graphics.renderer") == 0) copyText(c.graphics.rendererBackend, sizeof(c.graphics.rendererBackend), value);
         else if (strcmp(key, "postprocessing.bloom") == 0) c.postProcessing.enableBloom = isTrue(value);
         else if (strcmp(key, "postprocessing.filmGrain") == 0) c.postProcessing.enableFilmGrain = isTrue(value);
+        else if (strcmp(key, "postprocessing.scanlines") == 0) c.postProcessing.enableScanlines = isTrue(value);
+        else if (strcmp(key, "postprocessing.scanlineLevel") == 0) c.postProcessing.scanlineLevel = std::clamp(atoi(value), 1, 4);
         else if (strcmp(key, "postprocessing.ssao") == 0) c.postProcessing.enableSSAO = isTrue(value);
         else if (strcmp(key, "postprocessing.antialiasing") == 0) c.postProcessing.antialiasing = atoi(value);
         else if (strcmp(key, "animation.poseSmoothing") == 0) c.animation.enablePoseSmoothing = isTrue(value);
@@ -199,6 +204,8 @@ void saveSettings()
     fprintf(file, "# Screen effects and animation\n");
     fprintf(file, "postprocessing.bloom = %s\n", flag(c.postProcessing.enableBloom));
     fprintf(file, "postprocessing.filmGrain = %s\n", flag(c.postProcessing.enableFilmGrain));
+    fprintf(file, "postprocessing.scanlines = %s\n", flag(c.postProcessing.enableScanlines));
+    fprintf(file, "postprocessing.scanlineLevel = %d\n", c.postProcessing.scanlineLevel);
     fprintf(file, "postprocessing.ssao = %s\n", flag(c.postProcessing.enableSSAO));
     fprintf(file, "postprocessing.antialiasing = %d\n", c.postProcessing.antialiasing);
     fprintf(file, "animation.poseSmoothing = %s\n\n", flag(c.animation.enablePoseSmoothing));

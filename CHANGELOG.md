@@ -4,6 +4,15 @@ Alone in the Dark: Classic Reborn started on 2026-10-23 from [Alone in the Dark:
 
 This repository was published with a single starting commit, to keep it light: the early history carried large files that are no longer part of the project. Below are the changes of each release and, after them, the changes made in this fork before it was published, newest first, one line per change. The reasons behind larger removals are explained in `docs/DESCARTADO.md` and the fixes in `docs/baseline/BUGS.md`.
 
+## v1.3.0 (2026-11-03)
+
+Two new options for every game: a quick turn and CRT scanlines. Also more fixes for *Alone in the Dark 2*.
+
+- Scanlines, a new option in Effects (launcher and F1): thin dark lines over the picture, like an old CRT screen, with an intensity slider from 1 to 4, in all three games
+- Quick turn, as in the Resident Evil HD remaster: back and run pressed together turn the character half round, smoothly, in all three games
+- Alone in the Dark 2: the dumbwaiter's door on the ship stays open instead of opening and closing over and over (BUGS.md A43)
+- Alone in the Dark 2: Carnby no longer shows for an instant when Grace fires the small cannon (BUGS.md A44)
+
 ## v1.2.3 (2026-11-03)
 
 The found-object menu no longer sets off the character's action, and objects of the next room no longer show through the walls in *Alone in the Dark 2*.

@@ -46,6 +46,8 @@ struct LauncherSettings
     int resolution = 0;        // scene image width (4:3), 0 = automatic
     bool fullscreen = false;
     bool filmGrain = false;
+    bool scanlines = false;
+    int scanlineLevel = 2;     // 1 (soft) to 4 (strong)
     bool bloom = false;
     bool ssao = false;
     int antialiasing = 0;      // 0 off, 1 FXAA
@@ -74,7 +76,7 @@ struct LauncherSettings
     bool isDefault() const
     {
         return frameLimit == kDefaultFrameLimit && vsync && aspect == 0 && resolution == 0 && !fullscreen &&
-            !filmGrain && !bloom && !ssao && antialiasing == 0 && !animationSmoothing && !customBackgrounds &&
+            !filmGrain && !scanlines && scanlineLevel == 2 && !bloom && !ssao && antialiasing == 0 && !animationSmoothing && !customBackgrounds &&
             !enhancedText;
     }
     void restoreDefaults()
@@ -84,9 +86,10 @@ struct LauncherSettings
         aspect = 0;
         resolution = 0;
         fullscreen = false;
-        filmGrain = bloom = ssao = animationSmoothing = customBackgrounds = false;
+        filmGrain = scanlines = bloom = ssao = animationSmoothing = customBackgrounds = false;
         enhancedText = false;
         antialiasing = 0;
+        scanlineLevel = 2;
     }
 };
 

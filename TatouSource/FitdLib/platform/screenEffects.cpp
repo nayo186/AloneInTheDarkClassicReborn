@@ -10,6 +10,7 @@
 #include "settings.h"
 #include <bx/timer.h>
 #include "common.h"  // after bx: windows.h min/max macros
+#include <algorithm>
 #include <cmath>
 #include <string>
 
@@ -39,6 +40,9 @@ static const float kBloomIntensity = 1.0f;
 static const float kBloomWideWeight = 0.6f;  // each wider level weighs this much of the previous
 static const float kGrainIntensity = 0.035f;
 static const float kGrainChangesPerSecond = 24.0f;  // like film
+// How dark the scanlines are at each level of the option (1 to 4)
+static const float kScanlineDarkness[4] = { 0.2f, 0.35f, 0.5f, 0.65f };
+static const float kScanlineCount = 400.0f;
 static const float kSsaoRadius = 250.0f;     // world units
 static const float kSsaoIntensity = 1.0f;
 
@@ -279,6 +283,7 @@ void ScreenEffects::endScene(bool modelsDrawn, bool frozenImageDrawn)
     const bool active = (m_suspended == 0);
     const bool bloom = active && g_settings.postProcessing.enableBloom;
     const bool grain = active && g_settings.postProcessing.enableFilmGrain;
+    const bool scanlines = active && g_settings.postProcessing.enableScanlines;
     bool ambientOcclusion = active && g_settings.postProcessing.enableSSAO;
     const bool antialias = active && g_settings.postProcessing.antialiasing == 1 && bgfx::isValid(m_antialiasProgram);
 
@@ -310,7 +315,7 @@ void ScreenEffects::endScene(bool modelsDrawn, bool frozenImageDrawn)
     if (bloom)
         renderBloom();
 
-    renderComposite(bloom, grain, ambientOcclusion);
+    renderComposite(bloom, grain, scanlines, ambientOcclusion);
 }
 
 bool ScreenEffects::renderAmbientOcclusion()
@@ -390,7 +395,7 @@ void ScreenEffects::renderBloom()
     }
 }
 
-void ScreenEffects::renderComposite(bool bloom, bool grain, bool ambientOcclusion)
+void ScreenEffects::renderComposite(bool bloom, bool grain, bool scanlines, bool ambientOcclusion)
 {
     // Grain frame from real time: the same speed at any frame rate (BUGS.md V17)
     double seconds = (double)bx::getHPCounter() / (double)bx::getHPFrequency();
@@ -402,8 +407,10 @@ void ScreenEffects::renderComposite(bool bloom, bool grain, bool ambientOcclusio
         bloomWeights += powf(kBloomWideWeight, (float)i);
     float composite[4] = { bloom ? kBloomIntensity / bloomWeights : 0.0f, grain ? kGrainIntensity : 0.0f,
         grainFrame, m_screenFade };
-    // Grain of about one pixel at 1080p, a little coarser above
-    float grainParams[4] = { m_height > 1200 ? 2.0f : 1.0f, 0.0f, 0.0f, 0.0f };
+    // Grain of about one pixel at 1080p, a little coarser above; scanlines:
+    // how dark, and how many over the scene (two per line of the game, as a
+    // 640x400 CRT)
+    float grainParams[4] = { m_height > 1200 ? 2.0f : 1.0f, scanlines ? kScanlineDarkness[std::clamp(g_settings.postProcessing.scanlineLevel, 1, 4) - 1] : 0.0f, kScanlineCount, 0.0f };
 
     // A scene image smaller than its place on screen is enlarged with sharp
     // pixels (640x400 looks like pixel art, not blurred); a larger one is

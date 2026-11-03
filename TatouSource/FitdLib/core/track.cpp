@@ -210,12 +210,55 @@ static int followTurnTime(int targetX, int targetZ)
     return std::clamp(distance * 60 / 800, 10, 60);
 }
 
+// Quick turn, as the Resident Evil HD remaster: back and run pressed together turn the
+// player half round, smoothly, in kQuickTurnTicks; meanwhile the other
+// directions are ignored. A press: holding them turns once
+static const unsigned int kQuickTurnTicks = 18;
+static bool s_quickTurnPressed = false;
+static int s_quickTurnActor = -1;
+static unsigned int s_quickTurnStart = 0;
+static int s_quickTurnFrom = 0;
+
+static bool quickTurn()
+{
+    const bool pressed = (localJoyD & 2) && (localJoyD & 0x40);
+    const bool newPress = pressed && !s_quickTurnPressed;
+    s_quickTurnPressed = pressed;
+
+    tObject* actor = currentProcessedActorPtr;
+    if (newPress && s_quickTurnActor != currentProcessedActorIdx)
+    {
+        s_quickTurnActor = currentProcessedActorIdx;
+        s_quickTurnStart = timer;
+        s_quickTurnFrom = actor->beta;
+    }
+    if (s_quickTurnActor != currentProcessedActorIdx)
+        return false;
+
+    const unsigned int elapsed = timer - s_quickTurnStart;
+    actor->speed = 0;
+    actor->rotate.numSteps = 0;
+    if (elapsed >= kQuickTurnTicks)
+    {
+        actor->beta = (s_quickTurnFrom + 0x200) & 0x3FF;
+        actor->direction = 0;
+        s_quickTurnActor = -1;
+        return true;
+    }
+    actor->beta = (s_quickTurnFrom + (int)(0x200 * elapsed / kQuickTurnTicks)) & 0x3FF;
+    actor->direction = 1;
+    return true;
+}
+
 void processTrack(void)
 {
     switch(currentProcessedActorPtr->trackMode)
     {
     case 1: // manual
         {
+            if (quickTurn())
+                break;
+
             // The modern left stick turns the player towards it (modernStick.cpp);
             // its forward is not a double tap: turning on the spot and walking
             // again would start running

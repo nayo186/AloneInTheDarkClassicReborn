@@ -785,6 +785,17 @@ void GereAnim(void)
 
 			if(!(currentProcessedActorPtr->animType & 1) && (currentProcessedActorPtr->newAnim == -1)) // is another anim waiting ?
 			{
+				// AITD2 keeps a played-once animation on its last frame
+				// (AITD2.EXE, 44D4): started again by TYPE, the dumbwaiter's
+				// door on the ship opened from closed over and over. The end is
+				// no frame change there: the sound of that frame (ANIM_SAMPLE)
+				// came again each time, as the kitchen shelf's (BUGS.md A43)
+				if (g_gameId == AITD2)
+				{
+					currentProcessedActorPtr->frame = currentProcessedActorPtr->numOfFrames - 1;
+					currentProcessedActorPtr->END_FRAME = 0;
+				}
+
 				currentProcessedActorPtr->animType &= 0xFFFD;
 
 				InitAnim(currentProcessedActorPtr->animInfo, 1, -1);

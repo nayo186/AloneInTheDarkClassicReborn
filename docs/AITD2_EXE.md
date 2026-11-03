@@ -33,6 +33,9 @@ python tools/disasmExe.py "<carpeta del juego>/INDARK2/AITD2.EXE" <carpeta fuera
 | `10803` | las máscaras de un objeto: recorte a su recuadro en pantalla y cada máscara cuya zona lo contiene | `drawBgOverlay` (`core/sceneDraw.cpp`) |
 | `19F46` (`18D9:11B6`) | fija la altura de corte del renderizador (escribe el valor dentro del propio código, en `19C8E` y `19EBA`): los puntos del modelo más bajos que ella se marcan como fuera (-10000) | `setWaterSurface` (`core/renderer.cpp`, BUGS.md A38) |
 | `E0AD` | modo de recorrido 2 (seguir a un objeto; tabla de modos en `DFDB`): apunta a él con la prueba de lado de `18AC6` y gira un cuarto de vuelta en 60 marcas | `processTrack` (`core/track.cpp`); cerca, nosotros giramos más rápido (BUGS.md A40) |
+| `44D4` | `GereAnim`, fin de una animación: la de una vez sin otra en espera queda en su último fotograma (las demás vuelven al 0) y borra el cambio de fotograma (`+52`) | `GereAnim` (`core/anim.cpp`, BUGS.md A43) |
+| `52CA` | `fire`: guarda el tipo de destello de `FIRE` en `+A8` | `fire` (`scripts/life.cpp`) |
+| `11990` | crea un objeto especial (`InitSpecialObjet`); los tipos 3 a 8 son destellos que dibujan el cuerpo de una variable (`BODY_FLAMME`, `JET_SARBACANE`, `TIR_CANON`, `JET_SCALPEL`, `POIVRE`, `POIGNARD`); el disparo (`564A`) lo crea si el tirador está en la lista de dibujo (`+B2`) | `flashBody` (`core/animAction.cpp`, BUGS.md A44) |
 | `10C38` | antes de dibujar cada objeto quieto le pasa la altura de corte (10000 si tiene `AF_WATER` (`+04` & 0x400), si no el suelo; los demás objetos, igual en `1141C`); además repinta el fondo: copia el fondo de la cámara y pinta en él los objetos quietos, en el orden de la lista, cada uno seguido de sus máscaras; el resultado pasa a ser el fondo | `drawLaterStillMasks` (`core/sceneDraw.cpp`, BUGS.md A35) |
 
 Cuando se encuentre algo nuevo, se añade aquí con su dirección y el archivo nuestro que lo hace.

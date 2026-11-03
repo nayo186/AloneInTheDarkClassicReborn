@@ -77,7 +77,7 @@ It is not a static recompilation: a static recompilation translates the machine 
 - **Fixes** to the original: objects drawn in the wrong order, monsters stuck at windows, gaps in 3D models, lines at the edges of masks, game speed tied to the frame rate, and many more (see `docs/baseline/BUGS.md`).
 - **Launcher** to choose the game, its language (the five of the GOG and Steam editions: English, French, German, Italian, Spanish) and the data folder, with the same options as the in-game **F1** window. The menus are translated into the same five languages.
 - **Screen options**: resolution, aspect ratio (4:3, 16:10, stretched), fullscreen, frame limit, VSync.
-- **Optional effects**: edge smoothing (FXAA) on the 3D models, bloom from the painted backgrounds, film grain, ambient occlusion (SSAO), smoother animations, sharper text.
+- **Optional effects**: edge smoothing (FXAA) on the 3D models, bloom from the painted backgrounds, film grain, CRT scanlines, ambient occlusion (SSAO), smoother animations, sharper text.
 - **Custom backgrounds**: export every background and mask of the game, enlarge or repaint them, and the game uses yours. Ready-made **HD packs** are available for the three games (see [Custom backgrounds](#custom-backgrounds)).
 - **Controls**: keyboard and game controller (Xbox, PlayStation, Nintendo Switch Pro and most other USB or Bluetooth controllers), every action can be changed, several inputs per action.
 - **Modern left stick**: the character walks where you push the stick, seen from the camera, like the Resident Evil HD remasters; the D-pad and the keys stay tank controls (see [Controls](#controls)).
@@ -161,11 +161,14 @@ Every action can be changed in **Controls** (F1 window or launcher). Defaults:
 | --- | --- | --- |
 | Move | Arrows or W A S D | D-pad (tank) or left stick (modern) |
 | Run | Left Shift | L3 or right trigger |
+| Quick turn (half round) | Back + Run | Back + Run |
 | Action (use, fight, take) | Space | A |
 | Confirm / inventory | Enter | Start |
 | Cancel / pause menu | Esc | B |
 | Options window (F1) | F1 or Home | Back |
 | Fullscreen | F11 or Alt+Enter | — |
+
+**Running and turning.** Hold **Run** while moving forward to run (double-tapping forward also works, as in the original game). Press **back and Run** together for a quick turn: the character turns half round, as in the Resident Evil HD remaster.
 
 **Controllers.** Controllers are supported on Windows and Linux: any controller SDL3 recognises, connected by USB or Bluetooth (also while playing), such as Xbox (One, Series, 360), PlayStation (DualShock 4, DualSense), Nintendo Switch Pro and most generic controllers. If yours does not work as expected, please open an issue (see [Reporting a problem](#reporting-a-problem)) with its name. The table uses the Xbox names; on other controllers the buttons are in the same place:
 
@@ -193,6 +196,7 @@ The launcher's **Advanced options** and the in-game **F1** window share the same
 | Edge smoothing | FXAA on the 3D models |
 | Bloom | A soft glow from the bright parts of the painted backgrounds |
 | Film grain | A light grain over the picture |
+| Scanlines | Thin dark lines over the picture, like an old CRT screen; under it, their intensity from 1 (soft) to 4 (strong) |
 | SSAO | Soft shadows where surfaces meet |
 | Smooth animations | Poses blended between the original key frames |
 | Enhanced text | The game's letters redrawn sharp at screen resolution |

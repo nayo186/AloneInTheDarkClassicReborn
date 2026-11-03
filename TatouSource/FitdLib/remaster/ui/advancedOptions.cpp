@@ -134,6 +134,23 @@ static void optionCheckbox(AdvancedText label, AdvancedText help, bool* value, c
     helpMarker(text(help));
 }
 
+// Under Scanlines, indented: their darkness in 4 steps (grey while they are off)
+static void scanlineLevelSlider(float width, bool enabled, int& level)
+{
+    ImGui::BeginDisabled(!enabled);
+    ImGui::Indent();
+    ImGui::AlignTextToFramePadding();
+    ImGui::TextUnformatted(text(AdvancedText::ScanlineLevel));
+    helpMarker(text(AdvancedText::ScanlineLevelHelp));
+    comboColumn(width * 0.4f);
+    ImGui::SetNextItemWidth(-1.0f);
+    if (ImGui::SliderInt("##scanlineLevel", &level, 1, 4, "%d", ImGuiSliderFlags_AlwaysClamp))
+        printf(CFG_TAG "Advanced option (F1): scanlineLevel=%d\n", level);
+    menu::helpWhenFocused(text(AdvancedText::ScanlineLevelHelp));
+    ImGui::Unindent();
+    ImGui::EndDisabled();
+}
+
 static void resolutionLabel(int resolution, char* label, size_t size)
 {
     if (resolution > 0)
@@ -400,6 +417,9 @@ void advancedOptionsDraw()
         ImGui::Separator();
         optionCheckbox(AdvancedText::FilmGrain, AdvancedText::FilmGrainHelp,
             &g_settings.postProcessing.enableFilmGrain, "filmGrain");
+        optionCheckbox(AdvancedText::Scanlines, AdvancedText::ScanlinesHelp,
+            &g_settings.postProcessing.enableScanlines, "scanlines");
+        scanlineLevelSlider(width, g_settings.postProcessing.enableScanlines, g_settings.postProcessing.scanlineLevel);
         optionCheckbox(AdvancedText::Bloom, AdvancedText::BloomHelp,
             &g_settings.postProcessing.enableBloom, "bloom");
         optionCheckbox(AdvancedText::Ssao, AdvancedText::SsaoHelp,

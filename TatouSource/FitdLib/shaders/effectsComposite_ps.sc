@@ -1,7 +1,7 @@
 $input v_texcoord0
 
 // Final image of the screen effects: scene x ambient occlusion + bloom,
-// then film grain and the screen fade
+// then film grain, scanlines and the screen fade
 
 #include <bgfx_shader.sh>
 
@@ -10,7 +10,7 @@ SAMPLER2D(s_fxBloom, 1);   // black when bloom is off
 SAMPLER2D(s_fxAO, 2);      // white when SSAO is off
 
 uniform vec4 u_fxComposite;  // x: bloom intensity, y: grain intensity, z: grain frame, w: fade (0 black, 1 normal)
-uniform vec4 u_fxGrain;      // x: grain cell size in pixels
+uniform vec4 u_fxGrain;      // x: grain cell size in pixels, y: scanline darkness (0 off), z: scanlines over the scene
 uniform vec4 u_fxSmoke;      // cigar smoke: xy centre, zw radii (0 = none), in texture coordinates
 uniform vec4 u_fxSmokeTime;  // x: seconds, for the moving shape of the smoke
 
@@ -81,6 +81,15 @@ void main()
         float luma = dot(color, vec3(0.299, 0.587, 0.114));
         float weight = 0.4 + 0.6 * (1.0 - abs(luma * 2.0 - 1.0));
         color += vec3_splat(noise * u_fxComposite.y * weight);
+    }
+
+    // Scanlines: a dark band between the lines of a CRT, with soft edges so
+    // they look even at any resolution
+    if (u_fxGrain.y > 0.0)
+    {
+        float row = fract(v_texcoord0.y * u_fxGrain.z);
+        float band = 0.5 - 0.5 * cos(row * 6.2831853);
+        color *= 1.0 - u_fxGrain.y * band;
     }
 
     color *= u_fxComposite.w;

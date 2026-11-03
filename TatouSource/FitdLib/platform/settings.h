@@ -31,6 +31,8 @@ struct Settings
     struct {
         bool enableBloom;
         bool enableFilmGrain;
+        bool enableScanlines;   // lines of a CRT screen over the scene
+        int scanlineLevel;      // their darkness, 1 (soft) to 4 (strong)
         bool enableSSAO;
         int antialiasing;       // 3D models: 0 off, 1 FXAA
     } postProcessing;

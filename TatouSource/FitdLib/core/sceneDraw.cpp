@@ -506,8 +506,8 @@ void AffSpecialObjet(int actorIdx) // draw flow
         return;
     }
 
-    // AITD2's flash: the weapon's emit model at the emit point, turned as the
-    // shooter (none if the weapon has none, as the original, BUGS.md A9)
+    // AITD2's flash: the body of its kind at the emit point, turned as the
+    // shooter (none for a kind without one, as the original, BUGS.md A9, A44)
     if (mode == 3 && g_gameId >= AITD2)
     {
         BBox3D1 = 320;
