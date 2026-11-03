@@ -540,8 +540,9 @@ void startAITD1()
         }
         case 2: // exit
         {
-            freeAll();
-            exit(-1);
+            // Out through cleanupAndExit: the sound stopped first; with music
+            // playing, exit() closed its file under the sound thread (BUGS.md A33)
+            cleanupAndExit();
 
             break;
         }

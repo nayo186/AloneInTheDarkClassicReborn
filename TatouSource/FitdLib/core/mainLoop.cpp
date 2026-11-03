@@ -199,11 +199,17 @@ static bool aitd2ScriptRuns(bool scriptTick)
 }
 
 // What a script that skips frames would miss of the other objects: the end of
-// an animation and a key frame change last one frame. The frame of each is
-// kept, and a script sees those after its own last run (BUGS.md A20)
+// an animation, a key frame change and a touch (COL_BY) last one frame. The
+// frame of each is kept, and a script sees those after its own last run
+// (BUGS.md A20; the touch, A33: the door opened by touching it after the key
+// missed short touches and waited seconds)
 static unsigned int s_frameNumber = 0;
 static std::array<unsigned int, NUM_MAX_OBJECT> s_endAnimFrame{};
 static std::array<unsigned int, NUM_MAX_OBJECT> s_endFrameFrame{};
+static std::array<unsigned int, NUM_MAX_OBJECT> s_touchFrame{};
+static std::array<unsigned int, NUM_MAX_OBJECT> s_endAnimShownFrame{};   // the frame its next animation began (A30)
+static std::array<int, NUM_MAX_OBJECT> s_chainedAnim{};          // the animation its last one chains to, + 1 (0: none)
+static std::array<s16, NUM_MAX_OBJECT> s_touchedBy{};
 static std::array<unsigned int, NUM_MAX_OBJECT> s_scriptRunFrame{};
 static unsigned int s_scriptSeesAfter = 0;      // frame after which the running script sees events
 static const unsigned int kAITD2StaleFrames = 120;   // an older run belongs to another object in that slot
@@ -221,6 +227,11 @@ static void recordAITD2Events()
             s_endAnimFrame[i] = s_frameNumber;
         if (actor.END_FRAME)
             s_endFrameFrame[i] = s_frameNumber;
+        if (actor.COL_BY != -1)
+        {
+            s_touchFrame[i] = s_frameNumber;
+            s_touchedBy[i] = actor.COL_BY;
+        }
     }
 }
 
@@ -229,14 +240,25 @@ static void runAITD2Script()
 {
     const unsigned int lastRun = s_scriptRunFrame[currentProcessedActorIdx];
     s_scriptSeesAfter = s_frameNumber - lastRun <= kAITD2StaleFrames ? lastRun : s_frameNumber - 1;
+    if (currentProcessedActorPtr->COL_BY == -1 && s_touchFrame[currentProcessedActorIdx] > s_scriptSeesAfter)
+        currentProcessedActorPtr->COL_BY = s_touchedBy[currentProcessedActorIdx];
     processLife(currentProcessedActorPtr->life, false);
     s_scriptRunFrame[currentProcessedActorIdx] = s_frameNumber;
     s_scriptSeesAfter = s_frameNumber - 1;
 }
 
+// The end of an animation is seen by a script after it, and by every script
+// in the frame the animation it chains to begins by itself, also one that saw
+// it already: the player gets control back after the key of the door on
+// floor 6 when its script sees that end after the key's script said so
+// (vars[141]); it waited for the end of the next animation, 7 seconds. Not
+// when a script started the next one at that end: it saw it, and would take
+// the new one for ended (Carnby slid down the last steps of the stairs of
+// floors 5 and 6, script 441, BUGS.md A33)
 bool aitd2EndAnimSeen(int actorIdx)
 {
-    return actorIdx >= 0 && actorIdx < NUM_MAX_OBJECT && s_endAnimFrame[actorIdx] > s_scriptSeesAfter;
+    return actorIdx >= 0 && actorIdx < NUM_MAX_OBJECT
+        && (s_endAnimFrame[actorIdx] > s_scriptSeesAfter || s_endAnimShownFrame[actorIdx] == s_frameNumber);
 }
 
 bool aitd2EndFrameSeen(int actorIdx)
@@ -256,10 +278,23 @@ void aitd2ForgetEvents(int actorIdx, bool newObject)
         return;
     if (newObject || s_endAnimFrame[actorIdx] != s_frameNumber)
         s_endAnimFrame[actorIdx] = 0;
+    else if (ListObjets[actorIdx].ANIM + 1 == s_chainedAnim[actorIdx])
+        s_endAnimShownFrame[actorIdx] = s_frameNumber + 1;   // this frame, once its events are recorded
+    s_chainedAnim[actorIdx] = 0;
     if (newObject || s_endFrameFrame[actorIdx] != s_frameNumber)
         s_endFrameFrame[actorIdx] = 0;
     if (newObject)
+    {
+        s_touchFrame[actorIdx] = 0;
+        s_endAnimShownFrame[actorIdx] = 0;
         s_scriptRunFrame[actorIdx] = s_frameNumber;
+    }
+}
+
+void aitd2NoteChainedAnim(int actorIdx, int anim)
+{
+    if (actorIdx >= 0 && actorIdx < NUM_MAX_OBJECT)
+        s_chainedAnim[actorIdx] = anim + 1;
 }
 
 void PlayWorld(int allowSystemMenu, int deltaTime)

@@ -16,6 +16,18 @@ int getMatrix(int param1, int actorIdx, int param2)
 {
     unsigned char* matrixPtr = (unsigned char*)HQR_Get(HQ_Matrices,param1);
 
+    // An object out of the list (not loaded) or outside every zone of the
+    // matrix (hardMat -1) read outside it and crashed AITD2 after the
+    // pirate's story; it has no value there (BUGS.md A33)
+    const int row = (actorIdx >= 0 && actorIdx < NUM_MAX_OBJECT) ? ListObjets[actorIdx].hardMat : 0;
+    const int column = (param2 >= 0 && param2 < NUM_MAX_OBJECT) ? ListObjets[param2].hardMat : 0;
+    if (!matrixPtr || row < 1 || row > matrixPtr[1] || column < 1 || column > matrixPtr[0])
+    {
+        printf(LIFE_WARN "MATRIX %d: object %d (hardMat %d) and object %d (hardMat %d) out of it, 0\n",
+            param1, actorIdx, row, param2, column);
+        return 0;
+    }
+
     int matrixWidth = *matrixPtr++;
     int matrixHeigh = *matrixPtr++;
 

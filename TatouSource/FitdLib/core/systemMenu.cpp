@@ -332,8 +332,9 @@ void processSystemMenu(void)
                         // in JACK mode, matching the AITD2/AITD3 "exit" path.
                         if (g_gameId == JACK)
                         {
-                            freeAll();
-                            exit(0);
+                            // Out through cleanupAndExit: the sound stopped first; with music
+                            // playing, exit() closed its file under the sound thread (BUGS.md A33)
+                            cleanupAndExit();
                         }
                         FlagGameOver = 1;
                         exitMenu = 1;

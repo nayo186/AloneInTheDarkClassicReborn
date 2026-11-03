@@ -280,6 +280,21 @@ static void stopJumpOverObjects(ZVStruct* zvPtr, int& stepX, int& stepZ)
 
 		stepX = hardColStepX;
 		stepZ = hardColStepZ;
+
+		// Stopped against it, so it was touched, as in a plain collision: the
+		// AITD2 door opened by touching it after the key waited seconds for it
+		// (BUGS.md A33)
+		other.COL_BY = currentProcessedActorIdx;
+		for(int j = 0; j < 3; j++)
+		{
+			if(currentProcessedActorPtr->COL[j] == i)
+				break;
+			if(currentProcessedActorPtr->COL[j] == -1)
+			{
+				currentProcessedActorPtr->COL[j] = i;
+				break;
+			}
+		}
 	}
 }
 
@@ -773,6 +788,7 @@ void GereAnim(void)
 				currentProcessedActorPtr->animType &= 0xFFFD;
 
 				InitAnim(currentProcessedActorPtr->animInfo, 1, -1);
+				aitd2NoteChainedAnim(currentProcessedActorIdx, currentProcessedActorPtr->newAnim);
 			}
 		}
 		currentProcessedActorPtr->worldX += currentProcessedActorPtr->stepX;

@@ -4,6 +4,17 @@ Alone in the Dark: Classic Reborn started on 2026-10-23 from [Alone in the Dark:
 
 This repository was published with a single starting commit, to keep it light: the early history carried large files that are no longer part of the project. Below are the changes of each release and, after them, the changes made in this fork before it was published, newest first, one line per change. The reasons behind larger removals are explained in `docs/DESCARTADO.md` and the fixes in `docs/baseline/BUGS.md`.
 
+## v1.1.3 (2026-11-02)
+
+More fixes for *Alone in the Dark 2* found by players, and a safer exit from the game menu.
+
+- Alone in the Dark 2: the cook is seen climbing the red stairs instead of vanishing at their foot (BUGS.md A32)
+- Alone in the Dark 2: the story pictures with text use your own enlarged pictures too (BUGS.md A33)
+- Alone in the Dark 2: no more flash of a wrongly coloured picture between the story pictures and when opening books (also Jack in the Dark) (BUGS.md A33)
+- Alone in the Dark 2: the game no longer closes at the end of the pirate's story (BUGS.md A33)
+- Alone in the Dark 2: Carnby moves again right after using the key on the floor 6 door, and the door opens as soon as he touches it (BUGS.md A33)
+- Quitting from the game menu no longer crashes while music plays (all games) (BUGS.md A33)
+
 ## v1.1.2 (2026-11-02)
 
 A fix for *Alone in the Dark 2* found by players.

@@ -2048,6 +2048,9 @@ void processLife(int lifeNum, bool callFoundLife)
                 SaveTimerAnim();
 
                 FadeOutPhys(32, 0);
+                // The player's own picture replaces it, as for PICTURE: AITD2's
+                // story pictures with text kept the original (BUGS.md A33)
+                coreScreenPictureShown("ITD_RESS", lifeTempVar1);
                 LoadPak("ITD_RESS", lifeTempVar1, aux);
                 palette_t lpalette;
                 copyPalette(aux + 64000, lpalette);
@@ -2059,7 +2062,13 @@ void processLife(int lifeNum, bool callFoundLife)
                 if (ropVocIndex >= 0)
                     osystem_playVocByIndex(ropVocIndex);
 
+                // A 2D screen, as readBook: without it the frames and fades
+                // showed the 3D scene's picture, not the player's (BUGS.md A33)
+                osystem_suspendScreenEffects(true);
+                g_menuActive = true;
                 Lire(lifeTempVar2 + 1, lifeTempVar3, lifeTempVar4, lifeTempVar5, lifeTempVar6, 0, lifeTempVar7, lifeTempVar8);
+                g_menuActive = false;
+                osystem_suspendScreenEffects(false);
 
                 if (ropVocIndex >= 0)
                     osystem_stopVO();

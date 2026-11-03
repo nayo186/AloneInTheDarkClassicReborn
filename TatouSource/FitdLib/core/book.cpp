@@ -103,6 +103,12 @@ int Lire(int index, int startx, int top, int endx, int bottom, int demoMode, int
 
     SetFont(PtrFont, color);
 
+    // The first page comes up from black: setting the picture's palette had
+    // put the brightness back, and one frame showed the last screen in the
+    // new colours at full brightness (BUGS.md A33)
+    if (demoMode != 1)
+        osystem_setScreenFade(0.0f);
+
     maxStringWidth = endx - startx + 4;
 
     int textIndexMalloc = HQ_Malloc(HQ_Memory, getPakSize(languageNameString.c_str(), index) + 300);

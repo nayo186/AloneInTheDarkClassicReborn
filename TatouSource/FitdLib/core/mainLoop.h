@@ -29,4 +29,7 @@ bool aitd2EndFrameSeen(int actorIdx);
 // the last frame), or of a slot a new object takes (newObject: all; its
 // script then sees only what comes)
 void aitd2ForgetEvents(int actorIdx, bool newObject);
+// The animation an ended one chains to by itself (ANIM_ONCE's next): its
+// start shows that end once more to every script (BUGS.md A33)
+void aitd2NoteChainedAnim(int actorIdx, int anim);
 
