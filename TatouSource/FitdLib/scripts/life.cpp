@@ -18,7 +18,8 @@
 #include "nativeLife.h"
 #include "lifeSafety.h"
 
-int groundLevel;
+// 100 as a new game sets it: a loaded game does not run that script
+int groundLevel = 100;
 s16 specialTable[4] = { 144, 192, 48, 112 };
 
 // Sparks of a shot that hits (special object 5)
@@ -2211,7 +2212,10 @@ void processLife(int lifeNum, bool callFoundLife)
                         currentLifePtr += 2;
                     }
 
-                    playSound(newSample);
+                    if (g_gameId == AITD2)
+                        restartSound(newSample);
+                    else
+                        playSound(newSample);
                 }
                 printf(LIFE_TAG "LM_SAMPLE_THEN\n");
                 // setSampleFreq(0);
@@ -2597,11 +2601,12 @@ void processLife(int lifeNum, bool callFoundLife)
                 printf(LIFE_TAG "SET_INVENTORY %d\n", inventoryIdx);
                 break;
             }
-            case LM_SET_GROUND:
+            case LM_SET_GROUND: // 100 when the game starts (script 629)
             {
                 appendFormated("LM_SET_GROUND ");
                 groundLevel = *(s16*)currentLifePtr;
                 currentLifePtr += 2;
+                printf(LIFE_TAG "SET_GROUND %d\n", groundLevel);
                 break;
             }
             case LM_MESSAGE:

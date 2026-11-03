@@ -76,6 +76,8 @@
 	void osystem_stopSample();
 	// Stops the looping sound effects
 	void osystem_stopLoopingSamples();
+	// Stops the sound effect started last, if it is not a looping one
+	void osystem_stopLastSample();
 	// True while a sound effect is playing
 	bool osystem_isSamplePlaying();
 

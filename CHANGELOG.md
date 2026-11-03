@@ -4,6 +4,14 @@ Alone in the Dark: Classic Reborn started on 2026-10-23 from [Alone in the Dark:
 
 This repository was published with a single starting commit, to keep it light: the early history carried large files that are no longer part of the project. Below are the changes of each release and, after them, the changes made in this fork before it was published, newest first, one line per change. The reasons behind larger removals are explained in `docs/DESCARTADO.md` and the fixes in `docs/baseline/BUGS.md`.
 
+## v1.2.1 (2026-11-03)
+
+More fixes for *Alone in the Dark 2*: objects near the camera, the car's brakes and the statue in the garden.
+
+- Alone in the Dark 2: still objects near the camera, such as a small chest or an open door, are no longer cut by the walls in front of objects behind them (BUGS.md A36)
+- Alone in the Dark 2: the brakes of the car that takes Grace away sound when it stops at the gazebo (BUGS.md A37)
+- Alone in the Dark 2: the statue and the zombie rise from the lawn, as in the original, instead of coming up whole from below the screen (BUGS.md A38)
+
 ## v1.2.0 (2026-11-03)
 
 *Alone in the Dark 2* can now be played through Grace's part: her own inventory, the car's trunk, and fixes to the pirate's story and the hall.

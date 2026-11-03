@@ -102,11 +102,13 @@ static bool isStillObject(const tObject& object)
 // AITD2 paints its still objects into the background, in the order of the
 // object list, each followed by its masks clipped to its screen box
 // (AITD2.EXE): the masks of a still object painted later also cover the still
-// ones painted before it, where their boxes meet; one farther away, behind
-// it, is covered in all its box: the woman in purple (object 1 on floor 5)
-// waits behind the hall doors (9 and 10), whose masks hide her behind the
-// wall. Tested alone, she was out of the wall's zone by a little and showed
-// over it; only where the boxes met, a strip of her still did (BUGS.md A35)
+// ones painted before it, where their boxes meet. Here they cover only the
+// ones farther away, behind it, in all their box: the woman in purple (object
+// 1 on floor 5) waits behind the hall doors (9 and 10), whose masks hide her
+// behind the wall. Tested alone, she was out of the wall's zone by a little
+// and showed over it; only where the boxes met, a strip of her still did
+// (BUGS.md A35). On a nearer one, the walls in front of a far object cut a
+// small chest and an open door in front of them (BUGS.md A36)
 static void drawLaterStillMasks(const tObject* actorPtr, const cameraDataStruct* pCamera)
 {
     const int slot = (int)(actorPtr - &ListObjets[0]);
@@ -115,12 +117,7 @@ static void drawLaterStillMasks(const tObject* actorPtr, const cameraDataStruct*
         const tObject& later = ListObjets[k];
         if (s_drawPosition[k] < 0 || !isStillObject(later) || later.screenXMax < 0)
             continue;
-        const bool behind = s_drawPosition[slot] < s_drawPosition[k];
-        const int left = behind ? BBox3D1 : std::max<int>(BBox3D1, later.screenXMin);
-        const int top = behind ? BBox3D2 : std::max<int>(BBox3D2, later.screenYMin);
-        const int right = behind ? BBox3D3 : std::min<int>(BBox3D3, later.screenXMax);
-        const int bottom = behind ? BBox3D4 : std::min<int>(BBox3D4, later.screenYMax);
-        if (left > right || top > bottom)
+        if (s_drawPosition[slot] > s_drawPosition[k])
             continue;
         for (int r = 0; r < pCamera->numViewedRooms; r++)
         {
@@ -132,8 +129,8 @@ static void drawLaterStillMasks(const tObject* actorPtr, const cameraDataStruct*
                 if (!isInMaskZones(&later, viewedRoom.masks[m]))
                     continue;
                 if (s_logDrawFrame)
-                    printf("[DRAW]     mask %d (room %d) of still object %d clipped to %d,%d-%d,%d\n", m, later.room, k, left, top, right, bottom);
-                osystem_setClip(left, top, right, bottom);
+                    printf("[DRAW]     mask %d (room %d) of still object %d clipped to %d,%d-%d,%d\n", m, later.room, k, BBox3D1, BBox3D2, BBox3D3, BBox3D4);
+                osystem_setClip(BBox3D1, BBox3D2, BBox3D3, BBox3D4);
                 osystem_drawMask(r, m);
                 osystem_clearClip();
             }
@@ -806,6 +803,13 @@ void AllRedraw(int flagFlip)
                         // Its own number in the stencil: its masks cover only
                         // it (16 + its place, clear of the 2D masks' 1)
                         osystem_setObjectStencil(16 + (i % 240));
+
+                        // AITD2 cuts every object at the ground, but the ones
+                        // in water (AITD2.EXE, before drawing each object): the
+                        // statue and the zombie rising from the lawn came out
+                        // whole from below it (BUGS.md A38)
+                        if (g_gameId == AITD2)
+                            setWaterSurface(!(actorPtr->objectType & AF_WATER), groundLevel + actorPtr->worldY - actorPtr->roomY);
 
                         setCurrentBodyNum(actorPtr->bodyNum, bodyPtr, HQ_Bodys->string);
                         setNextObjectSize(drawSize);

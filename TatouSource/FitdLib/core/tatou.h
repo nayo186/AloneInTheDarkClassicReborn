@@ -24,6 +24,8 @@ void FadeInPhys(int var1,int var2);
 void FadeOutPhys(int var1, int var2);
 // Plays sound effect number `num` (LISTSAMP)
 void playSound(int num);
+// Plays a sample from its start, even if the same one is still playing
+void restartSound(int num);
 // Plays sound effect number `num` in a loop
 void playSoundLooping(int num);
 // Plays a sound effect and then another one

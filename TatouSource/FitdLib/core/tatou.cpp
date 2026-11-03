@@ -265,6 +265,18 @@ void playSound(int num)
 	logSample("Sample", num);
 }
 
+// AITD2's SAMPLE_THEN: the original had one channel, and a new sample started
+// from the beginning; skipping it, the next one followed the copy already
+// playing: the brakes of the car that takes Grace sounded seconds before it
+// stopped (BUGS.md A37)
+void restartSound(int num)
+{
+	if (num == LastSample && osystem_isSamplePlaying())
+		osystem_stopLastSample();
+	LastSample = -1;
+	playSound(num);
+}
+
 // Looping sample asked by a script in this pass of the game loop, and in how
 // many passes in a row (updateLoopingSample)
 static bool s_loopRequested = false;

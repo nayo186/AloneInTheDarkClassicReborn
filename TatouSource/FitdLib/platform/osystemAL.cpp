@@ -514,6 +514,15 @@ void osystem_stopSample()
     g_activeSfx.clear();
 }
 
+void osystem_stopLastSample()
+{
+    if (!gSoloud || g_activeSfx.empty() || g_activeSfx.back().looping)
+        return;
+    gSoloud->stop(g_activeSfx.back().handle);
+    delete g_activeSfx.back().source;
+    g_activeSfx.pop_back();
+}
+
 // Stop only the looping samples (one-shot sounds keep playing)
 void osystem_stopLoopingSamples()
 {
