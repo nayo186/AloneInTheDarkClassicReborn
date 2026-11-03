@@ -26,8 +26,8 @@ python tools/disasmExe.py "<carpeta del juego>/INDARK2/AITD2.EXE" <carpeta fuera
 | Dirección | Qué hace | En nuestro código |
 |---|---|---|
 | `14031` | si la cámara ve la sala del objeto; deja el índice de la sala vista en `ds:AD90` | `checkActorInRoom` (`core/actors.cpp`) |
-| `14088` | si el punto del objeto (posición + paso) cae en una zona vista de esa sala; **sin zonas, no se ve** | `isActorInSeenPart` (`core/actors.cpp`); nosotros sí lo dibujamos sin zonas (BUGS.md A35) |
-| `14523` | `GenereAffList`: mete en la lista los objetos con modelo de una sala vista cuyo punto se ve, y marca como quietos (`+04` \|= 8) los que no se animan | `GenereAffList` (`core/actors.cpp`); la prueba de la caja es nuestra (A32) |
+| `14088` | si el punto del objeto (posición + paso) cae en una zona vista de esa sala; **sin zonas, no se ve** | `isActorInSeenPart` (`core/actors.cpp`), igual en AITD2 desde BUGS.md A42 |
+| `14523` | `GenereAffList`: mete en la lista los objetos con modelo de una sala vista cuyo punto se ve, y marca como quietos (`+04` \|= 8) los que no se animan | `GenereAffList` (`core/actors.cpp`); la prueba de la caja de A32 ya no se usa en AITD2 (A42) |
 | `045F8` | coloca cada animación 2D en el orden de dibujo, justo después del objeto más cercano que cabe en su zona (entradas `0x8000` + número) | `core/anim2d.cpp` |
 | `15261` (`1509:01D1`) | prueba de zona: la caja del objeto en décimas cabe entera en uno de los rectángulos | `isBgOverlayRequired` (AITD1), `drawBgOverlay` (`core/sceneDraw.cpp`) |
 | `10803` | las máscaras de un objeto: recorte a su recuadro en pantalla y cada máscara cuya zona lo contiene | `drawBgOverlay` (`core/sceneDraw.cpp`) |

@@ -806,11 +806,6 @@ void FoundObjet(int objIdx, int param)
 
             if (localKey == 28 || localClick != 0)
             {
-                while (key)
-                {
-                    process_events();
-                }
-
                 exitflag = 1;
             }
         }
@@ -838,6 +833,15 @@ void FoundObjet(int objIdx, int param)
         //    menuWaitVSync();
     }
 
+    // Until every key and button is let go, as the other menus: chosen with
+    // the action button (Space, A) it was still held when the game went on,
+    // and the player's script did its action (guard, weapon up, Grace's
+    // spins) (BUGS.md A41)
+    while (key || JoyD || Click)
+    {
+        process_events();
+    }
+
 
     RestoreTimerAnim();
 
@@ -849,11 +853,6 @@ void FoundObjet(int objIdx, int param)
     else
     {
         s_declinedObjects[objIdx] = timer;
-    }
-
-    while (key && Click)
-    {
-        process_events();
     }
 
     localJoyD = 0;

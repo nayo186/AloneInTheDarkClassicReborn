@@ -4,6 +4,13 @@ Alone in the Dark: Classic Reborn started on 2026-10-23 from [Alone in the Dark:
 
 This repository was published with a single starting commit, to keep it light: the early history carried large files that are no longer part of the project. Below are the changes of each release and, after them, the changes made in this fork before it was published, newest first, one line per change. The reasons behind larger removals are explained in `docs/DESCARTADO.md` and the fixes in `docs/baseline/BUGS.md`.
 
+## v1.2.3 (2026-11-03)
+
+The found-object menu no longer sets off the character's action, and objects of the next room no longer show through the walls in *Alone in the Dark 2*.
+
+- Choosing Take or Leave for a found object no longer makes the character do their action as well (guard, weapon up, Grace's spins) (BUGS.md A41)
+- Alone in the Dark 2: objects of a room behind a wall no longer show through it, such as by the bed post in a cabin of the ship (BUGS.md A42)
+
 ## v1.2.2 (2026-11-03)
 
 More fixes for *Alone in the Dark 2*: games saved with Grace load in the original, and Grace feeds the parrot without going round the cabin.

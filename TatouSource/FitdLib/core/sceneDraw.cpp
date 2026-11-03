@@ -139,6 +139,21 @@ static void drawLaterStillMasks(const tObject* actorPtr, const cameraDataStruct*
     }
 }
 
+// AITD2, an object of another room than the camera's (seen through a wall or
+// a door): a mask of its room covers it also when where it stands is in the
+// mask's zone, its box going out of it. A tall one of the room behind the
+// cabin's wall (floor 11) went out of the wall's zone by 13 and showed by the
+// bed post (BUGS.md A42). The current room keeps the box only: a margin there
+// hid a leaf of the house door (BUGS.md A34)
+static bool pointInOtherRoomZone(const tObject* actorPtr, const rectTestStruct& rect)
+{
+    if (g_gameId != AITD2 || actorPtr->room == currentRoom)
+        return false;
+    const int x = (actorPtr->roomX + actorPtr->stepX) / 10;
+    const int z = (actorPtr->roomZ + actorPtr->stepZ) / 10;
+    return x >= rect.zoneX1 && x <= rect.zoneX2 && z >= rect.zoneZ1 && z <= rect.zoneZ2;
+}
+
 void drawBgOverlay(tObject* actorPtr)
 {
     char* data;
@@ -241,7 +256,8 @@ void drawBgOverlay(tObject* actorPtr)
                 if (s_logDrawFrame && actorPtr->room != currentRoom)
                     printf("[DRAW]     room %d object %d,%d-%d,%d vs mask %d zone %d,%d-%d,%d\n", actorPtr->room, actorX1, actorZ1, actorX2, actorZ2, i, pRect->zoneX1, pRect->zoneZ1, pRect->zoneX2, pRect->zoneZ2);
 
-                if (actorX1 >= pRect->zoneX1 && actorZ1 >= pRect->zoneZ1 && actorX2 <= pRect->zoneX2 && actorZ2 <= pRect->zoneZ2)
+                if ((actorX1 >= pRect->zoneX1 && actorZ1 >= pRect->zoneZ1 && actorX2 <= pRect->zoneX2 && actorZ2 <= pRect->zoneZ2)
+                    || pointInOtherRoomZone(actorPtr, *pRect))
                 {
                     if (s_logDrawFrame)
                         printf("[DRAW]     mask %d (room %d) clipped to %d,%d-%d,%d\n", i, actorPtr->room, clipLeft, clipTop, clipRight, clipBottom);

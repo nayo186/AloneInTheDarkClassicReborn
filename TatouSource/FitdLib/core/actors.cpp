@@ -535,9 +535,12 @@ static bool isActorInSeenPart(tObject* actorPtr)
     // (BUGS.md A16)
     // The player is always seen: the camera is chosen for him, and on the hall
     // stairs he left the zones the camera lists while climbing (BUGS.md A25)
-    // An object is seen by its box or by where it is drawn: a script can set a
-    // box away from it (DEF_ABS_ZV), and the cook climbing the red stairs
-    // vanished at their foot (BUGS.md A32)
+    // An object is seen by where it is drawn: a script can set a box away
+    // from it (DEF_ABS_ZV), and the cook climbing the red stairs vanished at
+    // their foot (BUGS.md A32). AITD2 tests only that point, and a room the
+    // camera keeps no boxes of shows nothing (AITD2.EXE, 14088): seen by its
+    // box, a still object of the room behind the wall showed by the bed post
+    // in the cabin of floor 11 (BUGS.md A42)
     const bool drawing2D = (actorPtr->objectType & AF_OBJ_2D) != 0;
     if (g_gameId < JACK || (g_gameId == JACK && actorPtr->room == currentRoom && !drawing2D))
         return true;
@@ -550,14 +553,14 @@ static bool isActorInSeenPart(tObject* actorPtr)
         if (viewedRoom.viewedRoomIdx != actorPtr->room)
             continue;
         if (viewedRoom.seenBoxes.empty())
-            return true;
+            return g_gameId != AITD2;
         for (const rectTestStruct& box : viewedRoom.seenBoxes)
         {
             const int x = actorPtr->roomX + (drawing2D ? 0 : actorPtr->stepX);
             const int z = actorPtr->roomZ + (drawing2D ? 0 : actorPtr->stepZ);
             if (x >= box.zoneX1 && x <= box.zoneX2 && z >= box.zoneZ1 && z <= box.zoneZ2)
                 return true;
-            if (!drawing2D && actorPtr->zv.ZVX2 >= box.zoneX1 && actorPtr->zv.ZVX1 <= box.zoneX2
+            if (!drawing2D && g_gameId != AITD2 && actorPtr->zv.ZVX2 >= box.zoneX1 && actorPtr->zv.ZVX1 <= box.zoneX2
                 && actorPtr->zv.ZVZ2 >= box.zoneZ1 && actorPtr->zv.ZVZ1 <= box.zoneZ2)
                 return true;
         }
