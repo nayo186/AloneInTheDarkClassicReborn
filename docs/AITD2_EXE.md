@@ -17,6 +17,8 @@ python tools/disasmExe.py "<carpeta del juego>/INDARK2/AITD2.EXE" <carpeta fuera
 | Cámara actual | `ds:ABA9` | índice en la tabla de punteros lejanos de `ds:A350` |
 | Datos de una cámara | | `+12` número de salas vistas; desde `+14`, una entrada de `0x10` bytes por sala: `+0` sala, `+2` máscaras, `+6` animaciones 2D, `+8` zonas vistas (como `core/floor.cpp`) |
 | Altura del suelo | `ds:0A94` | la pone `SET_GROUND` (rutina en `C4D0`, opcode 94 de la tabla `cs:29CF` del intérprete, segmento `9E00`); 100 al empezar la partida |
+| Inventario en uso | `ds:AAD7` | 0 Carnby, 1 Grace; lo cambia `SET_INVENTORY` (rutina en `C43B`, opcode 91) |
+| Valores de una partida | tabla en `ds:0F38` | entradas de 8 bytes (puntero lejano y tamaño), en el orden del archivo: sala, piso, cámara, objetivo, objeto de la cámara, número de objetos, los 400 objetos del mundo (21 600 bytes), las variables de configuración (140), los objetos en la mano (4), cuántos objetos (4), las dos listas (200), `ds:097A`, el inventario en uso (`ds:AAD7`), `ds:097C`, `ds:097E`, `ds:AA3B`, `ds:AA3D`, el reloj (4), el otro reloj (4) y la música; se cifran con xor 0x35 en `CFDC` | `core/save.cpp` (BUGS.md A6, A39) |
 | Lista de dibujo | `ds:A1BE`, cuántos en `ds:A25E` | la arma `GenereAffList`; se copia a `ds:A132` para ordenarla |
 
 ## Rutinas
@@ -30,6 +32,7 @@ python tools/disasmExe.py "<carpeta del juego>/INDARK2/AITD2.EXE" <carpeta fuera
 | `15261` (`1509:01D1`) | prueba de zona: la caja del objeto en décimas cabe entera en uno de los rectángulos | `isBgOverlayRequired` (AITD1), `drawBgOverlay` (`core/sceneDraw.cpp`) |
 | `10803` | las máscaras de un objeto: recorte a su recuadro en pantalla y cada máscara cuya zona lo contiene | `drawBgOverlay` (`core/sceneDraw.cpp`) |
 | `19F46` (`18D9:11B6`) | fija la altura de corte del renderizador (escribe el valor dentro del propio código, en `19C8E` y `19EBA`): los puntos del modelo más bajos que ella se marcan como fuera (-10000) | `setWaterSurface` (`core/renderer.cpp`, BUGS.md A38) |
+| `E0AD` | modo de recorrido 2 (seguir a un objeto; tabla de modos en `DFDB`): apunta a él con la prueba de lado de `18AC6` y gira un cuarto de vuelta en 60 marcas | `processTrack` (`core/track.cpp`); cerca, nosotros giramos más rápido (BUGS.md A40) |
 | `10C38` | antes de dibujar cada objeto quieto le pasa la altura de corte (10000 si tiene `AF_WATER` (`+04` & 0x400), si no el suelo; los demás objetos, igual en `1141C`); además repinta el fondo: copia el fondo de la cámara y pinta en él los objetos quietos, en el orden de la lista, cada uno seguido de sus máscaras; el resultado pasa a ser el fondo | `drawLaterStillMasks` (`core/sceneDraw.cpp`, BUGS.md A35) |
 
 Cuando se encuentre algo nuevo, se añade aquí con su dirección y el archivo nuestro que lo hace.

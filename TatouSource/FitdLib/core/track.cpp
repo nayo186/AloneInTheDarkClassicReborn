@@ -11,6 +11,7 @@
 #include "consoleLog.h"
 #include "modernStick.h"
 #include "math.h"
+#include <algorithm>
 
 #define	TL_INIT_COOR		0
 #define	TL_GOTO			1
@@ -195,6 +196,20 @@ char* getRoomLink(unsigned int room1, unsigned int room2)
     return bestZone;
 }
 
+// Time of a quarter turn of an object following another: 60 ticks, as the
+// original. AITD2 turns faster when the target is near: walking, that turn
+// draws a circle of about 200, and Grace, sent to the parrot's perch until she
+// is within 200 of it, went round it for a minute (BUGS.md A40)
+static int followTurnTime(int targetX, int targetZ)
+{
+    if (g_gameId != AITD2)
+        return 60;
+    const int dx = targetX - (currentProcessedActorPtr->roomX + currentProcessedActorPtr->stepX);
+    const int dz = targetZ - (currentProcessedActorPtr->roomZ + currentProcessedActorPtr->stepZ);
+    const int distance = (int)sqrt((double)dx * dx + (double)dz * dz);
+    return std::clamp(distance * 60 / 800, 10, 60);
+}
+
 void processTrack(void)
 {
     switch(currentProcessedActorPtr->trackMode)
@@ -299,7 +314,7 @@ void processTrack(void)
 
                 if( (currentProcessedActorPtr->rotate.numSteps == 0) || (currentProcessedActorPtr->direction != angleModif) )
                 {
-                    InitRealValue( currentProcessedActorPtr->beta, currentProcessedActorPtr->beta - (angleModif * 256), 60, &currentProcessedActorPtr->rotate);
+                    InitRealValue( currentProcessedActorPtr->beta, currentProcessedActorPtr->beta - (angleModif * 256), followTurnTime(targetX, targetZ), &currentProcessedActorPtr->rotate);
                 }
 
                 currentProcessedActorPtr->direction = angleModif;

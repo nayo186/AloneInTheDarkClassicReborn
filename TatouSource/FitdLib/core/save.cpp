@@ -494,13 +494,23 @@ int loadSave(int saveNumber)
 		}
 	}
 
-    // AITD2: whose inventory is in use is not in the save; Grace's has her own
-    // frame (TYPE_INVENTAIRE 2), Carnby's the others (BUGS.md A34)
-    if (g_gameId == AITD2)
-        currentInventory = (CVars[getCVarsIdx(TYPE_INVENTAIRE)] == 2) ? 1 : 0;
-
     ASSERT(sizeof(statusScreenAllowed) == 2);
     saveRead(&statusScreenAllowed,2,1,fHandle);
+
+    // AITD2's original: whose inventory is in use (0 Carnby, 1 Grace), after
+    // statusScreenAllowed (its table of saved values, AITD2.EXE). Saves
+    // written before had 0 there: Grace's has her own frame (TYPE_INVENTAIRE
+    // 2) (BUGS.md A34, A39)
+    if (s_layout.aitd2)
+    {
+        saveRead(&currentInventory,2,1,fHandle);
+        if (currentInventory < 0 || currentInventory >= NUM_MAX_INVENTORY)
+            currentInventory = 0;
+        if (currentInventory == 0 && CVars[getCVarsIdx(TYPE_INVENTAIRE)] == 2)
+            currentInventory = 1;
+    }
+    else if (g_gameId == AITD2)
+        currentInventory = (CVars[getCVarsIdx(TYPE_INVENTAIRE)] == 2) ? 1 : 0;
 
     ASSERT(sizeof(FlagGameOver) == 2);
     saveRead(&FlagGameOver,2,1,fHandle);
@@ -513,9 +523,6 @@ int loadSave(int saveNumber)
 
     ASSERT(sizeof(shakeVar1) == 2);
     saveRead(&shakeVar1,2,1,fHandle);
-
-    if (s_layout.aitd2)
-        skipValue(fHandle);
 
     ASSERT(sizeof(timer) == 4);
     saveRead(&timer,4,1,fHandle);
@@ -1121,6 +1128,11 @@ int makeSaveFile(int entry)
     ASSERT(sizeof(statusScreenAllowed) == 2);
     saveWrite(&statusScreenAllowed,2,1,fHandle);
 
+    // AITD2's original: whose inventory is in use; GOG gave Grace Carnby's
+    // inventory and actions without it (BUGS.md A39)
+    if (s_layout.aitd2)
+        saveWrite(&currentInventory,2,1,fHandle);
+
     ASSERT(sizeof(FlagGameOver) == 2);
     saveWrite(&FlagGameOver,2,1,fHandle);
 
@@ -1132,9 +1144,6 @@ int makeSaveFile(int entry)
 
     ASSERT(sizeof(shakeVar1) == 2);
     saveWrite(&shakeVar1,2,1,fHandle);
-
-    if (s_layout.aitd2)
-        writeValue(0, fHandle);
 
     // The time the game stopped at, not the one running inside the menu
     const unsigned int savedClock = gameClockForSave();

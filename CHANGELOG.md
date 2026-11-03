@@ -4,6 +4,13 @@ Alone in the Dark: Classic Reborn started on 2026-10-23 from [Alone in the Dark:
 
 This repository was published with a single starting commit, to keep it light: the early history carried large files that are no longer part of the project. Below are the changes of each release and, after them, the changes made in this fork before it was published, newest first, one line per change. The reasons behind larger removals are explained in `docs/DESCARTADO.md` and the fixes in `docs/baseline/BUGS.md`.
 
+## v1.2.2 (2026-11-03)
+
+More fixes for *Alone in the Dark 2*: games saved with Grace load in the original, and Grace feeds the parrot without going round the cabin.
+
+- Alone in the Dark 2: a game saved here with Grace loads in the original (GOG) with Grace's inventory and actions, not Carnby's (BUGS.md A39)
+- Alone in the Dark 2: Grace walks straight to the parrot's perch when she feeds it, instead of going round the cabin for a minute (BUGS.md A40)
+
 ## v1.2.1 (2026-11-03)
 
 More fixes for *Alone in the Dark 2*: objects near the camera, the car's brakes and the statue in the garden.
