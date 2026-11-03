@@ -741,6 +741,8 @@ int evalVar2(const char* name)
                     }
                 case 0x5:
                     {
+                        if (g_gameId == AITD2)
+                            return aitd2AnimSeen(actorIdx);
                         return(actorPtr->ANIM);
                         break;
                     }

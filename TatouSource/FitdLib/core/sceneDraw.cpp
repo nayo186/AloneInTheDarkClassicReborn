@@ -74,6 +74,74 @@ static bool s_logDrawFrame = false;
 // floor of the water rooms is at 0, the water monster stands at -1000)
 static const int kWaterSurfaceY = -1000;
 
+// Whether an object's box (in tenths) is inside one of a mask's zones
+static bool isInMaskZones(const tObject* actorPtr, const cameraMaskStruct& mask)
+{
+    const int actorX1 = actorPtr->zv.ZVX1 / 10;
+    const int actorX2 = actorPtr->zv.ZVX2 / 10;
+    const int actorZ1 = actorPtr->zv.ZVZ1 / 10;
+    const int actorZ2 = actorPtr->zv.ZVZ2 / 10;
+    for (int j = 0; j < mask.numTestRect; j++)
+    {
+        const rectTestStruct& rect = mask.rectTests[j];
+        if (actorX1 >= rect.zoneX1 && actorZ1 >= rect.zoneZ1 && actorX2 <= rect.zoneX2 && actorZ2 <= rect.zoneZ2)
+            return true;
+    }
+    return false;
+}
+
+// The drawing position (far to near) of the objects drawn in this frame, -1
+// for the others
+static std::array<int, NUM_MAX_OBJECT> s_drawPosition{};
+
+static bool isStillObject(const tObject& object)
+{
+    return (object.objectType & AF_BOXIFY) && !(object.objectType & (AF_ANIMATED | AF_SPECIAL | AF_OBJ_2D));
+}
+
+// AITD2 paints its still objects into the background, in the order of the
+// object list, each followed by its masks clipped to its screen box
+// (AITD2.EXE): the masks of a still object painted later also cover the still
+// ones painted before it, where their boxes meet; one farther away, behind
+// it, is covered in all its box: the woman in purple (object 1 on floor 5)
+// waits behind the hall doors (9 and 10), whose masks hide her behind the
+// wall. Tested alone, she was out of the wall's zone by a little and showed
+// over it; only where the boxes met, a strip of her still did (BUGS.md A35)
+static void drawLaterStillMasks(const tObject* actorPtr, const cameraDataStruct* pCamera)
+{
+    const int slot = (int)(actorPtr - &ListObjets[0]);
+    for (int k = slot + 1; k < NUM_MAX_OBJECT; k++)
+    {
+        const tObject& later = ListObjets[k];
+        if (s_drawPosition[k] < 0 || !isStillObject(later) || later.screenXMax < 0)
+            continue;
+        const bool behind = s_drawPosition[slot] < s_drawPosition[k];
+        const int left = behind ? BBox3D1 : std::max<int>(BBox3D1, later.screenXMin);
+        const int top = behind ? BBox3D2 : std::max<int>(BBox3D2, later.screenYMin);
+        const int right = behind ? BBox3D3 : std::min<int>(BBox3D3, later.screenXMax);
+        const int bottom = behind ? BBox3D4 : std::min<int>(BBox3D4, later.screenYMax);
+        if (left > right || top > bottom)
+            continue;
+        for (int r = 0; r < pCamera->numViewedRooms; r++)
+        {
+            const cameraViewedRoomStruct& viewedRoom = pCamera->viewedRoomTable[r];
+            if (viewedRoom.viewedRoomIdx != later.room)
+                continue;
+            for (int m = 0; m < (int)viewedRoom.masks.size(); m++)
+            {
+                if (!isInMaskZones(&later, viewedRoom.masks[m]))
+                    continue;
+                if (s_logDrawFrame)
+                    printf("[DRAW]     mask %d (room %d) of still object %d clipped to %d,%d-%d,%d\n", m, later.room, k, left, top, right, bottom);
+                osystem_setClip(left, top, right, bottom);
+                osystem_drawMask(r, m);
+                osystem_clearClip();
+            }
+            break;
+        }
+    }
+}
+
 void drawBgOverlay(tObject* actorPtr)
 {
     char* data;
@@ -187,6 +255,8 @@ void drawBgOverlay(tObject* actorPtr)
                 }
             }
         }
+        if (g_gameId == AITD2 && isStillObject(*actorPtr))
+            drawLaterStillMasks(actorPtr, pCamera);
     }
 
     SetClip(0, 0, 319, 199);
@@ -664,6 +734,11 @@ void AllRedraw(int flagFlip)
             water = false;
         setWaterSurface(water, surface);
     }
+
+    s_drawPosition.fill(-1);
+    for (int i = 0; i < numDrawn; i++)
+        if (!(Index[i] & 0x8000) && Index[i] < NUM_MAX_OBJECT)
+            s_drawPosition[Index[i]] = i;
 
     for (int i = 0; i < NbAffObjets + NbAnim2D && i < (int)Index.size(); i++)
     {

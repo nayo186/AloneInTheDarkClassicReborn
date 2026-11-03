@@ -4,6 +4,16 @@ Alone in the Dark: Classic Reborn started on 2026-10-23 from [Alone in the Dark:
 
 This repository was published with a single starting commit, to keep it light: the early history carried large files that are no longer part of the project. Below are the changes of each release and, after them, the changes made in this fork before it was published, newest first, one line per change. The reasons behind larger removals are explained in `docs/DESCARTADO.md` and the fixes in `docs/baseline/BUGS.md`.
 
+## v1.2.0 (2026-11-03)
+
+*Alone in the Dark 2* can now be played through Grace's part: her own inventory, the car's trunk, and fixes to the pirate's story and the hall.
+
+- Alone in the Dark 2: the narrator of the pirate's story finishes each text (BUGS.md A34)
+- Alone in the Dark 2: Grace has her own inventory, apart from Carnby's (BUGS.md A34)
+- Alone in the Dark 2: Grace can get into the car's trunk (BUGS.md A34)
+- Alone in the Dark 2: the woman in purple waiting behind the hall doors no longer shows through the wall (BUGS.md A35)
+- Developers: `tools/disasmExe.py` disassembles AITD2.EXE from your own copy, and `docs/AITD2_EXE.md` lists what is known of the original engine
+
 ## v1.1.3 (2026-11-02)
 
 More fixes for *Alone in the Dark 2* found by players, and a safer exit from the game menu.

@@ -2484,6 +2484,7 @@ void processLife(int lifeNum, bool callFoundLife)
                     osystem_startFrame();
                     osystem_drawBackground();
                     osystem_stopFrame();
+                    updateNextSample();   // the queued sample follows, as while reading (BUGS.md A34)
                     osystem_flip(NULL);
 
                     time = evalChrono(&chrono);
@@ -2579,24 +2580,21 @@ void processLife(int lifeNum, bool callFoundLife)
             case LM_SET_INVENTORY:
             {
                 appendFormated("LM_SET_INVENTORY ");
-                //int inventoryIndex = *(s16*)(currentLifePtr);
+                // AITD2: each character has an inventory (Carnby 0, Grace 1).
+                // The objects of the other one are no more "found" (FOUND,
+                // 0x8000), those of this one are; it did nothing and Grace
+                // had Carnby's objects (BUGS.md A34)
+                const int inventoryIdx = *(s16*)(currentLifePtr);
                 currentLifePtr += 2;
-
-                /*          if(indeventoyIndex != currentInHand)
+                if (inventoryIdx != currentInventory && inventoryIdx >= 0 && inventoryIdx < NUM_MAX_INVENTORY)
                 {
-                if(currentInHand<2)
-                {
-                int i;
-
-                for(i=0;i<inventory[currentInHand];i++)
-                {
-                objectTable[inventoryTable[currentInHand][i]].flags2&=0x7FFF;
+                    for (int i = 0; i < numObjInInventoryTable[currentInventory]; i++)
+                        ListWorldObjets[inventoryTable[currentInventory][i]].foundFlag &= 0x7FFF;
+                    currentInventory = inventoryIdx;
+                    for (int i = 0; i < numObjInInventoryTable[currentInventory]; i++)
+                        ListWorldObjets[inventoryTable[currentInventory][i]].foundFlag |= 0x8000;
                 }
-
-                currentInHand = inventoryIndex
-                }
-                }*/
-                printf(LIFE_TAG "LM_SET_INVENTORY\n");
+                printf(LIFE_TAG "SET_INVENTORY %d\n", inventoryIdx);
                 break;
             }
             case LM_SET_GROUND:

@@ -1,6 +1,6 @@
 # Mapa del código
 
-Qué hay en cada carpeta y para qué sirve cada archivo de **Alone in the Dark: Classic Reborn**. Lo que se borró y por qué está en `docs/DESCARTADO.md`; los fallos y sus arreglos, en `docs/baseline/BUGS.md`. Las funciones públicas de cada archivo, una por una, están en `docs/DICCIONARIO.md` (generado con `tools/makeDictionary.py`). El orden de capas se comprueba con `tools/checkLayers.py`.
+Qué hay en cada carpeta y para qué sirve cada archivo de **Alone in the Dark: Classic Reborn**. Lo que se borró y por qué está en `docs/DESCARTADO.md`; los fallos y sus arreglos, en `docs/baseline/BUGS.md`. Las funciones públicas de cada archivo, una por una, están en `docs/DICCIONARIO.md` (generado con `tools/makeDictionary.py`). El orden de capas se comprueba con `tools/checkLayers.py`. Lo que se sabe del motor original de *Alone in the Dark 2* (rutinas y datos de `AITD2.EXE`) está en `docs/AITD2_EXE.md`; `tools/disasmExe.py` lo desensambla desde la copia de cada uno, fuera del repositorio.
 
 Actualizado el 2026-10-27, al terminar la limpieza (bloques A, B y C).
 

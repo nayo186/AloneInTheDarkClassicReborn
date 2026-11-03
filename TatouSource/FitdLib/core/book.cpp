@@ -430,6 +430,10 @@ int Lire(int index, int startx, int top, int endx, int bottom, int demoMode, int
             while (1)
             {
                 process_events();
+                // A sample queued by SAMPLE_THEN still follows the one playing:
+                // the narrator of AITD2's story said its second part only after
+                // the page, and the next picture's voice cut it (BUGS.md A34)
+                updateNextSample();
                 localKey = key;
                 localJoyD = JoyD;
                 localClick = Click;

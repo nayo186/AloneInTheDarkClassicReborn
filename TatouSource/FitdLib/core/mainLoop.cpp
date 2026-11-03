@@ -208,6 +208,7 @@ static std::array<unsigned int, NUM_MAX_OBJECT> s_endAnimFrame{};
 static std::array<unsigned int, NUM_MAX_OBJECT> s_endFrameFrame{};
 static std::array<unsigned int, NUM_MAX_OBJECT> s_touchFrame{};
 static std::array<unsigned int, NUM_MAX_OBJECT> s_endAnimShownFrame{};   // the frame its next animation began (A30)
+static std::array<s16, NUM_MAX_OBJECT> s_endedAnim{};            // the animation that ended at s_endAnimFrame
 static std::array<int, NUM_MAX_OBJECT> s_chainedAnim{};          // the animation its last one chains to, + 1 (0: none)
 static std::array<s16, NUM_MAX_OBJECT> s_touchedBy{};
 static std::array<unsigned int, NUM_MAX_OBJECT> s_scriptRunFrame{};
@@ -224,7 +225,10 @@ static void recordAITD2Events()
         if (actor.indexInWorld < 0)
             continue;
         if (actor.flagEndAnim)
+        {
             s_endAnimFrame[i] = s_frameNumber;
+            s_endedAnim[i] = actor.ANIM;
+        }
         if (actor.END_FRAME)
             s_endFrameFrame[i] = s_frameNumber;
         if (actor.COL_BY != -1)
@@ -259,6 +263,20 @@ bool aitd2EndAnimSeen(int actorIdx)
 {
     return actorIdx >= 0 && actorIdx < NUM_MAX_OBJECT
         && (s_endAnimFrame[actorIdx] > s_scriptSeesAfter || s_endAnimShownFrame[actorIdx] == s_frameNumber);
+}
+
+// The animation a script sees: the one that ended, in its first run after
+// that end, also when the next one began meanwhile; the original saw both in
+// the frame of the end. Grace waited forever by the car: her script (10
+// times a second, A17) waits for the trunk's animation 219 and its end, and
+// the trunk was already in 218, the one it chains to (BUGS.md A34)
+int aitd2AnimSeen(int actorIdx)
+{
+    if (actorIdx < 0 || actorIdx >= NUM_MAX_OBJECT)
+        return -1;
+    if (s_endAnimFrame[actorIdx] > s_scriptSeesAfter)
+        return s_endedAnim[actorIdx];
+    return ListObjets[actorIdx].ANIM;
 }
 
 bool aitd2EndFrameSeen(int actorIdx)

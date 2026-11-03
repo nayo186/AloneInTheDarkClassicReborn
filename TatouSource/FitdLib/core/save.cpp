@@ -494,6 +494,11 @@ int loadSave(int saveNumber)
 		}
 	}
 
+    // AITD2: whose inventory is in use is not in the save; Grace's has her own
+    // frame (TYPE_INVENTAIRE 2), Carnby's the others (BUGS.md A34)
+    if (g_gameId == AITD2)
+        currentInventory = (CVars[getCVarsIdx(TYPE_INVENTAIRE)] == 2) ? 1 : 0;
+
     ASSERT(sizeof(statusScreenAllowed) == 2);
     saveRead(&statusScreenAllowed,2,1,fHandle);
 

@@ -25,6 +25,9 @@ bool roomAssumedDark();
 // (BUGS.md A20)
 bool aitd2EndAnimSeen(int actorIdx);
 bool aitd2EndFrameSeen(int actorIdx);
+// The animation the running script sees: the one that ended since its last
+// run, even if the next one began (BUGS.md A34)
+int aitd2AnimSeen(int actorIdx);
 // Forgets those events of an object that starts a new animation (but those of
 // the last frame), or of a slot a new object takes (newObject: all; its
 // script then sees only what comes)
