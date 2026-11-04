@@ -4,6 +4,16 @@ Alone in the Dark: Classic Reborn started on 2026-10-23 from [Alone in the Dark:
 
 This repository was published with a single starting commit, to keep it light: the early history carried large files that are no longer part of the project. Below are the changes of each release and, after them, the changes made in this fork before it was published, newest first, one line per change. The reasons behind larger removals are explained in `docs/DESCARTADO.md` and the fixes in `docs/baseline/BUGS.md`.
 
+## v1.3.2 (2026-11-03)
+
+More fixes for *Alone in the Dark 2* on the ship: the barred trapdoor, the sleeping pirates, the cannon and the destroyed dormitory, and a repeated object in the inventory.
+
+- An object given again to a character who already has it no longer shows twice in the inventory, as Carnby's "Actions" after the irons; saves that have it twice are fixed when loaded (BUGS.md A50)
+- AITD2: Carnby no longer gets stuck by the barred trapdoor: its message shows once and he can walk away (BUGS.md A51)
+- AITD2: entering a room starts its time again for the character who enters: the sleeping pirates of the ship no longer wake as soon as Carnby comes in (BUGS.md A52)
+- AITD2: after the cannon shot the pirates' dormitory shows its destroyed pictures, as in the original (BUGS.md A53)
+- AITD2: the ship's cannon keeps the side it was turned to when the fuse is put in (BUGS.md A54)
+
 ## v1.3.1 (2026-11-03)
 
 More fixes for *Alone in the Dark 2*, in the kitchen, the ship and the irons, and a crash at a door after them.

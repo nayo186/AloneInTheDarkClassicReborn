@@ -169,23 +169,26 @@ void take(int objIdx)
     if (numObjInInventoryTable[currentInventory] >= INVENTORY_SIZE)
         return;
 
-    if (numObjInInventoryTable[currentInventory] == 0)
+    // Not twice in the list: freed from the irons, AITD2's script 724 gives
+    // Carnby his "Actions" again, and the inventory showed two (BUGS.md A50)
+    if (findObjectInInventory(objIdx) == -1)
     {
-        inventoryTable[currentInventory][0] = objIdx;
-    }
-    else
-    {
-        int i;
-
-        for (i = numObjInInventoryTable[currentInventory]; i > 0; i--)
+        if (numObjInInventoryTable[currentInventory] == 0)
         {
-            inventoryTable[currentInventory][i + 1] = inventoryTable[currentInventory][i];
+            inventoryTable[currentInventory][0] = objIdx;
+        }
+        else
+        {
+            for (int i = numObjInInventoryTable[currentInventory]; i > 0; i--)
+            {
+                inventoryTable[currentInventory][i + 1] = inventoryTable[currentInventory][i];
+            }
+
+            inventoryTable[currentInventory][1] = objIdx;
         }
 
-        inventoryTable[currentInventory][1] = objIdx;
+        numObjInInventoryTable[currentInventory]++;
     }
-
-    numObjInInventoryTable[currentInventory]++;
 
     action = 0x800;
 
@@ -686,10 +689,23 @@ sceZoneStruct* processActor2Sub(int x, int y, int z, roomDataStruct* pRoomData)
 
 }
 
+// AITD2: the stage zone that already gave its life to the object in each
+// slot, until the object leaves it. By the barred trapdoor (floor 11) the
+// zone's script only shows a message and gives Carnby back his own life,
+// still inside the zone: it started again every frame and he could not walk
+// away. Now it starts again only after he steps out (BUGS.md A51)
+struct StageZoneHeld
+{
+    int worldObject = -1;
+    int zone = -1;
+};
+static std::array<StageZoneHeld, NUM_MAX_OBJECT> s_stageZoneHeld;
+
 void GereDec()
 {
     bool onceMore = false;
     bool flagFloorChange = false;
+    bool inStageZone = false;
     int zoneIdx = 0;
 
     do
@@ -742,7 +758,17 @@ void GereDec()
                             ChangeSalle(NewNumSalle);
 
                             // Hack: this wasn't in the original game, but is required here, or else we would use the current camera index in the new room and potentially go out of bound
+                            // It creates the objects of the new room, and creating
+                            // one makes it the processed object: the rest of this
+                            // zone (its room chrono) went to that object, and Carnby
+                            // kept counting from the room he left. The sleeping
+                            // pirates of the ship (floor 11), who wake after 30 s of
+                            // him in their room, woke as he came in (BUGS.md A52)
+                            tObject* const processedActor = currentProcessedActorPtr;
+                            const int processedActorIdx = currentProcessedActorIdx;
                             InitView();
+                            currentProcessedActorPtr = processedActor;
+                            currentProcessedActorIdx = processedActorIdx;
                         }
                     }
                     else
@@ -778,6 +804,17 @@ void GereDec()
                     if (idxW < 0 || idxW >= (int)ListWorldObjets.size())
                         break;
 
+                    if (g_gameId == AITD2)
+                    {
+                        inStageZone = true;
+                        const StageZoneHeld& held = s_stageZoneHeld[currentProcessedActorIdx];
+                        if (held.worldObject == idxW && held.zone == (int)pCurrentZone->parameter)
+                        {
+                            currentProcessedActorPtr->HARD_DEC = (short)pCurrentZone->parameter;
+                            break;
+                        }
+                    }
+
                     int life = ListWorldObjets[idxW].floorLife;
 
                     // No climb: AITD2.EXE goes on with the other zones, which
@@ -793,6 +830,8 @@ void GereDec()
                     if (life != currentProcessedActorPtr->life)
                         printf(MAIN_TAG "Stage zone %d: object %d life %d -> %d\n", (int)pCurrentZone->parameter, idxW, currentProcessedActorPtr->life, life);
                     currentProcessedActorPtr->life = life;
+                    if (g_gameId == AITD2)
+                        s_stageZoneHeld[currentProcessedActorIdx] = { idxW, (int)pCurrentZone->parameter };
 
                     currentProcessedActorPtr->HARD_DEC = (short)pCurrentZone->parameter;
                     flagFloorChange = true;
@@ -807,6 +846,9 @@ void GereDec()
                 break;
         }
     } while (onceMore);
+
+    if (!inStageZone)
+        s_stageZoneHeld[currentProcessedActorIdx] = StageZoneHeld();
 }
 
 int checkLineProjectionWithActors(int actorIdx, int X, int Y, int Z, int beta, int room, int param)

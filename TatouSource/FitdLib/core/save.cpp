@@ -209,6 +209,23 @@ static const int kThumbnailWidth = 80;
 static const int kThumbnailHeight = 50;
 static const int kThumbnailPadding = 32;
 
+// An object listed twice in an inventory is kept once: saves made before
+// take() checked it have Carnby's "Actions" twice after the irons (BUGS.md A50)
+static void removeRepeatedObjects(int inventoryId)
+{
+    int kept = 0;
+    for (int i = 0; i < numObjInInventoryTable[inventoryId]; i++)
+    {
+        const s16 objIdx = inventoryTable[inventoryId][i];
+        bool repeated = false;
+        for (int j = 0; j < kept; j++)
+            repeated |= (inventoryTable[inventoryId][j] == objIdx);
+        if (!repeated)
+            inventoryTable[inventoryId][kept++] = objIdx;
+    }
+    numObjInInventoryTable[inventoryId] = kept;
+}
+
 static u32 swapBytes(u32 value)
 {
     return ((value & 0xFF) << 24) | ((value & 0xFF00) << 8) | ((value & 0xFF0000) >> 8) | ((value & 0xFF000000) >> 24);
@@ -472,6 +489,7 @@ int loadSave(int saveNumber)
 			fseek(fHandle, (kAITD2InventorySize - INVENTORY_SIZE) * 2, SEEK_CUR);
 			if (numObjInInventoryTable[inventoryId] > INVENTORY_SIZE)
 				numObjInInventoryTable[inventoryId] = INVENTORY_SIZE;
+			removeRepeatedObjects(inventoryId);
 		}
 	}
 	else for(int inventoryId=0; inventoryId<s_layout.inventories; inventoryId++)

@@ -42,6 +42,8 @@ int findTouchingObject(int actorIdx);
 int checkLineProjectionWithActors( int actorIdx, int X, int Y, int Z, int beta, int room, int param );
 // Counts the fixed collision boxes of the room that touch zvPtr (fills hardColTable)
 int AsmCheckListCol(ZVStruct* zvPtr, roomDataStruct* pRoomData);
+// Place of a world object in the current inventory, or -1
+int findObjectInInventory(int objIdx);
 // Takes an object out of the inventory
 void DeleteInventoryObjet(int objIdx);
 // Turns a step of animation (animMoveX/Z) by the object's angles

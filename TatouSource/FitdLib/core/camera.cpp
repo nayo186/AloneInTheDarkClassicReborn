@@ -36,6 +36,14 @@ extern void playMenuSound(const char* soundName);
 #include <fstream>
 
 
+// AITD2: the ship's dormitory after the cannon shot (CVar DORTOIR, set by
+// its script). AITD2.EXE then shows four pictures of floor 11 from ITD_RESS
+// and takes that floor's masks from NASK11 (BUGS.md A53)
+static bool aitd2DormitoryDestroyed()
+{
+    return g_gameId == AITD2 && g_currentFloor == 11 && CVars[getCVarsIdx(DORTOIR)] != 0;
+}
+
 void loadCamera(int cameraIdx)
 {
     char name[16];
@@ -79,12 +87,25 @@ void loadCamera(int cameraIdx)
             }
             }
         }
+    }
 
-        if (useSpecial != -1)
+    // As AITD2.EXE (6699): pictures 1, 11, 12 and 13 of the destroyed dormitory
+    if (aitd2DormitoryDestroyed())
+    {
+        switch (cameraIdx)
         {
-            strcpy(name, "ITD_RESS");
-            cameraIdx = useSpecial;
+        case 1: useSpecial = 5; break;
+        case 11: useSpecial = 6; break;
+        case 12: useSpecial = 7; break;
+        case 13: useSpecial = 8; break;
+        default: break;
         }
+    }
+
+    if (useSpecial != -1)
+    {
+        strcpy(name, "ITD_RESS");
+        cameraIdx = useSpecial;
     }
 
     if (!LoadPak(name, cameraIdx, aux))
@@ -148,7 +169,7 @@ void loadMask(int cameraIdx)
 
     char name[16];
 
-    sprintf_s(name, sizeof(name), "MASK%02d", g_currentFloor);
+    sprintf_s(name, sizeof(name), aitd2DormitoryDestroyed() ? "NASK%02d" : "MASK%02d", g_currentFloor);
 
     if (g_MaskPtr)
     {
@@ -164,20 +185,41 @@ void loadMask(int cameraIdx)
         return;
     }
 
+    // Only what the entry holds: the destroyed dormitory's NASK11 has fewer
+    // masks than the floor's camera data, and reading the missing ones went
+    // out of the file and crashed (BUGS.md A53). The tables of offsets tell
+    // how many there are: the first one starts right after its table
+    const int maskSize = getPakSize(name, cameraIdx);
+    const unsigned char* const maskEnd = g_MaskPtr + (maskSize > 0 ? maskSize : 0);
+    auto inEntry = [&](const unsigned char* p, int bytes) { return p >= g_MaskPtr && p + bytes <= maskEnd; };
+    auto tableCount = [&](unsigned char* table) { return inEntry(table, 4) ? (int)(READ_LE_U32(table) / 4) : 0; };
+
     g_maskBuffers.clear();
     g_maskBuffers.resize(cameraDataTable[NumCamera]->numViewedRooms);
+    const int roomsInEntry = tableCount(g_MaskPtr);
     for (int i = 0; i < cameraDataTable[NumCamera]->numViewedRooms; i++)
     {
         cameraViewedRoomStruct* pRoomView = &cameraDataTable[NumCamera]->viewedRoomTable[i];
-        unsigned char* pViewedRoomMask = g_MaskPtr + READ_LE_U32(g_MaskPtr + i * 4);
+        unsigned char* pViewedRoomMask = (i < roomsInEntry) ? g_MaskPtr + READ_LE_U32(g_MaskPtr + i * 4) : nullptr;
+        const int masksInEntry = pViewedRoomMask ? tableCount(pViewedRoomMask) : 0;
 
         g_maskBuffers[i].reserve(pRoomView->masks.size());
-        for (int j = 0; j < pRoomView->masks.size(); j++)
+        for (int j = 0; j < (int)pRoomView->masks.size(); j++)
         {
+            unsigned char* pMaskData = (j < masksInEntry && inEntry(pViewedRoomMask + j * 4, 4)) ? pViewedRoomMask + READ_LE_U32(pViewedRoomMask + j * 4) : nullptr;
             sMaskStruct* pDestMask = &g_maskBuffers[i].emplace_back();
-            unsigned char* pMaskData = pViewedRoomMask + READ_LE_U32(pViewedRoomMask + j * 4);
 
             pDestMask->mask.fill(0);
+
+            // A mask the entry does not have is made empty, so the one of an
+            // earlier camera with that number is not drawn
+            if (!pMaskData || !inEntry(pMaskData, 12))
+            {
+                pDestMask->x1 = pDestMask->y1 = pDestMask->x2 = pDestMask->y2 = 0;
+                pDestMask->deltaX = pDestMask->deltaY = 1;
+                osystem_createMask(pDestMask->mask, i, j, (int)pRoomView->viewedRoomIdx, 0, 0, 0, 0);
+                continue;
+            }
 
             pDestMask->x1 = READ_LE_U16(pMaskData);
             pMaskData += 2;
@@ -195,10 +237,12 @@ void loadMask(int cameraIdx)
             assert(pDestMask->deltaX == pDestMask->x2 - pDestMask->x1 + 1);
             assert(pDestMask->deltaY == pDestMask->y2 - pDestMask->y1 + 1);
 
-            for (int k = 0; k < pDestMask->deltaY; k++)
+            for (int k = 0; k < pDestMask->deltaY && inEntry(pMaskData, 2); k++)
             {
                 u16 uNumEntryForLine = READ_LE_U16(pMaskData);
                 pMaskData += 2;
+                if (!inEntry(pMaskData, uNumEntryForLine * 2))
+                    break;
 
                 unsigned char* pSourceBuffer = (unsigned char*)aux;
 

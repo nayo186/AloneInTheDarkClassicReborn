@@ -1123,6 +1123,16 @@ void processLife(int lifeNum, bool callFoundLife)
                     }
                     else
                     {
+                        // A still object keeps the pose of its last animation:
+                        // the ship's cannon, turned with an animation, went back
+                        // to its first side when the fuse gave it a new body,
+                        // which started in its rest pose (BUGS.md A53)
+                        if (g_gameId == AITD2 && currentProcessedActorPtr->ANIM != -1 && lifeTempVar1 != -1)
+                        {
+                            SetAnimObjet(currentProcessedActorPtr->frame,
+                                HQR_Get(HQ_Anims, currentProcessedActorPtr->ANIM),
+                                HQR_Get(HQ_Bodys, lifeTempVar1));
+                        }
                         FlagInitView = 1;
                     }
                 }
