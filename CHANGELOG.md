@@ -4,6 +4,16 @@ Alone in the Dark: Classic Reborn started on 2026-10-23 from [Alone in the Dark:
 
 This repository was published with a single starting commit, to keep it light: the early history carried large files that are no longer part of the project. Below are the changes of each release and, after them, the changes made in this fork before it was published, newest first, one line per change. The reasons behind larger removals are explained in `docs/DESCARTADO.md` and the fixes in `docs/baseline/BUGS.md`.
 
+## v1.3.1 (2026-11-03)
+
+More fixes for *Alone in the Dark 2*, in the kitchen, the ship and the irons, and a crash at a door after them.
+
+- Alone in the Dark 2: the kitchen cupboard no longer opens and closes over and over when Grace stands in front of it (BUGS.md A45)
+- The text of the inventory no longer stays over the "You find" window or over a sequence started from it (BUGS.md A46)
+- Alone in the Dark 2: the kitchen's dumbwaiter door opens when Grace rings the bell (BUGS.md A47)
+- Alone in the Dark 2: Carnby can take the key of the irons after a few pulls, as in the original (BUGS.md A48)
+- No crash when an object without an animation changes its body, as at a door after the irons (BUGS.md A49)
+
 ## v1.3.0 (2026-11-03)
 
 Two new options for every game: a quick turn and CRT scanlines. Also more fixes for *Alone in the Dark 2*.

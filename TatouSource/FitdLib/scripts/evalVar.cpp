@@ -748,6 +748,12 @@ int evalVar2(const char* name)
                     }
                 case 0x6:
                     {
+                        // An animation a script has just asked for with
+                        // ANIM_RESET has not ended: the kitchen's dumbwaiter
+                        // door, asked to open, saw its closing ended in the
+                        // same pass and was stopped before it moved (BUGS.md A47)
+                        if (g_gameId == AITD2 && actorPtr->newAnim >= 0 && (actorPtr->newAnimType & ANIM_RESET))
+                            return 0;
                         if (g_gameId == AITD2 && aitd2EndAnimSeen(actorIdx))
                             return 1;
                         return(actorPtr->flagEndAnim);
@@ -830,8 +836,11 @@ int evalVar2(const char* name)
                         int colBy = actorPtr->COL_BY;
                         // Pushed or pushing, the objects only overlap in
                         // frames with a move; one that touches counts too
-                        // (BUGS.md A20)
-                        if(colBy == -1 && g_gameId == AITD2)
+                        // (BUGS.md A20). Only for an object that can be
+                        // pushed: the kitchen cupboard, touched by Grace
+                        // standing in front of it, opened again and again
+                        // (BUGS.md A45)
+                        if(colBy == -1 && g_gameId == AITD2 && (actorPtr->objectType & AF_MOVABLE))
                             colBy = findTouchingObject(actorIdx);
                         if(colBy == -1)
                             return(-1);

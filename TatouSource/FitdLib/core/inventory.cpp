@@ -611,6 +611,11 @@ void processInventory(void)
         executeFoundLife(selectedObjectIdx);
     }
 
+    // The inventory's text goes with it: it lives in its own layer, and a
+    // scene the game did not draw again kept it (the captain's staff laid on
+    // the floor, BUGS.md A46)
+    uiLayer.fill(0);
+
     shakingAmplitude = savedShakingAmplitude;
     shakeVar1 = savedShakeVar1;
     updateShaking();
@@ -696,7 +701,11 @@ void FoundObjet(int objIdx, int param)
 
     objPtr = &ListWorldObjets[objIdx];
 
-    if (param != 0 && (objPtr->foundFlag & 0xC000))
+    // Not offered again once taken; AITD1 neither once put down (0x4000).
+    // AITD2 only looks at the inventory (AITD2.EXE, 6E1E): the key of the
+    // irons Grace left by Carnby was never offered to him (BUGS.md A48)
+    const int notOffered = (g_gameId == AITD2) ? 0x8000 : 0xC000;
+    if (param != 0 && (objPtr->foundFlag & notOffered))
     {
         return;
     }

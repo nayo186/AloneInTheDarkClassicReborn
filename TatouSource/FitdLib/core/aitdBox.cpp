@@ -217,6 +217,13 @@ void AffBigCadre(int x, int y, int width, int height)
     right = x + halfWidth;
     bottom = y + halfHeight;
 
+    // The frame covers the text drawn under it, as on the original's one
+    // screen: the letters live in their own layer (uiLayer), and the
+    // inventory's showed through the frame of the "You find" window (BUGS.md A46)
+    for (int ty = (top < 0 ? 0 : top); ty <= (bottom > 199 ? 199 : bottom); ty++)
+        for (int tx = (left < 0 ? 0 : left); tx <= (right > 319 ? 319 : right); tx++)
+            uiLayer[ty * 320 + tx] = 0;
+
     if (g_gameId >= AITD2)
     {
         affCadreAITD2(left, top, right, bottom);

@@ -18,6 +18,12 @@ std::vector<sFrame> BufferAnim;
 
 int SetAnimObjet(int frame, sAnimation* pAnimation, sBody* body)
 {
+    // No animation (-1) or no body: nothing to pose. BODY_RESET on an
+    // animated object without an animation crashed AITD2 at a door after
+    // the irons (BUGS.md A49)
+    if (!pAnimation || !body)
+        return(0);
+
     if(frame >= pAnimation->m_numFrames)
     {
         return(0);

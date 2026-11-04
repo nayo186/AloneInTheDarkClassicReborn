@@ -207,6 +207,11 @@ void playSequence(int sequenceIdx, int fadeStart, int fadeOutVar)
     g_menuActive = true;
     bool skipped = false;
 
+    // The text on screen belongs to the scene, not to the sequence: a use
+    // of the captain's staff plays one from the inventory, and its list
+    // stayed over the sequence (BUGS.md A46)
+    uiLayer.fill(0);
+
     while(!quitPlayback)
     {
         int currentFrameId = 0;
