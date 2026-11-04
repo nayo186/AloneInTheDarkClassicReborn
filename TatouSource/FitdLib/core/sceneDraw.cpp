@@ -154,6 +154,47 @@ static bool pointInOtherRoomZone(const tObject* actorPtr, const rectTestStruct& 
     return x >= rect.zoneX1 && x <= rect.zoneX2 && z >= rect.zoneZ1 && z <= rect.zoneZ2;
 }
 
+// AITD2, an object of another room than the camera's: when a mask of its room
+// that applies to it (drawBgOverlay) covers the middle of where it is drawn,
+// it is behind that wall and is not drawn at all. The masks were made for the
+// objects' usual places: the cannon of floor 11, turned after firing (A54),
+// went out of its wall's mask by a few columns and showed by the bed post of
+// the cabin. An object seen through a door has its middle in the opening and
+// is drawn as before (BUGS.md A55)
+static bool hiddenBehindItsRoomWall(const tObject* actorPtr, int x, int y, int z, int alpha, int beta, int gamma, sBody* bodyPtr)
+{
+    if (g_gameId != AITD2 || actorPtr->room == currentRoom)
+        return false;
+    if (currentCameraTargetActor >= 0 && actorPtr == &ListObjets[currentCameraTargetActor])
+        return false;
+
+    const cameraDataStruct* pCamera = cameraDataTable[NumCamera];
+    for (int r = 0; r < pCamera->numViewedRooms; r++)
+    {
+        const cameraViewedRoomStruct& viewedRoom = pCamera->viewedRoomTable[r];
+        if (viewedRoom.viewedRoomIdx != actorPtr->room)
+            continue;
+
+        computeDrawnScreenBox(x, y, z, alpha, beta, gamma, bodyPtr);
+        if (BBox3D1 > BBox3D3 || BBox3D2 > BBox3D4)
+            return false;
+        const int middleX = (BBox3D1 + BBox3D3) / 2;
+        const int middleY = (BBox3D2 + BBox3D4) / 2;
+
+        for (int m = 0; m < (int)viewedRoom.masks.size(); m++)
+        {
+            const cameraMaskStruct& mask = viewedRoom.masks[m];
+            bool applies = isInMaskZones(actorPtr, mask);
+            for (int j = 0; j < mask.numTestRect && !applies; j++)
+                applies = pointInOtherRoomZone(actorPtr, mask.rectTests[j]);
+            if (applies && maskCoversPixel(r, m, middleX, middleY))
+                return true;
+        }
+        return false;
+    }
+    return false;
+}
+
 void drawBgOverlay(tObject* actorPtr)
 {
     char* data;
@@ -810,6 +851,16 @@ void AllRedraw(int flagFlip)
                         ObjectSize drawSize;
                         if (g_onObjectDraw && !g_onObjectDraw(currentDrawActor, &drawX, &drawY, &drawZ, &drawAlpha, &drawBeta, &drawGamma, &drawSize))
                             continue;
+
+                        if (hiddenBehindItsRoomWall(actorPtr, drawX, drawY, drawZ, drawAlpha, drawBeta, drawGamma, bodyPtr))
+                        {
+                            if (s_logDrawFrame)
+                                printf("[DRAW]   #%d actor %d world %d room %d hidden behind a wall of its room\n", i, currentDrawActor,
+                                    actorPtr->indexInWorld, actorPtr->room);
+                            actorPtr->screenXMin = actorPtr->screenYMin = -1;
+                            actorPtr->screenXMax = actorPtr->screenYMax = -1;
+                            continue;
+                        }
 
                         if (HQ_Load)
                         {

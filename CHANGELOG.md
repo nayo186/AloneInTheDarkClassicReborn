@@ -4,6 +4,12 @@ Alone in the Dark: Classic Reborn started on 2026-10-23 from [Alone in the Dark:
 
 This repository was published with a single starting commit, to keep it light: the early history carried large files that are no longer part of the project. Below are the changes of each release and, after them, the changes made in this fork before it was published, newest first, one line per change. The reasons behind larger removals are explained in `docs/DESCARTADO.md` and the fixes in `docs/baseline/BUGS.md`.
 
+## v1.3.3 (2026-11-04)
+
+All three games are now playable from start to end: *Alone in the Dark*, *Jack in the Dark* and *Alone in the Dark 2*. One last fix for the ship of *Alone in the Dark 2*.
+
+- AITD2: an object of the room behind a wall is no longer drawn through it: the cannon, turned after the shot, showed by the bed post of a cabin (BUGS.md A55)
+
 ## v1.3.2 (2026-11-03)
 
 More fixes for *Alone in the Dark 2* on the ship: the barred trapdoor, the sleeping pirates, the cannon and the destroyed dormitory, and a repeated object in the inventory.

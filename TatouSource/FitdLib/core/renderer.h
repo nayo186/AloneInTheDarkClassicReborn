@@ -84,5 +84,7 @@ void setCurrentBodyNum(int bodyNum, sBody* pBody, const std::string& hqrName);
 
 // Projects a model and computes the screen rectangle it covers (BBox3D)
 void computeScreenBox(int x, int y, int z, int alpha, int beta, int gamma, sBody* bodyPtr);
+// The screen rectangle (BBox3D) a model will cover where it is drawn, animated or not, without drawing it
+void computeDrawnScreenBox(int x, int y, int z, int alpha, int beta, int gamma, sBody* bodyPtr);
 
 #endif

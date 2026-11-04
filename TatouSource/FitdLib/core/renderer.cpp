@@ -1360,3 +1360,10 @@ void computeScreenBox(int x, int y, int z, int alpha, int beta, int gamma, sBody
         AnimNuage(x,y,z,alpha,beta,gamma, bodyPtr);
     }
 }
+
+void computeDrawnScreenBox(int x, int y, int z, int alpha, int beta, int gamma, sBody* bodyPtr)
+{
+    computeScreenBox(x, y, z, alpha, beta, gamma, bodyPtr);
+    if (!(modelFlags & INFO_ANIM))
+        RotateNuage(x, y, z, alpha, beta, gamma, bodyPtr);
+}

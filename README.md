@@ -4,7 +4,7 @@ Play the original **Alone in the Dark** (1992), **Jack in the Dark** and **Alone
 
 **[⬇ Download the latest version](https://github.com/nayo186/AloneInTheDarkClassicReborn/releases/latest)** for Windows or Linux: unpack it, run `Launcher.exe` (`Launcher` on Linux) and choose your GOG or Steam copy of the game. Nothing else to install.
 
-**New in 1.1.0: Alone in the Dark 2 is playable.** It is new, so please [report any problem](#reporting-a-problem) you find.
+**All three games are playable from start to end:** Alone in the Dark, Jack in the Dark and Alone in the Dark 2. If you find a problem, please [report it](#reporting-a-problem).
 
 Classic Reborn is a C++17 source port of the Infogrames engine, built on a decompilation of the original DOS game. It is a fork of [Alone in the Dark: Re-Haunted](https://github.com/spacefarergames/AloneInTheDarkReHaunted), itself based on [FITD (Free in the Dark)](https://github.com/yaz0r/FITD) by yaz0r. Its goal is the 1992 game as it was meant to be seen, without its defects: the remaster's HD mode was removed and every addition is optional.
 
@@ -68,8 +68,8 @@ It is not a static recompilation: a static recompilation translates the machine 
 | Game | State |
 | --- | --- |
 | Alone in the Dark (1992, CD version) | Playable from start to end |
-| Jack in the Dark (1993) | Playable |
-| Alone in the Dark 2 (1993, CD version) | Playable, new in 1.1.0: please [report any problem](#reporting-a-problem) |
+| Jack in the Dark (1993) | Playable from start to end |
+| Alone in the Dark 2 (1993, CD version) | Playable from start to end |
 | Alone in the Dark 3 | Not yet (the engine code inherited from FITD is there; the launcher shows it greyed out) |
 
 ## What it adds

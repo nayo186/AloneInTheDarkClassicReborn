@@ -162,6 +162,16 @@ struct sMaskStruct
 
 std::vector<std::vector<sMaskStruct>> g_maskBuffers;
 
+bool maskCoversPixel(int viewedRoom, int maskIdx, int x, int y)
+{
+    if (viewedRoom < 0 || viewedRoom >= (int)g_maskBuffers.size())
+        return false;
+    const std::vector<sMaskStruct>& masks = g_maskBuffers[viewedRoom];
+    if (maskIdx < 0 || maskIdx >= (int)masks.size() || x < 0 || x > 319 || y < 0 || y > 199)
+        return false;
+    return masks[maskIdx].mask[x + y * 320] != 0;
+}
+
 void loadMask(int cameraIdx)
 {
     if (g_gameId == TIMEGATE)

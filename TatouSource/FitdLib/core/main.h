@@ -171,6 +171,8 @@ int isInViewList(int value);
 void loadCamera(int cameraIdx);
 // Loads the foreground masks of a camera (Jack and later: MASKnn.PAK)
 void loadMask(int cameraIdx);
+// Jack and later: whether mask maskIdx of the camera's viewed room viewedRoom (its place in the camera's list) covers screen pixel (x, y)
+bool maskCoversPixel(int viewedRoom, int maskIdx, int x, int y);
 // Builds the foreground masks of the current camera (AITD1: polygons of the camera data)
 void createAITD1Mask();
 // Builds the list of rooms seen from the current camera
