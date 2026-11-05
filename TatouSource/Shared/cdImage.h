@@ -45,16 +45,22 @@ public:
         if (!file)
             return false;
         unsigned char descriptor[kDataSize];
-        // Raw sectors first (sync and header before the data), then plain ones
-        m_sectorSize = 2352;
-        m_dataOffset = 16;
-        if (!readSector(file, 16, descriptor) || memcmp(descriptor + 1, "CD001", 5) != 0)
+        // Raw sectors first (sync and header before the data: 16 bytes in
+        // MODE1, 24 in MODE2), then plain ones
+        bool found = false;
+        static const int kLayouts[3][2] = { { 2352, 16 }, { 2352, 24 }, { kDataSize, 0 } };
+        for (const auto& layout : kLayouts)
         {
-            m_sectorSize = kDataSize;
-            m_dataOffset = 0;
-            if (!readSector(file, 16, descriptor) || memcmp(descriptor + 1, "CD001", 5) != 0)
-                return false;
+            m_sectorSize = layout[0];
+            m_dataOffset = layout[1];
+            if (readSector(file, 16, descriptor) && memcmp(descriptor + 1, "CD001", 5) == 0)
+            {
+                found = true;
+                break;
+            }
         }
+        if (!found)
+            return false;
         file.clear();
         file.seekg(0, std::ios::end);
         const long long sectors = (long long)file.tellg() / m_sectorSize;

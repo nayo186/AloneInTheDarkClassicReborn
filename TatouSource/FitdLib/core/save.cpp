@@ -11,6 +11,8 @@
 #include "consoleLog.h"
 #include "zlib.h"
 #include <filesystem>
+#include <algorithm>
+#include <ctime>
 #include "gameFolder.h"
 
 std::string saveFilePath(int slot, const char* extension)
@@ -151,12 +153,33 @@ struct SaveLayout
     int inventories;     // AITD1 has one; the engine writes NUM_MAX_INVENTORY
     int memoTicksSize;   // 2 (original) or 4 bytes
     bool stageFirst;     // objects: the original saves the floor before the room
-    bool aitd2;          // AITD2's original layout
+    bool aitd2;          // AITD2's original layout (AITD3's builds on it)
+    bool aitd3;          // AITD3's original layout
 };
-static SaveLayout s_layout = { NUM_MAX_INVENTORY, 4, false, false };
-static const SaveLayout kOriginalLayout = { 1, 2, true, false };
-static const SaveLayout kOriginalAITD2Layout = { NUM_MAX_INVENTORY, 2, true, true };
-static const SaveLayout kEngineLayout = { NUM_MAX_INVENTORY, 4, false, false };
+static SaveLayout s_layout = { NUM_MAX_INVENTORY, 4, false, false, false };
+static const SaveLayout kOriginalLayout = { 1, 2, true, false, false };
+static const SaveLayout kOriginalAITD2Layout = { NUM_MAX_INVENTORY, 2, true, true, false };
+static const SaveLayout kOriginalAITD3Layout = { NUM_MAX_INVENTORY, 2, true, true, true };
+static const SaveLayout kEngineLayout = { NUM_MAX_INVENTORY, 4, false, false, false };
+
+// Objects per inventory in AITD1's original and in the engine's layout
+static const int kSmallInventorySize = 30;
+
+// AITD3's original (BUGS.md T11), read from its table of saved values
+// (AITD3.EXE, ds:0x94) and checked on the CD's own saves: AITD2's layout,
+// but the data starts with the difficulty (3 values), the world objects come
+// in two lists (the original's two EMS blocks, the first of 351) each with its
+// count and no room left over, the data ends with blocks the engine does not
+// have (a mark and a box for each object, the palette rotation: kept as read,
+// zeros in a new game) and each object has one more value at its end
+static const int kAITD3FirstWorldList = 351;
+static const size_t kAITD3DataEndSize = 8906;
+static std::vector<u8> s_aitd3DataEnd;
+
+void forgetSaveExtras()
+{
+    s_aitd3DataEnd.clear();
+}
 
 // AITD2's original: every byte of the world and of the variables is xored
 // with 0x35; room for 400 world objects (27 values each, the last one MARK);
@@ -316,19 +339,20 @@ int loadSave(int saveNumber)
         const long dataSize = (long)swapBytes(offsets[3]) - (long)swapBytes(offsets[2]);
         const long withoutInventories = 12 + 300 * 52 + (long)CVars.size() * 2 + 20;
         const long objectsSize = fileSize - (long)swapBytes(offsets[4]);
-        s_layout.inventories = (dataSize - withoutInventories == (4 + INVENTORY_SIZE * 2)) ? 1 : NUM_MAX_INVENTORY;
+        s_layout.inventories = (dataSize - withoutInventories == (4 + kSmallInventorySize * 2)) ? 1 : NUM_MAX_INVENTORY;
         s_layout.memoTicksSize = (objectsSize == NUM_MAX_OBJECT * 160) ? 2 : 4;
         s_layout.stageFirst = (s_layout.memoTicksSize == 2);
         printf(MAIN_TAG "Save %d: %s layout (%d inventory, %d-byte times)\n", saveNumber,
             s_layout.inventories == 1 ? "original (GOG)" : "older engine", s_layout.inventories, s_layout.memoTicksSize);
     }
-    // AITD2's original starts with the picture (at 20) and the palette after it
-    else if (g_gameId == AITD2)
+    // AITD2's and AITD3's originals start with the picture (at 20) and the
+    // palette after it
+    else if (g_gameId == AITD2 || g_gameId == AITD3)
     {
         u32 offsets[2] = {};
         saveRead(offsets, 4, 2, fHandle);
         if (swapBytes(offsets[0]) == 20 && swapBytes(offsets[1]) == kAITD2PaletteOffset)
-            s_layout = kOriginalAITD2Layout;
+            s_layout = (g_gameId == AITD3) ? kOriginalAITD3Layout : kOriginalAITD2Layout;
         printf(MAIN_TAG "Save %d: %s layout\n", saveNumber, s_layout.aitd2 ? "original (GOG)" : "older engine");
     }
 
@@ -344,6 +368,9 @@ int loadSave(int saveNumber)
 
     fseek(fHandle,var28,SEEK_SET);
     s_cipher = s_layout.aitd2 ? kAITD2Cipher : 0;
+
+    if (s_layout.aitd3)
+        saveRead(aitd3Difficulty, 2, 3, fHandle);
 
     ASSERT(sizeof(currentRoom) == 2);
     saveRead(&currentRoom,2,1,fHandle);
@@ -370,7 +397,18 @@ int loadSave(int saveNumber)
         ListWorldObjets.resize(maxObjects);
     }
 
-    for(i=0;i<maxObjects;i++)
+    // AITD3's original: the counts of its two lists of world objects
+    int worldObjectsSaved = maxObjects;
+    if (s_layout.aitd3)
+    {
+        s16 lists[2] = {};
+        saveRead(lists, 2, 2, fHandle);
+        worldObjectsSaved = lists[0] + lists[1];
+        if (worldObjectsSaved > (int)ListWorldObjets.size())
+            ListWorldObjets.resize(worldObjectsSaved);
+    }
+
+    for(i=0;i<worldObjectsSaved;i++)
     {
         ASSERT(sizeof(ListWorldObjets[i].objIndex) == 2);
         saveRead(&ListWorldObjets[i].objIndex,2,1,fHandle);
@@ -453,7 +491,7 @@ int loadSave(int saveNumber)
         if (s_layout.aitd2)
             saveRead(&ListWorldObjets[i].mark,2,1,fHandle);
     }
-    if (s_layout.aitd2)
+    if (s_layout.aitd2 && !s_layout.aitd3)
         fseek(fHandle, (kAITD2WorldSlots - maxObjects) * kAITD2WorldObjectSize, SEEK_CUR);
 
     if(g_gameId == AITD1)
@@ -483,12 +521,12 @@ int loadSave(int saveNumber)
 	{
 		saveRead(inHandTable, 2, NUM_MAX_INVENTORY, fHandle);
 		saveRead(numObjInInventoryTable, 2, NUM_MAX_INVENTORY, fHandle);
+		static_assert(INVENTORY_SIZE == kAITD2InventorySize, "the table holds a whole inventory of the original");
 		for(int inventoryId=0; inventoryId<NUM_MAX_INVENTORY; inventoryId++)
 		{
-			saveRead(inventoryTable[inventoryId], 2, INVENTORY_SIZE, fHandle);
-			fseek(fHandle, (kAITD2InventorySize - INVENTORY_SIZE) * 2, SEEK_CUR);
-			if (numObjInInventoryTable[inventoryId] > INVENTORY_SIZE)
-				numObjInInventoryTable[inventoryId] = INVENTORY_SIZE;
+			saveRead(inventoryTable[inventoryId], 2, kAITD2InventorySize, fHandle);
+			if (numObjInInventoryTable[inventoryId] > inventoryTableSize())
+				numObjInInventoryTable[inventoryId] = inventoryTableSize();
 			removeRepeatedObjects(inventoryId);
 		}
 	}
@@ -500,16 +538,11 @@ int loadSave(int saveNumber)
 		ASSERT(sizeof(numObjInInventoryTable[inventoryId]) == 2);
 		saveRead(&numObjInInventoryTable[inventoryId],2,1,fHandle);
 
-		if(g_gameId == AITD1)
-		{
-			ASSERT(INVENTORY_SIZE == 30);
-		}
-
-		for(i=0;i<INVENTORY_SIZE;i++)
-		{
-			ASSERT(sizeof(inventoryTable[inventoryId][i]) == 2);
-			saveRead(&inventoryTable[inventoryId][i],2,1,fHandle);
-		}
+		// AITD1's original and the engine's layout keep 30 objects
+		std::fill(std::begin(inventoryTable[inventoryId]), std::end(inventoryTable[inventoryId]), (s16)0);
+		saveRead(inventoryTable[inventoryId], 2, kSmallInventorySize, fHandle);
+		if (numObjInInventoryTable[inventoryId] > kSmallInventorySize)
+			numObjInInventoryTable[inventoryId] = kSmallInventorySize;
 	}
 
     ASSERT(sizeof(statusScreenAllowed) == 2);
@@ -554,6 +587,27 @@ int loadSave(int saveNumber)
 
     ASSERT(sizeof(currentMusic) == 2);
     saveRead(&currentMusic,2,1,fHandle);
+
+    // AITD3's original: the blocks up to the variables, kept to be written
+    // back as they were
+    s_aitd3DataEnd.clear();
+    if (s_layout.aitd3)
+    {
+        const long dataEnd = ftell(fHandle);
+        u32 varsOffset = 0;
+        s_cipher = 0;
+        fseek(fHandle, 12 + headerShift, SEEK_SET);
+        saveRead(&varsOffset, 4, 1, fHandle);
+        varsOffset = swapBytes(varsOffset);
+        if ((long)varsOffset > dataEnd && varsOffset - dataEnd < 65536)
+        {
+            s_aitd3DataEnd.resize(varsOffset - dataEnd);
+            fseek(fHandle, dataEnd, SEEK_SET);
+            s_cipher = kAITD2Cipher;
+            saveRead(s_aitd3DataEnd.data(), 1, s_aitd3DataEnd.size(), fHandle);
+        }
+        s_cipher = kAITD2Cipher;
+    }
 
     //timerFreeze = 1;
 
@@ -849,6 +903,8 @@ int loadSave(int saveNumber)
             saveRead(&ListObjets[i].hardMat,2,1,fHandle);
             skipValue(fHandle);
         }
+        if (s_layout.aitd3)
+            skipValue(fHandle);
     }
     fclose(fHandle);
 
@@ -863,6 +919,16 @@ int loadSave(int saveNumber)
                 sAnimation* animPtr = HQR_Get(HQ_Anims,ListObjets[i].ANIM);
                 SetAnimObjet(ListObjets[i].frame,animPtr,bodyPtr);
             }
+        }
+
+        // AITD3: an object without a body has an empty box; saves made before
+        // BUGS.md T22 kept the 200 x 200 one where Carnby got stuck
+        if (g_gameId == AITD3 && ListObjets[i].indexInWorld != -1 && ListObjets[i].bodyNum == -1)
+        {
+            ZVStruct& zv = ListObjets[i].zv;
+            zv.ZVX1 = zv.ZVX2 = ListObjets[i].roomX;
+            zv.ZVY1 = zv.ZVY2 = ListObjets[i].roomY;
+            zv.ZVZ1 = zv.ZVZ2 = ListObjets[i].roomZ;
         }
     }
 
@@ -932,7 +998,8 @@ int makeSaveFile(int entry)
         return 0;
 
     s_cipher = 0;
-    s_layout = (g_gameId == AITD1) ? kOriginalLayout : (g_gameId == AITD2) ? kOriginalAITD2Layout : kEngineLayout;
+    s_layout = (g_gameId == AITD1) ? kOriginalLayout : (g_gameId == AITD2) ? kOriginalAITD2Layout
+        : (g_gameId == AITD3) ? kOriginalAITD3Layout : kEngineLayout;
     const int headerShift = s_layout.aitd2 ? 4 : 0;
     if (g_gameId == AITD1 || s_layout.aitd2)
     {
@@ -963,9 +1030,24 @@ int makeSaveFile(int entry)
                     palette[i * 3 + c] = currentGamePalette[i][c] >> 2;
             saveWrite(palette, sizeof(palette), 1, fHandle);
         }
-        const unsigned char padding[kThumbnailPadding] = {};
+        // AITD3: the name of the save, which its original lists ("Chapitre 1"
+        // in the CD's saves); here the date and time it was made
+        unsigned char padding[kThumbnailPadding] = {};
+        if (s_layout.aitd3)
+        {
+            const std::time_t now = std::time(nullptr);
+            std::tm local = {};
+#ifdef _WIN32
+            localtime_s(&local, &now);
+#else
+            localtime_r(&now, &local);
+#endif
+            std::strftime((char*)padding, sizeof(padding), "%d/%m/%Y %H:%M", &local);
+        }
         saveWrite(padding, sizeof(padding), 1, fHandle);
         s_cipher = s_layout.aitd2 ? kAITD2Cipher : 0;
+        if (s_layout.aitd3)
+            saveWrite(aitd3Difficulty, 2, 3, fHandle);
     }
     else
     {
@@ -1004,6 +1086,13 @@ int makeSaveFile(int entry)
         oldNumMaxObj = maxObjects;
         maxObjects = 300; // fix for save engine..
         ListWorldObjets.resize(maxObjects);
+    }
+
+    if (s_layout.aitd3)
+    {
+        const s16 first = (s16)std::min<int>(maxObjects, kAITD3FirstWorldList);
+        const s16 lists[2] = { first, (s16)(maxObjects - first) };
+        saveWrite(lists, 2, 2, fHandle);
     }
 
     for(i=0;i<maxObjects;i++)
@@ -1089,7 +1178,7 @@ int makeSaveFile(int entry)
         if (s_layout.aitd2)
             saveWrite(&ListWorldObjets[i].mark,2,1,fHandle);
     }
-    if (s_layout.aitd2)
+    if (s_layout.aitd2 && !s_layout.aitd3)
     {
         const std::vector<u8> emptySlots((kAITD2WorldSlots - maxObjects) * kAITD2WorldObjectSize, 0);
         saveWrite(emptySlots.data(), 1, emptySlots.size(), fHandle);
@@ -1116,12 +1205,8 @@ int makeSaveFile(int entry)
 	{
 		saveWrite(inHandTable, 2, NUM_MAX_INVENTORY, fHandle);
 		saveWrite(numObjInInventoryTable, 2, NUM_MAX_INVENTORY, fHandle);
-		const s16 emptyEntries[kAITD2InventorySize - INVENTORY_SIZE] = {};
 		for(int inventoryId=0; inventoryId<NUM_MAX_INVENTORY; inventoryId++)
-		{
-			saveWrite(inventoryTable[inventoryId], 2, INVENTORY_SIZE, fHandle);
-			saveWrite(emptyEntries, 2, kAITD2InventorySize - INVENTORY_SIZE, fHandle);
-		}
+			saveWrite(inventoryTable[inventoryId], 2, kAITD2InventorySize, fHandle);
 	}
 	else for(int inventoryId = 0; inventoryId<s_layout.inventories; inventoryId++)
 	{
@@ -1131,16 +1216,8 @@ int makeSaveFile(int entry)
 		ASSERT(sizeof(numObjInInventoryTable[inventoryId]) == 2);
 		saveWrite(&numObjInInventoryTable[inventoryId],2,1,fHandle);
 
-		if(g_gameId == AITD1)
-		{
-			ASSERT(INVENTORY_SIZE == 30);
-		}
-
-		for(i=0;i<INVENTORY_SIZE;i++)
-		{
-			ASSERT(sizeof(inventoryTable[inventoryId][i]) == 2);
-			saveWrite(&inventoryTable[inventoryId][i],2,1,fHandle);
-		}
+		// AITD1's original and the engine's layout keep 30 objects
+		saveWrite(inventoryTable[inventoryId], 2, kSmallInventorySize, fHandle);
 	}
 
     ASSERT(sizeof(statusScreenAllowed) == 2);
@@ -1172,6 +1249,15 @@ int makeSaveFile(int entry)
 
     ASSERT(sizeof(currentMusic) == 2);
     saveWrite(&currentMusic,2,1,fHandle);
+
+    // AITD3's original: the blocks the engine does not have, as they were
+    // read, or as a new game leaves them
+    if (s_layout.aitd3)
+    {
+        if (s_aitd3DataEnd.empty())
+            s_aitd3DataEnd.assign(kAITD3DataEndSize, 0);
+        saveWrite(s_aitd3DataEnd.data(), 1, s_aitd3DataEnd.size(), fHandle);
+    }
 
     //timerFreeze = 1;
 
@@ -1444,6 +1530,8 @@ int makeSaveFile(int entry)
             saveWrite(&ListObjets[i].hardMat,2,1,fHandle);
             writeValue(0, fHandle);
         }
+        if (s_layout.aitd3)
+            writeValue(0, fHandle);
     }
 
     fclose(fHandle);

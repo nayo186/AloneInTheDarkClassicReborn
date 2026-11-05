@@ -38,8 +38,9 @@ void AllRedraw(int mode);
 int CheckObjectCol(int actorIdx, ZVStruct* zvPtr);
 // The first object whose box touches the actor's, even only face to face; -1 none
 int findTouchingObject(int actorIdx);
-// Moves a box along a line from (X, Y, Z) at angle beta and returns the first object it hits (-1 none, -2 a wall)
-int checkLineProjectionWithActors( int actorIdx, int X, int Y, int Z, int beta, int room, int param );
+// Moves a box along a line from (X, Y, Z) at angle beta (and alpha up or down,
+// AITD3) and returns the first object it hits (-1 none, -2 a wall)
+int checkLineProjectionWithActors( int actorIdx, int X, int Y, int Z, int beta, int room, int param, int alpha = 0 );
 // Counts the fixed collision boxes of the room that touch zvPtr (fills hardColTable)
 int AsmCheckListCol(ZVStruct* zvPtr, roomDataStruct* pRoomData);
 // Place of a world object in the current inventory, or -1
@@ -81,7 +82,7 @@ void playEndSequence();
 
 // True if the file exists (path as given)
 bool fileExists(const char* name);
-bool dataFileExists(const char* name);   // in the game data folder (homePath)
+bool dataFileExists(const char* name);   // in the game data folder (homePath) or the language folder (languagePack.h)
 
 // Program start of the original: screen, resources, texts, palette
 void OpenProgram(void);
@@ -121,6 +122,15 @@ void drawHardCol(int roomNumber);
 ///
 // Opens a book or letter: picture, pages and narrator voice
 void readBook(int index, int type, int vocIndex = -1);
+// One page of a text read by the narrator: a CD track for some seconds
+struct BookVoice { u8 track; u8 seconds; };
+// The narrator's pages of one text (the CD versions of AITD2 and AITD3)
+struct BookVoices { int text; BookVoice pages[10]; };
+// The narrator reads page `page` of text `index` if the table gives it a
+// voice; the voice takes the CD from the music
+void playBookVoice(const BookVoices* table, int count, int index, int page);
+// Silences the narrator and gives the CD back to the music
+void endBookVoice();
 // The reader of books and documents: shows the pages of text `index` in the rectangle and turns them
 int Lire(int index, int left, int top, int right, int bottom, int mode, int color, int shadow, int vocIndex = -1);
 

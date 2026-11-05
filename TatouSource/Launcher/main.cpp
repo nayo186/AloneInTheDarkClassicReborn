@@ -111,21 +111,19 @@ struct LauncherState
     bool jackFound = false;     // Jack in the Dark is there too (PERE.PAK)
     bool gogInstall = false;    // a GOG installation (never written to)
     std::string message;        // error shown at the bottom
-    int selectedGame = 0;       // 0 AITD1 (with Jack), 1 AITD2 (AITD3 later)
+    int selectedGame = 0;       // 0 AITD1 (with Jack), 1 AITD2, 2 AITD3
     bool quit = false;
     bool launched = false;      // Tatou.exe started (it saved the options already)
 };
 
-// The data folder of the selected game (AITD3 has none yet)
+// The data folder of the selected game
 static std::string& dataFolder(LauncherState& state)
 {
-    static std::string none;
-    none.clear();
-    if (state.selectedGame == 0)
-        return state.settings.aitd1DataFolder;
     if (state.selectedGame == 1)
         return state.settings.aitd2DataFolder;
-    return none;
+    if (state.selectedGame == 2)
+        return state.settings.aitd3DataFolder;
+    return state.settings.aitd1DataFolder;
 }
 
 static void refreshDataFolder(LauncherState& state)
@@ -682,7 +680,7 @@ static void handleIntent(LauncherState& state, const LauncherIntent& intent, SDL
 #endif
     }
     if (intent.play)
-        startGame(state, state.selectedGame == 1 ? "aitd2" : "aitd1");
+        startGame(state, state.selectedGame == 2 ? "aitd3" : state.selectedGame == 1 ? "aitd2" : "aitd1");
     else if (intent.playJack)
         startGame(state, "jack");
     if (intent.exit)

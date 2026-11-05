@@ -159,6 +159,17 @@ static const char* getLifeMacroName(int macro)
 
 int numSequenceParam = 0;
 
+// AITD3's full-screen pictures (palette 0-63): colours of at most 2 are
+// black. "The day after" has a box in (2,1,0) around its text, near black
+// on a VGA monitor and seen on a modern screen; GOG's DOSBox (output
+// overlay) shows it black too (BUGS.md T6)
+static void blackenNearBlack(palette_t& palette)
+{
+    for (int i = 0; i < 256; i++)
+        if (palette[i][0] <= 2 && palette[i][1] <= 2 && palette[i][2] <= 2)
+            palette[i][0] = palette[i][1] = palette[i][2] = 0;
+}
+
 sequenceParamStruct sequenceParams[NUM_MAX_SEQUENCE_PARAM];
 
 void resetRotateParam(void)
@@ -216,7 +227,7 @@ void put(int x, int y, int z, int room, int stage, int alpha, int beta, int gamm
 void drop(int worldIdx, int worldSource)
 {
     // AITD2 looks for room first: the card over the maze's flagstone stays in the inventory (BUGS.md A28)
-    if (g_gameId == AITD2)
+    if (g_gameId == AITD2 || g_gameId == AITD3)
         dropAITD2(worldIdx, worldSource);
     else
         PutAtObjet(worldIdx, worldSource);
@@ -476,8 +487,10 @@ int InitSpecialObjet(int mode, int X, int Y, int Z, int stage, int room, int alp
         currentActorPtr->END_FRAME = 0;   // lasts while its cigars exist
 
         // As the original engine did: 1 while the cloud exists, so the
-        // cigars' script (life 427) does not start another one (BUGS.md C41)
-        CVars[getCVarsIdx(FOG_FLAG)] = 1;
+        // cigars' script (life 427) does not start another one (BUGS.md C41).
+        // Only AITD1 has the variable (BUGS.md T12)
+        if (knownCVar(FOG_FLAG))
+            CVars[getCVarsIdx(FOG_FLAG)] = 1;
         printf(LIFE_TAG "Cigar smoke started (object %d, room %d)\n", currentActorPtr->trackNumber, room);
         break;
     }
@@ -1127,7 +1140,7 @@ void processLife(int lifeNum, bool callFoundLife)
                         // the ship's cannon, turned with an animation, went back
                         // to its first side when the fuse gave it a new body,
                         // which started in its rest pose (BUGS.md A53)
-                        if (g_gameId == AITD2 && currentProcessedActorPtr->ANIM != -1 && lifeTempVar1 != -1)
+                        if ((g_gameId == AITD2 || g_gameId == AITD3) && currentProcessedActorPtr->ANIM != -1 && lifeTempVar1 != -1)
                         {
                             SetAnimObjet(currentProcessedActorPtr->frame,
                                 HQR_Get(HQ_Anims, currentProcessedActorPtr->ANIM),
@@ -1465,6 +1478,7 @@ void processLife(int lifeNum, bool callFoundLife)
                     nextAnim = evalVar();
 
                     fire(fireAnim, shootFrame, emitPoint, zvSize, hitForce, nextAnim);
+                    currentProcessedActorPtr->fireAlpha = 0;
                     // The kind of flash shown at the emit point when the shot leaves (DO_TIR, BUGS.md A9, A44)
                     currentProcessedActorPtr->emitModel = emitModel;
                     printf(LIFE_TAG "  -> emit model %d\n", emitModel);
@@ -1472,13 +1486,25 @@ void processLife(int lifeNum, bool callFoundLife)
 
                 break;
             }
-            case LM_FIRE_UP_DOWN: // TODO AITD3 only
+            case LM_FIRE_UP_DOWN: // AITD3 only: FIRE with an angle up or down
             {
+                // The balcony's gunman of the saloon shoots down at Carnby; it
+                // was skipped and he left without firing (AITD3.EXE 0xB850, the
+                // angle at +0xB4 of the object; BUGS.md T24)
                 appendFormated("LM_FIRE_UP_DOWN ");
 
-                evalVar();
-                currentLifePtr += 12;
-                evalVar();
+                const int fireAnim = evalVar("Anim");
+                const int shootFrame = readNextArgument("Frame");
+                const int emitPoint = readNextArgument("EmitPoint");
+                const int emitModel = readNextArgument("EmitModel");
+                const int zvSize = readNextArgument("ZVSize");
+                const int hitForce = readNextArgument("Force");
+                const int fireAlpha = readNextArgument("Alpha");
+                const int nextAnim = evalVar();
+
+                fire(fireAnim, shootFrame, emitPoint, zvSize, hitForce, nextAnim);
+                currentProcessedActorPtr->emitModel = emitModel;
+                currentProcessedActorPtr->fireAlpha = fireAlpha;
                 break;
             }
             case LM_HIT_OBJECT: // HIT_OBJECT
@@ -2065,6 +2091,10 @@ void processLife(int lifeNum, bool callFoundLife)
                 LoadPak("ITD_RESS", lifeTempVar1, aux);
                 palette_t lpalette;
                 copyPalette(aux + 64000, lpalette);
+                // AITD3: the text colours over the picture's colours 0-15, which
+                // are placeholders (magenta); its texts use 15 (BUGS.md T17)
+                if (g_gameId == AITD3)
+                    textColoursAITD3(lpalette);
                 convertPaletteIfRequired(lpalette);
                 copyPalette(lpalette, currentGamePalette);
                 setPalette(lpalette);
@@ -2083,6 +2113,9 @@ void processLife(int lifeNum, bool callFoundLife)
 
                 if (ropVocIndex >= 0)
                     osystem_stopVO();
+                // AITD3: its narrator read the text; the CD goes back to the music
+                if (g_gameId == AITD3)
+                    endBookVoice();
 
                 FlagInitView = 2;
 
@@ -2222,7 +2255,7 @@ void processLife(int lifeNum, bool callFoundLife)
                         currentLifePtr += 2;
                     }
 
-                    if (g_gameId == AITD2)
+                    if (g_gameId == AITD2 || g_gameId == AITD3)
                         restartSound(newSample);
                     else
                         playSound(newSample);
@@ -2465,6 +2498,8 @@ void processLife(int lifeNum, bool callFoundLife)
                     FadeOutPhys(0x10, 0);
                     palette_t lpalette;
                     copyPalette(aux + 64000, lpalette);
+                    if (g_gameId == AITD3)
+                        blackenNearBlack(lpalette);
                     convertPaletteIfRequired(lpalette);
                     copyPalette(lpalette, currentGamePalette);
                     setPalette(lpalette);
@@ -2490,6 +2525,11 @@ void processLife(int lifeNum, bool callFoundLife)
 
                 //soundFunc(0);
 
+                // AITD3 first shows the picture 1 second (60 ticks) that no
+                // key ends, and then counts its time (AITD3.EXE, 0x7ED6):
+                // without it the intro ended before its narration (BUGS.md T5)
+                const unsigned int firstTicks = (g_gameId == AITD3) ? 60 : 0;
+
                 do
                 {
                     unsigned int time;
@@ -2503,9 +2543,14 @@ void processLife(int lifeNum, bool callFoundLife)
 
                     time = evalChrono(&chrono);
 
-                    if (time > (unsigned int)delay)
+                    if (time > firstTicks + (unsigned int)delay)
                         break;
-                } while (!key && !Click);
+                } while (evalChrono(&chrono) < firstTicks || (!key && !Click));
+
+                // AITD3: Esc on a picture of the intro ends the whole intro,
+                // as the original (AITD3.EXE, 0x7F31); other keys only end
+                // the picture (BUGS.md T5)
+                const bool endIntro = g_gameId == AITD3 && aitd3IntroPlaying && key == 0x1B;
 
                 RestoreTimerAnim();
 
@@ -2515,6 +2560,15 @@ void processLife(int lifeNum, bool callFoundLife)
                 if (g_gameId > AITD1)
                     FadeOutPhys(0x10, 0);
                 g_menuActive = false;
+
+                if (endIntro)
+                {
+                    printf(LIFE_TAG "Intro ended with Esc\n");
+                    while (key == 0x1B)
+                        process_events();
+                    FlagGameOver = 1;
+                    exitLife = 1;
+                }
                 break;
             }
             case LM_PLAY_SEQUENCE: // sequence
@@ -2701,6 +2755,10 @@ void processLife(int lifeNum, bool callFoundLife)
                 currentLifePtr += 2;
 
                 CVars[lifeTempVar1] = evalVar();
+                // AITD3: C_VAR 2 names the hero's life points variable,
+                // which the difficulty doubles or halves (BUGS.md T3)
+                if (lifeTempVar1 == 2)
+                    difficultyHeroLife();
                 break;
             }
             ////////////////////////////////////////////////////////////////////////

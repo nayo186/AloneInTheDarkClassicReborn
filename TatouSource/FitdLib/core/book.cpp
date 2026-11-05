@@ -20,6 +20,7 @@ extern void playMenuSound(const char* soundName);
 
 #include "nativeLife.h"
 #include "track.h"
+#include "sequence.h"
 #include <math.h>
 #include <SDL.h>
 
@@ -31,21 +32,174 @@ extern void playMenuSound(const char* soundName);
 #include "settings.h"
 #include "jobSystemInit.h"
 
+#include <algorithm>
 #include <array>
+#include <vector>
 #include <filesystem>
 #include <string>
 #include <fstream>
 
 
-// A page is turned as in 1992: the new page simply replaces the old one
+// The page on screen (picture and text layer), for AITD3's page curl
+static std::vector<char> s_shownPage;
+static std::vector<unsigned char> s_shownText;
+
+static void rememberShownPage()
+{
+    s_shownPage.assign(logicalScreen, logicalScreen + 64000);
+    s_shownText.assign(uiLayer.begin(), uiLayer.end());
+}
+
+// AITD3's books turn their page as the original (AITD3.EXE, 0x17432
+// forward, 0x174CF back, 0x17361 the back of the sheet): the fold, a light
+// line (colour 16), goes from x 260 to the left 10 pixels a step; behind it
+// the back of the sheet goes up to x `back` = 280 - (280 - fold) / 2, in
+// bands of colours 19 to 24 that each take half of what is left; past it the
+// page below. One step a tick of the game clock, at any FPS (BUGS.md T18)
+static void curlPageAITD3(bool forward)
+{
+    const std::vector<char> nextPage(logicalScreen, logicalScreen + 64000);
+    const std::vector<unsigned char> nextText(uiLayer.begin(), uiLayer.end());
+    if (s_shownPage.size() != 64000 || s_shownText.size() != 64000)
+    {
+        osystem_CopyBlockPhys((unsigned char*)logicalScreen, 0, 0, 320, 200);
+        return;
+    }
+
+    std::vector<int> folds;
+    for (int fold = 260; 280 - (280 - fold) / 2 >= -1; fold -= 10)
+        folds.push_back(fold);
+
+    // Forward the fold uncovers the next page; back it is the same sheet
+    // laid down again, from the left, over the page on screen
+    const std::vector<char>& leftPage = forward ? s_shownPage : nextPage;
+    const std::vector<unsigned char>& leftText = forward ? s_shownText : nextText;
+    const std::vector<char>& rightPage = forward ? nextPage : s_shownPage;
+    const std::vector<unsigned char>& rightText = forward ? nextText : s_shownText;
+
+    unsigned int start;
+    startChrono(&start);
+    for (;;)
+    {
+        const int step = evalChrono(&start);
+        if (step >= (int)folds.size())
+            break;
+        const int fold = folds[forward ? step : folds.size() - 1 - step];
+        const int back = 280 - (280 - fold) / 2;
+
+        // The colour of each column of the back of the sheet
+        unsigned char bands[320] = {};
+        int from = fold + 1;
+        for (int colour = 19; colour <= 24; colour++)
+        {
+            const int to = (colour == 24) ? back : from + (back - from) / 2;
+            for (int x = (std::max)(from, 0); x <= (std::min)(to, 319); x++)
+                bands[x] = (unsigned char)colour;
+            from = to;
+        }
+
+        for (int y = 0; y < 200; y++)
+        {
+            for (int x = 0; x < 320; x++)
+            {
+                const int i = y * 320 + x;
+                if (x < fold)
+                {
+                    logicalScreen[i] = leftPage[i];
+                    uiLayer[i] = leftText[i];
+                }
+                else if (x == fold)
+                {
+                    logicalScreen[i] = 16;
+                    uiLayer[i] = 0;
+                }
+                else if (x <= back)
+                {
+                    logicalScreen[i] = (char)bands[x];
+                    uiLayer[i] = 0;
+                }
+                else
+                {
+                    logicalScreen[i] = rightPage[i];
+                    uiLayer[i] = rightText[i];
+                }
+            }
+        }
+        osystem_CopyBlockPhys((unsigned char*)logicalScreen, 0, 0, 320, 200);
+        process_events();
+        osystem_startFrame();
+        osystem_drawBackground();
+        osystem_stopFrame();
+        osystem_flip(NULL);
+    }
+
+    memcpy(logicalScreen, nextPage.data(), 64000);
+    std::copy(nextText.begin(), nextText.end(), uiLayer.begin());
+    osystem_CopyBlockPhys((unsigned char*)logicalScreen, 0, 0, 320, 200);
+}
+
+// A page is turned as in 1992: the new page simply replaces the old one;
+// AITD3's books curl it as their original
 void turnPageForward()
 {
+    if (g_gameId == AITD3)
+    {
+        curlPageAITD3(true);
+        return;
+    }
     osystem_CopyBlockPhys((unsigned char*)logicalScreen, 0, 0, 320, 200);
 }
 
 void turnPageBackward()
 {
+    if (g_gameId == AITD3)
+    {
+        curlPageAITD3(false);
+        return;
+    }
     osystem_CopyBlockPhys((unsigned char*)logicalScreen, 0, 0, 320, 200);
+}
+
+// A text with a voice was read: its voice took the CD from the music
+static bool s_bookVoicePlayed = false;
+
+// The narrator of the CD versions: each page of a text plays a CD track for
+// some seconds, from a table of the game's executable by text and page
+// (AITD2, BUGS.md A18; AITD3, T17)
+void playBookVoice(const BookVoices* table, int count, int index, int page)
+{
+    for (int i = 0; i < count; i++)
+    {
+        const BookVoices& voices = table[i];
+        if (voices.text != index)
+            continue;
+        if (!s_bookVoicePlayed)
+        {
+            osystem_stopTrack();
+            s_bookVoicePlayed = true;
+        }
+        const int pages = (int)(sizeof(voices.pages) / sizeof(voices.pages[0]));
+        const BookVoice voice = page < pages ? voices.pages[page] : BookVoice{};
+        if (voice.track)
+            osystem_playVoiceTrack(voice.track, voice.seconds);
+        else
+            osystem_stopVO();
+        return;
+    }
+}
+
+void endBookVoice()
+{
+    if (!s_bookVoicePlayed)
+        return;
+    s_bookVoicePlayed = false;
+    osystem_stopVO();
+    const int music = currentMusic;
+    if (music >= 0)
+    {
+        currentMusic = -1;
+        playMusic(music);
+    }
 }
 
 void readBook(int index, int type, int vocIndex)
@@ -69,6 +223,9 @@ void readBook(int index, int type, int vocIndex)
         break;
     case AITD2:
         AITD2_ReadBook(index, type);
+        break;
+    case AITD3:
+        AITD3_ReadBook(index, type);
         break;
     default:
         assert(0);
@@ -98,6 +255,11 @@ int Lire(int index, int startx, int top, int endx, int bottom, int demoMode, int
     u8* textPtr;
 
     printf(MAIN_TAG "Book: reading text %d (demoMode %d)\n", index, demoMode);
+
+    // AITD3: the samples given by DEF_SEQUENCE_SAMPLE before READ_ON_PICTURE
+    // (the narrator of the piano's story) play one after the other while
+    // the text is open (AITD3.EXE 0x17BAB; BUGS.md T26)
+    int nextSequenceSample = 0;
 
     // Stop lantern lighting while reading book
 
@@ -400,10 +562,14 @@ int Lire(int index, int startx, int top, int endx, int bottom, int demoMode, int
         }
 
         osystem_drawBackground();
+        if (g_gameId == AITD3)
+            rememberShownPage();
         printf(MAIN_TAG "Book: page %d shown%s\n", page, lastPageReached ? " (last)" : "");
 
         if (g_gameId == AITD2)
             AITD2_playBookVoice(index, page);
+        else if (g_gameId == AITD3)
+            AITD3_playBookVoice(index, page);
 
         // Play per-page voice-over: concatenate all line VOCs for this page
         // VOC naming: BBSSLL.VOC where BB=vocIndex, SS=page, LL=line
@@ -434,6 +600,12 @@ int Lire(int index, int startx, int top, int endx, int bottom, int demoMode, int
                 // the narrator of AITD2's story said its second part only after
                 // the page, and the next picture's voice cut it (BUGS.md A34)
                 updateNextSample();
+                if (g_gameId == AITD3 && nextSequenceSample < numSequenceParam && !osystem_isSamplePlaying())
+                {
+                    playSound(sequenceParams[nextSequenceSample++].sample);
+                    LastSample = -1;
+                    LastPriority = -1;
+                }
                 localKey = key;
                 localJoyD = JoyD;
                 localClick = Click;
@@ -472,7 +644,9 @@ int Lire(int index, int startx, int top, int endx, int bottom, int demoMode, int
                         previousPage = page;
                         page++;
 
-                        if (demoMode == 2 || vocIndex >= 0)
+                        // AITD3 turns every page with its sound (AITD3.EXE,
+                        // 0x17C7A; BUGS.md T18)
+                        if (demoMode == 2 || vocIndex >= 0 || g_gameId == AITD3)
                         {
                             playSound(CVars[getCVarsIdx(SAMPLE_PAGE)]);
                             LastSample = -1;
@@ -495,7 +669,7 @@ int Lire(int index, int startx, int top, int endx, int bottom, int demoMode, int
                     if (page > 0) {
                         previousPage = page;
                         page--;
-                        if (demoMode == 2 || vocIndex >= 0)
+                        if (demoMode == 2 || vocIndex >= 0 || g_gameId == AITD3)
                         {
                             playSound(CVars[getCVarsIdx(SAMPLE_PAGE)]);
                             LastSample = -1;

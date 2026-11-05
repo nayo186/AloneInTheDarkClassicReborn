@@ -129,6 +129,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `gogImageAvailable` | True once GAME.GOG and GAME.INS were read (only for a GOG installation) |
 | `gogImageReadFile` | A file of the CD, e.g. ("INDARK", "000123.VOC"); false if not there |
 | `gogImageCreateTrack` | A music track of the CD (CD numbering: 2 = the first music track) as a SoLoud source that reads it from the image while it plays; null if there is no such track. The caller deletes it (after stopping it). |
+| `createCdTrack` | The same for a track of any CD image read with its track list (a language's CD: languagePack.h) |
 
 ### `platform/imguiBGFX.h`
 
@@ -150,6 +151,20 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `shutdownController` | Closes the controller |
 | `handleControllerDeviceEvent` | A controller was connected or disconnected |
 
+### `platform/languagePack.h`
+
+| Función | Para qué sirve |
+| --- | --- |
+| `selectLanguagePack` | Uses Languages/<name>/ of the working folder if it has <language>.PAK, loose or in its CD image; false if not |
+| `languagePackFolder` | The language folder in use, with a trailing slash (empty: none) |
+| `languagePackCreateTrack` | A CD track of the language's CD image (CD numbering: 2 = the first audio track); null if it has no image, no track list or not that track. The caller deletes it (after stopping it) |
+| `open` | Opens a data file by name (e.g. "LISTSAMP.PAK"); false if it is nowhere |
+| `isOpen` | True while a file is open |
+| `seek` | Moves the read position, as fseek |
+| `read` | Reads up to `size` bytes, as fread; the bytes read |
+| `size` | The size of the whole file in bytes |
+| `close` | Closes the file (also done when it goes away) |
+
 ### `platform/osystem.h`
 
 | Función | Para qué sirve |
@@ -167,6 +182,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `osystem_playSample` | Plays a sound effect from memory (the game's VOC data) |
 | `osystem_stopSample` | Stops every sound effect |
 | `osystem_stopLoopingSamples` | Stops the looping sound effects |
+| `osystem_stopLastSample` | Stops the sound effect started last, if it is not a looping one |
 | `osystem_isSamplePlaying` | True while a sound effect is playing |
 | `osystem_playVO` | Plays a narrator voice by its file name (loose file or GAME.GOG) |
 | `osystem_playVocByIndex` | Plays the narrator voice of a book or message by its number |
@@ -301,7 +317,17 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | Función | Para qué sirve |
 | --- | --- |
 | `startAITD3` | AITD3's start (inherited from FITD, not played yet) |
-| `drawInventoryAITD3` | Draws AITD3's inventory frame |
+| `AITD3_ReadBook` | Opens a letter, book or notebook of AITD3 (READ) |
+| `AITD3_playBookVoice` | The narrator reads one page of a text of AITD3, if it has a voice |
+| `textColoursAITD3` | Puts AITD3's 16 text colours (0-63) over colours 0-15 of a picture's palette |
+| `beginInventoryAITD3` | Keeps the game screen, darkened, as the background of AITD3's inventory |
+| `updateInventorySceneAITD3` | Makes that background from the copy of the whole scene once it arrives; true if it changed and the inventory must be drawn again |
+| `drawInventoryAITD3` | Draws AITD3's inventory frame over that background |
+| `restoreInventoryBoxAITD3` | Puts back a box of AITD3's inventory screen before writing in it |
+| `redrawInventorySpriteAITD3` | Draws the sprites of AITD3's inventory frame that go over its texts |
+| `endInventoryAITD3` | Forgets the background of AITD3's inventory when it closes |
+| `difficultyHitForce` | The force a hit gives `target`, with AITD3's difficulty applied |
+| `difficultyHeroLife` | AITD3: doubles or halves the hero's life points when C_VAR 2 names the variable that holds them |
 
 ### `core/JACK.h`
 
@@ -362,6 +388,8 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | Función | Para qué sirve |
 | --- | --- |
 | `getCVarsIdx` | Position of a game variable (CVar of DEFINES.ITD) in the CVars table |
+| `knownCVar` | Whether the game has that variable (AITD1 has some the others do not): getCVarsIdx gives 0 for one it does not have |
+| `knownCVar` | Whether the game has that variable (AITD1 has some the others do not) |
 | `getCVarsIdx` | Position of a game variable (CVar of DEFINES.ITD) in the CVars table |
 
 ### `core/coreHooks.h`
@@ -439,6 +467,8 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | Función | Para qué sirve |
 | --- | --- |
 | `processInventory` | The inventory screen: choose an object and an action |
+| `inventoryCapacity` | How many objects an inventory takes before "You cannot carry anything else": 30, and in AITD3 40 as its original (AITD3.EXE, 0xD567) |
+| `inventoryTableSize` | How many objects an inventory can hold at all, as the game's saves keep them: 30 in AITD1 and Jack, 50 in AITD2 and AITD3 |
 
 ### `core/launchOptions.h`
 
@@ -464,8 +494,9 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `AllRedraw` | Redraws the whole screen: background, objects, masks and texts |
 | `CheckObjectCol` | Finds the objects whose collision box touches zvPtr (up to 3); returns how many |
 | `findTouchingObject` | The first object whose box touches the actor's, even only face to face; -1 none |
-| `checkLineProjectionWithActors` | Moves a box along a line from (X, Y, Z) at angle beta and returns the first object it hits (-1 none, -2 a wall) |
+| `checkLineProjectionWithActors` | Moves a box along a line from (X, Y, Z) at angle beta (and alpha up or down, AITD3) and returns the first object it hits (-1 none, -2 a wall) |
 | `AsmCheckListCol` | Counts the fixed collision boxes of the room that touch zvPtr (fills hardColTable) |
+| `findObjectInInventory` | Place of a world object in the current inventory, or -1 |
 | `DeleteInventoryObjet` | Takes an object out of the inventory |
 | `walkStep` | Turns a step of animation (animMoveX/Z) by the object's angles |
 | `throwStoppedAt` | Places a thrown object where it stopped, on the floor near (x, z) |
@@ -482,7 +513,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `unapckSequenceFrame` | Draws one packed sequence frame (the PAK entry after its 4-byte size) over the 320x200 picture `dest`: only the pixels that change |
 | `playEndSequence` | AITD1 ending: the burning tree of ENDSEQ.PAK, then the screen turns red (END_SEQUENCE) |
 | `fileExists` | True if the file exists (path as given) |
-| `dataFileExists` | in the game data folder (homePath) |
+| `dataFileExists` | in the game data folder (homePath) or the language folder (languagePack.h) |
 | `OpenProgram` | Program start of the original: screen, resources, texts, palette |
 | `freeAll` | Frees the game's resource lists before exiting |
 | `startGame` | Starts a game on the given floor and room: loads the world, the floor and runs the main loop |
@@ -501,6 +532,8 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `drawSceZone` | Debug: draws the scenery zones of a room |
 | `drawHardCol` | Debug: draws the fixed collision boxes of a room |
 | `readBook` | Opens a book or letter: picture, pages and narrator voice |
+| `playBookVoice` | The narrator reads page `page` of text `index` if the table gives it a voice; the voice takes the CD from the music |
+| `endBookVoice` | Silences the narrator and gives the CD back to the music |
 | `Lire` | The reader of books and documents: shows the pages of text `index` in the rectangle and turns them |
 | `SetProjection` | Sets the camera projection: screen centre, perspective and field of view |
 | `SetAngleCamera` | Sets the camera angles (1024 steps per turn) |
@@ -521,6 +554,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `isInViewList` | True if the room is seen from the current camera |
 | `loadCamera` | Loads the camera picture (CAMERAnn.PAK) into the background |
 | `loadMask` | Loads the foreground masks of a camera (Jack and later: MASKnn.PAK) |
+| `maskCoversPixel` | Jack and later: whether mask maskIdx of the camera's viewed room viewedRoom (its place in the camera's list) covers screen pixel (x, y) |
 | `createAITD1Mask` | Builds the foreground masks of the current camera (AITD1: polygons of the camera data) |
 | `InitViewedRoomList` | Builds the list of rooms seen from the current camera |
 | `DeleteObjet` | Removes an active object from the list of objects |
@@ -537,7 +571,9 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `roomAssumedDark` | True if the current room is dark (no lamp light) |
 | `aitd2EndAnimSeen` | AITD2: whether the object's animation ended (or its key frame changed) since the running script last ran, as it would have seen it every frame (BUGS.md A20) |
 | `aitd2EndFrameSeen` | — |
+| `aitd2AnimSeen` | The animation the running script sees: the one that ended since its last run, even if the next one began (BUGS.md A34) |
 | `aitd2ForgetEvents` | Forgets those events of an object that starts a new animation (but those of the last frame), or of a slot a new object takes (newObject: all; its script then sees only what comes) |
+| `aitd2NoteChainedAnim` | The animation an ended one chains to by itself (ANIM_ONCE's next): its start shows that end once more to every script (BUGS.md A33) |
 
 ### `core/modernStick.h`
 
@@ -593,9 +629,10 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `projectToScreen` | A point (coordinates of the camera's room) on the 320x200 screen; false if it is behind or too near the camera |
 | `AffObjet` | Draws a 3D model at a position and angles: projects it and sends its polygons to the renderer |
 | `setNextObjectSize` | Size of the next object AffObjet draws; put back ObjectSize() afterwards |
-| `setWaterSurface` | Water of the caverns: while on, AffObjet does not draw what is below this height of the world (down is +), cutting what crosses it |
+| `setWaterSurface` | Water of the caverns (AITD1) or ground (AITD2): while on, AffObjet does not draw what is below this height of the world (down is +), cutting what crosses it |
 | `setCurrentBodyNum` | The body about to be drawn (for the rules of special bodies) |
 | `computeScreenBox` | Projects a model and computes the screen rectangle it covers (BBox3D) |
+| `computeDrawnScreenBox` | The screen rectangle (BBox3D) a model will cover where it is drawn, animated or not, without drawing it |
 
 ### `core/room.h`
 
@@ -613,6 +650,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `loadSave` | Reads a save file (both the GOG layout and older ones) |
 | `restoreSave` | The load screen: chooses a slot and loads it |
 | `makeSave` | The save screen: chooses a slot and writes the game (GOG layout for AITD1) |
+| `forgetSaveExtras` | A new game: forgets what a loaded save kept for writing back (AITD3's blocks of the original that the engine does not have) |
 
 ### `core/screen.h`
 
@@ -633,6 +671,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | --- | --- |
 | `DrawMenu` | Draws the start menu with an entry selected |
 | `MainMenu` | The start menu: new game, load or quit; returns the choice |
+| `difficultyMenuAITD3` | AITD3's difficulty menu (from the start menu and the pause menu) |
 
 ### `core/systemMenu.h`
 
@@ -652,6 +691,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `FadeInPhys` | Fades the screen in from black |
 | `FadeOutPhys` | Fades the screen out to black |
 | `playSound` | Plays sound effect number `num` (LISTSAMP) |
+| `restartSound` | Plays a sample from its start, even if the same one is still playing |
 | `playSoundLooping` | Plays sound effect number `num` in a loop |
 | `playSoundThen` | Plays a sound effect and then another one |
 | `updateNextSample` | Starts the sound effect waiting after the current one (playSoundThen) |
@@ -685,7 +725,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `GiveZVObjet` | Collision box of a body as stored in its data |
 | `getZvMax` | Collision box of a body big enough for any turn |
 | `getZvRot` | Collision box of a body turned by its angles |
-| `makeDefaultZV` | A default collision box (200 x 200 x 200 around the origin) |
+| `makeDefaultZV` | The collision box of an object without a body: 200 x 2000 x 200 around the origin, empty in AITD3 |
 
 ## scripts: La lógica del juego
 
@@ -864,7 +904,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `logLine` | Writes a line to launcher.log |
 | `loadLauncherSettings` | Reads launcher.cfg |
 | `saveLauncherSettings` | Writes launcher.cfg |
-| `dataFolderGame` | The chosen folder can be a copy of the data (LISTBOD2.PAK in it for AITD1, Jack in its JACK subfolder; MER.PAK for AITD2) or a GOG or Steam installation (GAME.GOG and GAME.INS, or GAME.INST on Steam; AITD1 in INDARK, Jack in JACK, AITD2 in INDARK2; that folder itself may be chosen too). A GOG installation is never written to: aitd_remaster.cfg goes to the user folder (Shared/userFolder.h), as the game's saves and log. The game of the folder: 0 AITD1, 1 AITD2, -1 none |
+| `dataFolderGame` | The chosen folder can be a copy of the data (LISTBOD2.PAK in it for AITD1, Jack in its JACK subfolder; MER.PAK for AITD2; AN1.PAK for AITD3) or a GOG or Steam installation (GAME.GOG and GAME.INS, or GAME.INST on Steam; AITD1 in INDARK, Jack in JACK, AITD2 in INDARK2, AITD3 in INDARK3; that folder itself may be chosen too). A GOG installation is never written to: aitd_remaster.cfg goes to the user folder (Shared/userFolder.h), as the game's saves and log. The game of the folder: 0 AITD1, 1 AITD2, 2 AITD3, -1 none |
 | `isGogInstallFolder` | True if the folder is a GOG or Steam installation |
 | `hasJackData` | True if Jack in the Dark is there too (PERE.PAK) |
 | `findAitd1Narrators` | The narrators with voices in AITD1's working folder (Voices: in UserData\AITD1, or in the copy itself in debug mode; Shared/narrators.h) |
@@ -873,7 +913,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `findGameLanguages` | Language PAKs present in the data folder, in a fixed order |
 | `readGameConfig` | Language and advanced options of the data folder's aitd_remaster.cfg |
 | `writeGameConfig` | Writes the launcher's options in the game's aitd_remaster.cfg, keeping every other line |
-| `launchGame` | Starts Tatou.exe with the default settings and the chosen language, in the game's data folder: game "aitd1", "jack" (Tatou enters the JACK subfolder and shares the AITD1 configuration) or "aitd2" |
+| `launchGame` | Starts Tatou.exe with the default settings and the chosen language, in the game's data folder: game "aitd1", "jack" (Tatou enters the JACK subfolder and shares the AITD1 configuration), "aitd2" or "aitd3" |
 
 ### `Launcher/updater.h`
 

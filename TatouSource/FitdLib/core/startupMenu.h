@@ -13,4 +13,6 @@
 void DrawMenu(int selectedEntry);
 // The start menu: new game, load or quit; returns the choice
 int MainMenu(void);
+// AITD3's difficulty menu (from the start menu and the pause menu)
+void difficultyMenuAITD3();
 #endif

@@ -166,7 +166,7 @@ void take(int objIdx)
 {
     tWorldObject* objPtr = &ListWorldObjets[objIdx];
 
-    if (numObjInInventoryTable[currentInventory] >= INVENTORY_SIZE)
+    if (numObjInInventoryTable[currentInventory] >= inventoryTableSize())
         return;
 
     // Not twice in the list: freed from the irons, AITD2's script 724 gives
@@ -343,6 +343,11 @@ void GereCollision(ZVStruct* oldZv, ZVStruct* animatedZv, ZVStruct* fixZv)
     halfX = (animatedZv->ZVX1 + animatedZv->ZVX2) / 2;
     halfZ = (animatedZv->ZVZ1 + animatedZv->ZVZ2) / 2;
 
+    // Where the centre of the move lands, seen from the box. FITD had "right"
+    // and "centre" swapped (and "below" and "centre"): almost every touch of a
+    // wall counted as the centre of the box and stopped the move instead of
+    // sliding along it, the invisible corners where the hero got stuck. As
+    // INDARK.EXE (0xDDDD), AITD2.EXE (0x514C) and AITD3.EXE (0xB647) (BUGS.md T21)
     if (fixZv->ZVX1 > halfX)
     {
         pos = 4; // left
@@ -351,11 +356,11 @@ void GereCollision(ZVStruct* oldZv, ZVStruct* animatedZv, ZVStruct* fixZv)
     {
         if (fixZv->ZVX2 < halfX)
         {
-            pos = 0; // center
+            pos = 8; // right
         }
         else
         {
-            pos = 8; // right
+            pos = 0; // center
         }
     }
 
@@ -367,11 +372,11 @@ void GereCollision(ZVStruct* oldZv, ZVStruct* animatedZv, ZVStruct* fixZv)
     {
         if (fixZv->ZVZ2 < halfZ)
         {
-            pos |= 0; // center
+            pos |= 2; // below
         }
         else
         {
-            pos |= 2; // bellow
+            pos |= 0; // center
         }
     }
 
@@ -804,7 +809,7 @@ void GereDec()
                     if (idxW < 0 || idxW >= (int)ListWorldObjets.size())
                         break;
 
-                    if (g_gameId == AITD2)
+                    if (g_gameId == AITD2 || g_gameId == AITD3)
                     {
                         inStageZone = true;
                         const StageZoneHeld& held = s_stageZoneHeld[currentProcessedActorIdx];
@@ -822,7 +827,7 @@ void GereDec()
                     // script that takes the climb away (BUGS.md A19)
                     if (life == -1)
                     {
-                        if (g_gameId == AITD2)
+                        if (g_gameId == AITD2 || g_gameId == AITD3)
                             break;
                         return;
                     }
@@ -830,7 +835,7 @@ void GereDec()
                     if (life != currentProcessedActorPtr->life)
                         printf(MAIN_TAG "Stage zone %d: object %d life %d -> %d\n", (int)pCurrentZone->parameter, idxW, currentProcessedActorPtr->life, life);
                     currentProcessedActorPtr->life = life;
-                    if (g_gameId == AITD2)
+                    if (g_gameId == AITD2 || g_gameId == AITD3)
                         s_stageZoneHeld[currentProcessedActorIdx] = { idxW, (int)pCurrentZone->parameter };
 
                     currentProcessedActorPtr->HARD_DEC = (short)pCurrentZone->parameter;
@@ -851,7 +856,7 @@ void GereDec()
         s_stageZoneHeld[currentProcessedActorIdx] = StageZoneHeld();
 }
 
-int checkLineProjectionWithActors(int actorIdx, int X, int Y, int Z, int beta, int room, int param)
+int checkLineProjectionWithActors(int actorIdx, int X, int Y, int Z, int beta, int room, int param, int alpha)
 {
     ZVStruct localZv;
     int foundFlag = -2;
@@ -865,6 +870,15 @@ int checkLineProjectionWithActors(int actorIdx, int X, int Y, int Z, int beta, i
     localZv.ZVZ1 = Z - param;
     localZv.ZVZ2 = Z + param;
 
+    // AITD3 shooting up or down (FIRE_UP_DOWN): each step also goes down by
+    // the first coordinate of a step of the same length turned by alpha
+    // (AITD3.EXE 0xDE32; BUGS.md T24)
+    int stepY = 0;
+    if (alpha)
+    {
+        walkStep(param * 2, 0, alpha);
+        stepY = animMoveX;
+    }
     walkStep(param * 2, 0, beta);
 
     int iterationLimit = 2000;
@@ -881,14 +895,17 @@ int checkLineProjectionWithActors(int actorIdx, int X, int Y, int Z, int beta, i
 
         localZv.ZVZ1 += animMoveZ;
         localZv.ZVZ2 += animMoveZ;
+        localZv.ZVY1 += stepY;
+        localZv.ZVY2 += stepY;
 
         tempX = X;
         tempZ = Z;
 
         X += animMoveX;
+        Y += stepY;
         Z += animMoveZ;
 
-        if (X > 20000 || X < -20000 || Z > 20000 || Z < -20000)
+        if (X > 20000 || X < -20000 || Z > 20000 || Z < -20000 || (stepY && (Y > 0 || Y < -20000)))
         {
             foundFlag = -1;
             break;
@@ -1231,6 +1248,35 @@ void throwStoppedAt(int x, int z)
         else
         {
             step += 100;
+        }
+    }
+
+    // The spot must also be one the hero can reach: free of walls up to his
+    // height. A bottle thrown under a high shelf stayed against the wall where
+    // Carnby, stopped by the shelf, could never touch it (BUGS.md T23). Go on
+    // back, at most 2000 units; if there is no such spot, keep the first one
+    if (step <= 20000 && currentCameraTargetActor >= 0)
+    {
+        const ZVStruct& hero = ListObjets[currentCameraTargetActor].zv;
+        const int heroHeight = hero.ZVY2 - hero.ZVY1;
+        for (int reach = step; reach <= step + 2000; reach += 100)
+        {
+            walkStep(0, reach, currentProcessedActorPtr->beta + 0x200);
+            ZVStruct standing;
+            CopyZV(&zvLocal, &standing);
+            standing.ZVX1 += x + animMoveX;
+            standing.ZVX2 += x + animMoveX;
+            standing.ZVZ1 += z + animMoveZ;
+            standing.ZVZ2 += z + animMoveZ;
+            standing.ZVY2 += y2;
+            standing.ZVY1 = (standing.ZVY2 - heroHeight < standing.ZVY1 + y2) ? standing.ZVY2 - heroHeight : standing.ZVY1 + y2;
+            if (!AsmCheckListCol(&standing, &roomDataTable[currentProcessedActorPtr->room]))
+            {
+                x2 = x + animMoveX;
+                z2 = z + animMoveZ;
+                step = reach;
+                break;
+            }
         }
     }
 

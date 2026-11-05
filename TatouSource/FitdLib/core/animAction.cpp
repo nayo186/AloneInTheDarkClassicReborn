@@ -103,7 +103,7 @@ void GereFrappe(void)
                 actorPtr2 = &ListObjets[currentProcessedActorPtr->COL[i]];
 
                 actorPtr2->HIT_BY = currentProcessedActorIdx;
-                actorPtr2->hitForce = currentProcessedActorPtr->hitForce;
+                actorPtr2->hitForce = difficultyHitForce(actorPtr2, currentProcessedActorPtr->hitForce);
 
 
                 if(actorPtr2->objectType & AF_ANIMATED)
@@ -157,7 +157,8 @@ void GereFrappe(void)
                 x, y, z,
                 currentProcessedActorPtr->beta - 0x100,
                 currentProcessedActorPtr->room,
-                currentProcessedActorPtr->animActionParam);
+                currentProcessedActorPtr->animActionParam,
+                g_gameId == AITD3 ? currentProcessedActorPtr->fireAlpha : 0);
 
             if(touchedActor >= 0)
             {
@@ -165,7 +166,7 @@ void GereFrappe(void)
 
                 currentProcessedActorPtr->HIT = touchedActor;
                 hitActorPtr->HIT_BY = currentProcessedActorIdx;
-                hitActorPtr->hitForce = currentProcessedActorPtr->hitForce;
+                hitActorPtr->hitForce = difficultyHitForce(hitActorPtr, currentProcessedActorPtr->hitForce);
 
 
                 playSound(CVars[getCVarsIdx((enumCVars)SAMPLE_CHOC)]);
@@ -374,7 +375,7 @@ void GereFrappe(void)
                 // Set damage info on the hit actor
                 currentProcessedActorPtr->HIT = hitActorIdx;
                 hitActorPtr->HIT_BY = currentProcessedActorIdx;
-                hitActorPtr->hitForce = currentProcessedActorPtr->hitForce;
+                hitActorPtr->hitForce = difficultyHitForce(hitActorPtr, currentProcessedActorPtr->hitForce);
             }
 
             break;
@@ -511,7 +512,10 @@ void GereFrappe(void)
                         }
 
                         // Handle REVERSE_OBJECT (mirrors/teleporters for thrown objects)
-                        if (!isGunProjectile && objPtr && ListObjets[currentActorCol].indexInWorld == CVars[getCVarsIdx((enumCVars)REVERSE_OBJECT)])
+                        // Only AITD1 has it: in the others the lookup gave
+                        // CVar 0 and world object 190 (AITD3) sent it back (BUGS.md T12)
+                        if (!isGunProjectile && objPtr && knownCVar((enumCVars)REVERSE_OBJECT)
+                            && ListObjets[currentActorCol].indexInWorld == CVars[getCVarsIdx((enumCVars)REVERSE_OBJECT)])
                         {
                             objPtr->alpha = CVars[getCVarsIdx((enumCVars)REVERSE_OBJECT)];
                             currentProcessedActorPtr->beta += 0x200;
@@ -551,7 +555,7 @@ void GereFrappe(void)
                             currentProcessedActorPtr->HIT = currentActorCol;
                             actorPtr = &ListObjets[currentActorCol];
                             actorPtr->HIT_BY = isGunProjectile ? currentProcessedActorPtr->HIT_BY : currentProcessedActorIdx;
-                            actorPtr->hitForce = currentProcessedActorPtr->hitForce;
+                            actorPtr->hitForce = difficultyHitForce(actorPtr, currentProcessedActorPtr->hitForce);
 
 
                             // Gun projectiles stop on first hit (bullets don't continue)

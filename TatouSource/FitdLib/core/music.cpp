@@ -1284,6 +1284,13 @@ void playMusic(int musicNumber)
 	{
 		trackNumber = AITD2MusicToTrackMapping[musicNumber];
 	}
+	// AITD3 plays music N from CD track N + 1 (AITD3.EXE; its table of track
+	// lengths matches Track02, 03...): asked for track N, music 1 fell on
+	// the data track and was silent, and the rest played the one before (BUGS.md T2)
+	if(g_gameId == AITD3 && musicNumber >= 0)
+	{
+		trackNumber = musicNumber + 1;
+	}
 
 	// JACK mode: skip MP3/CD audio path and play MIDI/AdLib music from
 	// LISTMUS.PAK directly so JACK uses its own MIDI tracks instead of

@@ -1,5 +1,6 @@
 """Unpacks a game executable compressed with LZEXE 0.90 (AITD2.EXE of the GOG
-and CD versions) and disassembles it, to study how the original engine did
+and CD versions), or takes one that is not (AITD3.EXE, Borland C), and
+disassembles it, to study how the original engine did
 something. It reads the player's own copy; the result is the game's code and
 stays out of the repository (the output folder may not be inside it).
 
@@ -9,7 +10,7 @@ Writes <name>.bin (the unpacked program: its code and data as loaded, from
 linear address 0) and, if GNU objdump is there (or in WSL on Windows),
 <name>.asm, 16-bit x86 in Intel syntax. Addresses in the .asm are linear: a
 far call to SEG:OFF is at SEG*16+OFF. What is known of AITD2.EXE is in
-docs/AITD2_EXE.md.
+docs/AITD2_EXE.md, and of AITD3.EXE in docs/AITD3_EXE.md.
 """
 import os
 import shutil
@@ -82,6 +83,15 @@ def unpack_lzexe(data):
     return bytes(out)
 
 
+def mz_image(data):
+    """The program of an unpacked MZ executable (AITD3.EXE), without its relocations."""
+    if data[:2] != b'MZ':
+        raise ValueError('not a DOS executable (no MZ mark)')
+    last_page, pages, _, header_paragraphs = struct.unpack_from('<4H', data, 2)
+    end = pages * 512 - ((512 - last_page) if last_page else 0)
+    return data[header_paragraphs * 16:end]
+
+
 def objdump_command(binary):
     """objdump of the system, or of WSL on Windows."""
     args = ['-D', '-b', 'binary', '-m', 'i8086', '-M', 'intel']
@@ -108,7 +118,8 @@ def main():
     name = os.path.splitext(os.path.basename(exe))[0].lower()
 
     with open(exe, 'rb') as f:
-        program = unpack_lzexe(f.read())
+        data = f.read()
+    program = unpack_lzexe(data) if data[0x1c:0x20] == b'LZ09' else mz_image(data)
     binary = os.path.join(out_folder, name + '.bin')
     with open(binary, 'wb') as f:
         f.write(program)

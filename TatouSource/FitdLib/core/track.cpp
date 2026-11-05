@@ -202,7 +202,7 @@ char* getRoomLink(unsigned int room1, unsigned int room2)
 // is within 200 of it, went round it for a minute (BUGS.md A40)
 static int followTurnTime(int targetX, int targetZ)
 {
-    if (g_gameId != AITD2)
+    if (g_gameId != AITD2 && g_gameId != AITD3)
         return 60;
     const int dx = targetX - (currentProcessedActorPtr->roomX + currentProcessedActorPtr->stepX);
     const int dz = targetZ - (currentProcessedActorPtr->roomZ + currentProcessedActorPtr->stepZ);

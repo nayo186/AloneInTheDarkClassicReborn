@@ -82,7 +82,9 @@ void AffSpfI(int left, int top, int index, char* gfxData)
 	int i;
 	int j;
 
-	if(g_gameId >= AITD3)
+	// AITD3's sprite sets are shorter than AITD2's (its CADRE has only the
+	// menu's arrows): an index past the table is not drawn (BUGS.md T1)
+	if(g_gameId > AITD3 || (g_gameId == AITD3 && index * 2 >= READ_LE_U16(gfxData)))
 		return;
 
 	outPtr = logicalScreen + top*320 + left;
@@ -190,6 +192,28 @@ static void affCadreAITD2(int left, int top, int right, int bottom)
     SetClip(WindowX1, WindowY1, WindowX2, WindowY2);
 }
 
+// AITD3's frame: its CADRE has no frame pieces, only the menu's arrows, and
+// drawn with AITD2's pieces it read past them and closed the game (BUGS.md
+// T1). Two lines, slate and brown (colours 8 and 4, the same in every
+// camera), around a black inside
+static void affCadreAITD3(int left, int top, int right, int bottom)
+{
+    if (left < 0) left = 0;
+    if (top < 0) top = 0;
+    if (right > 319) right = 319;
+    if (bottom > 199) bottom = 199;
+
+    AffRect(left, top, right, bottom, 8);
+    AffRect(left + 1, top + 1, right - 1, bottom - 1, 4);
+    AffRect(left + 2, top + 2, right - 2, bottom - 2, 0);
+
+    WindowX1 = left + 3;
+    WindowY1 = top + 3;
+    WindowX2 = right - 3;
+    WindowY2 = bottom - 3;
+    SetClip(WindowX1, WindowY1, WindowX2, WindowY2);
+}
+
 // The frame of menus and messages, made of the CADRE pieces: corners 0-3,
 // top and bottom bars 4-5, sides 6-7 and "in the dark" 8 (AITD1 and Jack:
 // 20 pixel corners, 8 pixel bars)
@@ -224,6 +248,11 @@ void AffBigCadre(int x, int y, int width, int height)
         for (int tx = (left < 0 ? 0 : left); tx <= (right > 319 ? 319 : right); tx++)
             uiLayer[ty * 320 + tx] = 0;
 
+    if (g_gameId == AITD3)
+    {
+        affCadreAITD3(left, top, right, bottom);
+        return;
+    }
     if (g_gameId >= AITD2)
     {
         affCadreAITD2(left, top, right, bottom);

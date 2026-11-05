@@ -33,6 +33,7 @@ int unkScreenVar2;
 std::vector<s16> CVars;
 
 char* PtrPrioritySample;
+int prioritySampleCount = 0;
 
 char* PtrFont;
 

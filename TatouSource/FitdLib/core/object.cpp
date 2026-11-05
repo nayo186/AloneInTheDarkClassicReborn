@@ -83,6 +83,7 @@ int InitObjet(int body, int typeZv, int hardZvIdx, s16 objectType, int x, int y,
         actorPtr->hardMat = -1;
         actorPtr->emitModel = -1;
     }
+    actorPtr->fireAlpha = 0;
 
     actorPtr->rotate.startValue = 0;
     actorPtr->rotate.endValue = 0;

@@ -61,6 +61,7 @@ void startGame(int startupFloor, int startupRoom, int allowSystemMenu)
 {
     LoadWorld();
     initVars();
+    forgetSaveExtras();
 
     LoadEtage(startupFloor);
 
@@ -498,7 +499,7 @@ void detectGame(void)
     {
         g_gameId = AITD3;
         CVars.resize(70);
-        currentCVarTable = AITD2KnownCVars;
+        currentCVarTable = AITD3KnownCVars;
         gameName = "Alone in the Dark 3";
     }
     else if (dataFileExists("PURSUIT.PAK"))

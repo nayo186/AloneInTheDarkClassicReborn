@@ -20,7 +20,6 @@ enum class UiText
     PlayAitd2,
     PlayAitd3,
     PlayJack,
-    ComingSoon,
     Settings,
     Defaults,
     DefaultsHelp,
@@ -93,8 +92,6 @@ static const char* const kLauncherTexts[(int)UiText::Count][(int)UiLanguage::Cou
     // PlayJack
     { "PLAY JACK IN THE DARK", "JUGAR JACK IN THE DARK", "JOUER À JACK IN THE DARK",
       "GIOCA A JACK IN THE DARK", "JACK IN THE DARK SPIELEN" },
-    // ComingSoon
-    { "Coming soon", "Próximamente", "Bientôt disponible", "Prossimamente", "Demnächst" },
     // Settings
     { "Settings", "Configuración", "Configuration", "Configurazione", "Einstellungen" },
     // Defaults

@@ -10,6 +10,7 @@
 #include "settings.h"
 #include "launchOptions.h"
 #include "coreHooks.h"
+#include "languagePack.h"
 #include <algorithm>
 #include <cctype>
 
@@ -53,10 +54,10 @@ void applyLaunchOptions()
     // g_settings stays untouched (the launcher owns it), so a config
     // save during the game never overwrites the launcher's choice.
 
-    // Game: Alone in the Dark 1, Jack in the Dark or AITD2 (platform/gameFolder.cpp
+    // Game: Alone in the Dark 1, Jack in the Dark, AITD2 or AITD3 (platform/gameFolder.cpp
     // already entered its folder; detectGame recognises it by its files)
     if (!g_launchOptions.game.empty() && g_launchOptions.game != "aitd1" && g_launchOptions.game != "jack" &&
-        g_launchOptions.game != "aitd2")
+        g_launchOptions.game != "aitd2" && g_launchOptions.game != "aitd3")
     {
         printf(MAIN_WARN "--game %s is not supported yet, starting with the data in the working directory" CON_RESET "\n",
             g_launchOptions.game.c_str());
@@ -69,6 +70,11 @@ void applyLaunchOptions()
 
     if (!language.empty())
     {
+        // AITD3: a language from the player's CD, in Languages/<name>/ of the
+        // working folder (its texts, the data that goes with them, its narrator)
+        if (g_launchOptions.game == "aitd3" && selectLanguagePack(language))
+            printf(MAIN_OK "Language folder: %s\n", languagePackFolder().c_str());
+
         if (dataFileExists((language + ".PAK").c_str()))
         {
             languageNameString = language;

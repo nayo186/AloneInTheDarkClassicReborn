@@ -8,6 +8,7 @@
 #include "launcherSettings.h"
 #include "userFolder.h"
 #include "narrators.h"
+#include "languageFolder.h"
 
 #include <SDL3/SDL.h>
 #include <algorithm>
@@ -118,6 +119,8 @@ void loadLauncherSettings(LauncherSettings& settings)
             settings.aitd1DataFolder = value;
         else if (key == "aitd2.dataFolder")
             settings.aitd2DataFolder = value;
+        else if (key == "aitd3.dataFolder")
+            settings.aitd3DataFolder = value;
         else if (key == "debugMode")
             settings.debugMode = (value == "true" || value == "1");
         else if (key == "window.width")
@@ -127,8 +130,9 @@ void loadLauncherSettings(LauncherSettings& settings)
         else if (key == "window.maximized")
             settings.windowMaximized = (value == "true" || value == "1");
     }
-    logLine("Loaded launcher.cfg: ui.language=%s aitd1.dataFolder=%s aitd2.dataFolder=%s",
-        settings.uiLanguage.c_str(), settings.aitd1DataFolder.c_str(), settings.aitd2DataFolder.c_str());
+    logLine("Loaded launcher.cfg: ui.language=%s aitd1.dataFolder=%s aitd2.dataFolder=%s aitd3.dataFolder=%s",
+        settings.uiLanguage.c_str(), settings.aitd1DataFolder.c_str(), settings.aitd2DataFolder.c_str(),
+        settings.aitd3DataFolder.c_str());
 }
 
 void saveLauncherSettings(const LauncherSettings& settings)
@@ -143,6 +147,7 @@ void saveLauncherSettings(const LauncherSettings& settings)
     file << "ui.language = " << settings.uiLanguage << "\n";
     file << "aitd1.dataFolder = \"" << settings.aitd1DataFolder << "\"\n";
     file << "aitd2.dataFolder = \"" << settings.aitd2DataFolder << "\"\n";
+    file << "aitd3.dataFolder = \"" << settings.aitd3DataFolder << "\"\n";
     // Only changed by hand (0 or 1): no box in the window
     file << "debugMode = " << (settings.debugMode ? 1 : 0) << "\n";
     // The window as it was left
@@ -156,7 +161,7 @@ struct GameInstall
 {
     bool valid = false;
     bool gog = false;
-    int game = -1;          // 0 AITD1 (with Jack), 1 AITD2
+    int game = -1;          // 0 AITD1 (with Jack), 1 AITD2, 2 AITD3
     fs::path root;          // the folder Tatou starts in
     fs::path gameData;      // the game's PAKs, with the language PAKs
     fs::path jackData;      // PERE.PAK (AITD1 only)
@@ -164,8 +169,9 @@ struct GameInstall
 };
 
 // Each game's folder in a GOG installation and a file only it has
-static const char* const kGogDataFolder[] = { "INDARK", "INDARK2" };
-static const char* const kGameMarker[] = { "LISTBOD2.PAK", "MER.PAK" };
+static const int kGames = 3;
+static const char* const kGogDataFolder[kGames] = { "INDARK", "INDARK2", "INDARK3" };
+static const char* const kGameMarker[kGames] = { "LISTBOD2.PAK", "MER.PAK", "AN1.PAK" };
 
 static bool pathExists(const fs::path& path)
 {
@@ -179,7 +185,7 @@ static int gogRootGame(const fs::path& folder)
 {
     if (!pathExists(folder / "GAME.GOG") || !(pathExists(folder / "GAME.INS") || pathExists(folder / "GAME.INST")))
         return -1;
-    for (int game = 0; game < 2; game++)
+    for (int game = 0; game < kGames; game++)
         if (pathExists(folder / kGogDataFolder[game] / kGameMarker[game]))
             return game;
     return -1;
@@ -204,7 +210,7 @@ static GameInstall findGameInstall(const std::string& folder)
         return install;
     fs::path path = toPath(folder);
     if (gogRootGame(path) < 0 && gogRootGame(path.parent_path()) >= 0)
-        path = path.parent_path();   // GOG's INDARK (INDARK2) folder was chosen
+        path = path.parent_path();   // GOG's INDARK (INDARK2, INDARK3) folder was chosen
     const int gogGame = gogRootGame(path);
     if (gogGame >= 0)
     {
@@ -216,7 +222,7 @@ static GameInstall findGameInstall(const std::string& folder)
         install.jackData = path / "JACK";
         return install;
     }
-    for (int game = 0; game < 2; game++)
+    for (int game = 0; game < kGames; game++)
     {
         if (!pathExists(path / kGameMarker[game]))
             continue;
@@ -258,7 +264,7 @@ std::vector<std::string> findAitd1Narrators(const std::string& folder)
 
 void prepareUserData()
 {
-    for (const char* game : { "AITD1", "JACK", "AITD2" })
+    for (const char* game : { "AITD1", "JACK", "AITD2", "AITD3" })
     {
         const fs::path gameFolder = userDataFolder() / game;
         std::error_code ec;
@@ -267,6 +273,7 @@ void prepareUserData()
     }
     std::error_code ec;
     fs::create_directories(userDataFolder() / "AITD1" / kVoicesFolder, ec);
+    fs::create_directories(userDataFolder() / "AITD3" / kLanguagesFolder, ec);
     logLine("UserData ready: %s", userDataFolder().u8string().c_str());
 }
 
@@ -283,9 +290,21 @@ std::vector<GameLanguage> findGameLanguages(const std::string& folder)
     const GameInstall install = findGameInstall(folder);
     if (!install.valid)
         return found;
+    // AITD3: also a language from the player's CD, in Languages\<name> of
+    // the working folder (the copy in debug mode, else UserData\AITD3), with
+    // its files or its CD image (Shared/languageFolder.h)
+    const fs::path languages = ((!install.gog && s_debugMode) ? install.gameData : userDataFolder() / "AITD3") / kLanguagesFolder;
     for (const GameLanguage& language : all)
     {
-        if (pathExists(install.gameData / (language.pakName + ".PAK")))
+        const std::string pak = language.pakName + ".PAK";
+        bool has = pathExists(install.gameData / pak);
+        if (!has && install.game == 2)
+        {
+            const fs::path folder = languages / languagePackName(language.pakName.c_str());
+            CdImage image;
+            has = pathExists(folder / pak) || openLanguageImage(folder, pak, image);
+        }
+        if (has)
             found.push_back(language);
     }
     return found;
@@ -486,7 +505,8 @@ LaunchResult launchGame(const LauncherSettings& settings, const char* game)
         args += " --lang " + settings.gameLanguage;
     // Tatou starts in the copy's folder or the GOG installation and finds the
     // rest itself (platform/gameFolder.cpp)
-    const std::string& folder = (strcmp(game, "aitd2") == 0) ? settings.aitd2DataFolder : settings.aitd1DataFolder;
+    const std::string& folder = (strcmp(game, "aitd3") == 0) ? settings.aitd3DataFolder
+        : (strcmp(game, "aitd2") == 0) ? settings.aitd2DataFolder : settings.aitd1DataFolder;
     const GameInstall install = findGameInstall(folder);
     const fs::path startFolder = install.valid ? install.root : toPath(folder);
     logLine("Starting %s %s (working folder %s%s)", kTatouFile, args.c_str(), startFolder.u8string().c_str(),

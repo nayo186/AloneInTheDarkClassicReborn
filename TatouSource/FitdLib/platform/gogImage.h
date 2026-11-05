@@ -16,6 +16,7 @@
 #include <vector>
 
 namespace SoLoud { class AudioSource; }
+class CdImage;
 
 // True once GAME.GOG and GAME.INS were read (only for a GOG installation)
 bool gogImageAvailable();
@@ -27,3 +28,7 @@ bool gogImageReadFile(const char* folder, const char* name, std::vector<unsigned
 // SoLoud source that reads it from the image while it plays; null if there
 // is no such track. The caller deletes it (after stopping it).
 SoLoud::AudioSource* gogImageCreateTrack(int track);
+
+// The same for a track of any CD image read with its track list (a
+// language's CD: languagePack.h)
+SoLoud::AudioSource* createCdTrack(const CdImage& image, int track);

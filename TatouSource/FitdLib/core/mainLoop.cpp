@@ -351,7 +351,8 @@ void PlayWorld(int allowSystemMenu, int deltaTime)
             // AITD2's intro (the scene on the ship) ends with ESC as with
             // Enter: the pause menu let a game be loaded inside the intro,
             // which then went back to the main menu (BUGS.md A21)
-            if(localKey == 0x1B && g_gameId == AITD2 && allowSystemMenu == 0)
+            // AITD3's too: Esc ends it, as on its pictures (BUGS.md T5)
+            if(localKey == 0x1B && (g_gameId == AITD2 || g_gameId == AITD3) && allowSystemMenu == 0)
             {
                 while(key==0x1B)
                 {
@@ -672,5 +673,10 @@ void PlayWorld(int allowSystemMenu, int deltaTime)
     // the menu); a looping sample, like the shaking-floor monster's, otherwise
     // kept playing over the game over picture and the menu (BUGS.md C21)
     osystem_stopSample();
+    // AITD3 stopped the CD too (AITD3.EXE, 0x181BB): the intro's narration
+    // is its music track, and skipped with Esc it went on over the main
+    // menu (BUGS.md T4)
+    if (g_gameId == AITD3)
+        stopMusic();
 }
 

@@ -13,6 +13,10 @@
 //       Exports\      what F1 exports
 //       Voices\       (AITD1) other narrators, one folder each (e.g. French
 //                     with the player's French CD): Shared/narrators.h
+//   UserData\AITD3\Languages\  languages from the player's CD, one folder
+//                     each (Spanish): the language PAK, the data files that
+//                     go with it and its CD tracks, or the CD
+//                     image: Shared/languageFolder.h
 // The launcher creates the folders the first time it opens (empty: the
 // general README explains them). With the debug
 // mode on and a copy of the data, everything stays inside the copy as before
@@ -27,3 +31,4 @@ static const char* const kPicturesFolder = "Backgrounds";
 static const char* const kMasksFolder = "Masks";
 static const char* const kExportsFolder = "Exports";
 static const char* const kVoicesFolder = "Voices";
+static const char* const kLanguagesFolder = "Languages";

@@ -795,8 +795,11 @@ void GereAnim(void)
 				// (AITD2.EXE, 44D4): started again by TYPE, the dumbwaiter's
 				// door on the ship opened from closed over and over. The end is
 				// no frame change there: the sound of that frame (ANIM_SAMPLE)
-				// came again each time, as the kitchen shelf's (BUGS.md A43)
-				if (g_gameId == AITD2)
+				// came again each time, as the kitchen shelf's (BUGS.md A43).
+				// AITD3 too: the preacher stood up again after melting, and
+				// script 760, which lights the street when he is on frame 1,
+				// never did and the screen stayed black (BUGS.md T8)
+				if (g_gameId == AITD2 || g_gameId == AITD3)
 				{
 					currentProcessedActorPtr->frame = currentProcessedActorPtr->numOfFrames - 1;
 					currentProcessedActorPtr->END_FRAME = 0;

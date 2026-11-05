@@ -188,6 +188,7 @@ struct tObject // used to read data from file too
     // aitd2
     s16 hardMat;
     s16 emitModel; // kind of flash at the gun's emit point when it fires (LM_FIRE, 3-8, BUGS.md A44)
+    s16 fireAlpha; // AITD3: the shot's angle up or down (FIRE_UP_DOWN; 0 with FIRE, BUGS.md T24)
 
     // Remaster: set when actor is on stairs (YHandler active), cleared when stair interpolation ends
 };
@@ -276,6 +277,8 @@ extern int unkScreenVar2;
 extern std::vector<s16> CVars;
 
 extern char* PtrPrioritySample;
+// Number of samples in PRIORITY.ITD (one byte each)
+extern int prioritySampleCount;
 
 extern char* PtrFont;
 

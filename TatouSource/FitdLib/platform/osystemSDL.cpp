@@ -437,14 +437,6 @@ void osystem_endOfFrame()
 
 }
 
-// A file of the game data, in homePath (platform/gameFolder.cpp)
-bool dataFileExists(const char* name)
-{
-    char path[1024];
-    snprintf(path, sizeof(path), "%s%s", homePath, name);
-    return fileExists(path);
-}
-
 bool fileExists(const char* name)
 {
     FILE* fHandle;

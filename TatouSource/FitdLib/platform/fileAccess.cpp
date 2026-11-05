@@ -9,7 +9,7 @@
 
 #include "common.h"
 #include "consoleLog.h"
-#include "fileNameCase.h"
+#include "languagePack.h"
 #include <cstring>
 // seg 20
 void fatalError(int type, const char* name)
@@ -20,36 +20,24 @@ void fatalError(int type, const char* name)
     assert(0);
 }
 
-extern "C" {
-    extern char homePath[512];
-}
-
 char* loadFromItd(const char* name)
 {
     // Try disk file first
     {
-        FILE* fHandle;
+        DataFile file;
         char* ptr;
 
-        char filePath[512];
-        snprintf(filePath, sizeof(filePath), "%s%s", homePath, name);
-
-        fHandle = fopen(matchFileCase(filePath).c_str(),"rb");
-        if(fHandle)
+        if(file.open(name))
         {
-            fseek(fHandle,0,SEEK_END);
-            fileSize = ftell(fHandle);
-            fseek(fHandle,0,SEEK_SET);
+            fileSize = file.size();
             ptr = (char*)malloc(fileSize);
 
             if(!ptr)
             {
-                fclose(fHandle);
                 fatalError(1,name);
                 return NULL;
             }
-            fread(ptr,fileSize,1,fHandle);
-            fclose(fHandle);
+            file.read(ptr,fileSize);
             return(ptr);
         }
     }

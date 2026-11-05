@@ -146,8 +146,8 @@ typedef enum enumLifeMacro enumLifeMacro;
 extern enumLifeMacro AITD1LifeMacroTable[];
 extern enumLifeMacro AITD2LifeMacroTable[];
 
-// AITD2: height of the ground (SET_GROUND), in room coordinates; what is
-// below it is not drawn (BUGS.md A38)
+// AITD2 and AITD3: height of the ground (SET_GROUND), in room coordinates;
+// what is below it is not drawn (BUGS.md A38, T8)
 extern int groundLevel;
 
 // Runs one frame of script number lifeNum for the current object (the interpreter)

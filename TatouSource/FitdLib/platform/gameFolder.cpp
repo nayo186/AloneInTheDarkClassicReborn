@@ -128,17 +128,21 @@ static fs::path cueFile(const fs::path& folder)
     return fs::path();
 }
 
-// The game's folder in a GOG installation and a file only that game has
-// (Jack goes in AITD1's installation)
-static const char* gogDataFolder(bool aitd2) { return aitd2 ? "INDARK2" : "INDARK"; }
-static const char* gameMarker(bool aitd2) { return aitd2 ? "MER.PAK" : "LISTBOD2.PAK"; }
+// The games of the trilogy (Jack goes with AITD1: its folder is inside AITD1's)
+enum class Trilogy { AITD1, AITD2, AITD3 };
+
+// The game's folder in a GOG installation, a file only that game has and the
+// name of its folder in UserData and of its data folder in launcher.cfg
+static const char* gogDataFolder(Trilogy game) { return game == Trilogy::AITD3 ? "INDARK3" : game == Trilogy::AITD2 ? "INDARK2" : "INDARK"; }
+static const char* gameMarker(Trilogy game) { return game == Trilogy::AITD3 ? "AN1.PAK" : game == Trilogy::AITD2 ? "MER.PAK" : "LISTBOD2.PAK"; }
+static const char* gameKey(Trilogy game) { return game == Trilogy::AITD3 ? "aitd3" : game == Trilogy::AITD2 ? "aitd2" : "aitd1"; }
 
 // A GOG or Steam installation: GAME.GOG and its track list next to INDARK
-// (INDARK2 for AITD2)
-static bool isGogRoot(const fs::path& folder, bool aitd2)
+// (INDARK2 for AITD2, INDARK3 for AITD3)
+static bool isGogRoot(const fs::path& folder, Trilogy game)
 {
     return pathExists(folder / "GAME.GOG") && !cueFile(folder).empty() &&
-        pathExists(folder / gogDataFolder(aitd2) / gameMarker(aitd2));
+        pathExists(folder / gogDataFolder(game) / gameMarker(game));
 }
 
 static void setHomePath(const fs::path& dataFolder)
@@ -150,15 +154,16 @@ static void setHomePath(const fs::path& dataFolder)
 void selectGameFolder(int argc, char* argv[])
 {
     bool jack = false;
-    bool aitd2 = false;
+    Trilogy game = Trilogy::AITD1;
     bool debugGiven = false;
     for (int i = 1; i < argc; i++)
     {
         const std::string arg = argv[i];
         if (arg == "--game" && i + 1 < argc)
         {
-            jack = (lower(argv[i + 1]) == "jack");
-            aitd2 = (lower(argv[i + 1]) == "aitd2");
+            const std::string name = lower(argv[i + 1]);
+            jack = (name == "jack");
+            game = name == "aitd3" ? Trilogy::AITD3 : name == "aitd2" ? Trilogy::AITD2 : Trilogy::AITD1;
         }
         else if (arg == "--debug")
             s_debug = debugGiven = true;
@@ -181,8 +186,8 @@ void selectGameFolder(int argc, char* argv[])
         start = fs::current_path(error);
         if (error)
             return;
-        const bool known = pathExists(start / gameMarker(aitd2)) || isGogRoot(start, aitd2) || isGogRoot(start.parent_path(), aitd2);
-        const std::string chosen = launcherSetting(aitd2 ? "aitd2.dataFolder" : "aitd1.dataFolder");
+        const bool known = pathExists(start / gameMarker(game)) || isGogRoot(start, game) || isGogRoot(start.parent_path(), game);
+        const std::string chosen = launcherSetting((std::string(gameKey(game)) + ".dataFolder").c_str());
         if (!known && !chosen.empty())
             start = fs::u8path(chosen);
     }
@@ -193,19 +198,19 @@ void selectGameFolder(int argc, char* argv[])
         return;
     }
 
-    // Started inside the GOG INDARK (INDARK2) folder: its installation is the parent
-    if (!isGogRoot(start, aitd2) && isGogRoot(start.parent_path(), aitd2))
+    // Started inside the GOG INDARK (INDARK2, INDARK3) folder: its installation is the parent
+    if (!isGogRoot(start, game) && isGogRoot(start.parent_path(), game))
         start = start.parent_path();
-    const bool gog = isGogRoot(start, aitd2);
+    const bool gog = isGogRoot(start, game);
 
     // Where the game data is
-    fs::path dataFolder = gog ? start / (jack ? "JACK" : gogDataFolder(aitd2)) : (jack ? start / "JACK" : start);
+    fs::path dataFolder = gog ? start / (jack ? "JACK" : gogDataFolder(game)) : (jack ? start / "JACK" : start);
     if (jack && !pathExists(dataFolder / "PERE.PAK"))
     {
         s_message = MAIN_WARN "Jack in the Dark: no JACK\\PERE.PAK in the data folder" CON_RESET "\n";
         return;
     }
-    if (!jack && !pathExists(dataFolder / gameMarker(aitd2)))
+    if (!jack && !pathExists(dataFolder / gameMarker(game)))
         return;   // not a known layout: the working directory as it is
 
     if (s_debug && !gog)
@@ -222,7 +227,7 @@ void selectGameFolder(int argc, char* argv[])
 
     // The portable folder next to the exe; the data is only read
     const fs::path userRoot = exeFolder() / kUserDataFolder;
-    const fs::path userFolder = userRoot / (jack ? "JACK" : aitd2 ? "AITD2" : "AITD1");
+    const fs::path userFolder = userRoot / (jack ? "JACK" : game == Trilogy::AITD3 ? "AITD3" : game == Trilogy::AITD2 ? "AITD2" : "AITD1");
     fs::create_directories(userFolder, error);
     fs::current_path(userFolder, error);
     if (error)

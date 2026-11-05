@@ -17,6 +17,7 @@ void GiveZVObjet(sBody* bodyPtr, ZVStruct* zvPtr);
 void getZvMax(sBody* bodyPtr, ZVStruct* zvPtr);
 // Collision box of a body turned by its angles
 void getZvRot(sBody* bodyPtr, ZVStruct* zvPtr, int alpha, int beta, int gamma);
-// A default collision box (200 x 200 x 200 around the origin)
+// The collision box of an object without a body: 200 x 2000 x 200 around
+// the origin, empty in AITD3
 void makeDefaultZV(ZVStruct* zvPtr);
 #endif

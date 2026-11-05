@@ -39,22 +39,28 @@ extern void playMenuSound(const char* soundName);
 
 int* currentCVarTable = NULL;
 
-int getCVarsIdx(enumCVars searchedType) // TODO: optimize by reversing the table....
+// The position of a game variable in the table of the game, -1 if the game
+// has none: the table ends at -1, and the search went on past it
+static int findCVarIdx(enumCVars searchedType)
 {
-    for (int i = 0; i < CVars.size(); i++)
+    for (int i = 0; i < (int)CVars.size() && currentCVarTable[i] != -1; i++)
     {
-        if (currentCVarTable[i] == -1)
-        {
-            ASSERT(0);
-        }
-
-
         if (currentCVarTable[i] == searchedType)
             return i;
     }
+    return -1;
+}
 
-    ASSERT(0);
-    return 0;
+int getCVarsIdx(enumCVars searchedType)
+{
+    const int i = findCVarIdx(searchedType);
+    ASSERT(i >= 0);
+    return i >= 0 ? i : 0;
+}
+
+bool knownCVar(enumCVars searchedType)
+{
+    return findCVarIdx(searchedType) >= 0;
 }
 
 int getCVarsIdx(int searchedType)
@@ -515,6 +521,7 @@ void OpenProgram(void)
     }
 
     PtrPrioritySample = loadFromItd("PRIORITY.ITD");
+    prioritySampleCount = fileSize;
 
     // read cvars definitions
     {

@@ -303,8 +303,6 @@ void redrawInventorySpriteAITD2()
 
 // The narrator of the CD version: each page of a text plays a CD track for
 // some seconds (table of AITD2.EXE, by text and page; BUGS.md A18)
-struct BookVoice { u8 track; u8 seconds; };
-struct BookVoices { int text; BookVoice pages[9]; };
 static const BookVoices s_bookVoices[] = {
 	{  1, { {44, 12}, {47, 39}, {48, 27}, {49, 41}, {50, 28}, {55, 31}, {56, 19}, {57, 40}, {58, 10} } },
 	{  3, { {29, 29} } },
@@ -322,42 +320,9 @@ static const BookVoices s_bookVoices[] = {
 	{ 48, { {44, 12}, {53, 39}, {54, 15} } },
 };
 
-// A text with a voice was read: its voice took the CD from the music
-static bool s_bookVoicePlayed = false;
-
 void AITD2_playBookVoice(int index, int page)
 {
-	for (const BookVoices& voices : s_bookVoices)
-	{
-		if (voices.text != index)
-			continue;
-		if (!s_bookVoicePlayed)
-		{
-			osystem_stopTrack();
-			s_bookVoicePlayed = true;
-		}
-		const BookVoice voice = page < 9 ? voices.pages[page] : BookVoice{};
-		if (voice.track)
-			osystem_playVoiceTrack(voice.track, voice.seconds);
-		else
-			osystem_stopVO();
-		return;
-	}
-}
-
-// Silences the voice of the book and gives the CD back to the music
-static void endBookVoice()
-{
-	if (!s_bookVoicePlayed)
-		return;
-	s_bookVoicePlayed = false;
-	osystem_stopVO();
-	const int music = currentMusic;
-	if (music >= 0)
-	{
-		currentMusic = -1;
-		playMusic(music);
-	}
+	playBookVoice(s_bookVoices, (int)(sizeof(s_bookVoices) / sizeof(s_bookVoices[0])), index, page);
 }
 
 void AITD2_ReadBook(int index, int type)

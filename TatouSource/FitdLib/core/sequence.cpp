@@ -166,7 +166,11 @@ void unapckSequenceFrame(unsigned char* source,unsigned char* dest)
 
 extern "C" { extern char homePath[512]; }
 
-static const int kSequenceFrameTicks = 4;
+// Ticks of the game clock (60 a second) each frame stays on screen: AITD2
+// waited 5 screen syncs at 70 Hz, about 4; AITD3 5 ticks of its own 60 Hz
+// timer (AITD3.EXE, 0x15F1E): with 4 its sequences went 25% too fast and
+// the intro ended before its narration (BUGS.md T5)
+static int sequenceFrameTicks() { return (g_gameId == AITD3) ? 5 : 4; }
 
 void playSequence(int sequenceIdx, int fadeStart, int fadeOutVar)
 {
@@ -287,10 +291,9 @@ void playSequence(int sequenceIdx, int fadeStart, int fadeOutVar)
 
             currentFrameId++;
 
-			// The original waited 5 screen syncs (70 Hz) per frame: about 4
-			// ticks of the game clock, whatever the FPS
+			// Ticks of the game clock, whatever the FPS
 			int frameTicks = 0;
-			while (frameTicks < kSequenceFrameTicks && !key)
+			while (frameTicks < sequenceFrameTicks() && !key)
 			{
 				process_events();
 				frameTicks += ticksThisFrame;

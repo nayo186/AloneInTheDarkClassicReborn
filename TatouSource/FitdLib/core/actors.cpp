@@ -44,7 +44,8 @@ void DeleteObjet(int index) // remove actor
     {
         actorPtr->indexInWorld = -1;
 
-        if (actorPtr->ANIM == 4)
+        // FOG_FLAG is AITD1's: elsewhere it cleared CVar 0 (BUGS.md T12)
+        if (actorPtr->ANIM == 4 && knownCVar(FOG_FLAG))
         {
             CVars[getCVarsIdx(FOG_FLAG)] = 0;
             printf(LIFE_TAG "Cigar smoke gone\n");
@@ -544,7 +545,7 @@ static bool isActorInSeenPart(tObject* actorPtr)
     const bool drawing2D = (actorPtr->objectType & AF_OBJ_2D) != 0;
     if (g_gameId < JACK || (g_gameId == JACK && actorPtr->room == currentRoom && !drawing2D))
         return true;
-    if (g_gameId == AITD2 && currentCameraTargetActor >= 0 && actorPtr == &ListObjets[currentCameraTargetActor])
+    if ((g_gameId == AITD2 || g_gameId == AITD3) && currentCameraTargetActor >= 0 && actorPtr == &ListObjets[currentCameraTargetActor])
         return true;
 
     for (int i = 0; i < cameraDataTable[NumCamera]->numViewedRooms; i++)
@@ -553,14 +554,14 @@ static bool isActorInSeenPart(tObject* actorPtr)
         if (viewedRoom.viewedRoomIdx != actorPtr->room)
             continue;
         if (viewedRoom.seenBoxes.empty())
-            return g_gameId != AITD2;
+            return (g_gameId != AITD2 && g_gameId != AITD3);
         for (const rectTestStruct& box : viewedRoom.seenBoxes)
         {
             const int x = actorPtr->roomX + (drawing2D ? 0 : actorPtr->stepX);
             const int z = actorPtr->roomZ + (drawing2D ? 0 : actorPtr->stepZ);
             if (x >= box.zoneX1 && x <= box.zoneX2 && z >= box.zoneZ1 && z <= box.zoneZ2)
                 return true;
-            if (!drawing2D && g_gameId != AITD2 && actorPtr->zv.ZVX2 >= box.zoneX1 && actorPtr->zv.ZVX1 <= box.zoneX2
+            if (!drawing2D && (g_gameId != AITD2 && g_gameId != AITD3) && actorPtr->zv.ZVX2 >= box.zoneX1 && actorPtr->zv.ZVX1 <= box.zoneX2
                 && actorPtr->zv.ZVZ2 >= box.zoneZ1 && actorPtr->zv.ZVZ1 <= box.zoneZ2)
                 return true;
         }

@@ -147,7 +147,7 @@ static void drawLaterStillMasks(const tObject* actorPtr, const cameraDataStruct*
 // hid a leaf of the house door (BUGS.md A34)
 static bool pointInOtherRoomZone(const tObject* actorPtr, const rectTestStruct& rect)
 {
-    if (g_gameId != AITD2 || actorPtr->room == currentRoom)
+    if ((g_gameId != AITD2 && g_gameId != AITD3) || actorPtr->room == currentRoom)
         return false;
     const int x = (actorPtr->roomX + actorPtr->stepX) / 10;
     const int z = (actorPtr->roomZ + actorPtr->stepZ) / 10;
@@ -163,6 +163,9 @@ static bool pointInOtherRoomZone(const tObject* actorPtr, const rectTestStruct& 
 // is drawn as before (BUGS.md A55)
 static bool hiddenBehindItsRoomWall(const tObject* actorPtr, int x, int y, int z, int alpha, int beta, int gamma, sBody* bodyPtr)
 {
+    // AITD2 only: in AITD3 (as its original) a mask covers only its part of
+    // the object; the horse running in the street behind the saloon's posts
+    // vanished whole for a moment (BUGS.md T25)
     if (g_gameId != AITD2 || actorPtr->room == currentRoom)
         return false;
     if (currentCameraTargetActor >= 0 && actorPtr == &ListObjets[currentCameraTargetActor])
@@ -309,7 +312,7 @@ void drawBgOverlay(tObject* actorPtr)
                 }
             }
         }
-        if (g_gameId == AITD2 && isStillObject(*actorPtr))
+        if ((g_gameId == AITD2 || g_gameId == AITD3) && isStillObject(*actorPtr))
             drawLaterStillMasks(actorPtr, pCamera);
     }
 
@@ -430,7 +433,10 @@ static void AffSmoke(int actorIdx)
 
     // FOG_FLAG went back to 1 at the start of the frame (AllRedraw); the
     // player touching the cloud (in the room and on screen) sets
-    // it to 2 again, after the cough, unless a one-shot animation is playing
+    // it to 2 again, after the cough, unless a one-shot animation is playing.
+    // Only AITD1 has the variable (BUGS.md T12)
+    if (!knownCVar(FOG_FLAG))
+        return;
     s16& fog = CVars[getCVarsIdx(FOG_FLAG)];
     static unsigned int s_lastCough = 0;
     if (currentCameraTargetActor < 0 || fog != 1 || timer - s_lastCough < (unsigned int)kSmokeCoughTicks)
@@ -874,8 +880,10 @@ void AllRedraw(int flagFlip)
                         // AITD2 cuts every object at the ground, but the ones
                         // in water (AITD2.EXE, before drawing each object): the
                         // statue and the zombie rising from the lawn came out
-                        // whole from below it (BUGS.md A38)
-                        if (g_gameId == AITD2)
+                        // whole from below it (BUGS.md A38). AITD3 too: its
+                        // preacher sank whole under the street instead of
+                        // melting into it (BUGS.md T8)
+                        if (g_gameId == AITD2 || g_gameId == AITD3)
                             setWaterSurface(!(actorPtr->objectType & AF_WATER), groundLevel + actorPtr->worldY - actorPtr->roomY);
 
                         setCurrentBodyNum(actorPtr->bodyNum, bodyPtr, HQ_Bodys->string);

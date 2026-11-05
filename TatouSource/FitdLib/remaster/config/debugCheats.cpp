@@ -28,9 +28,7 @@ static std::vector<int> s_pending;   // items chosen, given when the window clos
 
 void debugCheatsToggle()
 {
-    if (!isDebugMode())   // test tool: only in debug mode (launcher)
-        return;
-    if (g_gameId != AITD1 && g_gameId != JACK)
+    if (!isDebugMode())   // test tool: only in debug mode (launcher), every game
         return;
     s_open.store(!s_open.load());
 }
@@ -142,7 +140,7 @@ void debugCheatsDraw()
         return;
 
     // take() moves one slot too many when inserting: two slots stay free
-    const int room = (INVENTORY_SIZE - 2) - numObjInInventoryTable[currentInventory];
+    const int room = (inventoryCapacity() - 2) - numObjInInventoryTable[currentInventory];
     int chosen;
     {
         std::lock_guard<std::mutex> lock(s_pendingMutex);
@@ -207,7 +205,7 @@ static void onGameLoopTick()
     {
         if (objIdx < 0 || objIdx >= (int)ListWorldObjets.size() || carried(objIdx))
             continue;
-        if (numObjInInventoryTable[currentInventory] >= INVENTORY_SIZE - 2)
+        if (numObjInInventoryTable[currentInventory] >= inventoryCapacity() - 2)
         {
             printf(MAIN_WARN "Debug cheat (F9): the inventory is full\n");
             break;

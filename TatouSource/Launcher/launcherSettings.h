@@ -31,6 +31,7 @@ struct LauncherSettings
     std::string uiLanguage = "en";
     std::string aitd1DataFolder;   // UTF-8 path
     std::string aitd2DataFolder;
+    std::string aitd3DataFolder;
     bool debugMode = false;        // test tools; a copy of the data keeps everything inside it
     int windowWidth = 0;           // the launcher window as it was left (0: not saved yet)
     int windowHeight = 0;
@@ -107,12 +108,12 @@ void loadLauncherSettings(LauncherSettings& settings);
 void saveLauncherSettings(const LauncherSettings& settings);
 
 // The chosen folder can be a copy of the data (LISTBOD2.PAK in it for AITD1,
-// Jack in its JACK subfolder; MER.PAK for AITD2) or a GOG or Steam
-// installation (GAME.GOG and GAME.INS, or GAME.INST on Steam; AITD1 in
-// INDARK, Jack in JACK, AITD2 in INDARK2; that folder itself may be chosen
+// Jack in its JACK subfolder; MER.PAK for AITD2; AN1.PAK for AITD3) or a GOG
+// or Steam installation (GAME.GOG and GAME.INS, or GAME.INST on Steam; AITD1 in
+// INDARK, Jack in JACK, AITD2 in INDARK2, AITD3 in INDARK3; that folder itself may be chosen
 // too). A GOG installation is never written to: aitd_remaster.cfg goes to the
 // user folder (Shared/userFolder.h), as the game's saves and log.
-// The game of the folder: 0 AITD1, 1 AITD2, -1 none
+// The game of the folder: 0 AITD1, 1 AITD2, 2 AITD3, -1 none
 int dataFolderGame(const std::string& folder);
 // True if the folder is a GOG or Steam installation
 bool isGogInstallFolder(const std::string& folder);
@@ -149,5 +150,5 @@ enum class LaunchResult
 
 // Starts Tatou.exe with the default settings and the chosen language, in the
 // game's data folder: game "aitd1", "jack" (Tatou enters the JACK subfolder
-// and shares the AITD1 configuration) or "aitd2"
+// and shares the AITD1 configuration), "aitd2" or "aitd3"
 LaunchResult launchGame(const LauncherSettings& settings, const char* game);

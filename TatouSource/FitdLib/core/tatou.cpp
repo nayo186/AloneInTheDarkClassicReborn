@@ -205,6 +205,30 @@ void setCameraTarget(int x,int y,int z,int alpha,int beta,int gamma,int time)
     SetAngleCamera(alpha,beta,gamma);
 }
 
+// Priority of a sample in PRIORITY.ITD (0 if it is not there)
+static int samplePriority(int num)
+{
+	if (!PtrPrioritySample || num < 0 || num >= prioritySampleCount)
+		return 0;
+	return (unsigned char)PtrPrioritySample[num];
+}
+
+// Priority of the looping sample that is playing, -1 if there is none
+static int s_loopPriority = -1;
+
+// AITD3 had one sample channel, and a sample of the same or a higher
+// priority (PRIORITY.ITD) took it from a loop (AITD3.EXE, 0x96B8): the
+// preacher's match (REP_SAMPLE 60, priority 10) stops with his sample 157
+// (11); here it went on under it and the bridge sequence. A sample of a lower
+// priority, which the original did not play, plays over the loop (BUGS.md T9)
+static void cutLoopByPriority(int num)
+{
+	if (g_gameId != AITD3 || s_loopPriority < 0 || samplePriority(num) < s_loopPriority)
+		return;
+	osystem_stopLoopingSamples();
+	s_loopPriority = -1;
+}
+
 // Who asked for a sample, for the [SOUND] lines of tatou.log
 static void logSample(const char* what, int num)
 {
@@ -259,6 +283,7 @@ void playSound(int num)
 		return;
 	}
 
+	cutLoopByPriority(num);
 	osystem_playSample(ptr, size);
 	LastSample = num;
 	s_lastSkipped = -1;
@@ -318,6 +343,7 @@ static void startLoopingSample(int num)
 	const float volume = (g_gameId == AITD1 && num == 90) ? 2.0f : 1.0f;
 	osystem_playLoopingSample(ptr, size, volume);
 	s_lastLoopingSample = num;
+	s_loopPriority = samplePriority(num);
 	logSample("Looping sample", num);
 }
 

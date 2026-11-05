@@ -29,6 +29,18 @@ void getZvCube(sBody* bodyPtr, ZVStruct* zvPtr)
 
 void makeDefaultZV(ZVStruct* zvPtr)
 {
+    // AITD3 gives an object without a body an empty box (AITD3.EXE 0x1289E):
+    // its script objects (at the origin of their room, such as 185 and 506
+    // of floor 0 room 1) then touch nothing. With the 200 x 200 box of AITD1
+    // and AITD2 they were invisible posts where Carnby got stuck (BUGS.md T22)
+    if (g_gameId == AITD3)
+    {
+        zvPtr->ZVX1 = zvPtr->ZVX2 = 0;
+        zvPtr->ZVY1 = zvPtr->ZVY2 = 0;
+        zvPtr->ZVZ1 = zvPtr->ZVZ2 = 0;
+        return;
+    }
+
     zvPtr->ZVX1 = -100;
     zvPtr->ZVX2 = 100;
 

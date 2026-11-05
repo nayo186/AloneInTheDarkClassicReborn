@@ -752,7 +752,7 @@ int evalVar2(const char* name)
                         // ANIM_RESET has not ended: the kitchen's dumbwaiter
                         // door, asked to open, saw its closing ended in the
                         // same pass and was stopped before it moved (BUGS.md A47)
-                        if (g_gameId == AITD2 && actorPtr->newAnim >= 0 && (actorPtr->newAnimType & ANIM_RESET))
+                        if ((g_gameId == AITD2 || g_gameId == AITD3) && actorPtr->newAnim >= 0 && (actorPtr->newAnimType & ANIM_RESET))
                             return 0;
                         if (g_gameId == AITD2 && aitd2EndAnimSeen(actorIdx))
                             return 1;
@@ -840,7 +840,7 @@ int evalVar2(const char* name)
                         // pushed: the kitchen cupboard, touched by Grace
                         // standing in front of it, opened again and again
                         // (BUGS.md A45)
-                        if(colBy == -1 && g_gameId == AITD2 && (actorPtr->objectType & AF_MOVABLE))
+                        if(colBy == -1 && (g_gameId == AITD2 || g_gameId == AITD3) && (actorPtr->objectType & AF_MOVABLE))
                             colBy = findTouchingObject(actorIdx);
                         if(colBy == -1)
                             return(-1);
@@ -911,7 +911,7 @@ int evalVar2(const char* name)
 							// in frames where the actor moves: at 60 FPS many
 							// moves round to 0. An object that touches it
 							// counts too, at any FPS (BUGS.md A20)
-							if(temp1 == -1 && g_gameId == AITD2)
+							if(temp1 == -1 && (g_gameId == AITD2 || g_gameId == AITD3))
 								temp1 = findTouchingObject(actorIdx);
 							if(temp1 == -1)
 								return -1;

@@ -9,5 +9,38 @@
 
 // AITD3's start (inherited from FITD, not played yet)
 void startAITD3();
-// Draws AITD3's inventory frame
+// AITD3's intro is playing (the original's flag at 0xE104)
+extern bool aitd3IntroPlaying;
+// Opens a letter, book or notebook of AITD3 (READ)
+void AITD3_ReadBook(int index, int type);
+// The narrator reads one page of a text of AITD3, if it has a voice
+void AITD3_playBookVoice(int index, int page);
+// Puts AITD3's 16 text colours (0-63) over colours 0-15 of a picture's palette
+void textColoursAITD3(palette_t& palette);
+// Keeps the game screen, darkened, as the background of AITD3's inventory
+void beginInventoryAITD3();
+// Makes that background from the copy of the whole scene once it arrives;
+// true if it changed and the inventory must be drawn again
+bool updateInventorySceneAITD3();
+// Draws AITD3's inventory frame over that background
 void drawInventoryAITD3();
+// Puts back a box of AITD3's inventory screen before writing in it
+void restoreInventoryBoxAITD3(int x1, int y1, int x2, int y2);
+// Draws the sprites of AITD3's inventory frame that go over its texts
+void redrawInventorySpriteAITD3();
+// Forgets the background of AITD3's inventory when it closes
+void endInventoryAITD3();
+
+// AITD3's difficulty (AITD3.EXE): each value is 0 low, 1 average or 2 high
+enum
+{
+    DIFFICULTY_LIFE,          // Carnby's life points
+    DIFFICULTY_HERO_HITS,     // Carnby's hit points: the force of his hits
+    DIFFICULTY_VILLAIN_HITS,  // villains' hit points: the force of theirs
+};
+extern s16 aitd3Difficulty[3];
+// The force a hit gives `target`, with AITD3's difficulty applied
+int difficultyHitForce(const tObject* target, int force);
+// AITD3: doubles or halves the hero's life points when C_VAR 2 names the
+// variable that holds them
+void difficultyHeroLife();

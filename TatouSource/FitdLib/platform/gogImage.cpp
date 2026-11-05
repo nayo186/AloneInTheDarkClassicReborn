@@ -53,14 +53,14 @@ bool gogImageReadFile(const char* folder, const char* name, std::vector<unsigned
     return gogImageAvailable() && s_image.readFile(folder, name, data);
 }
 
-// ---- Music tracks -------------------------------------------------------------
+// ---- CD tracks -------------------------------------------------------------
 
-class GogTrackInstance : public SoLoud::AudioSourceInstance
+class CdTrackInstance : public SoLoud::AudioSourceInstance
 {
 public:
-    GogTrackInstance(long long start, long long end) : m_position(start), m_end(end)
+    CdTrackInstance(const std::filesystem::path& image, long long start, long long end) : m_position(start), m_end(end)
     {
-        m_image.open(s_image.path(), std::ios::binary);
+        m_image.open(image, std::ios::binary);
         m_image.seekg(start);
     }
 
@@ -100,39 +100,43 @@ private:
     std::vector<short> m_pcm;
 };
 
-class GogTrackSource : public SoLoud::AudioSource
+class CdTrackSource : public SoLoud::AudioSource
 {
 public:
-    GogTrackSource(long long start, long long end) : m_start(start), m_end(end)
+    CdTrackSource(const std::filesystem::path& image, long long start, long long end) : m_image(image), m_start(start), m_end(end)
     {
         mChannels = 2;
         mBaseSamplerate = 44100.0f;
     }
 
-    ~GogTrackSource() override
+    ~CdTrackSource() override
     {
         stop();
     }
 
     SoLoud::AudioSourceInstance* createInstance() override
     {
-        return new GogTrackInstance(m_start, m_end);
+        return new CdTrackInstance(m_image, m_start, m_end);
     }
 
 private:
+    std::filesystem::path m_image;
     long long m_start;
     long long m_end;
 };
 
-SoLoud::AudioSource* gogImageCreateTrack(int track)
+SoLoud::AudioSource* createCdTrack(const CdImage& image, int track)
 {
-    if (!gogImageAvailable())
-        return nullptr;
-    const long long sectorSize = s_image.sectorSize();
-    for (const CdTrack& cdTrack : s_image.tracks())
+    const long long sectorSize = image.sectorSize();
+    for (const CdTrack& cdTrack : image.tracks())
     {
         if (cdTrack.number == track && cdTrack.audio && cdTrack.endSector > cdTrack.startSector)
-            return new GogTrackSource(cdTrack.startSector * sectorSize, cdTrack.endSector * sectorSize);
+            return new CdTrackSource(image.path(), cdTrack.startSector * sectorSize, cdTrack.endSector * sectorSize);
     }
     return nullptr;
+}
+
+SoLoud::AudioSource* gogImageCreateTrack(int track)
+{
+    return gogImageAvailable() ? createCdTrack(s_image, track) : nullptr;
 }

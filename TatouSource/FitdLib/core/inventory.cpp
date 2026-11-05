@@ -59,6 +59,24 @@ int statusTop;
 int statusRight;
 int statusBottom;
 
+// Colour of the inventory's texts that are not chosen: AITD3 writes them in
+// colour 64, a blue of its palette (AITD3.EXE, 0x10494, 0x10671); with 4,
+// which is brown there, they came out magenta (BUGS.md T10)
+static int inventoryTextColour()
+{
+    return (g_gameId == AITD3) ? 64 : 4;
+}
+
+int inventoryCapacity()
+{
+    return (g_gameId == AITD3) ? 40 : 30;
+}
+
+int inventoryTableSize()
+{
+    return (g_gameId == AITD1 || g_gameId == JACK) ? 30 : INVENTORY_SIZE;
+}
+
 int numInventoryActions;
 s16 inventoryActionTable[5];
 
@@ -79,7 +97,10 @@ int DrawListObjets(int startIdx, int selectIdx, int selectColor)
 	else
 	{
 		SetClip(27,25,292,98);
-		AffRect(27,25,292,98,0);
+		if (g_gameId == AITD3)
+			restoreInventoryBoxAITD3(27,25,292,98);
+		else
+			AffRect(27,25,292,98,0);
 
 		WindowX1 = 30;
 		WindowY1 = 27;
@@ -134,7 +155,7 @@ int DrawListObjets(int startIdx, int selectIdx, int selectColor)
 		}
 		else
 		{
-			SimpleMessage(160,y,objPtr->foundName,4);
+			SimpleMessage(160,y,objPtr->foundName,inventoryTextColour());
 		}
 
 		y += fontHeight;
@@ -158,7 +179,10 @@ int DrawListObjets(int startIdx, int selectIdx, int selectColor)
 void renderInventoryObject(int arg)
 {
     SetClip(statusLeft,statusTop,statusRight,statusBottom);
-    AffRect(statusLeft,statusTop,statusRight,statusBottom,0);
+    if (g_gameId == AITD3)
+        restoreInventoryBoxAITD3(statusLeft,statusTop,statusRight,statusBottom);
+    else
+        AffRect(statusLeft,statusTop,statusRight,statusBottom,0);
 
     turnShowObjet();
 
@@ -172,7 +196,7 @@ void renderInventoryObject(int arg)
     if(arg!=-1)
     {
         u8 buffer[256];
-        SetFont(PtrFont,4);
+        SetFont(PtrFont,inventoryTextColour());
         sprintf_s((char*)buffer, sizeof(buffer), "%d",vars[arg]);
         PrintFont(statusLeft+4,statusTop+4,logicalScreen,buffer);
     }
@@ -181,6 +205,9 @@ void renderInventoryObject(int arg)
 	{
 	case AITD2:
 		redrawInventorySpriteAITD2();
+		break;
+	case AITD3:
+		redrawInventorySpriteAITD3();
 		break;
 	default:
 		break;
@@ -201,7 +228,10 @@ void drawInventoryActions(int arg)
 	else
 	{
 		SetClip(162,100,292,174);
-		AffRect(162,100,292,174, 0);
+		if (g_gameId == AITD3)
+			restoreInventoryBoxAITD3(162,100,292,174);
+		else
+			AffRect(162,100,292,174, 0);
 
 		WindowX1 = 166;
 		WindowY1 = 104;
@@ -243,7 +273,7 @@ void drawInventoryActions(int arg)
         }
         else
         {
-            SimpleMessage(240,y,inventoryActionTable[i],4);
+            SimpleMessage(240,y,inventoryActionTable[i],inventoryTextColour());
         }
 
         y += fontHeight;
@@ -253,6 +283,9 @@ void drawInventoryActions(int arg)
 	{
 	case AITD2:
 		redrawInventorySpriteAITD2();
+		break;
+	case AITD3:
+		redrawInventorySpriteAITD3();
 		break;
 	default:
 		break;
@@ -318,6 +351,7 @@ void processInventory(void)
 		drawInventoryAITD2();
 		break;
 	case AITD3:
+		beginInventoryAITD3();
 		drawInventoryAITD3();
 		break;
 	default:
@@ -332,7 +366,10 @@ void processInventory(void)
 
 		// If window was resized during process_events, force a full redraw
 		bool needRedraw = false;
-		if (g_windowWasResized)
+		// AITD3: the copy of the whole scene (with its 3D models) arrived for
+		// the darkened background (BUGS.md T19)
+		const bool sceneArrived = (g_gameId == AITD3) && updateInventorySceneAITD3();
+		if (g_windowWasResized || sceneArrived)
 		{
 			resetWindowResizeFlag();
 			needRedraw = true;
@@ -405,7 +442,7 @@ void processInventory(void)
 					lastSelectedObjectIdx = -1;
 					selectedActions = 0;
 					antiBounce = 2;
-					continue;
+					goto drawFrame;   // this frame still shows the object (BUGS.md T20)
 				}
                 else
                 {
@@ -509,7 +546,7 @@ void processInventory(void)
                     modeSelect = 0;
                     lastSelectedObjectIdx = -1;
                     antiBounce = 2;
-                    continue;
+                    goto drawFrame;
                 }
 
                 if(localJoyD&1 && selectedActions>0)
@@ -528,7 +565,7 @@ void processInventory(void)
                     modeSelect = 0;
                     lastSelectedObjectIdx = -1;
                     antiBounce = 2;
-                    continue;
+                    goto drawFrame;
                 }
 
                 if(localJoyD&2 && selectedActions<(numInventoryActions-1))
@@ -547,7 +584,7 @@ void processInventory(void)
                     modeSelect = 0;
                     lastSelectedObjectIdx = -1;
                     antiBounce = 2;
-                    continue;
+                    goto drawFrame;
                 }
 
                 if(localKey || localJoyD || localClick)
@@ -577,6 +614,10 @@ void processInventory(void)
                 menuWaitVSync();
             }
         }
+        // Every turn of the loop is one image on screen: a turn that skipped
+        // this showed the scene without the 3D object, a flash of the whole
+        // screen when choosing an object or going back from its actions
+    drawFrame:
         renderInventoryObject(ListWorldObjets[selectedWorldObjectIdx].floorLife);
 
         if(firstTime)
@@ -596,6 +637,8 @@ void processInventory(void)
     RestoreTimerAnim();
 
     FlagInitView = 1;
+    if (g_gameId == AITD3)
+        endInventoryAITD3();
 
     while(Click || key || JoyD)
     {
@@ -606,6 +649,8 @@ void processInventory(void)
     localKey = 0;
     localClick = 0;
 
+    printf("[INV] Inventory closed: %s (object %d, action 0x%X)\n",
+           choice == 1 ? "action chosen" : "no action", selectedObjectIdx, action);
     if(choice == 1)
     {
         executeFoundLife(selectedObjectIdx);
@@ -703,8 +748,9 @@ void FoundObjet(int objIdx, int param)
 
     // Not offered again once taken; AITD1 neither once put down (0x4000).
     // AITD2 only looks at the inventory (AITD2.EXE, 6E1E): the key of the
-    // irons Grace left by Carnby was never offered to him (BUGS.md A48)
-    const int notOffered = (g_gameId == AITD2) ? 0x8000 : 0xC000;
+    // irons Grace left by Carnby was never offered to him (BUGS.md A48). AITD3
+    // too (AITD3.EXE, 0xD526; BUGS.md T11)
+    const int notOffered = (g_gameId == AITD2 || g_gameId == AITD3) ? 0x8000 : 0xC000;
     if (param != 0 && (objPtr->foundFlag & notOffered))
     {
         return;
@@ -739,8 +785,12 @@ void FoundObjet(int objIdx, int param)
     // Too heavy or the inventory is full: only "You cannot carry anything
     // else" (text 10, DrawFoundWindow case 2), no take/leave choice. It was 3,
     // which DrawFoundWindow does not draw: no options at all, and left/right
-    // brought them back and let the object be taken anyway (BUGS.md C40)
-    if (objPtr->positionInTrack + weight > CVars[getCVarsIdx(MAX_WEIGHT_LOADABLE)] || numObjInInventoryTable[currentInventory] + 1 == 30)
+    // brought them back and let the object be taken anyway (BUGS.md C40).
+    // AITD3 has no weight: only a full inventory stops it, at 40 (AITD3.EXE,
+    // 0xD567). Its CVar 2 is the variable of the hero's life points (14), and
+    // as the weight it stopped the taking of objects that weighed more (BUGS.md T11)
+    const bool tooHeavy = g_gameId != AITD3 && objPtr->positionInTrack + weight > CVars[getCVarsIdx(MAX_WEIGHT_LOADABLE)];
+    if (tooHeavy || numObjInInventoryTable[currentInventory] + 1 >= inventoryCapacity())
     {
         choix = 2;
     }

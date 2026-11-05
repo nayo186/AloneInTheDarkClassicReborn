@@ -124,11 +124,11 @@ void loadCamera(int cameraIdx)
 
         if (g_gameId == AITD3)
         {
-            for (int i = 0; i < 16; i++) {
-                currentGamePalette[i][0] = defaultPaletteAITD3[i * 3 + 0];
-                currentGamePalette[i][1] = defaultPaletteAITD3[i * 3 + 1];
-                currentGamePalette[i][2] = defaultPaletteAITD3[i * 3 + 2];
-            }
+            // The table is in 0-255 and the palette is still 0-63 here
+            // (convertPaletteIfRequired follows): taken as it was, its values
+            // went past 255 and wrapped, and the text colour 4, brown, came
+            // out magenta (AITD3.EXE keeps it in 0-63 at ds:0xC64; BUGS.md T10)
+            textColoursAITD3(currentGamePalette);
         }
         else
         {

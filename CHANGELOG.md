@@ -4,6 +4,29 @@ Alone in the Dark: Classic Reborn started on 2026-10-23 from [Alone in the Dark:
 
 This repository was published with a single starting commit, to keep it light: the early history carried large files that are no longer part of the project. Below are the changes of each release and, after them, the changes made in this fork before it was published, newest first, one line per change. The reasons behind larger removals are explained in `docs/DESCARTADO.md` and the fixes in `docs/baseline/BUGS.md`.
 
+## v1.4.0 (2026-11-05)
+
+*Alone in the Dark 3* can now be played in the same engine as the other games, with its own page in the launcher. It is being polished: if something behaves differently from the original, please open an issue. Its fixes follow `AITD3.EXE`, the game's own program, and are listed in `docs/baseline/BUGS.md` (T1 to T26); what is known of it is in `docs/AITD3_EXE.md`.
+
+- Alone in the Dark 3: playable with the GOG edition (the `INDARK3` folder and its music in `MUSIC`) or a copy of its files, with `Tatou.exe --game aitd3` and its own tab in the launcher
+- Alone in the Dark 3: its menus as in the original: the main menu with four entries and the difficulty, the pause menu on its option screen with "Difficulty Level", and the intro again after 15 seconds on the main menu (BUGS.md T1, T3, T7, T16)
+- Alone in the Dark 3: the difficulty changes the hero's life and the hits, as in the original (BUGS.md T3)
+- Alone in the Dark 3: the music plays the right CD track and stops on leaving the game; the intro keeps the original timing and Esc ends it (BUGS.md T2, T4, T5)
+- Alone in the Dark 3: no dark brown box around the text of the intro's pictures, black as in the original (BUGS.md T6)
+- Alone in the Dark 3: the street preacher stays down after melting, the street shows again after the bridge sequence, and his match no longer sounds in a loop (BUGS.md T8, T9)
+- Alone in the Dark 3: its inventory (frames, objects and colours), with Carnby and the others in its darkened scene, no weight limit, 40 objects and the last one of the list no longer cut (BUGS.md T10, T11, T15, T19)
+- Alone in the Dark 3: letters and books open, with their colours, the narrator of the CD, the page sound and the page turn; the story pictures (such as the piano's) are read with their voices (BUGS.md T17, T18, T26)
+- Alone in the Dark 3: saves in the layout of the GOG edition, in both directions (BUGS.md T11)
+- Alone in the Dark 3: the rules of the engine found in Alone in the Dark 2 (what each camera shows, masks, ladders, pushing, dropping objects, followers...) and its own table of game variables (BUGS.md T12, T13)
+- Alone in the Dark 3: Carnby no longer stops at invisible posts (BUGS.md T22)
+- Alone in the Dark 3: the gunman of the saloon's balcony shoots down at Carnby (BUGS.md T24)
+- Alone in the Dark 3: the horse in the street no longer disappears behind the walls for a moment (BUGS.md T25)
+- Alone in the Dark 3 in Spanish, from the original Spanish CD over the GOG edition: texts, voices of the scenes, intro and narrator, with the CD image or its files in `UserData\AITD3\Languages\Spanish` (see the README)
+- All games: no flash of the screen when choosing an object in the inventory (BUGS.md T20)
+- All games: the hero slides along the corners of walls and furniture instead of getting stuck (BUGS.md T21)
+- All games: a thrown object always lands where the hero can reach it to pick it up again (BUGS.md T23)
+- CD images in MODE2 are read too (narrators of Alone in the Dark and the language CD of Alone in the Dark 3)
+
 ## v1.3.3 (2026-11-04)
 
 All three games are now playable from start to end: *Alone in the Dark*, *Jack in the Dark* and *Alone in the Dark 2*. One last fix for the ship of *Alone in the Dark 2*.

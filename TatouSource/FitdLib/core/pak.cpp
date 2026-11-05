@@ -11,16 +11,13 @@
 
 #include "common.h"
 #include "consoleLog.h"
+#include "languagePack.h"
 
 #ifdef WIN32
 #include <direct.h>
 #endif
 
 #include <cstring>
-
-extern "C" {
-    extern char homePath[512];
-}
 
 struct pakInfoStruct // warning: alignment unsafe
 {
@@ -33,13 +30,13 @@ struct pakInfoStruct // warning: alignment unsafe
 
 //#define USE_UNPACKED_DATA
 
-void readPakInfo(pakInfoStruct* pPakInfo, FILE* fileHandle)
+void readPakInfo(pakInfoStruct* pPakInfo, DataFile& fileHandle)
 {
-    fread(&pPakInfo->discSize,4,1,fileHandle);
-    fread(&pPakInfo->uncompressedSize,4,1,fileHandle);
-    fread(&pPakInfo->compressionFlag,1,1,fileHandle);
-    fread(&pPakInfo->info5,1,1,fileHandle);
-    fread(&pPakInfo->offset,2,1,fileHandle);
+    fileHandle.read(&pPakInfo->discSize,4);
+    fileHandle.read(&pPakInfo->uncompressedSize,4);
+    fileHandle.read(&pPakInfo->compressionFlag,1);
+    fileHandle.read(&pPakInfo->info5,1);
+    fileHandle.read(&pPakInfo->offset,2);
 
     pPakInfo->discSize = READ_LE_U32(&pPakInfo->discSize);
     pPakInfo->uncompressedSize = READ_LE_U32(&pPakInfo->uncompressedSize);
@@ -50,24 +47,19 @@ unsigned int PAK_getNumFiles(const char* name)
 {
     // Try disk file first
     {
-        char bufferName[512];
-        FILE* fileHandle;
+        DataFile fileHandle;
         u32 fileOffset;
 
-        strcpy_s(bufferName, sizeof(bufferName), homePath);
-        strcat_s(bufferName, sizeof(bufferName), name);
-        strcat_s(bufferName, sizeof(bufferName), ".PAK");
+        fileHandle.open((std::string(name) + ".PAK").c_str());
 
-        fopen_s(&fileHandle, bufferName,"rb");
-
-        if (fileHandle)
+        if(fileHandle.isOpen())
         {
-            fseek(fileHandle,4,SEEK_CUR);
-            fread(&fileOffset,4,1,fileHandle);
+            fileHandle.seek(4,SEEK_CUR);
+            fileHandle.read(&fileOffset,4);
 #ifdef MACOSX
             fileOffset = READ_LE_U32(&fileOffset);
 #endif
-            fclose(fileHandle);
+            fileHandle.close();
             // The entry table starts at offset 4 and ends where the first
             // entry begins, so it holds (fileOffset/4)-1 entries. The old
             // "-2" missed the last entry in every AITD1 and JACK PAK.
@@ -147,39 +139,34 @@ int getPakSize(const char* name, int index)
 #else
     // Try disk file first
     {
-        char bufferName[512];
-        FILE* fileHandle;
+        DataFile fileHandle;
         s32 fileOffset;
         s32 additionalDescriptorSize;
         pakInfoStruct pakInfo;
         s32 size=0;
 
-        strcpy_s(bufferName, sizeof(bufferName), homePath);
-        strcat_s(bufferName, sizeof(bufferName), name);
-        strcat_s(bufferName, sizeof(bufferName), ".PAK");
+        fileHandle.open((std::string(name) + ".PAK").c_str());
 
-        fopen_s(&fileHandle, bufferName,"rb");
-
-        if(fileHandle)
+        if(fileHandle.isOpen())
         {
-            fseek(fileHandle,(index+1)*4,SEEK_SET);
+            fileHandle.seek((index+1)*4,SEEK_SET);
 
-            fread(&fileOffset,4,1,fileHandle);
+            fileHandle.read(&fileOffset,4);
             fileOffset = READ_LE_U32(&fileOffset);
 
-            fseek(fileHandle,fileOffset,SEEK_SET);
+            fileHandle.seek(fileOffset,SEEK_SET);
 
-            fread(&additionalDescriptorSize,4,1,fileHandle);
+            fileHandle.read(&additionalDescriptorSize,4);
             additionalDescriptorSize = READ_LE_U32(&additionalDescriptorSize);
 
             if(additionalDescriptorSize)
             {
-                fseek(fileHandle, additionalDescriptorSize-4, SEEK_CUR);
+                fileHandle.seek(additionalDescriptorSize-4, SEEK_CUR);
             }
 
             readPakInfo(&pakInfo,fileHandle);
 
-            fseek(fileHandle,pakInfo.offset,SEEK_CUR);
+            fileHandle.seek(pakInfo.offset,SEEK_CUR);
 
             // Apply same safety caps as loadPak for DOS buffer skipover consistency
             const s32 MAX_PAK_SIZE = 16 * 1024 * 1024;
@@ -199,7 +186,7 @@ int getPakSize(const char* name, int index)
                 size = pakInfo.uncompressedSize;
             }
 
-            fclose(fileHandle);
+            fileHandle.close();
             return size;
         }
     }
@@ -243,36 +230,31 @@ char* loadPak(const char* name, int index)
 #else
 	// Try disk file first
 	{
-		char bufferName[512];
-		FILE* fileHandle;
+		DataFile fileHandle;
 		u32 fileOffset;
 		u32 additionalDescriptorSize;
 		pakInfoStruct pakInfo;
 		char* ptr=0;
 
-		strcpy_s(bufferName, sizeof(bufferName), homePath);
-		strcat_s(bufferName, sizeof(bufferName), name);
-		strcat_s(bufferName, sizeof(bufferName), ".PAK");
+		fileHandle.open((std::string(name) + ".PAK").c_str());
 
-		fopen_s(&fileHandle, bufferName,"rb");
-
-		if(fileHandle)
+		if(fileHandle.isOpen())
 		{
 			char nameBuffer[256] = "";
 
-			fseek(fileHandle,(index+1)*4,SEEK_SET);
+			fileHandle.seek((index+1)*4,SEEK_SET);
 
-			fread(&fileOffset,4,1,fileHandle);
+			fileHandle.read(&fileOffset,4);
 			fileOffset = READ_LE_U32(&fileOffset);
 
-			fseek(fileHandle,fileOffset,SEEK_SET);
+			fileHandle.seek(fileOffset,SEEK_SET);
 
-			fread(&additionalDescriptorSize,4,1,fileHandle);
+			fileHandle.read(&additionalDescriptorSize,4);
 			additionalDescriptorSize = READ_LE_U32(&additionalDescriptorSize);
 
 			if(additionalDescriptorSize)
 		{
-			fseek(fileHandle, additionalDescriptorSize-4, SEEK_CUR);
+			fileHandle.seek(additionalDescriptorSize-4, SEEK_CUR);
 		}
 
 		readPakInfo(&pakInfo,fileHandle);
@@ -281,18 +263,18 @@ char* loadPak(const char* name, int index)
 		{
 			// A garbage header (index past the end of the PAK) asked for a
 			// name longer than the buffer: skip it, never overflow the stack
-			fseek(fileHandle, pakInfo.offset, SEEK_CUR);
+			fileHandle.seek(pakInfo.offset, SEEK_CUR);
 		}
 		else if(pakInfo.offset)
 		{
-			fread(nameBuffer,pakInfo.offset,1,fileHandle);
+			fileHandle.read(nameBuffer,pakInfo.offset);
 #ifdef FITD_DEBUGGER
 			printf(PAK_TAG "Loading %s/%s\n", name,nameBuffer+2);
 #endif
 		}
 		else
 		{
-			fseek(fileHandle,pakInfo.offset,SEEK_CUR);
+			fileHandle.seek(pakInfo.offset,SEEK_CUR);
 		}
 
 		// DOS buffer skipover safety: cap sizes to prevent crash from garbage pakInfo
@@ -307,7 +289,7 @@ char* loadPak(const char* name, int index)
 		case 0:
 			{
 				ptr = (char*)malloc(pakInfo.discSize);
-				if(ptr) fread(ptr,pakInfo.discSize,1,fileHandle);
+				if(ptr) fileHandle.read(ptr,pakInfo.discSize);
 				break;
 			}
 		case 1:
@@ -315,7 +297,7 @@ char* loadPak(const char* name, int index)
 				char * compressedDataPtr = (char *) malloc(pakInfo.discSize);
 				if(compressedDataPtr)
 				{
-					fread(compressedDataPtr, pakInfo.discSize, 1, fileHandle);
+					fileHandle.read(compressedDataPtr, pakInfo.discSize);
 					ptr = (char *) malloc(pakInfo.uncompressedSize);
 					if(ptr)
 					{
@@ -330,7 +312,7 @@ char* loadPak(const char* name, int index)
 				char * compressedDataPtr = (char *) malloc(pakInfo.discSize);
 				if(compressedDataPtr)
 				{
-					fread(compressedDataPtr, pakInfo.discSize, 1, fileHandle);
+					fileHandle.read(compressedDataPtr, pakInfo.discSize);
 					ptr = (char *) malloc(pakInfo.uncompressedSize);
 					if(ptr)
 					{
@@ -355,7 +337,7 @@ char* loadPak(const char* name, int index)
 			if(ptr) memset(ptr, 0, 4096);
 		}
 
-			fclose(fileHandle);
+			fileHandle.close();
 			return ptr;
 		}
 	}

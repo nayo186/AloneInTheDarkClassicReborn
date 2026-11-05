@@ -36,6 +36,9 @@
 #include "settings.h"
 #include "audioVolume.h"
 #include "gogImage.h"
+#include "gameFolder.h"
+#include "languagePack.h"
+#include <filesystem>
 #include "osystemAL.h"
 #include "vocDecoder.h"
 #include "userFolder.h"
@@ -94,20 +97,20 @@ static int countPlayingSfx(bool loopingOnly)
 SoLoud::DiskFile* pFile = NULL;
 SoLoud::WavStream* pWavStream = NULL;
 
-// A music track read from GOG's CD image (gogImage.cpp), when there are no
-// track files
-static SoLoud::AudioSource* s_gogTrack = nullptr;
+// A music track read from a CD image (GOG's or a language's CD), when there
+// are no track files
+static SoLoud::AudioSource* s_imageTrack = nullptr;
 
-// The music track that is playing (file or GAME.GOG), to know when it ends
+// The music track that is playing (file or CD image), to know when it ends
 static SoLoud::handle s_trackHandle = 0;
 
-static void stopGogTrack()
+static void stopImageTrack()
 {
-    if (s_gogTrack)
+    if (s_imageTrack)
     {
-        s_gogTrack->stop();
-        delete s_gogTrack;
-        s_gogTrack = nullptr;
+        s_imageTrack->stop();
+        delete s_imageTrack;
+        s_imageTrack = nullptr;
     }
 }
 
@@ -116,7 +119,7 @@ static SoLoud::WavStream* s_voStream = nullptr;
 static SoLoud::DiskFile*  s_voFile   = nullptr;
 static unsigned char*      s_voBuf    = nullptr;
 static SoLoud::handle      s_voHandle = 0;
-// A voice that is a track of GOG's CD image (AITD2's books)
+// A voice that is a track of a CD image (the books of AITD2 and AITD3)
 static SoLoud::AudioSource* s_voTrack = nullptr;
 
 float g_voPitchMultiplier = 1.0f;
@@ -138,7 +141,7 @@ void closeAudioArchive()
         delete pWavStream;
         pWavStream = nullptr;
     }
-    stopGogTrack();
+    stopImageTrack();
     if (pFile)
     {
         delete pFile;
@@ -258,7 +261,7 @@ void osystem_stopTrack()
             delete pWavStream;
             pWavStream = nullptr;
         }
-        stopGogTrack();
+        stopImageTrack();
 
         if (pFile)
         {
@@ -646,22 +649,70 @@ int osystemAL_getSampleRate()
 }
 
 
-// The file of a CD track: NN.ogg, .wav or .mp3, numbered from 01 for the
-// first audio track (CD track 2: track 1 is the data one); null if none
-static FILE* openTrackFile(int trackId)
+// A file of a CD track in a folder: NN.ogg, .wav or .mp3, numbered from 01
+// for the first audio track (CD track 2: track 1 is the data one), and with
+// `gogNames` also TrackNN (numbered as the CD, as GOG names them); null if none
+static FILE* openLooseTrack(const std::string& folder, int trackId, bool gogNames)
 {
-    if (trackId < 2)
-        return nullptr;
     for (const char* ext : { "ogg", "wav", "mp3" })
     {
-        char filename[32];
-        sprintf_s(filename, sizeof(filename), "%02d.%s", trackId - 1, ext);
-        FILE* fHandle = nullptr;
-        fopen_s(&fHandle, filename, "rb");
-        if (fHandle)
-            return fHandle;
+        for (int name = 0; name < (gogNames ? 2 : 1); name++)
+        {
+            char filename[32];
+            if (name == 0)
+                sprintf_s(filename, sizeof(filename), "%02d.%s", trackId - 1, ext);
+            else
+                sprintf_s(filename, sizeof(filename), "Track%02d.%s", trackId, ext);
+            FILE* fHandle = nullptr;
+            fopen_s(&fHandle, (folder + filename).c_str(), "rb");
+            if (fHandle)
+                return fHandle;
+        }
     }
     return nullptr;
+}
+
+// A CD track: a file, or else a source read from a CD image (the caller
+// deletes it); both null if there is none
+struct FoundTrack
+{
+    FILE* file = nullptr;
+    SoLoud::AudioSource* source = nullptr;
+    const char* from = "";
+};
+
+// Where a CD track is, the first found: the language folder (its files,
+// then its CD image: a language from the player's CD), the track files of
+// the data, GOG's MUSIC\TrackNN.ogg (AITD3) and GOG's CD image
+static FoundTrack findTrack(int trackId)
+{
+    FoundTrack found;
+    if (trackId < 2)
+        return found;
+    if (!languagePackFolder().empty())
+    {
+        if ((found.file = openLooseTrack(languagePackFolder(), trackId, true)))
+            return found;
+        if ((found.source = languagePackCreateTrack(trackId)))
+        {
+            found.from = "the language CD image";
+            return found;
+        }
+    }
+    if ((found.file = openLooseTrack(std::string(), trackId, false)))
+        return found;
+    if (isGogInstall())
+    {
+        char filename[32];
+        sprintf_s(filename, sizeof(filename), "Track%02d.ogg", trackId);
+        const std::string path = (std::filesystem::u8path(gogImagePath()).parent_path() / "MUSIC" / filename).string();
+        fopen_s(&found.file, path.c_str(), "rb");
+        if (found.file)
+            return found;
+    }
+    if ((found.source = gogImageCreateTrack(trackId)))
+        found.from = "the GOG image";
+    return found;
 }
 
 int osystem_playTrack(int trackId)
@@ -680,7 +731,7 @@ int osystem_playTrack(int trackId)
         delete pWavStream;
         pWavStream = nullptr;
     }
-    stopGogTrack();
+    stopImageTrack();
     s_trackHandle = 0;
 
     // Clean up previous DiskFile (used by filesystem fallback path)
@@ -698,17 +749,18 @@ int osystem_playTrack(int trackId)
     if (playCDAudioTrack(trackId))
         return 1;
 
-    FILE* fHandle = openTrackFile(trackId);
-    if (fHandle == NULL)
+    const FoundTrack track = findTrack(trackId);
+    if (track.source)
     {
-        // GOG installation: the track straight from GAME.GOG
-        s_gogTrack = gogImageCreateTrack(trackId);
-        if (!s_gogTrack)
-            return 0;
-        s_trackHandle = osystemAL_playMusicSource(*s_gogTrack);
-        printf(AL_TAG "Music: CD track %d from the GOG image\n", trackId);
+        // Straight from a CD image (GOG's or a language's CD)
+        s_imageTrack = track.source;
+        s_trackHandle = osystemAL_playMusicSource(*s_imageTrack);
+        printf(AL_TAG "Music: CD track %d from %s\n", trackId, track.from);
         return 1;
     }
+    FILE* fHandle = track.file;
+    if (fHandle == NULL)
+        return 0;
 
     pFile = new SoLoud::DiskFile(fHandle);
     pWavStream = new SoLoud::WavStream();
@@ -785,15 +837,16 @@ void osystem_playVoiceTrack(int trackId, int seconds)
 
     char label[32];
     sprintf_s(label, sizeof(label), "CD track %d", trackId);
-    if (FILE* fh = openTrackFile(trackId))
+    const FoundTrack track = findTrack(trackId);
+    if (track.file)
     {
-        if (!playVoStream(fh, label))
+        if (!playVoStream(track.file, label))
             return;
     }
-    else if ((s_voTrack = gogImageCreateTrack(trackId)))
+    else if ((s_voTrack = track.source))
     {
         s_voHandle = playAudioSource(*s_voTrack);
-        printf(VO_OK "Playing VO: %s from the GOG image" CON_RESET "\n", label);
+        printf(VO_OK "Playing VO: %s from %s" CON_RESET "\n", label, track.from);
     }
     else
     {

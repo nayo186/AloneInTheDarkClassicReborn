@@ -78,8 +78,9 @@ Cuando un archivo tiene `.cpp` y `.h`, va en una sola fila.
 | `settings.cpp/.h` | Las opciones (`g_settings`), guardadas en `aitd_remaster.cfg`: pantalla, efectos, animación, volumen, idioma, controles y ajustes de desarrollador. |
 | `platformHooks.cpp/.h` | Los ganchos del sistema (ver sección 1). |
 | `gameFolder.cpp/.h` | Carpetas: datos (copia o instalación de GOG/Steam), carpeta de trabajo (`UserData` o la copia en modo depuración), Jack en `JACK`. |
+| `languagePack.cpp/.h` | Los archivos de datos (`DataFile`, lo usan `pak.cpp` y `loadFromItd`) y un idioma del CD del jugador (AITD3): con él elegido, lo que tenga `Languages\<nombre>` (suelto o en su imagen del CD) se lee antes que los datos. |
 | `fileAccess.cpp/.h` | Cargar archivos `.ITD` y entradas de `.PAK` en memoria, y el error fatal si falta uno. |
-| `gogImage.cpp/.h` | La música y las voces de la imagen del CD de GOG (`GAME.GOG`, leída con `Shared/cdImage.h`), sin extraer nada. |
+| `gogImage.cpp/.h` | La música y las voces de la imagen del CD de GOG (`GAME.GOG`, leída con `Shared/cdImage.h`), sin extraer nada; las pistas de cualquier imagen (`createCdTrack`, también la del CD de un idioma). |
 | `osystemAL.cpp/.h` | Audio con SoLoud: efectos, voces (narrador del juego o de `Voices`, página por página), música del CD, dos grupos de volumen (música / voces y efectos). |
 | `osystemAL_adlib.cpp` | Música AdLib de Jack in the Dark, como fuente de sonido de SoLoud. |
 | `fmopl.cpp/.h` | Emulador del chip AdLib (OPL2) de MAME, para la música de Jack. |
@@ -174,9 +175,10 @@ Cuando un archivo tiene `.cpp` y `.h`, va en una sola fila.
 | `advancedOptionsText.h` | Textos de las opciones avanzadas en cinco idiomas. |
 | `audioVolume.h` | Volúmenes (0-100) y su ganancia. |
 | `audioWindow.h` | Ventana "Audio" (música, voces y efectos, narrador). |
-| `cdImage.h` | Lee una imagen de CD (`.iso`, `.bin`, `GAME.GOG`): sus archivos y, con su `.cue`, sus pistas. |
+| `cdImage.h` | Lee una imagen de CD (`.iso`, `.bin` MODE1 o MODE2, `GAME.GOG`): sus archivos y, con su `.cue`, sus pistas. |
 | `controlsBindings.h` | Acciones del juego, sus entradas, valores por defecto y su forma de texto en `aitd_remaster.cfg`. |
 | `controlsWindow.h` | Ventana "Controles" para cambiar las asignaciones. |
+| `languageFolder.h` | Idiomas del CD del jugador (AITD3): qué lleva cada carpeta de `Languages` (archivos sueltos y pistas `NN`/`TrackNN`, o la imagen del CD con su `.cue`) y cómo encontrar la imagen. |
 | `narrators.h` | Narradores: cada carpeta de `Voices` con voces sueltas (`.voc`, `.wav`, `.ogg`) o una imagen del CD. |
 | `userFolder.h` | Carpeta portable `UserData` junto a los ejecutables. |
 | `ui/menuBase.h` | Base de todos los menús: paleta, escala por pantalla, disposición horizontal o vertical, controles para ratón, toque, teclado y mando. |

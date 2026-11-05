@@ -1,14 +1,14 @@
 # Alone in the Dark: Classic Reborn
 
-Play the original **Alone in the Dark** (1992), **Jack in the Dark** and **Alone in the Dark 2** on modern PCs, with their original graphics and a set of careful fixes and options.
+Play the original **Alone in the Dark** (1992), **Jack in the Dark**, **Alone in the Dark 2** and **Alone in the Dark 3** on modern PCs, with their original graphics and a set of careful fixes and options.
 
 **[⬇ Download the latest version](https://github.com/nayo186/AloneInTheDarkClassicReborn/releases/latest)** for Windows or Linux: unpack it, run `Launcher.exe` (`Launcher` on Linux) and choose your GOG or Steam copy of the game. Nothing else to install.
 
-**All three games are playable from start to end:** Alone in the Dark, Jack in the Dark and Alone in the Dark 2. If you find a problem, please [report it](#reporting-a-problem).
+**Alone in the Dark, Jack in the Dark and Alone in the Dark 2 are playable from start to end.** **Alone in the Dark 3 is playable too**, and it is being polished: if something behaves differently from the original, please [report it](#reporting-a-problem).
 
 Classic Reborn is a C++17 source port of the Infogrames engine, built on a decompilation of the original DOS game. It is a fork of [Alone in the Dark: Re-Haunted](https://github.com/spacefarergames/AloneInTheDarkReHaunted), itself based on [FITD (Free in the Dark)](https://github.com/yaz0r/FITD) by yaz0r. Its goal is the 1992 game as it was meant to be seen, without its defects: the remaster's HD mode was removed and every addition is optional.
 
-> **The game data is not included.** You need your own copy of *Alone in the Dark* and/or *Alone in the Dark 2* (the GOG or Steam editions). Nothing of the original games is in this repository.
+> **The game data is not included.** You need your own copy of *Alone in the Dark*, *Alone in the Dark 2* and/or *Alone in the Dark 3* (the GOG or Steam editions). Nothing of the original games is in this repository.
 
 ## Screenshots
 
@@ -52,7 +52,7 @@ It is not a static recompilation: a static recompilation translates the machine 
 
 - **Windows** 10 or 11, 64-bit, and a graphics card with DirectX 11.
 - Or **Linux**, 64-bit (x86-64): Ubuntu 22.04, Linux Mint 21, Debian 12, Fedora 37 or newer, or any other distribution of the same age, with a graphics card that supports Vulkan or OpenGL.
-- Your own copy of *Alone in the Dark* (*Jack in the Dark* comes with it) and/or *Alone in the Dark 2*: the GOG or Steam editions.
+- Your own copy of *Alone in the Dark* (*Jack in the Dark* comes with it), *Alone in the Dark 2* and/or *Alone in the Dark 3*: the GOG or Steam editions.
 - Nothing else to install: no .NET, no Visual C++ Redistributable, no DirectX setup, no Linux packages. Unpack and run the launcher.
 
 **To build the project**
@@ -70,7 +70,7 @@ It is not a static recompilation: a static recompilation translates the machine 
 | Alone in the Dark (1992, CD version) | Playable from start to end |
 | Jack in the Dark (1993) | Playable from start to end |
 | Alone in the Dark 2 (1993, CD version) | Playable from start to end |
-| Alone in the Dark 3 | Not yet (the engine code inherited from FITD is there; the launcher shows it greyed out) |
+| Alone in the Dark 3 (1994, CD version) | Playable, being polished: reports are welcome |
 
 ## What it adds
 
@@ -78,21 +78,22 @@ It is not a static recompilation: a static recompilation translates the machine 
 - **Launcher** to choose the game, its language (the five of the GOG and Steam editions: English, French, German, Italian, Spanish) and the data folder, with the same options as the in-game **F1** window. The menus are translated into the same five languages.
 - **Screen options**: resolution, aspect ratio (4:3, 16:10, stretched), fullscreen, frame limit, VSync.
 - **Optional effects**: edge smoothing (FXAA) on the 3D models, bloom from the painted backgrounds, film grain, CRT scanlines, ambient occlusion (SSAO), smoother animations, sharper text.
-- **Custom backgrounds**: export every background and mask of the game, enlarge or repaint them, and the game uses yours. Ready-made **HD packs** are available for the three games (see [Custom backgrounds](#custom-backgrounds)).
+- **Custom backgrounds**: export every background and mask of the game, enlarge or repaint them, and the game uses yours. Ready-made **HD packs** are available for *Alone in the Dark*, *Jack in the Dark* and *Alone in the Dark 2* (see [Custom backgrounds](#custom-backgrounds)).
 - **Controls**: keyboard and game controller (Xbox, PlayStation, Nintendo Switch Pro and most other USB or Bluetooth controllers), every action can be changed, several inputs per action.
 - **Modern left stick**: the character walks where you push the stick, seen from the camera, like the Resident Evil HD remasters; the D-pad and the keys stay tank controls (see [Controls](#controls)).
 - **Cheats** (F1): infinite life, behind an "Enable cheats" switch.
 - **Separate volumes** for music and for voices and effects.
-- **Narrators**: the French CD's narrator (from your own CD) or a fans' dubbing, with any text language; in *Alone in the Dark 2* the narrator reads the books from the CD, and fans can dub it too (see [Narrators](#narrators)).
-- **Saves** in the format of the GOG edition: saves made in the GOG game load here (both *Alone in the Dark* games).
+- **Narrators**: the French CD's narrator (from your own CD) or a fans' dubbing, with any text language; in *Alone in the Dark 2* and *3* the narrator reads the books from the CD, and fans can dub it too (see [Narrators](#narrators)).
+- ***Alone in the Dark 3* in Spanish** from the original Spanish CD, over the GOG edition: texts, voices and narrator (see [Alone in the Dark 3 in Spanish](#alone-in-the-dark-3-in-spanish)).
+- **Saves** in the format of the GOG edition: saves made in the GOG game load here (the three *Alone in the Dark* games).
 - **Menus** that adapt to any window size and work with mouse, keyboard, controller and touch.
 
 ## Getting started
 
 1. Build the project (see [Building](#building)) or get a release.
 2. Run **`Launcher.exe`** (next to `Tatou.exe`). On Linux: **`Launcher`** (next to `Tatou`), see [On Linux](#on-linux).
-3. Choose the game's tab (**Alone in the Dark** or **Alone in the Dark 2**), press **Browse** and choose your game folder:
-   - a **GOG or Steam installation**: the folder with `GAME.GOG` (or its `INDARK` subfolder; `INDARK2` for *Alone in the Dark 2*). Music and voices are read straight from the CD image; nothing is extracted or written there;
+3. Choose the game's tab (**Alone in the Dark**, **Alone in the Dark 2** or **Alone in the Dark 3**), press **Browse** and choose your game folder:
+   - a **GOG or Steam installation**: the folder with `GAME.GOG` (or its `INDARK` subfolder; `INDARK2` for *Alone in the Dark 2*, `INDARK3` for *Alone in the Dark 3*). Music and voices are read straight from the CD image (for *Alone in the Dark 3*, from its `MUSIC` folder); nothing is extracted or written there;
    - or a **copy of the game files** (a folder with the `.PAK` files; Jack in the Dark in its `JACK` subfolder).
 4. Choose the language of the game and press **Play** (see [Languages](#languages)). *Jack in the Dark* has its own button, in the *Alone in the Dark* tab, when its files are found.
 
@@ -104,6 +105,7 @@ It is not a static recompilation: a static recompilation translates the machine 
 Tatou.exe --game aitd1
 Tatou.exe --game jack
 Tatou.exe --game aitd2
+Tatou.exe --game aitd3
 ```
 
 (`./Tatou --game aitd1` on Linux; in PowerShell, with the full path in quotes, put `&` before it: `& "C:\Games\ClassicReborn\Tatou.exe" --game aitd2`.) The game finds the folder, the language and the options you chose by itself.
@@ -122,6 +124,7 @@ GOG and Steam sell the same edition of each game, with the same languages:
 | *Alone in the Dark* | English, French, German, Italian, Spanish | English |
 | *Jack in the Dark* | English, French, German, Italian, Spanish | none (it never had voices) |
 | *Alone in the Dark 2* | English, French, German, Italian, Spanish | English |
+| *Alone in the Dark 3* | The one chosen when installing it (English, French, German or Italian); Spanish from the original CD | The one of your installation; Spanish from the original CD |
 
 The narrator reads with any text language. A French narrator only came on the old French CD of *Alone in the Dark* (1993), not in GOG or Steam; if you own it, see [Narrators](#narrators).
 
@@ -131,11 +134,24 @@ The narrator reads with any text language. A French narrator only came on the ol
 - **Menu language** (launcher and F1): **Interface**, at the top right of the launcher.
 - **Narrator**, if you added extra voices: the **Narrator** list of the **Audio** window, in the launcher's **Advanced options** or in the game with **F1**.
 
+### Alone in the Dark 3 in Spanish
+
+The GOG edition of *Alone in the Dark 3* installs a single language. The original Spanish CD has the whole game in Spanish: the texts, the voices of the scenes, the intro and the narrator of the books. If you own it, the game can use it over your GOG installation:
+
+1. Open `UserData\AITD3\Languages` (next to `Launcher.exe`; the launcher creates it the first time it opens) and make a folder named `Spanish` in it.
+2. Put the Spanish CD there, in one of these forms:
+   - **an image of the CD**: the `.bin` (or `.img`) with its `.cue` of the same name. Everything is read straight from the image; nothing is extracted;
+   - **its files**: `ESPAGNOL.PAK`, `LISTSAMP.PAK`, `LISTLIFE.PAK`, `PRIORITY.ITD` and `ITD_RESS.PAK` from the CD's `INDARK3` folder (or the whole folder), and the CD's audio tracks as `.ogg`, `.wav` or `.mp3`, named after their CD track (`Track22.ogg`, `Track24.ogg`...) or after the track minus 1 (`21.ogg`, `23.ogg`...). The ones that are in Spanish are track 22 (the intro) and 24 to 61 (the narrator); the others are the same music as in GOG;
+   - an `.iso`, or the files without the tracks, also work: then the texts and the voices of the scenes are in Spanish, and the intro and the books are read by the narrator of your installation.
+3. In the launcher, choose **Español** in the **Game language** list of the *Alone in the Dark 3* page (it appears once the folder is found) and press **Play**.
+
+The Spanish CD numbers its voices differently from the GOG edition, so with Spanish chosen the game takes those files from the folder instead of the installed ones. Your GOG installation is not changed, and choosing another language goes back to it. The CD is not included with this project: you need your own.
+
 ### On Linux
 
 1. Unpack the `.tar.gz` anywhere in your home folder (most file managers open it with a double click, or `tar -xzf ClassicReborn-<version>-linux-x64.tar.gz`).
 2. Run `Launcher` from that folder (double click, or `./Launcher` in a terminal).
-3. **Browse** to the game installed for Windows (the same for both *Alone in the Dark* games):
+3. **Browse** to the game installed for Windows (the same for every game):
    - **GOG** with Heroic, Lutris or Wine: the game's folder inside the Wine prefix, the one with `GAME.GOG` (for example `~/Games/Heroic/Alone in the Dark` or `~/Games/Heroic/Alone in the Dark 2`);
    - **Steam** with Proton: `steamapps/common` in your Steam library (by default `~/.steam/steam/steamapps/common`);
    - or a copy of the game files, as on Windows.
@@ -221,8 +237,11 @@ UserData/
 │   ├── Exports/           what F1 exports (masks in masks/, with guides in masks_guides/)
 │   └── Voices/            other narrators, one folder each (see Narrators)
 ├── JACK/                  Jack in the Dark (same layout)
-└── AITD2/                 Alone in the Dark 2 (same layout, without Voices: its
-                           narrator's recordings go in the folder itself, see Narrators)
+├── AITD2/                 Alone in the Dark 2 (same layout, without Voices: its
+│                          narrator's recordings go in the folder itself, see Narrators)
+└── AITD3/                 Alone in the Dark 3 (as AITD2), and
+    └── Languages/         languages from your own CD, one folder each (see
+                           Alone in the Dark 3 in Spanish)
 ```
 
 `launcher.cfg` and `launcher.log`, next to `Launcher.exe`, keep the launcher's own settings.
@@ -313,29 +332,35 @@ In *Alone in the Dark 2* the narrator (in English, with any text language) reads
 
 Please share only recordings you made yourself, never the voices of the game or of its CD.
 
+### Alone in the Dark 3
+
+*Alone in the Dark 3* reads its books and letters the same way, from the CD's audio tracks 24 to 61 (with the GOG edition, from its `MUSIC` folder), and the story pictures, such as the piano's, with the voices of the game. A dubbing works as in *Alone in the Dark 2*: put the recordings in **`UserData\AITD3`**, named after the track they replace minus 1 (`23.ogg` ... `60.ogg`); `tatou.log` names the track of each page (`Playing VO: CD track 45`: the file is `44`).
+
 ## Saves
 
 Saves of *Alone in the Dark* use the layout of the GOG edition: saves made in the GOG game (`cloud_saves\INDARK` in its folder) can be copied to `UserData\AITD1\Saves` and loaded. The other way round works too, except that the lamp's oil does not run out in the GOG game with a save made here (known issue). The save list shows the date and time of each save.
 
 Saves of *Alone in the Dark 2* use the layout of the GOG edition too: the GOG game's saves (`cloud_saves\INDARK2`) can be copied to `UserData\AITD2\Saves` and loaded, and the other way round.
 
+Saves of *Alone in the Dark 3* use the layout of the GOG edition too. The GOG game keeps them in `cloud_saves\INDARK3`, in a folder per state (`SAVE00` California, `SAVE01` Montana, `SAVE02` Nevada, `SAVE03` Oklahoma) with up to six slots each (`SAVE0.ITD` ... `SAVE5.ITD`, the slots A to F). Copy one to `UserData\AITD3\Saves` as `SAVEn.ITD` and it loads here; a save made here can be copied the other way and loads in the GOG game. Here the list is the same as in the other games: eight slots with the date and time, without states or names.
+
 ## Reporting a problem
 
 Found a bug? Please open an [issue](https://github.com/nayo186/AloneInTheDarkClassicReborn/issues) and tell us:
 
 - what happened and what you were doing (where in the game, if you can);
-- in which game: *Alone in the Dark*, *Jack in the Dark* or *Alone in the Dark 2*;
+- in which game: *Alone in the Dark*, *Jack in the Dark*, *Alone in the Dark 2* or *Alone in the Dark 3*;
 - on which system: **Windows** or **Linux** (and which distribution);
 - which copy of the game: GOG, Steam or a copy of the files.
 
 It helps a lot to attach these files: drag them into the issue's text box. Close the game first, so the logs are complete:
 
-- **The logs**, in `UserData\AITD1` (or `UserData\JACK`, `UserData\AITD2`), next to `Launcher.exe`:
+- **The logs**, in `UserData\AITD1` (or `UserData\JACK`, `UserData\AITD2`, `UserData\AITD3`), next to `Launcher.exe`:
   - `tatou.log`: the last session;
   - `tatou.prev.log`: the session before it (if you opened the game again after the problem, the problem is in this one);
   - `crash_log.txt`, if the game closed by itself;
   - `launcher.log`, next to `Launcher.exe`, if the problem is in the launcher.
-- **A save** made just before the problem, if you can: `UserData\AITD1\Saves\SAVEn.ITD` (or `UserData\AITD2\Saves\...`; n is the slot). GitHub does not accept `.ITD` files, so put the save in a `.zip` first. With it we can go straight to that spot.
+- **A save** made just before the problem, if you can: `UserData\AITD1\Saves\SAVEn.ITD` (or `UserData\AITD2\Saves\...`, `UserData\AITD3\Saves\...`; n is the slot). GitHub does not accept `.ITD` files, so put the save in a `.zip` first. With it we can go straight to that spot.
 
 The logs only name the game's folders and what the game did; they may show your user name inside a folder path (`C:\Users\<name>\...`). Nothing else from your PC is in them.
 

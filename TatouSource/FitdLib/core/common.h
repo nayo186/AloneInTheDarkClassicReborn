@@ -71,10 +71,16 @@ typedef enum enumCVars enumCVars;
 
 extern int AITD1KnownCVars[];
 extern int AITD2KnownCVars[];
+extern int AITD3KnownCVars[];
 extern int* currentCVarTable;
 
 // Position of a game variable (CVar of DEFINES.ITD) in the CVars table
 int getCVarsIdx(enumCVars);
+// Whether the game has that variable (AITD1 has some the others do not):
+// getCVarsIdx gives 0 for one it does not have
+bool knownCVar(enumCVars);
+// Whether the game has that variable (AITD1 has some the others do not)
+inline bool knownCVar(int searchedType) { return knownCVar((enumCVars)searchedType); }
 // Position of a game variable (CVar of DEFINES.ITD) in the CVars table
 int getCVarsIdx(int);
 

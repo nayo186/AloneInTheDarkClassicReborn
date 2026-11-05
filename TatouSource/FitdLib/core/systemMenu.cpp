@@ -34,14 +34,22 @@ void playMenuSound(const char* soundName)
 // original option numbers: 9 is "quit")
 static const int s_menuEntries[] = { 0, 1, 2, 3, 4, 5, 9 };
 
+// AITD3's entry "Difficulty Level", fourth as in its original (AITD3.EXE,
+// 0x13576); its menu's "Intermediate sequence" switches the 3D animations of
+// its menus, which these menus do not have (BUGS.md T16)
+static const int kDifficultyEntry = 10;
+static const int s_menuEntriesAITD3[] = { 0, 1, 2, kDifficultyEntry, 3, 4, 5, 9 };
+
 static int menuEntryCount()
 {
+    if (g_gameId == AITD3)
+        return (int)(sizeof(s_menuEntriesAITD3) / sizeof(int));
     return (int)(sizeof(s_menuEntries) / sizeof(int));
 }
 
 static int menuEntryAt(int row)
 {
-    return s_menuEntries[row];
+    return (g_gameId == AITD3) ? s_menuEntriesAITD3[row] : s_menuEntries[row];
 }
 
 // Screen row of an entry (-1 if hidden)
@@ -53,8 +61,14 @@ static int menuRowOf(int entry)
     return -1;
 }
 
+// AITD3's rows go from y 37 every 14, as its original (0x13530)
+static const int kAITD3MenuTop = 37;
+static const int kAITD3MenuStep = 14;
+
 static int menuEntryY(int entry)
 {
+    if (g_gameId == AITD3)
+        return kAITD3MenuTop + menuRowOf(entry) * kAITD3MenuStep;
     return WindowY1 + ((WindowY2 - WindowY1) / 2) - (menuEntryCount() * SIZE_FONT) / 2 + (menuRowOf(entry) * SIZE_FONT);
 }
 
@@ -111,12 +125,20 @@ void AffOption(int n, int num, int selected)
     }
 }
 
-// The text numbers of the menu's entries, in their order
-static void menuTexts(int texts[7])
+// The text number of a menu entry
+static int entryText(int entry)
 {
-    const int list[7] = { 48, 45, 46, 42 - musicEnabled, 43 + soundEnabled, 49 + detailLevel, 47 };
-    for (int i = 0; i < 7; i++)
-        texts[i] = list[i];
+    switch (entry)
+    {
+    case 0: return 48;
+    case 1: return 45;
+    case 2: return 46;
+    case 3: return 42 - musicEnabled;
+    case 4: return 43 + soundEnabled;
+    case 5: return 49 + detailLevel;
+    case kDifficultyEntry: return 53;
+    default: return 47;
+    }
 }
 
 // AITD2: the preview goes in the top left corner, in a frame that ends
@@ -124,12 +146,10 @@ static void menuTexts(int texts[7])
 // screen's shape; the picture fills only the inside of the frame (BUGS.md A22)
 static void affPreviewAITD2()
 {
-    int texts[7];
-    menuTexts(texts);
     int textLeft = 160;
-    for (int text : texts)
+    for (int row = 0; row < menuEntryCount(); row++)
     {
-        textEntryStruct* entry = getTextFromIdx(text);
+        textEntryStruct* entry = getTextFromIdx(entryText(menuEntryAt(row)));
         if (entry && 160 - entry->width / 2 < textLeft)
             textLeft = 160 - entry->width / 2;
     }
@@ -145,8 +165,61 @@ static void affPreviewAITD2()
     scaleDownImage(WindowX1, WindowY1, WindowX2, WindowY2, aux2);
 }
 
+// AITD3's option screen (ITD_RESS 17, with the menu's own colours) while
+// the pause menu is open (BUGS.md T1)
+static char* s_optionScreenAITD3 = nullptr;
+
+// AITD3's pause menu: its option screen with the entries in the middle and
+// its two arrows (CADRE 1 and 2) beside the chosen one, in the colours of
+// its main menu
+static void affOptionListAITD3(int selected)
+{
+    memcpy(logicalScreen, s_optionScreenAITD3, 64000);
+    WindowX1 = 0;
+    WindowY1 = 0;
+    WindowX2 = 319;
+    WindowY2 = 199;
+    SetClip(WindowX1, WindowY1, WindowX2, WindowY2);
+
+    for (int row = 0; row < menuEntryCount(); row++)
+    {
+        const int entry = menuEntryAt(row);
+        const int y = menuEntryY(entry);
+        if (entry != selected)
+        {
+            SimpleMessage(160, y, entryText(entry), 4);
+            continue;
+        }
+        SelectedMessage(160, y, entryText(entry), 1, 4);
+        const textEntryStruct* text = getTextFromIdx(entryText(entry));
+        const int halfWidth = text ? text->width / 2 : 0;
+        int arrowWidth, arrowHeight;
+        SizeSpf(1, PtrCadre, &arrowWidth, &arrowHeight);
+        const int arrowTop = y + (fontHeight - arrowHeight) / 2;
+        AffSpfI(160 - halfWidth - 6 - arrowWidth, arrowTop, 1, PtrCadre);
+        AffSpfI(160 + halfWidth + 6, arrowTop, 2, PtrCadre);
+    }
+}
+
+// Frees AITD3's option screen and gives the game its colours back
+static void closeOptionScreenAITD3()
+{
+    if (!s_optionScreenAITD3)
+        return;
+    free(s_optionScreenAITD3);
+    s_optionScreenAITD3 = nullptr;
+    setPalette(currentGamePalette);
+}
+
 void AffOptionList(int selectedStringNumber)
 {
+    if (g_gameId == AITD3)
+    {
+        affOptionListAITD3(selectedStringNumber);
+        menuWaitVSync();
+        return;
+    }
+
     // AITD2's frame pieces are not solid: the menu is drawn on black
     if (g_gameId == AITD2)
         AffRect(0, 0, 319, 199, 0);
@@ -178,10 +251,8 @@ void AffOptionList(int selectedStringNumber)
 
     SetClip(WindowX1,WindowY1,WindowX2,WindowY2);
 
-    int texts[7];
-    menuTexts(texts);
     for (int row = 0; row < menuEntryCount(); row++)
-        AffOption(menuEntryAt(row), texts[row], selectedStringNumber);
+        AffOption(menuEntryAt(row), entryText(menuEntryAt(row)), selectedStringNumber);
 
     menuWaitVSync();
 }
@@ -205,7 +276,13 @@ static int getSystemMenuItemAtMouse()
     for (int row = 0; row < menuEntryCount(); row++)
     {
         int itemY = wy1 + (wy2 - wy1) / 2 - (menuEntryCount() * SIZE_FONT) / 2 + row * SIZE_FONT;
-        if (gameY >= itemY && gameY < itemY + SIZE_FONT)
+        int itemHeight = SIZE_FONT;
+        if (g_gameId == AITD3)
+        {
+            itemY = kAITD3MenuTop + row * kAITD3MenuStep;
+            itemHeight = kAITD3MenuStep;
+        }
+        if (gameY >= itemY && gameY < itemY + itemHeight)
             return menuEntryAt(row);
     }
     return -1;
@@ -226,6 +303,17 @@ void processSystemMenu(void)
 
     SaveTimerAnim();
     //pauseShaking();
+
+    // AITD3: the option screen and its colours; the game's stay in
+    // currentGamePalette (the save's thumbnail is made with them)
+    palette_t menuPalette;
+    if (g_gameId == AITD3)
+    {
+        s_optionScreenAITD3 = CheckLoadMallocPak("ITD_RESS", 17);
+        copyPalette(s_optionScreenAITD3 + 64000, menuPalette);
+        convertPaletteIfRequired(menuPalette);
+        setPalette(menuPalette);
+    }
 
 	if(lightOff)
 	{
@@ -308,11 +396,19 @@ void processSystemMenu(void)
                         exitMenu = 1;
                         break;
                     case 1: // save
+                        // AITD3: the save list in the game's colours
+                        if (g_gameId == AITD3)
+                            setPalette(currentGamePalette);
                         makeSave(45);
+                        if (g_gameId == AITD3)
+                            setPalette(menuPalette);
                         break;
                     case 2: // load
+                        if (g_gameId == AITD3)
+                            setPalette(currentGamePalette);
                         if(restoreSave(46,1))
                         {
+                            closeOptionScreenAITD3();
                             osystem_unfreezeSceneForMenu();
                             FlagInitView = 2;
                             RestoreTimerAnim();
@@ -324,6 +420,11 @@ void processSystemMenu(void)
                             //updateShaking();
                             return;
                         }
+                        if (g_gameId == AITD3)
+                            setPalette(menuPalette);
+                        break;
+                    case kDifficultyEntry: // AITD3: its difficulty menu
+                        difficultyMenuAITD3();
                         break;
                     case 9: // quit to main menu
                         // Jack in the Dark has no main menu to return to (startJACK
@@ -419,6 +520,7 @@ void processSystemMenu(void)
 	// Short fade to black like the original (fadeOut(32,2)); the scene then
 	// fades back in when it is redrawn
 	FadeOutPhys(32, 0);
+	closeOptionScreenAITD3();
 	while(key || JoyD || Click)
 	{
 		process_events();

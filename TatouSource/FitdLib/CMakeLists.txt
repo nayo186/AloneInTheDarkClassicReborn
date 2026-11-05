@@ -150,6 +150,7 @@ set(OBJECT_FIXES_FILES
     "${CMAKE_CURRENT_SOURCE_DIR}/assets/objectFixes/aitd1.cfg"
     "${CMAKE_CURRENT_SOURCE_DIR}/assets/objectFixes/jack.cfg"
     "${CMAKE_CURRENT_SOURCE_DIR}/assets/objectFixes/aitd2.cfg"
+    "${CMAKE_CURRENT_SOURCE_DIR}/assets/objectFixes/aitd3.cfg"
 )
 set(OBJECT_FIXES_DATA "${CMAKE_CURRENT_BINARY_DIR}/objectFixesData.cpp")
 add_custom_command(

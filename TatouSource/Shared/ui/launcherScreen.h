@@ -153,7 +153,6 @@ struct Parts
     LauncherIntent& intent;
     ImDrawList* draw;
     bool isAitd1;
-    bool hasFolder;     // a game that can be played (AITD1 with Jack, AITD2)
     bool linked;
 
     // Size in pixels of `units` of the screen design
@@ -209,7 +208,7 @@ struct Parts
         if (menu::goldButton("##play", tr(playTexts[view.selectedGame]), ImVec2(x, y), ImVec2(width, playH), fonts.button, linked))
             intent.play = true;
         if (!linked)
-            tooltipWhenHovered(tr(hasFolder ? UiText::DataFolderMissing : UiText::ComingSoon));
+            tooltipWhenHovered(tr(UiText::DataFolderMissing));
         y += playH + u(10.0f);
         if (isAitd1)
         {
@@ -293,20 +292,15 @@ struct Parts
             pathY = y + lineH + u(4.0f);
         }
         ImGui::SetCursorScreenPos(ImVec2(pathX, pathY));
-        if (hasFolder)
-            menu::fittedText(view.dataFolderValid ? menu::kText : menu::kError,
-                view.dataFolder.empty() ? std::string(tr(UiText::DataFolderMissing)) : view.dataFolder, pathEnd - pathX);
-        else
-            ImGui::TextColored(menu::color(menu::kTextDisabled), "%s", tr(UiText::ComingSoon));
+        menu::fittedText(view.dataFolderValid ? menu::kText : menu::kError,
+            view.dataFolder.empty() ? std::string(tr(UiText::DataFolderMissing)) : view.dataFolder, pathEnd - pathX);
 
         if (view.canBrowse)
         {
             const ImVec2 browsePos = browseInline ? ImVec2(x + width - browseW, y) : ImVec2(x, pathY + lineH + u(8.0f));
             ImGui::SetCursorScreenPos(browsePos);
-            ImGui::BeginDisabled(!hasFolder);
             if (ImGui::Button(tr(UiText::Browse), ImVec2(browseW, browseH)))
                 intent.browse = true;
-            ImGui::EndDisabled();
             y = browseInline ? y + browseH : browsePos.y + browseH;
         }
         else
@@ -479,8 +473,7 @@ inline LauncherIntent drawLauncherScreen(const LauncherView& view, const menu::M
     }
 
     launcherScreen::Parts parts{ view, metrics, fonts, intent, ImGui::GetWindowDrawList(), view.selectedGame == 0,
-        view.selectedGame <= 1, false };
-    parts.linked = parts.hasFolder && view.dataFolderValid;
+        view.dataFolderValid };
     if (metrics.portrait())
         launcherScreen::portrait(parts, origin, area);
     else

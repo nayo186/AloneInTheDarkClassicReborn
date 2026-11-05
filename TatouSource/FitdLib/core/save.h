@@ -17,3 +17,7 @@ int loadSave(int saveNumber);
 int restoreSave(int arg0, int arg1);
 // The save screen: chooses a slot and writes the game (GOG layout for AITD1)
 int makeSave(int arg0);
+
+// A new game: forgets what a loaded save kept for writing back (AITD3's
+// blocks of the original that the engine does not have)
+void forgetSaveExtras();
