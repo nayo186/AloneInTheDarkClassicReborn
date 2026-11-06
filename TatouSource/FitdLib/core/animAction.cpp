@@ -128,6 +128,12 @@ void GereFrappe(void)
 
             currentProcessedActorPtr->animActionType = 5;
 
+            // AITD3: the Lone Miner's shots (anim 1147, script 1169) had no
+            // sound in any script, the other gunmen play sample 0 when they
+            // shoot; it is played here, at the shot (BUGS.md T32)
+            if (g_gameId == AITD3 && currentProcessedActorPtr->ANIM == 1147)
+                playSound(0);
+
             break;
         }
     case 5: // DO_TIR (instant raycast)

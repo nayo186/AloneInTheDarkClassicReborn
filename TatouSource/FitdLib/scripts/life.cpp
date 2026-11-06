@@ -1352,6 +1352,14 @@ void processLife(int lifeNum, bool callFoundLife)
                 lifeTempVar1 = readNextArgument("Anim");
                 lifeTempVar2 = readNextArgument("Flags");
 
+                // AITD3: Carnby hit while holding the whip (body 365, anim 892)
+                // went on to 649, the stance of another weapon, where the whip's
+                // script (1163) does nothing: the whip was stuck until he moved.
+                // Its stance is 650, as in the rest of script 647 (BUGS.md T31)
+                if (g_gameId == AITD3 && lifeTempVar1 == 892 && lifeTempVar2 == 649
+                    && currentProcessedActorPtr->bodyNum == 365)
+                    lifeTempVar2 = 650;
+
                 InitAnim(lifeTempVar1, 2, lifeTempVar2);
 
                 break;

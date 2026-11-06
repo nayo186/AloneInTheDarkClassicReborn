@@ -4,6 +4,14 @@ Alone in the Dark: Classic Reborn started on 2026-10-23 from [Alone in the Dark:
 
 This repository was published with a single starting commit, to keep it light: the early history carried large files that are no longer part of the project. Below are the changes of each release and, after them, the changes made in this fork before it was published, newest first, one line per change. The reasons behind larger removals are explained in `docs/DESCARTADO.md` and the fixes in `docs/baseline/BUGS.md`.
 
+## v1.4.2 (2026-11-06)
+
+Fixes for *Alone in the Dark 3*: searching, the whip and the Lone Miner's shots.
+
+- Alone in the Dark 3: Carnby takes what he searches for when it is in front of him, as in the original: the sheriff's star and the Winchester of the sheriff's office could not be taken (BUGS.md T30)
+- Alone in the Dark 3: the whip works again after Carnby is shot; it stayed in a wrong stance and did nothing until he moved (BUGS.md T31)
+- Alone in the Dark 3: the Lone Miner's shots make a sound, as the other gunmen's; the original game had none (BUGS.md T32)
+
 ## v1.4.1 (2026-11-06)
 
 More for *Alone in the Dark 3*: its map, custom pictures and a fix in the barrel cellar.

@@ -41,8 +41,36 @@ int getMatrix(int param1, int actorIdx, int param2)
     return *(char*)matrixPtr;
 }
 
+// AITD3's POSREL (AITD3.EXE 0xC6DB): the way from the centre of actor1 to the
+// centre of actor2, turned by 0x180 - beta, falls in one of four quarters of
+// 90 degrees; 2 is the one ahead of actor1. The AITD1 test below wanted
+// Carnby's body beside the point: the gun case's Winchester, in front of its
+// middle, never came (BUGS.md T30)
+static int getPosRelAITD3(tObject* actor1, tObject* actor2)
+{
+    ZVStruct localZv;
+    CopyZV(&actor2->zv, &localZv);
+    if (actor1->room != actor2->room)
+        AdjustZV(&localZv, actor2->room, actor1->room);
+
+    const int angle = 0x180 - actor1->beta;
+    const int dx = (localZv.ZVX1 + localZv.ZVX2) / 2 - (actor1->zv.ZVX1 + actor1->zv.ZVX2) / 2;
+    const int dz = (localZv.ZVZ1 + localZv.ZVZ2) / 2 - (actor1->zv.ZVZ1 + actor1->zv.ZVZ2) / 2;
+    const int c = cosTable[(angle + 0x100) & 0x3FF];
+    const int s = cosTable[angle & 0x3FF];
+    const int across = (dx * c - dz * s) >> 15;
+    const int along = (dx * s + dz * c) >> 15;
+
+    if (across >= 0)
+        return along >= 0 ? 2 : 8;
+    return along > 0 ? 4 : 1;
+}
+
 int getPosRel(tObject* actor1, tObject* actor2)
 {
+    if (g_gameId == AITD3)
+        return getPosRelAITD3(actor1, actor2);
+
     int beta1 = actor1->beta;
     int counter = 3;
     ZVStruct localZv;
@@ -651,6 +679,18 @@ int evalVar2(const char* name)
                             return(ListWorldObjets[objectNumber].stage);
                             break;
                         }
+                    case 0x20:
+                        // The script of an object not loaded: AITD3.EXE reads
+                        // it from the world object (0x5A14); it gave 0 and a
+                        // warning every frame (BUGS.md T30)
+                        if (g_gameId == AITD3)
+                        {
+                            if (name)
+                                appendFormated("%s:", name);
+                            appendFormated("worldObjects[%d].life, ", objectNumber);
+                            return(ListWorldObjets[objectNumber].life);
+                        }
+                        [[fallthrough]];
                     default:
                         {
                             printf(EVAL_WARN "Unsupported evalVar2 %X when actor not in room !" CON_RESET "\n", var1 & 0x7FFF);
