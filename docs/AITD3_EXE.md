@@ -36,6 +36,8 @@ Su motor es el de AITD2 casi sin cambios: muchas rutinas son iguales instrucció
 | `D4F7` | objeto encontrado: sin peso, 40 objetos, no ofrece uno ya cogido (0x8000) | `FoundObjet` (`core/inventory.cpp`, BUGS.md T11) |
 | `BB13` y siguientes | la fuerza de un golpe según la dificultad | `difficultyHitForce` (`core/AITD3.cpp`, BUGS.md T3) |
 | `166BF` | tabla de tipos de destello (3 a 8) | `AITD3KnownCVars` (BUGS.md T12) |
+| `E518`, `923A` | Tab en el bucle del juego (si `DEAD_PERSO` es 0): el mapa, imagen 48 de `ITD_RESS`, con fundidos; la flecha (`8E14`) parpadea cada 30 marcas hasta una tecla o 600 marcas | `AITD3_showMap` (`core/AITD3.cpp`, BUGS.md T28) |
+| `905E` | sitio de la flecha del mapa por piso (`ds:E25A`) y sala (`ds:E25C`) | `mapArrowAITD3` (`core/AITD3.cpp`) |
 | `13576`, `13530` | menú de pausa: nueve filas desde y 37 cada 14; "Intermediate sequence" (`ds:C5E`) enciende las animaciones 3D de los menús (`15174` y siguientes) | `core/systemMenu.cpp` (BUGS.md T16) |
 | `78D4`, `17DD6` | `READ`: carta (imagen 2), libro (3) o cuaderno (4), con las zonas de texto de AITD2 y los colores de texto de `ds:C64` | `AITD3_ReadBook` (`core/AITD3.cpp`, BUGS.md T17) |
 | `7917` | `READ_ON_PICTURE`: imagen con barrido, colores de texto de `ds:C64` y el lector | `scripts/life.cpp` (BUGS.md T17) |

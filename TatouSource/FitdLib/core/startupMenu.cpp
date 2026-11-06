@@ -72,6 +72,7 @@ static void drawDifficultyMessage(int x, int y, int text, bool selected)
 
 static void drawDifficultyMenu(int selectedRow)
 {
+    coreScreenPictureShown("ITD_RESS", 13);
     LoadPak("ITD_RESS", 13, logicalScreen);
     for (int row = 0; row < kDifficultyRows; row++)
     {
@@ -203,6 +204,7 @@ void difficultyMenuAITD3()
 void DrawMenu(int selectedEntry)
 {
     if (g_gameId == AITD3) {
+        coreScreenPictureShown("ITD_RESS", 13);
         LoadPak("ITD_RESS", 13, logicalScreen);
     }
     else {

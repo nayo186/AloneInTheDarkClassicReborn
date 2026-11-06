@@ -326,6 +326,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `restoreInventoryBoxAITD3` | Puts back a box of AITD3's inventory screen before writing in it |
 | `redrawInventorySpriteAITD3` | Draws the sprites of AITD3's inventory frame that go over its texts |
 | `endInventoryAITD3` | Forgets the background of AITD3's inventory when it closes |
+| `AITD3_showMap` | Shows AITD3's map (Tab) with the arrow where Carnby is |
 | `difficultyHitForce` | The force a hit gives `target`, with AITD3's difficulty applied |
 | `difficultyHeroLife` | AITD3: doubles or halves the hero's life points when C_VAR 2 names the variable that holds them |
 

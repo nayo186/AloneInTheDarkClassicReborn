@@ -9,6 +9,7 @@
 
 #include "common.h"
 #include "coreHooks.h"
+#include "consoleLog.h"
 #include <climits>
 #include <vector>
 
@@ -439,4 +440,136 @@ void endInventoryAITD3()
 	s_inventoryScreen.clear();
 	s_sceneCaptureWait = 0;
 	osystem_unfreezeSceneForMenu();   // the capture froze the copy of the scene
+}
+
+// The map (Tab): where the arrow goes on it, by floor and room (AITD3.EXE,
+// 0x905E); false where the original has none
+static bool mapArrowAITD3(int floor, int room, int& x, int& y)
+{
+	auto at = [&](int px, int py) { x = px; y = py; return true; };
+	switch (floor)
+	{
+	case 0:
+		if (room == 0 || room == 15) return at(207, 134);
+		if (room == 1) return at(187, 139);
+		if (room == 12) return at(183, 189);
+		if (room == 14) return at(211, 113);
+		return false;
+	case 1: return at(193, 75);
+	case 2:
+		if (room == 0) return at(172, 162);
+		if (room == 1 || room == 2) return at(220, 174);
+		return false;
+	case 3:
+		if (room == 0 || room == 1) return at(245, 61);
+		if (room == 2 || room == 3) return at(204, 61);
+		if (room == 5) return at(123, 65);
+		if (room == 4 || room == 6 || room == 7 || room == 9) return at(156, 70);
+		return false;
+	case 4: return at(93, 70);
+	case 5: return at(90, 45);
+	case 6: case 7: case 8: return at(98, 122);
+	case 9:
+		if (room == 2 || room == 3 || (room >= 5 && room <= 7)) return at(212, 94);
+		if (room >= 8 && room <= 10) return at(233, 105);
+		return false;
+	case 10: return at(173, 100);
+	case 11: return at(117, 31);
+	case 12:
+		if (room == 11) return at(241, 142);
+		if (room == 13) return at(279, 138);
+		return false;
+	case 13: return at(256, 75);
+	default: return false;
+	}
+}
+
+extern unsigned char* polyBackBuffer;
+void line(int x1, int y1, int x2, int y2, unsigned char c);
+
+// The arrow, pointing down at (x, y), with the lines and colours 32-37 of
+// the map's palette of the original (0x8E14). In the text layer, so that it
+// also goes over a picture of the player's own
+static void drawMapArrowAITD3(int x, int y)
+{
+	unsigned char* const saved = polyBackBuffer;
+	polyBackBuffer = uiLayer.data();
+	line(x, y, x - 3, y - 4, 0x20);
+	line(x, y, x - 2, y - 4, 0x21);
+	line(x, y, x - 1, y - 4, 0x22);
+	line(x, y, x, y - 12, 0x23);
+	line(x, y, x + 1, y - 4, 0x22);
+	line(x, y, x + 2, y - 4, 0x21);
+	line(x, y, x + 3, y - 4, 0x20);
+	for (int side = -3; side <= 3; side += 6)
+	{
+		line(x, y - 11, x + side, y - 14, 0x25);
+		line(x, y - 9, x + side, y - 12, 0x24);
+		line(x, y - 7, x + side, y - 10, 0x23);
+	}
+	polyBackBuffer = saved;
+}
+
+// The map of the town (ITD_RESS 48), as the original (0x923A): the game
+// stops, the map comes up from black and its arrow shows where Carnby is,
+// half a second on and half off, until a key or 10 seconds. Where the
+// original has no arrow it closed the map at once; here it stays until a
+// key, as the others (BUGS.md T28)
+void AITD3_showMap()
+{
+	int arrowX = 0, arrowY = 0;
+	const bool arrow = mapArrowAITD3(g_currentFloor, currentRoom, arrowX, arrowY);
+	printf(MLOOP_TAG "Map opened: floor %d, room %d, %s\n", g_currentFloor, currentRoom, arrow ? "with its arrow" : "no arrow there");
+
+	SaveTimerAnim();
+	while (key || Click)   // Tab, which opened it
+		process_events();
+
+	FadeOutPhys(32, 0);
+	coreScreenPictureShown("ITD_RESS", MAP);
+	LoadPak("ITD_RESS", MAP, aux);
+	palette_t mapPalette;
+	copyPalette(aux + 64000, mapPalette);
+	convertPaletteIfRequired(mapPalette);
+	copyPalette(mapPalette, currentGamePalette);
+	setPalette(mapPalette);
+	uiLayer.fill(0);
+	FastCopyScreen(aux, frontBuffer);
+	osystem_CopyBlockPhys((unsigned char*)frontBuffer, 0, 0, 320, 200);
+	osystem_drawBackground();
+
+	// g_menuActive: the fades show the map, not the 3D scene behind it
+	g_menuActive = true;
+	FadeInPhys(0x10, 0);
+
+	unsigned int chrono;
+	startChrono(&chrono);
+	bool arrowShown = false;
+	while (!key && !Click && (!arrow || evalChrono(&chrono) < 600))
+	{
+		process_events();
+		const bool showArrow = arrow && (evalChrono(&chrono) / 30) % 2 == 0;
+		if (showArrow != arrowShown)
+		{
+			uiLayer.fill(0);
+			if (showArrow)
+				drawMapArrowAITD3(arrowX, arrowY);
+			arrowShown = showArrow;
+		}
+		osystem_startFrame();
+		osystem_drawBackground();
+		osystem_stopFrame();
+		osystem_flip(NULL);
+	}
+
+	// The key that closed it does nothing in the game
+	FadeOutPhys(32, 0);
+	g_menuActive = false;
+	uiLayer.fill(0);
+	while (key || Click || JoyD)
+		process_events();
+	localKey = localClick = localJoyD = 0;
+	FlagInitView = 2;
+	RestoreTimerAnim();
+	printf(MLOOP_TAG "Map closed\n");
 }

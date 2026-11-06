@@ -905,6 +905,8 @@ int loadSave(int saveNumber)
         }
         if (s_layout.aitd3)
             skipValue(fHandle);
+        // Not saved: its script sets it again on its next pass
+        ListObjets[i].zvFollowsAnim = false;
     }
     fclose(fHandle);
 

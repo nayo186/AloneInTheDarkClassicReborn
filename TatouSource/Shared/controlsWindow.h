@@ -93,7 +93,7 @@ inline AdvancedText controlsActionText(GameAction action)
     static const AdvancedText texts[kGameActionCount] = {
         AdvancedText::ActionUp, AdvancedText::ActionDown, AdvancedText::ActionLeft, AdvancedText::ActionRight,
         AdvancedText::ActionAction, AdvancedText::ActionConfirm, AdvancedText::ActionCancel,
-        AdvancedText::ActionRun, AdvancedText::ActionOptions };
+        AdvancedText::ActionRun, AdvancedText::ActionMap, AdvancedText::ActionOptions };
     return texts[(int)action];
 }
 

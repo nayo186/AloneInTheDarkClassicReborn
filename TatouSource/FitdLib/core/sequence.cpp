@@ -57,13 +57,21 @@ const char* sequenceListAITD2[]=
 
 const char* sequenceName(int index)
 {
-    static char name[16];
+    // One per thread: the F1 window asks for sequence 0 every frame while the
+    // export goes through them in its own thread, and a shared one took the
+    // export's names ("AN0" instead of AN43)
+    static thread_local char name[16];
     if (index < 0)
         return nullptr;
     if (g_gameId == AITD2)
         return index < (int)(sizeof(sequenceListAITD2) / sizeof(sequenceListAITD2[0])) ? sequenceListAITD2[index] : nullptr;
+    // AITD3: "AN" and the number (AITD3.EXE, 0x15D8D, no table); its CD has
+    // AN1 to AN63, the ones its scripts play, so there are no more (the
+    // export goes through them all and skips the numbers without a file)
     if (g_gameId == AITD3)
     {
+        if (index > 63)
+            return nullptr;
         snprintf(name, sizeof(name), "AN%d", index);
         return name;
     }

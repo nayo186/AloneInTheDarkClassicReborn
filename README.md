@@ -181,6 +181,7 @@ Every action can be changed in **Controls** (F1 window or launcher). Defaults:
 | Action (use, fight, take) | Space | A |
 | Confirm / inventory | Enter | Start |
 | Cancel / pause menu | Esc | B |
+| Map (Alone in the Dark 3) | Tab | Y |
 | Options window (F1) | F1 or Home | Back |
 | Fullscreen | F11 or Alt+Enter | — |
 
@@ -265,7 +266,7 @@ To make your own:
 
 Masks matter when your picture moves or redraws an object that stands in front of the characters.
 
-**Animated sequences** (*Jack in the Dark* and *Alone in the Dark 2*: the intro, the cut scenes...) can be redrawn picture by picture too: **Export sequences** in F1 writes each one to `Exports/sequences/<NAME>/` (`000.png`, `001.png`...); a picture saved with the same name in `Backgrounds/sequences/<NAME>/` replaces it.
+**Animated sequences** (*Jack in the Dark*, *Alone in the Dark 2* and *Alone in the Dark 3*: the intro, the cut scenes...) can be redrawn picture by picture too: **Export sequences** in F1 writes each one to `Exports/sequences/<NAME>/` (`000.png`, `001.png`...); a picture saved with the same name in `Backgrounds/sequences/<NAME>/` replaces it.
 
 ## Narrators
 

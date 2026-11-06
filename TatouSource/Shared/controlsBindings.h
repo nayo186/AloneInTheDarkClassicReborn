@@ -25,6 +25,7 @@ enum class GameAction
     Confirm,         // Enter
     Cancel,          // Esc: pause menu
     Run,
+    Map,             // AITD3's map (Tab)
     Options,         // opens and closes the F1 window (not a game input)
     Count
 };
@@ -48,7 +49,7 @@ struct InputBinding
 inline const char* gameActionId(GameAction action)
 {
     static const char* const ids[kGameActionCount] = {
-        "up", "down", "left", "right", "action", "confirm", "cancel", "run", "options" };
+        "up", "down", "left", "right", "action", "confirm", "cancel", "run", "map", "options" };
     return ids[(int)action];
 }
 
@@ -91,6 +92,8 @@ inline std::vector<InputBinding> defaultBindings(GameAction action)
     case GameAction::Run:
         return { keyBinding(SDL_SCANCODE_LSHIFT), padButtonBinding(SDL_GAMEPAD_BUTTON_LEFT_STICK),
                  padAxisBinding(SDL_GAMEPAD_AXIS_RIGHT_TRIGGER, true) };
+    case GameAction::Map:
+        return { keyBinding(SDL_SCANCODE_TAB), padButtonBinding(SDL_GAMEPAD_BUTTON_NORTH) };
     case GameAction::Options:
         return { keyBinding(SDL_SCANCODE_F1), keyBinding(SDL_SCANCODE_HOME), padButtonBinding(SDL_GAMEPAD_BUTTON_BACK) };
     default:

@@ -30,6 +30,8 @@ void restoreInventoryBoxAITD3(int x1, int y1, int x2, int y2);
 void redrawInventorySpriteAITD3();
 // Forgets the background of AITD3's inventory when it closes
 void endInventoryAITD3();
+// Shows AITD3's map (Tab) with the arrow where Carnby is
+void AITD3_showMap();
 
 // AITD3's difficulty (AITD3.EXE): each value is 0 low, 1 average or 2 high
 enum

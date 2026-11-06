@@ -139,6 +139,20 @@ static void drawLaterStillMasks(const tObject* actorPtr, const cameraDataStruct*
     }
 }
 
+// AITD3, an object whose box follows its animation (DO_REAL_ZV): a mask
+// covers it also when where it stands is in the mask's zone. The big snake of
+// floor 2 lives in the middle barrel; striking, its box went out of the
+// barrel's zone and the part of it still inside was drawn over the barrel
+// (BUGS.md T29)
+static bool pointInZoneOfAnimatedBox(const tObject* actorPtr, const rectTestStruct& rect)
+{
+    if (g_gameId != AITD3 || !actorPtr->zvFollowsAnim || actorPtr->room != currentRoom)
+        return false;
+    const int x = (actorPtr->roomX + actorPtr->stepX) / 10;
+    const int z = (actorPtr->roomZ + actorPtr->stepZ) / 10;
+    return x >= rect.zoneX1 && x <= rect.zoneX2 && z >= rect.zoneZ1 && z <= rect.zoneZ2;
+}
+
 // AITD2, an object of another room than the camera's (seen through a wall or
 // a door): a mask of its room covers it also when where it stands is in the
 // mask's zone, its box going out of it. A tall one of the room behind the
@@ -301,7 +315,7 @@ void drawBgOverlay(tObject* actorPtr)
                     printf("[DRAW]     room %d object %d,%d-%d,%d vs mask %d zone %d,%d-%d,%d\n", actorPtr->room, actorX1, actorZ1, actorX2, actorZ2, i, pRect->zoneX1, pRect->zoneZ1, pRect->zoneX2, pRect->zoneZ2);
 
                 if ((actorX1 >= pRect->zoneX1 && actorZ1 >= pRect->zoneZ1 && actorX2 <= pRect->zoneX2 && actorZ2 <= pRect->zoneZ2)
-                    || pointInOtherRoomZone(actorPtr, *pRect))
+                    || pointInOtherRoomZone(actorPtr, *pRect) || pointInZoneOfAnimatedBox(actorPtr, *pRect))
                 {
                     if (s_logDrawFrame)
                         printf("[DRAW]     mask %d (room %d) clipped to %d,%d-%d,%d\n", i, actorPtr->room, clipLeft, clipTop, clipRight, clipBottom);

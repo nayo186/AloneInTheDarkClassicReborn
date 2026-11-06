@@ -189,6 +189,7 @@ struct tObject // used to read data from file too
     s16 hardMat;
     s16 emitModel; // kind of flash at the gun's emit point when it fires (LM_FIRE, 3-8, BUGS.md A44)
     s16 fireAlpha; // AITD3: the shot's angle up or down (FIRE_UP_DOWN; 0 with FIRE, BUGS.md T24)
+    bool zvFollowsAnim; // its box comes from its animated pose (DO_REAL_ZV), BUGS.md T29
 
     // Remaster: set when actor is on stairs (YHandler active), cleared when stair interpolation ends
 };

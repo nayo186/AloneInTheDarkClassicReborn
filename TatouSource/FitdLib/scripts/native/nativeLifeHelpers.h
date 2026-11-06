@@ -657,6 +657,7 @@ inline void life_DoRealZv() { doRealZv(currentProcessedActorPtr); }
 
 inline void life_DoRotZv()
 {
+    currentProcessedActorPtr->zvFollowsAnim = false;
     getZvRot(HQR_Get(HQ_Bodys, currentProcessedActorPtr->bodyNum), &currentProcessedActorPtr->zv,
         currentProcessedActorPtr->alpha, currentProcessedActorPtr->beta, currentProcessedActorPtr->gamma);
     currentProcessedActorPtr->zv.ZVX1 += currentProcessedActorPtr->roomX;
@@ -669,6 +670,7 @@ inline void life_DoRotZv()
 
 inline void life_DoMaxZv()
 {
+    currentProcessedActorPtr->zvFollowsAnim = false;
     getZvMax(HQR_Get(HQ_Bodys, currentProcessedActorPtr->bodyNum), &currentProcessedActorPtr->zv);
     currentProcessedActorPtr->zv.ZVX1 += currentProcessedActorPtr->roomX;
     currentProcessedActorPtr->zv.ZVX2 += currentProcessedActorPtr->roomX;
@@ -680,6 +682,7 @@ inline void life_DoMaxZv()
 
 inline void life_DoCarreZv()
 {
+    currentProcessedActorPtr->zvFollowsAnim = false;
     getZvCube(HQR_Get(HQ_Bodys, currentProcessedActorPtr->bodyNum), &currentProcessedActorPtr->zv);
     currentProcessedActorPtr->zv.ZVX1 += currentProcessedActorPtr->roomX;
     currentProcessedActorPtr->zv.ZVX2 += currentProcessedActorPtr->roomX;
@@ -691,6 +694,7 @@ inline void life_DoCarreZv()
 
 inline void life_DefZv(int x1, int x2, int y1, int y2, int z1, int z2)
 {
+    currentProcessedActorPtr->zvFollowsAnim = false;
     currentProcessedActorPtr->zv.ZVX1 = currentProcessedActorPtr->roomX + x1 + currentProcessedActorPtr->stepX;
     currentProcessedActorPtr->zv.ZVX2 = currentProcessedActorPtr->roomX + x2 + currentProcessedActorPtr->stepX;
     currentProcessedActorPtr->zv.ZVY1 = currentProcessedActorPtr->roomY + y1 + currentProcessedActorPtr->stepY;
@@ -701,6 +705,7 @@ inline void life_DefZv(int x1, int x2, int y1, int y2, int z1, int z2)
 
 inline void life_DefAbsZv(int x1, int x2, int y1, int y2, int z1, int z2)
 {
+    currentProcessedActorPtr->zvFollowsAnim = false;
     currentProcessedActorPtr->zv.ZVX1 = x1;
     currentProcessedActorPtr->zv.ZVX2 = x2;
     currentProcessedActorPtr->zv.ZVY1 = y1;

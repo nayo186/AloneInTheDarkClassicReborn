@@ -435,6 +435,15 @@ void PlayWorld(int allowSystemMenu, int deltaTime)
                     }
                 }
             }
+
+            // AITD3's map (Tab), as AITD3.EXE (0xE518): not with Carnby dead.
+            // Here also not in the intro nor while the scripts close the
+            // inventory, the scenes played with the engine (BUGS.md T28)
+            if(localKey == 0x0F && g_gameId == AITD3 && allowSystemMenu && statusScreenAllowed
+               && CVars[getCVarsIdx(DEAD_PERSO)] == 0)
+            {
+                AITD3_showMap();
+            }
         }
         else
         {

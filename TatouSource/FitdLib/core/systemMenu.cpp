@@ -309,6 +309,7 @@ void processSystemMenu(void)
     palette_t menuPalette;
     if (g_gameId == AITD3)
     {
+        coreScreenPictureShown("ITD_RESS", 17);
         s_optionScreenAITD3 = CheckLoadMallocPak("ITD_RESS", 17);
         copyPalette(s_optionScreenAITD3 + 64000, menuPalette);
         convertPaletteIfRequired(menuPalette);

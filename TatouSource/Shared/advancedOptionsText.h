@@ -77,6 +77,7 @@ enum class AdvancedText
     ActionConfirm,
     ActionCancel,
     ActionRun,
+    ActionMap,
     ActionOptions,
     Audio,
     MusicVolume,
@@ -351,6 +352,8 @@ inline const char* advancedText(AdvancedText text, int language)
         { "Cancel / pause", "Cancelar / pausa", "Annuler / pause", "Annulla / pausa", "Abbrechen / Pause" },
         // ActionRun
         { "Run", "Correr", "Courir", "Correre", "Rennen" },
+        // ActionMap
+        { "Map (Alone 3)", "Mapa (Alone 3)", "Plan (Alone 3)", "Mappa (Alone 3)", "Karte (Alone 3)" },
         // ActionOptions
         { "Options window", "Ventana de opciones", "Fenêtre des options", "Finestra delle opzioni", "Optionsfenster" },
         // Audio

@@ -657,15 +657,17 @@ static bool exportPicture(const std::string& outFolder, const char* pakName, int
     return written;
 }
 
-// Jack's and AITD2's animated sequences, every frame as a PNG in
+// Jack's, AITD2's and AITD3's animated sequences, every frame as a PNG in
 // sequences/<NAME>/000.png...: they can be remade (by hand, with an AI
 // upscaler) and put back. Decoded as playSequence (core/sequence.cpp) does:
 // frame 0 is the palette and the whole picture, each next one changes it
 static int exportSequences(const std::string& outFolder)
 {
     int frames = 0;
-    for (int sequence = 0; const char* name = sequenceName(sequence); sequence++)
+    for (int sequence = 0; const char* sequenceText = sequenceName(sequence); sequence++)
     {
+        const std::string sequenceString = sequenceText;   // kept: the next call reuses its buffer
+        const char* name = sequenceString.c_str();
         const int count = (int)PAK_getNumFiles(name);
         if (count <= 0 || count > 4096 || getPakSize(name, 0) < 0x300 + 64000)
             continue;
@@ -762,7 +764,7 @@ static void exportAll(int gameId)
                 s_exportCount++;
         }
     }
-    else if (gameId == JACK || gameId == AITD2)
+    else if (gameId == JACK || gameId == AITD2 || gameId == AITD3)
     {
         // Full-screen pictures (book, outside view...): every ITD_RESS entry
         // the size of a picture (exportPicture skips the rest)
@@ -956,7 +958,7 @@ static int specialCameraPicture(int floor, int camera)
     return -1;
 }
 
-// The masks of one Jack in the Dark or AITD2 camera (MASKnn entry), built as loadMask
+// The masks of one Jack in the Dark, AITD2 or AITD3 camera (MASKnn entry), built as loadMask
 // (core/camera.cpp) builds them: per viewed room, per mask, a box and its
 // rows as runs of skipped and covered pixels. The entry describes itself
 // (each table starts with the offset of its first item).
@@ -1030,8 +1032,8 @@ static void exportAllMasks()
         return;
     }
 
-    // Jack in the Dark and AITD2: the masks are in MASKnn, one entry per camera
-    for (int floor = 0; (g_gameId == JACK || g_gameId == AITD2) && floor < 32; floor++)
+    // Jack in the Dark, AITD2 and AITD3: the masks are in MASKnn, one entry per camera
+    for (int floor = 0; (g_gameId == JACK || g_gameId == AITD2 || g_gameId == AITD3) && floor < 32; floor++)
     {
         char maskPak[16], cameraPak[16];
         snprintf(maskPak, sizeof(maskPak), "MASK%02d", floor);
@@ -1090,9 +1092,9 @@ void customBackgroundsExportMasksStart()
 {
     if (s_maskExportState == 1)
         return;
-    if (g_gameId != AITD1 && g_gameId != JACK && g_gameId != AITD2)
+    if (g_gameId != AITD1 && g_gameId != JACK && g_gameId != AITD2 && g_gameId != AITD3)
     {
-        printf(MAIN_WARN "Mask export: only Alone in the Dark 1 and 2 and Jack in the Dark\n");
+        printf(MAIN_WARN "Mask export: only Alone in the Dark 1, 2 and 3 and Jack in the Dark\n");
         s_maskExportState = 3;
         return;
     }

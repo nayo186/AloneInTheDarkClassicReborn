@@ -173,7 +173,9 @@ void controlsUpdate(const bool* keyboard, int keyCount, SDL_Gamepad* gamepad)
     if (held(GameAction::Action))
         Click = 1;
 
-    // The 1992 key codes: Esc, Enter (Enter wins over Esc, as before)
+    // The 1992 key codes: Tab (AITD3's map), Esc, Enter (Enter wins over
+    // Esc, as before)
+    if (held(GameAction::Map))     key = 0x0F;
     if (held(GameAction::Cancel))  key = 0x1B;
     if (held(GameAction::Confirm)) key = 0x1C;
 }

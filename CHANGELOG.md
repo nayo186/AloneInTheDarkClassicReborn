@@ -4,6 +4,14 @@ Alone in the Dark: Classic Reborn started on 2026-10-23 from [Alone in the Dark:
 
 This repository was published with a single starting commit, to keep it light: the early history carried large files that are no longer part of the project. Below are the changes of each release and, after them, the changes made in this fork before it was published, newest first, one line per change. The reasons behind larger removals are explained in `docs/DESCARTADO.md` and the fixes in `docs/baseline/BUGS.md`.
 
+## v1.4.1 (2026-11-06)
+
+More for *Alone in the Dark 3*: its map, custom pictures and a fix in the barrel cellar.
+
+- Alone in the Dark 3: Tab (Y on the controller) opens the map of the town, with the arrow blinking where Carnby is, as in the original; only while playing, not during the intro or a scene (BUGS.md T28)
+- Alone in the Dark 3: its backgrounds, full-screen pictures, masks and sequences can be exported and replaced from F1, as in the other games (BUGS.md T27)
+- Alone in the Dark 3: the big snake of the barrel cellar no longer shows over its barrel when it strikes (BUGS.md T29)
+
 ## v1.4.0 (2026-11-05)
 
 *Alone in the Dark 3* can now be played in the same engine as the other games, with its own page in the launcher. It is being polished: if something behaves differently from the original, please open an issue. Its fixes follow `AITD3.EXE`, the game's own program, and are listed in `docs/baseline/BUGS.md` (T1 to T26); what is known of it is in `docs/AITD3_EXE.md`.

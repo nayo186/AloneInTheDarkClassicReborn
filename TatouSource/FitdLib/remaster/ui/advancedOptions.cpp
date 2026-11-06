@@ -459,7 +459,7 @@ void advancedOptionsDraw()
         else if (maskState == 3)
             ImGui::TextColored(kGoldLight, "%s", text(AdvancedText::ExportFailed));
 
-        // Every frame of the animated sequences (Jack, AITD2), on their own:
+        // Every frame of the animated sequences (Jack, AITD2, AITD3), on their own:
         // the backgrounds are often wanted without them
         if (customBackgroundsHasSequences())
         {
