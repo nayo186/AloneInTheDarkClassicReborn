@@ -184,6 +184,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `osystem_stopLoopingSamples` | Stops the looping sound effects |
 | `osystem_stopLastSample` | Stops the sound effect started last, if it is not a looping one |
 | `osystem_isSamplePlaying` | True while a sound effect is playing |
+| `osystem_isLoopingSamplePlaying` | True while a looping sound effect is playing |
 | `osystem_playVO` | Plays a narrator voice by its file name (loose file or GAME.GOG) |
 | `osystem_playVocByIndex` | Plays the narrator voice of a book or message by its number |
 | `osystem_playVocPage` | Plays the narrator voice of one page of a book |
@@ -329,6 +330,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `AITD3_showMap` | Shows AITD3's map (Tab) with the arrow where Carnby is |
 | `difficultyHitForce` | The force a hit gives `target`, with AITD3's difficulty applied |
 | `difficultyHeroLife` | AITD3: doubles or halves the hero's life points when C_VAR 2 names the variable that holds them |
+| `shownBetaAITD3` | The turn an object is drawn and collides with: its beta, but for the left leaf of the double door of floor 9, which opens as far as the right one |
 
 ### `core/JACK.h`
 

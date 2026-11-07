@@ -316,8 +316,13 @@ static void startLoopingSample(int num)
 		return;
 
 	// Skip re-triggering the same looping sample if it is still playing.
+	// AITD3 looks at the loop itself: with any sound, the heartbeat of the
+	// dark cellar (sample 14, script 648, asked for once) was skipped while
+	// Carnby's cry of the fall into it still played, and never sounded
+	// (BUGS.md T40)
 	static int s_lastLoopingSample = -1;
-	if(num == s_lastLoopingSample && osystem_isSamplePlaying())
+	const bool stillPlaying = (g_gameId == AITD3) ? osystem_isLoopingSamplePlaying() : osystem_isSamplePlaying();
+	if(num == s_lastLoopingSample && stillPlaying)
 		return;
 
 	char sampleFileName[256] = "";

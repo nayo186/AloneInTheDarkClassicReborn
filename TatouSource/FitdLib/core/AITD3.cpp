@@ -118,6 +118,11 @@ void startAITD3()
 			{
 				if(restoreSave(12,0))
 				{
+					// The key that chose the save must not reach the game, as
+					// in AITD1 and AITD2 (BUGS.md C51)
+					while(key || JoyD || Click)
+						process_events();
+
 					updateShaking();
 
 					FlagInitView = 2;
@@ -147,6 +152,26 @@ void startAITD3()
 
 // Average in everything, as the original starts (AITD3.EXE)
 s16 aitd3Difficulty[3] = { 1, 1, 1 };
+
+// The double door of floor 9 (room 8): its script turns the left leaf
+// (object 404) from 512 to 1024, half a turn, into the wall's column, and the
+// right one (405) from 512 to 950. The left leaf is shown and collides as if
+// it turned as far as the right one (512 to 74); its script still sees its
+// real beta. Our own fix (BUGS.md T41)
+static const int kDoubleDoorFloor = 9;
+static const int kDoubleDoorLeftLeaf = 404;
+static const int kDoubleDoorClosed = 512;
+static const int kDoubleDoorOpened = 74;
+
+int shownBetaAITD3(const tObject* object)
+{
+    if (g_gameId != AITD3 || g_currentFloor != kDoubleDoorFloor || object->indexInWorld != kDoubleDoorLeftLeaf)
+        return object->beta;
+    const int beta = object->beta & 0x3FF;
+    if (beta > kDoubleDoorClosed)
+        return object->beta;
+    return kDoubleDoorClosed - (kDoubleDoorClosed - beta) * (kDoubleDoorClosed - kDoubleDoorOpened) / kDoubleDoorClosed;
+}
 
 // As the original (AITD3.EXE, where a hit hands its force to the one hit): a
 // hit on the hero follows the villains' hit points and any other Carnby's:

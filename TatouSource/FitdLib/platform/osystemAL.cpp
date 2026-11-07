@@ -558,6 +558,17 @@ bool osystem_isSamplePlaying()
     return false;
 }
 
+bool osystem_isLoopingSamplePlaying()
+{
+    if (!gSoloud) return false;
+    for (auto& sfx : g_activeSfx)
+    {
+        if (sfx.looping && gSoloud->isValidVoiceHandle(sfx.handle))
+            return true;
+    }
+    return false;
+}
+
 void osystem_playLoopingSample(char* samplePtr, int size, float volume)
 {
     if (!gSoloud || !samplePtr || size <= 0)

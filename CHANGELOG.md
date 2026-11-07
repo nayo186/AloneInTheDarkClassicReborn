@@ -4,6 +4,15 @@ Alone in the Dark: Classic Reborn started on 2026-10-23 from [Alone in the Dark:
 
 This repository was published with a single starting commit, to keep it light: the early history carried large files that are no longer part of the project. Below are the changes of each release and, after them, the changes made in this fork before it was published, newest first, one line per change. The reasons behind larger removals are explained in `docs/DESCARTADO.md` and the fixes in `docs/baseline/BUGS.md`.
 
+## v1.4.5 (2026-11-07)
+
+More fixes for *Alone in the Dark 3*, and one for every game when loading a saved game.
+
+- All games: loading a saved game from the pause menu no longer makes Carnby jump, aim or attack with the key that confirmed the load (BUGS.md C51)
+- Alone in the Dark 3: the heartbeat of the dark cellar sounds and stops when the lighter is lit, as in the original; it was sometimes silent and sometimes never stopped (BUGS.md T40)
+- Alone in the Dark 3: the left leaf of the double door of floor 9 no longer goes into the wall when it opens: it opens as far as the right one (BUGS.md T41)
+- Alone in the Dark 3: putting the hat on the statue gives the ammunition and Carnby moves again at once, at his usual speed; he stayed stuck until the next scene (BUGS.md T42)
+
 ## v1.4.4 (2026-11-07)
 
 More fixes for *Alone in the Dark 3*: a crash, the balcony and a hole in the floor.

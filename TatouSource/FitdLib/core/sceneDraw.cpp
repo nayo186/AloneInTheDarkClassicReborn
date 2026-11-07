@@ -871,7 +871,7 @@ void AllRedraw(int flagFlip)
                         int drawX = actorPtr->worldX + actorPtr->stepX;
                         int drawY = actorPtr->worldY + actorPtr->stepY;
                         int drawZ = actorPtr->worldZ + actorPtr->stepZ;
-                        int drawAlpha = actorPtr->alpha, drawBeta = actorPtr->beta, drawGamma = actorPtr->gamma;
+                        int drawAlpha = actorPtr->alpha, drawBeta = shownBetaAITD3(actorPtr), drawGamma = actorPtr->gamma;
                         ObjectSize drawSize;
                         if (g_onObjectDraw && !g_onObjectDraw(currentDrawActor, &drawX, &drawY, &drawZ, &drawAlpha, &drawBeta, &drawGamma, &drawSize))
                             continue;

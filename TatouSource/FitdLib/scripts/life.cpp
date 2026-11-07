@@ -1262,7 +1262,7 @@ void processLife(int lifeNum, bool callFoundLife)
                 currentProcessedActorPtr->zvFollowsAnim = false;
                 getZvRot(HQR_Get(HQ_Bodys, currentProcessedActorPtr->bodyNum), &currentProcessedActorPtr->zv,
                     currentProcessedActorPtr->alpha,
-                    currentProcessedActorPtr->beta,
+                    shownBetaAITD3(currentProcessedActorPtr),
                     currentProcessedActorPtr->gamma);
 
                 currentProcessedActorPtr->zv.ZVX1 += currentProcessedActorPtr->roomX;
@@ -2232,6 +2232,16 @@ void processLife(int lifeNum, bool callFoundLife)
                 {
                     sampleNumber = *(s16*)(currentLifePtr);
                     currentLifePtr += 2;
+                }
+
+                // AITD3: sample -1 stops the sound, as the loop the scripts
+                // started with REP_SAMPLE (the heartbeat in the dark, stopped
+                // by the lighter, script 966); it went on forever (BUGS.md T40)
+                if (g_gameId == AITD3 && sampleNumber == -1)
+                {
+                    printf(LIFE_TAG "[SOUND] Stop samples by object %d (life %d)\n", currentProcessedActorIdx, currentLifeNum);
+                    osystem_stopSample();
+                    break;
                 }
 
                 playSound(sampleNumber);

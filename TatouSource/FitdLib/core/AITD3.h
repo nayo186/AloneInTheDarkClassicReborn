@@ -46,3 +46,7 @@ int difficultyHitForce(const tObject* target, int force);
 // AITD3: doubles or halves the hero's life points when C_VAR 2 names the
 // variable that holds them
 void difficultyHeroLife();
+
+// The turn an object is drawn and collides with: its beta, but for the left
+// leaf of the double door of floor 9, which opens as far as the right one
+int shownBetaAITD3(const tObject* object);

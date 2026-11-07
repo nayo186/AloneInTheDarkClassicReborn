@@ -80,6 +80,8 @@
 	void osystem_stopLastSample();
 	// True while a sound effect is playing
 	bool osystem_isSamplePlaying();
+	// True while a looping sound effect is playing
+	bool osystem_isLoopingSamplePlaying();
 
 	// Plays a narrator voice by its file name (loose file or GAME.GOG)
 	void osystem_playVO(const char* voFileName);

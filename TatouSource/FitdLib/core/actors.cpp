@@ -804,8 +804,11 @@ void DeleteInventoryObjet(int objIdx)
 
     // AITD2: an object taken away (a script puts it somewhere else) leaves
     // the hand empty; its life went on running and the player still fired a
-    // weapon he no longer had (BUGS.md A14)
-    if (g_gameId >= AITD2 && inHandTable[currentInventory] == objIdx)
+    // weapon he no longer had (BUGS.md A14). Not AITD3: its scripts go on
+    // asking for the object in hand after taking it away; the hat put on the
+    // statue of floor 9 (script 949, IN_HAND 297 after DELETE 297) gave the
+    // ammunition and Carnby back only then, and he stayed stuck (BUGS.md T42)
+    if (g_gameId == AITD2 && inHandTable[currentInventory] == objIdx)
         inHandTable[currentInventory] = -1;
 
     ListWorldObjets[objIdx].foundFlag &= 0x7FFF;

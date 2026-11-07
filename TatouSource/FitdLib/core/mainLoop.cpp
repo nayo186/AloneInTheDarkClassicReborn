@@ -390,13 +390,18 @@ void PlayWorld(int allowSystemMenu, int deltaTime)
 
 
 
-                while(key==0x1B || key == 0x1C)
+                while(key==0x1B || key == 0x1C || Click)
                 {
                     process_events();
                 }
                 // The menu leaves its own last key (Enter) in localKey: a
-                // game loaded there opened the inventory at once (BUGS.md A24)
+                // game loaded there opened the inventory at once (BUGS.md A24).
+                // And the action button (Space, A) that confirmed in it in
+                // localClick: the game began with the action of the object in
+                // hand, Carnby jumped or took his fighting stance (BUGS.md C51)
                 localKey = key;
+                localClick = Click;
+                localJoyD = JoyD;
                 printf(MLOOP_TAG "Back to the game after the pause menu\n");
                 framesSinceStart = 0;
             }
