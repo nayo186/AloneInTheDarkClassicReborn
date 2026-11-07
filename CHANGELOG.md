@@ -4,6 +4,14 @@ Alone in the Dark: Classic Reborn started on 2026-10-23 from [Alone in the Dark:
 
 This repository was published with a single starting commit, to keep it light: the early history carried large files that are no longer part of the project. Below are the changes of each release and, after them, the changes made in this fork before it was published, newest first, one line per change. The reasons behind larger removals are explained in `docs/DESCARTADO.md` and the fixes in `docs/baseline/BUGS.md`.
 
+## v1.4.4 (2026-11-07)
+
+More fixes for *Alone in the Dark 3*: a crash, the balcony and a hole in the floor.
+
+- Alone in the Dark 3: the game no longer closes when a script takes away an object past the 30th place of the inventory, as when Carnby dies from a fall (BUGS.md T37)
+- Alone in the Dark 3: the baluster of the balcony is no longer hidden by the plank and the shutter the enemy opens; it only showed where Carnby walked by (BUGS.md T38)
+- Alone in the Dark 3: Carnby falls through the hole in the floor to the room below, as in the original; he only waved his arms at the edge (BUGS.md T39)
+
 ## v1.4.3 (2026-11-07)
 
 More fixes for *Alone in the Dark 3*, and its HD pack.

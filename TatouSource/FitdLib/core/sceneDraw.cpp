@@ -143,10 +143,14 @@ static void drawLaterStillMasks(const tObject* actorPtr, const cameraDataStruct*
 // covers it also when where it stands is in the mask's zone. The big snake of
 // floor 2 lives in the middle barrel; striking, its box went out of the
 // barrel's zone and the part of it still inside was drawn over the barrel
-// (BUGS.md T29)
+// (BUGS.md T29). The same for a set piece (AF_BOXIFY: still or moved by a
+// script, never the characters): on the balcony of floor 10, the plank
+// (object 0) and the shutter the enemy opens (object 1) go out of the
+// railing's zone and were drawn over a baluster but where the hero walked
+// by, whose masks covered them again (BUGS.md T38)
 static bool pointInZoneOfAnimatedBox(const tObject* actorPtr, const rectTestStruct& rect)
 {
-    if (g_gameId != AITD3 || !actorPtr->zvFollowsAnim || actorPtr->room != currentRoom)
+    if (g_gameId != AITD3 || !(actorPtr->zvFollowsAnim || (actorPtr->objectType & AF_BOXIFY)) || actorPtr->room != currentRoom)
         return false;
     const int x = (actorPtr->roomX + actorPtr->stepX) / 10;
     const int z = (actorPtr->roomZ + actorPtr->stepZ) / 10;

@@ -794,7 +794,10 @@ void DeleteInventoryObjet(int objIdx)
 
     if (inventoryIdx != -1)
     {
-        memmove(&inventoryTable[currentInventory][inventoryIdx], &inventoryTable[currentInventory][inventoryIdx + 1], (30 - inventoryIdx - 1) * 2);
+        // The rest of the list moves up one place. Its length is the game's:
+        // AITD2 and AITD3 hold more than 30 objects and, with a fixed 30, an
+        // object from the 31st on gave a negative size (BUGS.md T37)
+        memmove(&inventoryTable[currentInventory][inventoryIdx], &inventoryTable[currentInventory][inventoryIdx + 1], (inventoryTableSize() - inventoryIdx - 1) * 2);
 
         numObjInInventoryTable[currentInventory]--;
     }

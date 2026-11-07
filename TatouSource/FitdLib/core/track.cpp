@@ -12,6 +12,7 @@
 #include "modernStick.h"
 #include "math.h"
 #include <algorithm>
+#include <array>
 
 #define	TL_INIT_COOR		0
 #define	TL_GOTO			1
@@ -50,6 +51,33 @@ s16 convertTrackMacro(s16 inTrackMacro) {
 
     assert(inTrackMacro == 5);
     return TL_WAIT;
+}
+
+// AITD3: ticks between two track macros that do not move the object (one
+// frame of the original), and when each object ran the last one
+static const unsigned int kAitd3InstantMacroTicks = 5;
+static std::array<unsigned int, NUM_MAX_OBJECT> s_lastInstantMacroTick{};
+
+// A macro done at once: the object neither walks nor turns while on it
+static bool isInstantTrackMacro(s16 trackMacro)
+{
+    switch (trackMacro)
+    {
+    case TL_INIT_COOR:
+    case TL_END:
+    case TL_REPEAT:
+    case TL_MARK:
+    case TL_STOP:
+    case TL_COL_OFF:
+    case TL_COL_ON:
+    case TL_DEC_OFF:
+    case TL_DEC_ON:
+    case TL_MEMO_COOR:
+    case TL_ANGLE:
+        return true;
+    default:
+        return false;
+    }
 }
 
 int makeProportional(int x1, int x2, int y1, int y2)
@@ -390,6 +418,20 @@ void processTrack(void)
 
             s16 trackMacro = convertTrackMacro(*(s16*)trackPtr);
             trackPtr += 2;
+
+            // AITD3 runs one macro per frame (DO_MOVE in the life script),
+            // about 12 frames a second on the PCs of its time: the macros that
+            // do not move wait that long here. Above, the hole of floor 10
+            // (zone 43, track 1344: four switches and the end) ended in 5
+            // ticks, before the falling animation (16 ticks) the script waits
+            // for, and Carnby never fell (BUGS.md T39)
+            if (g_gameId == AITD3 && isInstantTrackMacro(trackMacro))
+            {
+                unsigned int& lastTick = s_lastInstantMacroTick[currentProcessedActorIdx];
+                if (timer - lastTick < kAitd3InstantMacroTicks)
+                    break;
+                lastTick = timer;
+            }
 
             //printf("Track macro %X\n",trackMacro);
 
