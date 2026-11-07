@@ -152,8 +152,9 @@ int drawTextOverlay(void)
                 // Counted in ticks of the game clock: the original counted
                 // drawn frames, so a message lasted less the higher the FPS
                 // (under a second at 60). It now stays one second longer
-                // before fading out (BUGS.md C49)
-                const int kMessageFullTicks = 26 + 60;
+                // before fading out (BUGS.md C49). In AITD3, half a second
+                // more: its messages were too short to read (BUGS.md T36)
+                const int kMessageFullTicks = 26 + 60 + ((g_gameId == AITD3) ? 30 : 0);
                 const int kMessageFadeTicks = 30;
 
                 currentMessage->time += ticksThisFrame;

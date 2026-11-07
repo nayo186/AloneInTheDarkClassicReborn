@@ -797,6 +797,28 @@ void appendFormated(const char* format, ...)
 }
 #endif
 
+// AITD3: the scripts of the bullets and boxes of cartridges for Carnby's
+// Winchester set its bullets (vars[319]) to 10, say it is loaded and delete
+// the object, also when it was already full: the bullets were lost for
+// nothing. The other Winchester of the game (script 261) says it is already
+// loaded and keeps them; these do the same (BUGS.md T34)
+static const int kAitd3WinchesterReloads[] = { 734, 872, 873, 908, 944, 954, 955, 1090, 1220 };
+
+// The reload script that found the Winchester already full, -1 if none
+static int s_winchesterAlreadyLoaded = -1;
+
+static bool aitd3WinchesterAlreadyLoaded(int index, int value)
+{
+    if (g_gameId != AITD3 || index != 319 || value != 10 || vars[319] < 10)
+        return false;
+    for (int script : kAitd3WinchesterReloads)
+    {
+        if (script == currentLifeNum)
+            return true;
+    }
+    return false;
+}
+
 void processLife(int lifeNum, bool callFoundLife)
 {
     int exitLife = 0;
@@ -807,6 +829,7 @@ void processLife(int lifeNum, bool callFoundLife)
     currentLifeActorIdx = currentProcessedActorIdx;
     currentLifeActorPtr = currentProcessedActorPtr;
     currentLifeNum = lifeNum;
+    s_winchesterAlreadyLoaded = -1;
 
     currentLifePtr = HQR_Get(listLife, lifeNum);
     assert(currentLifePtr);
@@ -1797,6 +1820,12 @@ void processLife(int lifeNum, bool callFoundLife)
                     lifeTempVar1 = evalVar("ObjectId");
                 }
 
+                if (s_winchesterAlreadyLoaded == currentLifeNum)
+                {
+                    s_winchesterAlreadyLoaded = -1;
+                    break;
+                }
+
                 deleteObject(lifeTempVar1);
 
                 if (ListWorldObjets[lifeTempVar1].foundBody != -1)
@@ -2693,6 +2722,11 @@ void processLife(int lifeNum, bool callFoundLife)
                 lifeTempVar1 = *(s16*)(currentLifePtr);
                 currentLifePtr += 2;
 
+                // "The Winchester is already loaded!" instead of "My
+                // Winchester is loaded!" (BUGS.md T34)
+                if (s_winchesterAlreadyLoaded == currentLifeNum && lifeTempVar1 == 107)
+                    lifeTempVar1 = 1026;
+
                 makeMessage(lifeTempVar1);
 
                 break;
@@ -2722,7 +2756,14 @@ void processLife(int lifeNum, bool callFoundLife)
                 appendFormated("LM_VAR ");
                 lifeTempVar1 = readNextArgument("Index");
 
-                vars[lifeTempVar1] = evalVar("value");
+                lifeTempVar2 = evalVar("value");
+                if (aitd3WinchesterAlreadyLoaded(lifeTempVar1, lifeTempVar2))
+                {
+                    s_winchesterAlreadyLoaded = currentLifeNum;
+                    break;
+                }
+
+                vars[lifeTempVar1] = lifeTempVar2;
                 break;
             }
             case LM_INC: // INC_VAR

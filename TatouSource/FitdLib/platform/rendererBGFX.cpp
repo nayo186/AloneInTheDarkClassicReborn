@@ -938,7 +938,7 @@ void osystem_drawDeferredGlass()
 
     // The slice is already in Z: plain depth
     osystem_setDepthSlice(-1);
-    float glassParams[4] = { 1.0f / width, 1.0f / height, 0.0f, 0.0f };
+    float glassParams[4] = { 1.0f / width, 1.0f / height, (g_gameId == AITD3) ? 1.0f : 0.0f, 0.0f };
     bgfx::setUniform(glassParamsUniform, glassParams);
     bgfx::setState(0 | BGFX_STATE_WRITE_RGB
         | BGFX_STATE_DEPTH_TEST_LEQUAL

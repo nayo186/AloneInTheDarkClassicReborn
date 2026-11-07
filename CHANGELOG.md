@@ -4,6 +4,16 @@ Alone in the Dark: Classic Reborn started on 2026-10-23 from [Alone in the Dark:
 
 This repository was published with a single starting commit, to keep it light: the early history carried large files that are no longer part of the project. Below are the changes of each release and, after them, the changes made in this fork before it was published, newest first, one line per change. The reasons behind larger removals are explained in `docs/DESCARTADO.md` and the fixes in `docs/baseline/BUGS.md`.
 
+## v1.4.3 (2026-11-07)
+
+More fixes for *Alone in the Dark 3*, and its HD pack.
+
+- Alone in the Dark 3: the wall blown up with the dynamite is shown broken, as in the original; Carnby could walk through it but the picture kept it whole (BUGS.md T33)
+- Alone in the Dark 3: bullets for the Winchester are kept when it is already loaded, with the game's own "already loaded" message; they were used up for nothing (BUGS.md T34)
+- Alone in the Dark 3: the ghost that appears by the locked door when its lamp is lit can be seen; it was drawn too dark to notice (BUGS.md T35)
+- Alone in the Dark 3: messages stay half a second longer, to give time to read them (BUGS.md T36)
+- README: an HD pack for Alone in the Dark 3, and two pictures of it
+
 ## v1.4.2 (2026-11-06)
 
 Fixes for *Alone in the Dark 3*: searching, the whip and the Lone Miner's shots.

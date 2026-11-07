@@ -44,6 +44,59 @@ static bool aitd2DormitoryDestroyed()
     return g_gameId == AITD2 && g_currentFloor == 11 && CVars[getCVarsIdx(DORTOIR)] != 0;
 }
 
+// AITD3: after some events (a CVar set by a script) AITD3.EXE shows, for some
+// cameras, another picture from ITD_RESS instead of the CAMERAnn one: the wall
+// blown up with the dynamite is CVar 11 (script 1183), floor 1, room 0,
+// camera 17 (0xCD51; BUGS.md T33). The room is the hero's current one
+struct Aitd3CameraPicture
+{
+    int cvar;
+    int floor;
+    int room;
+    int camera;
+    int picture;
+};
+
+static const Aitd3CameraPicture kAitd3CameraPictures[] =
+{
+    { 5, 9, 10, 17, 61 },
+    { 5, 9, 10, 1, 62 },
+    { 6, 12, 11, 6, 63 },
+    { 6, 12, 11, 4, 64 },
+    { 6, 0, 15, 1, 5 },
+    { 6, 0, 15, 7, 6 },
+    { 6, 0, 0, 1, 5 },
+    { 6, 0, 0, 7, 6 },
+    { 7, 3, 4, 11, 10 },
+    { 9, 1, 6, 24, 65 },
+    { 8, 13, 13, 5, 11 },
+    { 8, 13, 14, 5, 11 },
+    { 8, 13, 13, 13, 12 },
+    { 11, 1, 0, 17, 9 },
+    { 10, 11, 6, 11, 66 },
+};
+
+static int aitd3CameraPicture(int cameraIdx)
+{
+    if (g_gameId != AITD3)
+        return -1;
+
+    for (const Aitd3CameraPicture& entry : kAitd3CameraPictures)
+    {
+        if (entry.floor == g_currentFloor && entry.room == currentRoom && entry.camera == cameraIdx
+            && entry.cvar < (int)CVars.size() && CVars[entry.cvar] != 0)
+            return entry.picture;
+    }
+    return -1;
+}
+
+// AITD3: with the wall blown up (CVar 11) the masks of floor 1 are NASK01
+// (AITD3.EXE, 0x18BC5)
+static bool aitd3WallBlownUp()
+{
+    return g_gameId == AITD3 && g_currentFloor == 1 && CVars.size() > 11 && CVars[11] != 0;
+}
+
 void loadCamera(int cameraIdx)
 {
     char name[16];
@@ -101,6 +154,9 @@ void loadCamera(int cameraIdx)
         default: break;
         }
     }
+
+    if (useSpecial == -1)
+        useSpecial = aitd3CameraPicture(cameraIdx);
 
     if (useSpecial != -1)
     {
@@ -179,7 +235,7 @@ void loadMask(int cameraIdx)
 
     char name[16];
 
-    sprintf_s(name, sizeof(name), aitd2DormitoryDestroyed() ? "NASK%02d" : "MASK%02d", g_currentFloor);
+    sprintf_s(name, sizeof(name), (aitd2DormitoryDestroyed() || aitd3WallBlownUp()) ? "NASK%02d" : "MASK%02d", g_currentFloor);
 
     if (g_MaskPtr)
     {

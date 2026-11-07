@@ -34,6 +34,15 @@ Classic Reborn is a C++17 source port of the Infogrames engine, built on a decom
   </tr>
 </table>
 
+### Alone in the Dark 3
+
+<table>
+  <tr>
+    <td align="center"><img src="docs/images/aitd3-portrait-hd.jpg" alt="Carnby by the portrait in the bedroom" width="100%"><br><sub>Carnby by the portrait, with the HD pack</sub></td>
+    <td align="center"><img src="docs/images/aitd3-saloon-hd.jpg" alt="Carnby behind the saloon's bar" width="100%"><br><sub>The saloon, with the HD pack</sub></td>
+  </tr>
+</table>
+
 <p align="center"><img src="docs/images/launcher.jpg" alt="The launcher" width="70%"><br><sub>The launcher</sub></p>
 
 ## How it was made
@@ -78,7 +87,7 @@ It is not a static recompilation: a static recompilation translates the machine 
 - **Launcher** to choose the game, its language (the five of the GOG and Steam editions: English, French, German, Italian, Spanish) and the data folder, with the same options as the in-game **F1** window. The menus are translated into the same five languages.
 - **Screen options**: resolution, aspect ratio (4:3, 16:10, stretched), fullscreen, frame limit, VSync.
 - **Optional effects**: edge smoothing (FXAA) on the 3D models, bloom from the painted backgrounds, film grain, CRT scanlines, ambient occlusion (SSAO), smoother animations, sharper text.
-- **Custom backgrounds**: export every background and mask of the game, enlarge or repaint them, and the game uses yours. Ready-made **HD packs** are available for *Alone in the Dark*, *Jack in the Dark* and *Alone in the Dark 2* (see [Custom backgrounds](#custom-backgrounds)).
+- **Custom backgrounds**: export every background and mask of the game, enlarge or repaint them, and the game uses yours. Ready-made **HD packs** are available for *Alone in the Dark*, *Jack in the Dark*, *Alone in the Dark 2* and *Alone in the Dark 3* (see [Custom backgrounds](#custom-backgrounds)).
 - **Controls**: keyboard and game controller (Xbox, PlayStation, Nintendo Switch Pro and most other USB or Bluetooth controllers), every action can be changed, several inputs per action.
 - **Modern left stick**: the character walks where you push the stick, seen from the camera, like the Resident Evil HD remasters; the D-pad and the keys stay tank controls (see [Controls](#controls)).
 - **Cheats** (F1): infinite life, behind an "Enable cheats" switch.
@@ -253,6 +262,7 @@ UserData/
 
 - *Alone in the Dark* and *Jack in the Dark*: **[download from Google Drive](https://drive.google.com/file/d/1ps4ZVv-tBio4YYLrr8lVeiR8kiYFy5Z1/view?usp=sharing)** (a `.rar` file: Windows 11 opens it, or use [7-Zip](https://www.7-zip.org/)). Copy each game's pictures into `UserData\AITD1\Backgrounds` and `UserData\JACK\Backgrounds`.
 - *Alone in the Dark 2*: **[download from Google Drive](https://drive.google.com/file/d/1TJAbAFtaVNr7sVnREjCp1ATIuWSu6tuw/view?usp=sharing)**. Copy its pictures into `UserData\AITD2\Backgrounds`.
+- *Alone in the Dark 3*: **[download from Google Drive](https://drive.google.com/file/d/1S0qRXvsVeq4HfAyVkofXynHUf97LQh-2/view?usp=sharing)**. Copy its pictures into `UserData\AITD3\Backgrounds`.
 
 Then switch on **Custom backgrounds** in F1 or in the launcher. The packs have backgrounds only: the game's own masks keep working with them. You can also make your own, or mix both.
 

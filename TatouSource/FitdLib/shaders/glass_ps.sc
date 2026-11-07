@@ -12,7 +12,17 @@ $input v_texcoord0
 
 SAMPLER2D(s_sceneCopy, 0);
 
-uniform vec4 u_glassParams;  // xy: 1 / size of the scene image
+uniform vec4 u_glassParams;  // xy: 1 / size of the scene image; z: 1 in AITD3
+
+// AITD3 adds the shade of what is behind to the glass's whole colour, not to
+// its palette group: the ghost by the lamp of floor 10 (colour 149) takes 149 to 164,
+// light greys and the light blues of the next group (BUGS.md T35). With a
+// colour that starts its group, as the glass of the other games, both are the
+// same
+vec3 glassShade(uint bank, uint shade, uint offset)
+{
+    return getColorFromRawOffset((bank * 16u + shade + offset) & 255u).rgb;
+}
 
 float luminance(vec3 c)
 {
@@ -27,6 +37,7 @@ void main()
     // The colours of the glass: the 16 shades of its palette group. Take the
     // two shades around the light behind and blend them (any shade order).
     uint bank = uint(v_texcoord0.y * 15.0 + 0.5);
+    uint offset = (u_glassParams.z > 0.5) ? uint(v_texcoord0.x * 15.0 + 0.5) : 0u;
     vec3 below = vec3_splat(0.0);
     vec3 above = vec3_splat(0.0);
     float belowLight = -1.0;
@@ -38,12 +49,12 @@ void main()
         if (shadeLight <= light && shadeLight > belowLight)
         {
             belowLight = shadeLight;
-            below = shade;
+            below = glassShade(bank, i, offset);
         }
         if (shadeLight >= light && shadeLight < aboveLight)
         {
             aboveLight = shadeLight;
-            above = shade;
+            above = glassShade(bank, i, offset);
         }
     }
 
