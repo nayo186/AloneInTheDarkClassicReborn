@@ -876,7 +876,7 @@ void AllRedraw(int flagFlip)
                         if (g_onObjectDraw && !g_onObjectDraw(currentDrawActor, &drawX, &drawY, &drawZ, &drawAlpha, &drawBeta, &drawGamma, &drawSize))
                             continue;
 
-                        if (hiddenBehindItsRoomWall(actorPtr, drawX, drawY, drawZ, drawAlpha, drawBeta, drawGamma, bodyPtr))
+                        if (hiddenAtBetaAITD3(actorPtr) || hiddenBehindItsRoomWall(actorPtr, drawX, drawY, drawZ, drawAlpha, drawBeta, drawGamma, bodyPtr))
                         {
                             if (s_logDrawFrame)
                                 printf("[DRAW]   #%d actor %d world %d room %d hidden behind a wall of its room\n", i, currentDrawActor,

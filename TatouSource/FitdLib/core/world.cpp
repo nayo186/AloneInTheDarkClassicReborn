@@ -9,7 +9,7 @@
 
 #include "common.h"
 #include "consoleLog.h"
-#include "fileNameCase.h"
+#include "languagePack.h"
 
 // Menu sound helper (from systemMenu.cpp)
 extern void playMenuSound(const char* soundName);
@@ -42,28 +42,24 @@ void LoadWorld(void)
     u8* pObjectData;
     u8* pObjectDataBackup;
     size_t objectDataSize;
-    FILE* fHandle;
     int i;
     int choosePersoBackup;
 
     {
-        char objectPath[512];
-        strcpy(objectPath, homePath);
-        strcat(objectPath, "OBJETS.ITD");
-        fHandle = fopen(matchFileCase(objectPath).c_str(), "rb");
-        if (!fHandle) {
+        // Through DataFile: AITD3's language folder has its own objects
+        // (the French ones call their scripts by other numbers); read from
+        // the installation, they went with the French scripts and the intro
+        // went to a room that does not exist (BUGS.md T48)
+        DataFile file;
+        if (!file.open("OBJETS.ITD")) {
             fatalError(0, "OBJETS.ITD");
         }
 
-        fseek(fHandle, 0, SEEK_END);
-        objectDataSize = ftell(fHandle);
-        fseek(fHandle, 0, SEEK_SET);
-
+        objectDataSize = file.size();
         pObjectDataBackup = pObjectData = (u8*)malloc(objectDataSize);
         ASSERT(pObjectData);
 
-        fread(pObjectData, objectDataSize, 1, fHandle);
-        fclose(fHandle);
+        file.read(pObjectData, objectDataSize);
     }
 
     maxObjects = READ_LE_U16(pObjectData);
@@ -171,18 +167,13 @@ void LoadWorld(void)
     }
 
     {
-        char definestPath[512];
-        strcpy(definestPath, homePath);
-        strcat(definestPath, "DEFINES.ITD");
-
-        fHandle = fopen(matchFileCase(definestPath).c_str(), "rb");
-        if (!fHandle)
+        DataFile file;
+        if (!file.open("DEFINES.ITD"))
         {
             fatalError(0, "DEFINES.ITD");
         }
 
-        fread(&CVars[0], CVars.size(), 2, fHandle);
-        fclose(fHandle);
+        file.read(&CVars[0], CVars.size() * 2);
 
         for (i = 0; i < CVars.size(); i++)
         {

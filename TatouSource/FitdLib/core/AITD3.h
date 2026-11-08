@@ -47,6 +47,10 @@ int difficultyHitForce(const tObject* target, int force);
 // variable that holds them
 void difficultyHeroLife();
 
-// The turn an object is drawn and collides with: its beta, but for the left
-// leaf of the double door of floor 9, which opens as far as the right one
+// The turn an object is drawn and collides with: its beta, but for the
+// doors whose script turns them into the wall (they open as far as they can)
 int shownBetaAITD3(const tObject* object);
+
+// True if the camera does not draw the object at its present beta (an open
+// door behind a wall, whose edge showed along a frame)
+bool hiddenAtBetaAITD3(const tObject* object);

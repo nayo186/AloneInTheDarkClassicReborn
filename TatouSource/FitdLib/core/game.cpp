@@ -196,6 +196,7 @@ int parseAllSaves(int arg)
 {
     const int NUM_SAVE_SLOTS = 9; // Slots 0-8 (slot 9 would overflow menu)
     bool saveExists[NUM_SAVE_SLOTS];
+    bool saveFits[NUM_SAVE_SLOTS];          // its language's scripts are the ones in use (AITD3)
     std::string saveDates[NUM_SAVE_SLOTS];   // when each one was written
     int currentSelectedSlot = 0;
     int selectedSlot = -1;
@@ -218,6 +219,7 @@ int parseAllSaves(int arg)
     {
         strcpy_s(buffer, sizeof(buffer), saveFilePath(i, ".ITD").c_str());
         saveExists[i] = fileExists(buffer);
+        saveFits[i] = !saveExists[i] || saveFitsLanguage(i);
         if (saveExists[i])
             saveDates[i] = saveDate(buffer);
     }
@@ -268,7 +270,13 @@ int parseAllSaves(int arg)
             int yPos = startY + (i * lineHeight);
 
             // Format slot text
-            if (saveExists[i])
+            if (saveExists[i] && arg == 0 && !saveFits[i])
+            {
+                // AITD3: a save of the French version in the others, or the
+                // other way round: it cannot be loaded (BUGS.md T48)
+                sprintf_s(buffer, sizeof(buffer), "Slot %d - Other language", i);
+            }
+            else if (saveExists[i])
             {
                 sprintf_s(buffer, sizeof(buffer), "Slot %d", i);
             }
@@ -305,7 +313,7 @@ int parseAllSaves(int arg)
 
             // Date and time of the save, small, right after "Slot N": at the end
             // of the line the preview's frame (from x=175) covered it
-            if (saveExists[i] && !saveDates[i].empty())
+            if (saveExists[i] && !saveDates[i].empty() && (arg != 0 || saveFits[i]))
                 drawTinyText(listX + 2 + ExtGetSizeFont((u8*)buffer) + 8, yPos + 5, saveDates[i].c_str(),
                     (i == currentSelectedSlot) ? 15 : 4);
         }
@@ -389,7 +397,7 @@ int parseAllSaves(int arg)
             if ((localKey == 0x1C || localClick) && initialDelay == 0)
             {
                 // For load mode (arg == 0), only allow selection if save exists
-                if (arg == 0 && !saveExists[currentSelectedSlot])
+                if (arg == 0 && (!saveExists[currentSelectedSlot] || !saveFits[currentSelectedSlot]))
                 {
                     // Can't load from empty slot, do nothing
                 }

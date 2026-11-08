@@ -4,6 +4,17 @@ Alone in the Dark: Classic Reborn started on 2026-10-23 from [Alone in the Dark:
 
 This repository was published with a single starting commit, to keep it light: the early history carried large files that are no longer part of the project. Below are the changes of each release and, after them, the changes made in this fork before it was published, newest first, one line per change. The reasons behind larger removals are explained in `docs/DESCARTADO.md` and the fixes in `docs/baseline/BUGS.md`.
 
+## v1.5.0 (2026-11-08)
+
+*Alone in the Dark 3* has been played from start to end with no errors left: all four games (*Alone in the Dark*, *Jack in the Dark*, *Alone in the Dark 2* and *Alone in the Dark 3*) can now be played from start to end. This version adds its other languages and a portable folder for each game.
+
+- Alone in the Dark 3: playable from start to end (README)
+- Alone in the Dark 3: works with the GOG and Steam editions in all their languages (English, French, German, Italian): the launcher offers the installed one, and the narrator follows the timing of each language (BUGS.md T46, T47)
+- Alone in the Dark 3: any of its languages over your installation, from a folder in `UserData\AITD3\Languages` with the files of that language (texts, voices, narrator); a folder that lacks a needed file is not offered; saves of the French version and of the others are kept apart, as in the original versions (see the README, BUGS.md T48)
+- Alone in the Dark 3: the door of floor 13 and the one at the end of its corridor no longer go through the walls when they open (BUGS.md T43, T44)
+- Alone in the Dark 3: as the cougar, the inventory has only the cougar's actions, as in the original; it kept Carnby's objects with the cougar's actions among them (BUGS.md T45)
+- All games: each game can be kept inside `UserData`, in its own `GAME` folder (only the files the game uses are needed); the launcher takes it when no folder is chosen or the chosen one is gone (see the README, BUGS.md C52)
+
 ## v1.4.5 (2026-11-07)
 
 More fixes for *Alone in the Dark 3*, and one for every game when loading a saved game.

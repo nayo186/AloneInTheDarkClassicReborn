@@ -4,7 +4,7 @@ Play the original **Alone in the Dark** (1992), **Jack in the Dark**, **Alone in
 
 **[⬇ Download the latest version](https://github.com/nayo186/AloneInTheDarkClassicReborn/releases/latest)** for Windows or Linux: unpack it, run `Launcher.exe` (`Launcher` on Linux) and choose your GOG or Steam copy of the game. Nothing else to install.
 
-**Alone in the Dark, Jack in the Dark and Alone in the Dark 2 are playable from start to end.** **Alone in the Dark 3 is playable too**, and it is being polished: if something behaves differently from the original, please [report it](#reporting-a-problem).
+**Alone in the Dark, Jack in the Dark, Alone in the Dark 2 and Alone in the Dark 3 are playable from start to end.** If something behaves differently from the original, please [report it](#reporting-a-problem).
 
 Classic Reborn is a C++17 source port of the Infogrames engine, built on a decompilation of the original DOS game. It is a fork of [Alone in the Dark: Re-Haunted](https://github.com/spacefarergames/AloneInTheDarkReHaunted), itself based on [FITD (Free in the Dark)](https://github.com/yaz0r/FITD) by yaz0r. Its goal is the 1992 game as it was meant to be seen, without its defects: the remaster's HD mode was removed and every addition is optional.
 
@@ -79,7 +79,7 @@ It is not a static recompilation: a static recompilation translates the machine 
 | Alone in the Dark (1992, CD version) | Playable from start to end |
 | Jack in the Dark (1993) | Playable from start to end |
 | Alone in the Dark 2 (1993, CD version) | Playable from start to end |
-| Alone in the Dark 3 (1994, CD version) | Playable, being polished: reports are welcome |
+| Alone in the Dark 3 (1994, CD version) | Playable from start to end |
 
 ## What it adds
 
@@ -93,7 +93,7 @@ It is not a static recompilation: a static recompilation translates the machine 
 - **Cheats** (F1): infinite life, behind an "Enable cheats" switch.
 - **Separate volumes** for music and for voices and effects.
 - **Narrators**: the French CD's narrator (from your own CD) or a fans' dubbing, with any text language; in *Alone in the Dark 2* and *3* the narrator reads the books from the CD, and fans can dub it too (see [Narrators](#narrators)).
-- ***Alone in the Dark 3* in Spanish** from the original Spanish CD, over the GOG edition: texts, voices and narrator (see [Alone in the Dark 3 in Spanish](#alone-in-the-dark-3-in-spanish)).
+- ***Alone in the Dark 3* in any of its languages** over your GOG or Steam installation, with the files of that language (English, French, German, Italian, and Spanish from the original Spanish CD): texts, voices and narrator (see [Other languages in Alone in the Dark 3](#other-languages-in-alone-in-the-dark-3)).
 - **Saves** in the format of the GOG edition: saves made in the GOG game load here (the three *Alone in the Dark* games).
 - **Menus** that adapt to any window size and work with mouse, keyboard, controller and touch.
 
@@ -105,6 +105,16 @@ It is not a static recompilation: a static recompilation translates the machine 
    - a **GOG or Steam installation**: the folder with `GAME.GOG` (or its `INDARK` subfolder; `INDARK2` for *Alone in the Dark 2*, `INDARK3` for *Alone in the Dark 3*). Music and voices are read straight from the CD image (for *Alone in the Dark 3*, from its `MUSIC` folder); nothing is extracted or written there;
    - or a **copy of the game files** (a folder with the `.PAK` files; Jack in the Dark in its `JACK` subfolder).
 4. Choose the language of the game and press **Play** (see [Languages](#languages)). *Jack in the Dark* has its own button, in the *Alone in the Dark* tab, when its files are found.
+
+**Everything in one folder (portable).** Each game can also live inside `UserData`, in its own **`GAME`** folder (the launcher creates them empty): `UserData\AITD1\GAME` (with *Jack in the Dark*), `UserData\AITD2\GAME` and `UserData\AITD3\GAME`. Copy your GOG or Steam installation there; only these files are needed (the rest, like DOSBox, GOG's saves or the installers, can be left out):
+
+| Game | Files |
+|---|---|
+| *Alone in the Dark* | `GAME.GOG`, `GAME.INS` (Steam: `GAME.INST`), the `.PAK` and `.ITD` files of `INDARK`, and those of `JACK` for *Jack in the Dark* |
+| *Alone in the Dark 2* | `GAME.GOG`, `GAME.INS` (Steam: `GAME.INST`), the `.PAK` and `.ITD` files of `INDARK2` |
+| *Alone in the Dark 3* | the `.PAK` and `.ITD` files of `INDARK3` and its `INDARK3.CFG`, and the `MUSIC` folder |
+
+When the launcher opens, a game with no folder chosen takes its `GAME` folder, and so does one whose chosen folder is gone (uninstalled or moved). If neither is there, its folder stays empty for you to choose. With `UserData` and the programs in one folder, everything can be moved or copied to another computer or drive.
 
 **Updates.** When it opens, the launcher asks GitHub for the latest release of this project and, if there is a newer one, offers to install it; the **Update** button next to the version (bottom right) looks again. Installing downloads the package for your system and replaces only the programs and the documents next to them: `UserData` (options, saves, backgrounds) and `launcher.cfg` are never touched. Then close the launcher and open it again. The launcher connects to the internet only for this, and the game never does.
 
@@ -143,18 +153,29 @@ The narrator reads with any text language. A French narrator only came on the ol
 - **Menu language** (launcher and F1): **Interface**, at the top right of the launcher.
 - **Narrator**, if you added extra voices: the **Narrator** list of the **Audio** window, in the launcher's **Advanced options** or in the game with **F1**.
 
-### Alone in the Dark 3 in Spanish
+### Other languages in Alone in the Dark 3
 
-The GOG edition of *Alone in the Dark 3* installs a single language. The original Spanish CD has the whole game in Spanish: the texts, the voices of the scenes, the intro and the narrator of the books. If you own it, the game can use it over your GOG installation:
+GOG and Steam sell *Alone in the Dark 3* one language at a time (English, French, German or Italian), and each language has its own texts, voices, narrator and some data files. Spanish was only on the original Spanish CD. The launcher offers the language of your installation; any other one you own can be added as a folder, and the game reads it over your installation without changing it:
 
-1. Open `UserData\AITD3\Languages` (next to `Launcher.exe`; the launcher creates it the first time it opens) and make a folder named `Spanish` in it.
-2. Put the Spanish CD there, in one of these forms:
-   - **an image of the CD**: the `.bin` (or `.img`) with its `.cue` of the same name. Everything is read straight from the image; nothing is extracted;
-   - **its files**: `ESPAGNOL.PAK`, `LISTSAMP.PAK`, `LISTLIFE.PAK`, `PRIORITY.ITD` and `ITD_RESS.PAK` from the CD's `INDARK3` folder (or the whole folder), and the CD's audio tracks as `.ogg`, `.wav` or `.mp3`, named after their CD track (`Track22.ogg`, `Track24.ogg`...) or after the track minus 1 (`21.ogg`, `23.ogg`...). The ones that are in Spanish are track 22 (the intro) and 24 to 61 (the narrator); the others are the same music as in GOG;
-   - an `.iso`, or the files without the tracks, also work: then the texts and the voices of the scenes are in Spanish, and the intro and the books are read by the narrator of your installation.
-3. In the launcher, choose **Español** in the **Game language** list of the *Alone in the Dark 3* page (it appears once the folder is found) and press **Play**.
+1. Open `UserData\AITD3\Languages` (next to `Launcher.exe`; the launcher creates it the first time it opens) and make a folder in it named `English`, `French`, `German`, `Italian` or `Spanish`.
+2. Put that language's files in it, from the `INDARK3` folder of an installation in that language (or the whole folder):
 
-The Spanish CD numbers its voices differently from the GOG edition, so with Spanish chosen the game takes those files from the folder instead of the installed ones. Your GOG installation is not changed, and choosing another language goes back to it. The CD is not included with this project: you need your own.
+   | Language | Files |
+   |---|---|
+   | English | `ENGLISH.PAK`, `LISTSAMP.PAK`, `LISTLIFE.PAK`, `ITD_RESS.PAK`, `LISTMAT.PAK`, `LISTTRAK.PAK`, `PRIORITY.ITD` |
+   | French | `FRANCAIS.PAK`, `LISTSAMP.PAK`, `LISTLIFE.PAK`, `OBJETS.ITD`, `ITD_RESS.PAK`, `LISTMAT.PAK`, `LISTTRAK.PAK`, `PRIORITY.ITD` |
+   | German | `DEUTSCH.PAK`, `LISTSAMP.PAK`, `LISTLIFE.PAK`, `ITD_RESS.PAK`, `LISTMAT.PAK`, `LISTTRAK.PAK`, `PRIORITY.ITD` |
+   | Italian | `ITALIANO.PAK`, `LISTSAMP.PAK`, `LISTLIFE.PAK`, `LISTANIM.PAK`, `ITD_RESS.PAK`, `LISTMAT.PAK`, `LISTTRAK.PAK`, `PRIORITY.ITD` |
+   | Spanish (CD) | `ESPAGNOL.PAK`, `LISTSAMP.PAK`, `LISTLIFE.PAK`, `PRIORITY.ITD`, `ITD_RESS.PAK` |
+
+   With a French installation, the other languages also need its `OBJETS.ITD`, and French over any other one needs its own: the French version numbers its scripts differently. A folder that lacks a file it needs is not offered (the launcher writes which one in `launcher.log`).
+3. For the voiced intro and the narrator, add that language's audio tracks: the files of its `MUSIC` folder (`Track02.ogg`...) as they are, or named after the track minus 1 (`01.ogg`...), as `.ogg`, `.wav` or `.mp3`. Without them, the texts and the voices of the scenes are in that language and the intro and the books are read by the narrator of your installation. The narrator's timing of each language is built into the game.
+4. The Spanish CD also works as **an image**: its `.bin` (or `.img`) with its `.cue` of the same name in the `Spanish` folder. Everything is read straight from the image; nothing is extracted.
+5. In the launcher, choose the language in the **Game language** list of the *Alone in the Dark 3* page (it appears once the folder is found) and press **Play**.
+
+Your installation is not changed, and choosing its language goes back to it. No game files are included with this project: you need your own copies.
+
+**Saves and French.** A save keeps the number of the script each object is running, and the French version numbers its scripts differently from the others. So a save made in French can only be loaded in French, and one made in English, German, Italian or Spanish only in one of those (as with the original versions). The load screen shows the others as **Other language**. Saves made before this version, and GOG's, carry no language and load as before.
 
 ### On Linux
 
@@ -233,7 +254,7 @@ The launcher's **Advanced options** and the in-game **F1** window share the same
 
 ## Folders
 
-Nothing is ever written to the game folder. Everything the game writes goes to **`UserData`**, next to the executables:
+Nothing is ever written to the game folder (not even to a `GAME` folder inside `UserData`). Everything the game writes goes to **`UserData`**, next to the executables:
 
 ```
 UserData/
@@ -245,13 +266,15 @@ UserData/
 │   ├── Backgrounds/       your backgrounds and full-screen pictures
 │   ├── Masks/             your masks
 │   ├── Exports/           what F1 exports (masks in masks/, with guides in masks_guides/)
-│   └── Voices/            other narrators, one folder each (see Narrators)
-├── JACK/                  Jack in the Dark (same layout)
+│   ├── Voices/            other narrators, one folder each (see Narrators)
+│   └── GAME/              the game itself, if you keep it here (see Getting started)
+├── JACK/                  Jack in the Dark (same layout, without GAME: it is in AITD1's)
 ├── AITD2/                 Alone in the Dark 2 (same layout, without Voices: its
-│                          narrator's recordings go in the folder itself, see Narrators)
-└── AITD3/                 Alone in the Dark 3 (as AITD2), and
-    └── Languages/         languages from your own CD, one folder each (see
-                           Alone in the Dark 3 in Spanish)
+│                          narrator's recordings go in the folder itself, see Narrators;
+│                          with its own GAME)
+└── AITD3/                 Alone in the Dark 3 (as AITD2, with its own GAME), and
+    └── Languages/         other languages, one folder each (see
+                           Other languages in Alone in the Dark 3)
 ```
 
 `launcher.cfg` and `launcher.log`, next to `Launcher.exe`, keep the launcher's own settings.

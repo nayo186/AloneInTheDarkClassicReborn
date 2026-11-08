@@ -32,3 +32,7 @@ static const char* const kMasksFolder = "Masks";
 static const char* const kExportsFolder = "Exports";
 static const char* const kVoicesFolder = "Voices";
 static const char* const kLanguagesFolder = "Languages";
+// A portable copy of the game's GOG or Steam installation, in each game's
+// folder (UserData\AITD1\GAME...): the launcher takes it when no other is
+// chosen or the chosen one is gone
+static const char* const kPortableGameFolder = "GAME";

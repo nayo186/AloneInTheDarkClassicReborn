@@ -141,8 +141,11 @@ static const char* gameKey(Trilogy game) { return game == Trilogy::AITD3 ? "aitd
 // (INDARK2 for AITD2, INDARK3 for AITD3)
 static bool isGogRoot(const fs::path& folder, Trilogy game)
 {
-    return pathExists(folder / "GAME.GOG") && !cueFile(folder).empty() &&
-        pathExists(folder / gogDataFolder(game) / gameMarker(game));
+    // AITD3 reads its music from MUSIC, not from its CD image: a copy of
+    // the installation without GAME.GOG also works (UserData\AITD3\GAME)
+    const bool image = pathExists(folder / "GAME.GOG") && !cueFile(folder).empty();
+    const bool music = game == Trilogy::AITD3 && pathExists(folder / "MUSIC");
+    return (image || music) && pathExists(folder / gogDataFolder(game) / gameMarker(game));
 }
 
 static void setHomePath(const fs::path& dataFolder)
@@ -188,8 +191,14 @@ void selectGameFolder(int argc, char* argv[])
             return;
         const bool known = pathExists(start / gameMarker(game)) || isGogRoot(start, game) || isGogRoot(start.parent_path(), game);
         const std::string chosen = launcherSetting((std::string(gameKey(game)) + ".dataFolder").c_str());
-        if (!known && !chosen.empty())
+        // The game's portable copy (UserData\<game>\GAME; Jack's is AITD1's),
+        // when none is chosen or the chosen one is gone, as the launcher does
+        const fs::path portable = exeFolder() / kUserDataFolder
+            / (game == Trilogy::AITD3 ? "AITD3" : game == Trilogy::AITD2 ? "AITD2" : "AITD1") / kPortableGameFolder;
+        if (!known && !chosen.empty() && pathExists(fs::u8path(chosen)))
             start = fs::u8path(chosen);
+        else if (!known && pathExists(portable))
+            start = portable;
     }
     fs::current_path(start, error);
     if (error)
@@ -248,9 +257,13 @@ void selectGameFolder(int argc, char* argv[])
         s_gogImage = (start / "GAME.GOG").string();
         s_gogCue = cueFile(start).string();
     }
+    // AITD3's music is in MUSIC; its CD image may be left out of a copy
+    const std::string audioFrom = !gog ? std::string()
+        : pathExists(start / "GAME.GOG") ? ", music and voices from " + s_gogImage
+        : ", music from " + (start / "MUSIC").string();
     s_message = std::string(MAIN_OK) + (gog ? "GOG/Steam installation" : "Copy of the data") + (s_debug ? " (debug mode)" : "") +
         ": data in " + dataFolder.string() + " (read only), everything written in " + userFolder.string() +
-        ", configuration in " + s_configFolder + (gog ? ", music and voices from " + s_gogImage : std::string()) + "\n";
+        ", configuration in " + s_configFolder + audioFrom + "\n";
 }
 
 void logGameFolder()

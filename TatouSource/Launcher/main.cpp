@@ -725,7 +725,9 @@ int main(int, char**)
     updaterStartCheck();
     bool offerUpdate = updatesEnabled();   // the window opens by itself once, if there is one
 
-    // First run: use the launcher's own folder if it holds the game data
+    // Each game's portable copy (UserData\<game>\GAME), then, the first
+    // time, the launcher's own folder if it holds the game data
+    findPortableGames(state.settings);
     if (state.settings.aitd1DataFolder.empty() && dataFolderGame(launcherFolder()) == 0)
         state.settings.aitd1DataFolder = launcherFolder();
     refreshDataFolder(state);

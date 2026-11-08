@@ -3047,6 +3047,28 @@ void processLife(int lifeNum, bool callFoundLife)
                 exitLife = 1;
                 break;
             }
+            case LM_DEL_INVENTORY:
+            {
+                // AITD3 (AITD3.EXE, 0x804B; no argument): empties the
+                // inventory in use. Carnby turning into the cougar (script
+                // 767) leaves his objects so; the cougar's script (377) then
+                // takes its own actions (182). Unknown here, the cougar had
+                // Carnby's inventory, with its actions among his objects
+                // (BUGS.md T45)
+                appendFormated("LM_DEL_INVENTORY ");
+                if (g_gameId != AITD3)
+                {
+                    printf(LIFE_WARN "DEL_INVENTORY only known in AITD3" CON_RESET "\n");
+                    break;
+                }
+                for (int i = 0; i < numObjInInventoryTable[currentInventory]; i++)
+                    ListWorldObjets[inventoryTable[currentInventory][i]].foundFlag &= 0x7FFF;
+                inHandTable[currentInventory] = -1;
+                numObjInInventoryTable[currentInventory] = 0;
+                action = 0;
+                printf(LIFE_TAG "DEL_INVENTORY %d\n", currentInventory);
+                break;
+            }
             case LM_CALL_INVENTORY:
             {
                 appendFormated("LM_CALL_INVENTORY ");

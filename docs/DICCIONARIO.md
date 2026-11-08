@@ -330,7 +330,8 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `AITD3_showMap` | Shows AITD3's map (Tab) with the arrow where Carnby is |
 | `difficultyHitForce` | The force a hit gives `target`, with AITD3's difficulty applied |
 | `difficultyHeroLife` | AITD3: doubles or halves the hero's life points when C_VAR 2 names the variable that holds them |
-| `shownBetaAITD3` | The turn an object is drawn and collides with: its beta, but for the left leaf of the double door of floor 9, which opens as far as the right one |
+| `shownBetaAITD3` | The turn an object is drawn and collides with: its beta, but for the doors whose script turns them into the wall (they open as far as they can) |
+| `hiddenAtBetaAITD3` | True if the camera does not draw the object at its present beta (an open door behind a wall, whose edge showed along a frame) |
 
 ### `core/JACK.h`
 
@@ -654,6 +655,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `restoreSave` | The load screen: chooses a slot and loads it |
 | `makeSave` | The save screen: chooses a slot and writes the game (GOG layout for AITD1) |
 | `forgetSaveExtras` | A new game: forgets what a loaded save kept for writing back (AITD3's blocks of the original that the engine does not have) |
+| `saveFitsLanguage` | AITD3: false if the save of slot `slot` was made in a language that numbers its scripts otherwise than the one in use (French against the others), so it cannot be loaded; saves without that note (GOG's, older ones) can |
 
 ### `core/screen.h`
 
@@ -908,6 +910,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `loadLauncherSettings` | Reads launcher.cfg |
 | `saveLauncherSettings` | Writes launcher.cfg |
 | `dataFolderGame` | The chosen folder can be a copy of the data (LISTBOD2.PAK in it for AITD1, Jack in its JACK subfolder; MER.PAK for AITD2; AN1.PAK for AITD3) or a GOG or Steam installation (GAME.GOG and GAME.INS, or GAME.INST on Steam; AITD1 in INDARK, Jack in JACK, AITD2 in INDARK2, AITD3 in INDARK3; that folder itself may be chosen too). A GOG installation is never written to: aitd_remaster.cfg goes to the user folder (Shared/userFolder.h), as the game's saves and log. The game of the folder: 0 AITD1, 1 AITD2, 2 AITD3, -1 none |
+| `findPortableGames` | Each game's portable copy (UserData\<game>\GAME), when no data folder is chosen or the chosen one is gone; a gone one with no copy is cleared |
 | `isGogInstallFolder` | True if the folder is a GOG or Steam installation |
 | `hasJackData` | True if Jack in the Dark is there too (PERE.PAK) |
 | `findAitd1Narrators` | The narrators with voices in AITD1's working folder (Voices: in UserData\AITD1, or in the copy itself in debug mode; Shared/narrators.h) |

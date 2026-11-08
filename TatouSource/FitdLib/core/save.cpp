@@ -20,6 +20,44 @@ std::string saveFilePath(int slot, const char* extension)
     return std::string(savesFolder()) + "SAVE" + std::to_string(slot) + extension;
 }
 
+// AITD3: the French version numbers its scripts otherwise than the others
+// (English, German, Italian, the Spanish CD), and a save names the script of
+// each object: one made in French put them in other scripts in the others and
+// the other way round. The language is noted beside the save (SAVEn.LNG) and
+// such a save is not loaded (BUGS.md T48)
+static bool frenchScripts(const std::string& language)
+{
+    return language == "FRANCAIS";
+}
+
+static void noteSaveLanguage(int slot)
+{
+    const std::string path = saveFilePath(slot, ".LNG");
+    if (g_gameId != AITD3)
+        return;
+    FILE* file = nullptr;
+    fopen_s(&file, path.c_str(), "wb");
+    if (!file)
+        return;
+    fputs(languageNameString.c_str(), file);
+    fclose(file);
+}
+
+bool saveFitsLanguage(int slot)
+{
+    if (g_gameId != AITD3)
+        return true;
+    FILE* file = nullptr;
+    fopen_s(&file, saveFilePath(slot, ".LNG").c_str(), "rb");
+    if (!file)
+        return true;
+    char language[32] = {};
+    const size_t read = fread(language, 1, sizeof(language) - 1, file);
+    fclose(file);
+    language[read] = 0;
+    return frenchScripts(language) == frenchScripts(languageNameString);
+}
+
 extern "C" {
     extern char homePath[512];
 }
@@ -1537,6 +1575,8 @@ int makeSaveFile(int entry)
     }
 
     fclose(fHandle);
+
+    noteSaveLanguage(entry);
 
     // Save screenshot PNG alongside save file
     std::filesystem::path pngPath = std::filesystem::path(saveFilePath(entry, ".png"));

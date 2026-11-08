@@ -115,6 +115,9 @@ void saveLauncherSettings(const LauncherSettings& settings);
 // user folder (Shared/userFolder.h), as the game's saves and log.
 // The game of the folder: 0 AITD1, 1 AITD2, 2 AITD3, -1 none
 int dataFolderGame(const std::string& folder);
+// Each game's portable copy (UserData\<game>\GAME), when no data folder is
+// chosen or the chosen one is gone; a gone one with no copy is cleared
+void findPortableGames(LauncherSettings& settings);
 // True if the folder is a GOG or Steam installation
 bool isGogInstallFolder(const std::string& folder);
 

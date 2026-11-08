@@ -48,6 +48,14 @@ bool selectLanguagePack(const std::string& language)
     const std::string pak = language + ".PAK";
     if (pathExists(matchFileCase(folder + pak)))
     {
+        // Loose files: only if none of the ones it needs is missing, else
+        // the game would mix its scripts with other objects (BUGS.md T48)
+        const std::string missing = missingLanguageFiles(fs::u8path(folder), language, fs::u8path(homePath[0] ? homePath : "."));
+        if (!missing.empty())
+        {
+            printf(MAIN_WARN "Language folder %s not used: it lacks %s\n", folder.c_str(), missing.c_str());
+            return false;
+        }
         s_folder = folder;
         return true;
     }

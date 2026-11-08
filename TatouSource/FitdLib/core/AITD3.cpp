@@ -10,7 +10,10 @@
 #include "common.h"
 #include "coreHooks.h"
 #include "consoleLog.h"
+#include "languagePack.h"
 #include <climits>
+#include <cstdio>
+#include <cstdlib>
 #include <vector>
 
 #define AITD3_CADRE_SPF						0
@@ -153,24 +156,92 @@ void startAITD3()
 // Average in everything, as the original starts (AITD3.EXE)
 s16 aitd3Difficulty[3] = { 1, 1, 1 };
 
-// The double door of floor 9 (room 8): its script turns the left leaf
-// (object 404) from 512 to 1024, half a turn, into the wall's column, and the
-// right one (405) from 512 to 950. The left leaf is shown and collides as if
-// it turned as far as the right one (512 to 74); its script still sees its
-// real beta. Our own fix (BUGS.md T41)
-static const int kDoubleDoorFloor = 9;
-static const int kDoubleDoorLeftLeaf = 404;
-static const int kDoubleDoorClosed = 512;
-static const int kDoubleDoorOpened = 74;
+// Doors whose script turns them past where they open, into the wall: each is
+// shown and collides as if it turned from `closed` to `shown` while its
+// script turns it from `closed` to `scripted`; the script still sees its real
+// beta. Our own fix: GOG shows them right
+struct DoorOpening
+{
+    int floor;
+    int object;     // in the world list
+    int closed;     // beta
+    int scripted;   // beta the script turns it to
+    int shown;      // beta it is shown at, open
+};
+static const DoorOpening kDoorOpenings[] = {
+    // Double door of floor 9 (room 8): the left leaf turns half a turn into
+    // the wall's column; it opens as far as the right one (405, to 950)
+    // (BUGS.md T41)
+    { 9, 404, 512, 1024, 74 },
+    // Door of floor 13 between rooms 16 and 15: 112.5 degrees, into the wall
+    // by the jamb; it opens a quarter turn (BUGS.md T43)
+    { 13, 408, 256, 576, 512 },
+};
+
+// The turn from `from` to `to` the shortest way, as the original turns
+// (updateActorRotation): -512 to 512
+static int turnBetween(int from, int to)
+{
+    int turn = (to & 0x3FF) - (from & 0x3FF);
+    if (turn > 0x200)
+        turn -= 0x400;
+    else if (turn < -0x200)
+        turn += 0x400;
+    return turn;
+}
 
 int shownBetaAITD3(const tObject* object)
 {
-    if (g_gameId != AITD3 || g_currentFloor != kDoubleDoorFloor || object->indexInWorld != kDoubleDoorLeftLeaf)
+    if (g_gameId != AITD3)
         return object->beta;
-    const int beta = object->beta & 0x3FF;
-    if (beta > kDoubleDoorClosed)
-        return object->beta;
-    return kDoubleDoorClosed - (kDoubleDoorClosed - beta) * (kDoubleDoorClosed - kDoubleDoorOpened) / kDoubleDoorClosed;
+    for (const DoorOpening& door : kDoorOpenings)
+    {
+        if (door.floor != g_currentFloor || door.object != object->indexInWorld)
+            continue;
+        const int scriptedTurn = turnBetween(door.closed, door.scripted);
+        int turn = (object->beta & 0x3FF) - door.closed;
+        if (scriptedTurn < 0 && turn > 0)
+            turn -= 0x400;
+        else if (scriptedTurn > 0 && turn < 0)
+            turn += 0x400;
+        if (scriptedTurn == 0 || turn * scriptedTurn < 0 || abs(turn) > abs(scriptedTurn))
+            return object->beta;
+        return (door.closed + turn * turnBetween(door.closed, door.shown) / scriptedTurn) & 0x3FF;
+    }
+    return object->beta;
+}
+
+// Objects not drawn by a camera while at a beta: an open door that stands
+// behind a wall and frame. GOG drew it at 320x200, where its edge along the
+// frame's mask came to less than a pixel; drawn at the monitor's resolution,
+// that edge showed as a thin line on the frame. Our own fix
+struct HiddenAtBeta
+{
+    int floor;
+    int camera;   // of the floor (CAMERAnn_ccc)
+    int object;   // in the world list
+    int beta;
+};
+static const HiddenAtBeta kHiddenAtBeta[] = {
+    // Door at the end of the corridor of floor 13 (room 17), where the enemy
+    // comes out: open, its edge showed along the left side of its frame
+    // (BUGS.md T44)
+    { 13, 8, 235, 256 },
+};
+
+bool hiddenAtBetaAITD3(const tObject* object)
+{
+    if (g_gameId != AITD3 || NumCamera < 0 || currentRoom < 0 || currentRoom >= (int)roomDataTable.size()
+        || NumCamera >= (int)roomDataTable[currentRoom].cameraIdxTable.size())
+        return false;
+    const int camera = roomDataTable[currentRoom].cameraIdxTable[NumCamera];
+    for (const HiddenAtBeta& hidden : kHiddenAtBeta)
+    {
+        if (hidden.floor == g_currentFloor && hidden.camera == camera && hidden.object == object->indexInWorld
+            && (object->beta & 0x3FF) == hidden.beta)
+            return true;
+    }
+    return false;
 }
 
 // As the original (AITD3.EXE, where a hit hands its force to the one hit): a
@@ -275,12 +346,206 @@ static const BookVoices s_bookVoicesAITD3Spanish[] = {
 	{ 38, { {35, 10} } },
 };
 
+// The tables of the French, German and Italian AITD3.EXE (GOG and Steam sell
+// them; the Italian one is another build), so that a language folder works
+// without its AITD3.EXE (BUGS.md T48)
+static const BookVoices s_bookVoicesAITD3French[] = {
+	{  1, { {51, 12} } },
+	{  2, { {25, 19}, {26, 22}, {27, 22} } },
+	{  3, { {48, 15} } },
+	{  4, { {49, 16} } },
+	{  5, { {31, 17} } },
+	{  6, { {50, 11} } },
+	{  7, { {32, 16} } },
+	{  8, { {33, 12} } },
+	{  9, { {57, 29}, {58, 12} } },
+	{ 10, { {52, 13}, {53, 15}, {54, 16}, {55, 14}, {56, 10} } },
+	{ 11, { {24, 8} } },
+	{ 15, { {41, 7}, {42, 31}, {43, 16} } },
+	{ 16, { {44, 9} } },
+	{ 17, { {45, 7}, {46, 13}, {47, 7} } },
+	{ 18, { {38, 6}, {39, 14}, {40, 14} } },
+	{ 19, { {36, 10}, {37, 9} } },
+	{ 21, { {28, 14} } },
+	{ 22, { {29, 18} } },
+	{ 23, { {30, 17} } },
+	{ 24, { {59, 18} } },
+	{ 25, { {60, 16} } },
+	{ 26, { {61, 12} } },
+	{ 37, { {34, 25} } },
+	{ 38, { {35, 13} } },
+};
+
+static const BookVoices s_bookVoicesAITD3German[] = {
+	{  1, { {51, 12} } },
+	{  2, { {25, 21}, {26, 27}, {27, 23} } },
+	{  3, { {48, 15} } },
+	{  4, { {49, 16} } },
+	{  5, { {31, 27} } },
+	{  6, { {50, 9} } },
+	{  7, { {32, 14} } },
+	{  8, { {33, 10} } },
+	{  9, { {57, 29}, {58, 9} } },
+	{ 10, { {52, 16}, {53, 17}, {54, 23}, {55, 18}, {56, 16} } },
+	{ 11, { {24, 8} } },
+	{ 15, { {41, 7}, {42, 31}, {43, 13} } },
+	{ 16, { {44, 10} } },
+	{ 17, { {45, 10}, {46, 17}, {47, 10} } },
+	{ 18, { {38, 7}, {39, 14}, {40, 11} } },
+	{ 19, { {36, 12}, {37, 14} } },
+	{ 21, { {28, 12} } },
+	{ 22, { {29, 16} } },
+	{ 23, { {30, 17} } },
+	{ 24, { {59, 21} } },
+	{ 25, { {60, 26} } },
+	{ 26, { {61, 17} } },
+	{ 37, { {34, 23} } },
+	{ 38, { {35, 15} } },
+};
+
+static const BookVoices s_bookVoicesAITD3Italian[] = {
+	{  1, { {51, 8} } },
+	{  2, { {25, 25}, {26, 23}, {27, 25} } },
+	{  3, { {48, 13} } },
+	{  4, { {49, 16} } },
+	{  5, { {31, 18} } },
+	{  6, { {50, 9} } },
+	{  7, { {32, 16} } },
+	{  8, { {33, 13} } },
+	{  9, { {57, 24}, {58, 9} } },
+	{ 10, { {52, 12}, {53, 17}, {54, 20}, {55, 17}, {56, 12} } },
+	{ 11, { {24, 8} } },
+	{ 15, { {41, 7}, {42, 41}, {43, 15} } },
+	{ 16, { {44, 7} } },
+	{ 17, { {45, 10}, {46, 21}, {47, 9} } },
+	{ 18, { {38, 7}, {39, 17}, {40, 12} } },
+	{ 19, { {36, 14}, {37, 13} } },
+	{ 21, { {28, 15} } },
+	{ 22, { {29, 17} } },
+	{ 23, { {30, 17} } },
+	{ 24, { {59, 13} } },
+	{ 25, { {60, 17} } },
+	{ 26, { {61, 12} } },
+	{ 37, { {34, 23} } },
+	{ 38, { {35, 17} } },
+};
+
+// The narrator's table of a language (its PAK's name), English if not known
+static const BookVoices* builtInBookVoices(const std::string& language, int* count)
+{
+	struct LanguageTable { const char* language; const BookVoices* table; int count; };
+#define LANGUAGE_TABLE(name, table) { name, table, (int)(sizeof(table) / sizeof(table[0])) }
+	static const LanguageTable tables[] = {
+		LANGUAGE_TABLE("ESPAGNOL", s_bookVoicesAITD3Spanish),
+		LANGUAGE_TABLE("FRANCAIS", s_bookVoicesAITD3French),
+		LANGUAGE_TABLE("DEUTSCH", s_bookVoicesAITD3German),
+		LANGUAGE_TABLE("ITALIANO", s_bookVoicesAITD3Italian),
+	};
+#undef LANGUAGE_TABLE
+	for (const LanguageTable& entry : tables)
+	{
+		if (language == entry.language)
+		{
+			*count = entry.count;
+			return entry.table;
+		}
+	}
+	*count = (int)(sizeof(s_bookVoicesAITD3) / sizeof(s_bookVoicesAITD3[0]));
+	return s_bookVoicesAITD3;
+}
+
+// The table of the installed AITD3.EXE: GOG and Steam sell AITD3 one
+// language at a time, and each one has its narrator, its CD tracks and its
+// AITD3.EXE, which differs from the English one only in these seconds
+// (ds:0x31C: 40 texts of 10 pages of 3 bytes, the seconds in 2 and the track
+// in 1). The French one read the English seconds and was cut or went on
+// (BUGS.md T46). The Italian one is another build, with the table elsewhere
+// (0x2534C of the file, 0x2592C in the others): it is found by its shape, the
+// tracks of texts 1 to 3 (BUGS.md T47)
+static const int kExeTexts = 40;
+static const long kExeMaxSize = 1024 * 1024;
+static std::vector<BookVoices> s_bookVoicesFromExe;
+static bool s_bookVoicesFromExeRead = false;
+
+// Where the table starts in the file: text 1 is track 51 alone, text 2
+// tracks 25, 26 and 27, text 3 track 48; -1 if not there
+static long findBookVoicesTable(const std::vector<u8>& exe)
+{
+	const long end = (long)exe.size() - kExeTexts * 30;
+	for (long start = 0; start < end; start++)
+	{
+		const u8* text1 = &exe[start + 30];
+		const u8* text2 = &exe[start + 60];
+		const u8* text3 = &exe[start + 90];
+		if (text1[2] == 51 && text1[3] == 0 && text1[4] == 0 && text1[5] == 0
+			&& text2[2] == 25 && text2[5] == 26 && text2[8] == 27 && text3[2] == 48)
+			return start;
+	}
+	return -1;
+}
+
+static void readBookVoicesFromExe()
+{
+	s_bookVoicesFromExeRead = true;
+	DataFile file;
+	if (!file.open("AITD3.EXE"))
+		return;
+	const long size = file.size();
+	if (size <= 0 || size > kExeMaxSize)
+		return;
+	std::vector<u8> exe(size);
+	if (file.read(exe.data(), exe.size()) != exe.size())
+		return;
+	const long start = findBookVoicesTable(exe);
+	if (start < 0)
+		return;
+	const u8* table = &exe[start];
+
+	std::vector<BookVoices> found;
+	for (int text = 0; text < kExeTexts; text++)
+	{
+		BookVoices voices = { text, {} };
+		int pages = 0;
+		for (int page = 0; page < 10; page++)
+		{
+			const u8* entry = &table[text * 30 + page * 3];
+			const int seconds = entry[0] | (entry[1] << 8);
+			const int track = entry[2];
+			if (seconds == 0 && track == 0)
+				break;
+			// Not a table of narrator tracks: another AITD3.EXE
+			if (track < 24 || track > 61 || seconds < 1 || seconds > 120)
+				return;
+			voices.pages[page] = { (u8)track, (u8)seconds };
+			pages++;
+		}
+		if (pages)
+			found.push_back(voices);
+	}
+	if (found.size() < 20)
+		return;
+	s_bookVoicesFromExe = found;
+	printf(MAIN_OK "Narrator: seconds of %d texts read from AITD3.EXE (at 0x%lX)\n", (int)found.size(), start);
+}
+
 void AITD3_playBookVoice(int index, int page)
 {
-	if (languageNameString == "ESPAGNOL")
-		playBookVoice(s_bookVoicesAITD3Spanish, (int)(sizeof(s_bookVoicesAITD3Spanish) / sizeof(s_bookVoicesAITD3Spanish[0])), index, page);
-	else
-		playBookVoice(s_bookVoicesAITD3, (int)(sizeof(s_bookVoicesAITD3) / sizeof(s_bookVoicesAITD3[0])), index, page);
+	// A language folder (Languages\<name>): the table of its language, with
+	// or without its AITD3.EXE there. Else the installed AITD3.EXE's, which
+	// is its language's; if it cannot be read, the table of the language
+	int count = 0;
+	const BookVoices* table = builtInBookVoices(languageNameString, &count);
+	if (languagePackFolder().empty())
+	{
+		if (!s_bookVoicesFromExeRead)
+			readBookVoicesFromExe();
+		if (!s_bookVoicesFromExe.empty())
+		{
+			table = s_bookVoicesFromExe.data();
+			count = (int)s_bookVoicesFromExe.size();
+		}
+	}
+	playBookVoice(table, count, index, page);
 }
 
 // READ: a letter, a book or a notebook, with the text areas of AITD3.EXE

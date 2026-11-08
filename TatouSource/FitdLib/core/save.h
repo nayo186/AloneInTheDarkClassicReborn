@@ -21,3 +21,8 @@ int makeSave(int arg0);
 // A new game: forgets what a loaded save kept for writing back (AITD3's
 // blocks of the original that the engine does not have)
 void forgetSaveExtras();
+
+// AITD3: false if the save of slot `slot` was made in a language that numbers
+// its scripts otherwise than the one in use (French against the others), so
+// it cannot be loaded; saves without that note (GOG's, older ones) can
+bool saveFitsLanguage(int slot);

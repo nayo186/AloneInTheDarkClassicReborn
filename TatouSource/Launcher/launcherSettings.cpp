@@ -183,11 +183,15 @@ static bool pathExists(const fs::path& path)
 // game installed there, or -1
 static int gogRootGame(const fs::path& folder)
 {
-    if (!pathExists(folder / "GAME.GOG") || !(pathExists(folder / "GAME.INS") || pathExists(folder / "GAME.INST")))
-        return -1;
+    const bool image = pathExists(folder / "GAME.GOG") && (pathExists(folder / "GAME.INS") || pathExists(folder / "GAME.INST"));
     for (int game = 0; game < kGames; game++)
-        if (pathExists(folder / kGogDataFolder[game] / kGameMarker[game]))
+    {
+        // AITD3 reads its music from MUSIC, not from its CD image: a copy
+        // of the installation without GAME.GOG also works
+        const bool music = game == 2 && pathExists(folder / "MUSIC");
+        if ((image || music) && pathExists(folder / kGogDataFolder[game] / kGameMarker[game]))
             return game;
+    }
     return -1;
 }
 
@@ -242,6 +246,33 @@ int dataFolderGame(const std::string& folder)
     return findGameInstall(folder).game;
 }
 
+// Each game's portable copy (UserData\<game>\GAME): used when no data folder
+// is chosen, or the chosen one is gone; a chosen one gone with no copy there
+// is cleared, for the player to choose another
+void findPortableGames(LauncherSettings& settings)
+{
+    static const char* const games[kGames] = { "AITD1", "AITD2", "AITD3" };
+    std::string* folders[kGames] = { &settings.aitd1DataFolder, &settings.aitd2DataFolder, &settings.aitd3DataFolder };
+    for (int game = 0; game < kGames; game++)
+    {
+        std::string& folder = *folders[game];
+        if (!folder.empty() && dataFolderGame(folder) == game)
+            continue;
+        const std::string portable = (userDataFolder() / games[game] / kPortableGameFolder).u8string();
+        if (dataFolderGame(portable) == game)
+        {
+            logLine("%s: data folder %s (%s)", games[game], portable.c_str(),
+                folder.empty() ? "portable copy found" : "the chosen one is gone or has not the game");
+            folder = portable;
+        }
+        else if (!folder.empty() && !pathExists(fs::u8path(folder)))
+        {
+            logLine("%s: data folder %s is gone and no portable copy: cleared", games[game], folder.c_str());
+            folder.clear();
+        }
+    }
+}
+
 bool isGogInstallFolder(const std::string& folder)
 {
     return findGameInstall(folder).gog;
@@ -274,6 +305,8 @@ void prepareUserData()
     std::error_code ec;
     fs::create_directories(userDataFolder() / "AITD1" / kVoicesFolder, ec);
     fs::create_directories(userDataFolder() / "AITD3" / kLanguagesFolder, ec);
+    for (const char* game : { "AITD1", "AITD2", "AITD3" })
+        fs::create_directories(userDataFolder() / game / kPortableGameFolder, ec);
     logLine("UserData ready: %s", userDataFolder().u8string().c_str());
 }
 
@@ -294,15 +327,31 @@ std::vector<GameLanguage> findGameLanguages(const std::string& folder)
     // the working folder (the copy in debug mode, else UserData\AITD3), with
     // its files or its CD image (Shared/languageFolder.h)
     const fs::path languages = ((!install.gog && s_debugMode) ? install.gameData : userDataFolder() / "AITD3") / kLanguagesFolder;
+    std::string installed = (install.game == 2) ? installedLanguageAITD3(install.gameData) : std::string();
+    if (!installed.empty() && !pathExists(install.gameData / (installed + ".PAK")))
+        installed.clear();
     for (const GameLanguage& language : all)
     {
         const std::string pak = language.pakName + ".PAK";
-        bool has = pathExists(install.gameData / pak);
+        // AITD3 is sold one language at a time and changing it leaves the
+        // other's PAK behind: only the installed one, whose voices and
+        // tracks are there (BUGS.md T46)
+        bool has = pathExists(install.gameData / pak) && (installed.empty() || installed == language.pakName);
         if (!has && install.game == 2)
         {
+            // A language folder: its CD image, or its loose files if none of
+            // the ones it needs is missing (BUGS.md T48)
             const fs::path folder = languages / languagePackName(language.pakName.c_str());
             CdImage image;
-            has = pathExists(folder / pak) || openLanguageImage(folder, pak, image);
+            if (openLanguageImage(folder, pak, image))
+                has = true;
+            else if (languageFileExists(folder, pak.c_str()))
+            {
+                const std::string missing = missingLanguageFiles(folder, language.pakName, install.gameData);
+                has = missing.empty();
+                if (!has)
+                    logLine("Language folder %s not used: it lacks %s", folder.u8string().c_str(), missing.c_str());
+            }
         }
         if (has)
             found.push_back(language);
