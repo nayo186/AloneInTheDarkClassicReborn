@@ -65,6 +65,14 @@ static bool pathExists(const fs::path& path)
 // The folder of Tatou.exe (and of the launcher), UTF-8
 static fs::path exeFolder()
 {
+#ifdef __ANDROID__
+    // Android: the app's own folder in the shared storage
+    // (Android/data/com.classicreborn.game/files): UserData, with each
+    // game's GAME folder, goes there
+    const char* external = SDL_GetAndroidExternalStoragePath();
+    if (external)
+        return fs::u8path(external);
+#endif
     const char* base = SDL_GetBasePath();
     return base ? fs::u8path(base) : fs::path();
 }
@@ -197,7 +205,9 @@ void selectGameFolder(int argc, char* argv[])
             / (game == Trilogy::AITD3 ? "AITD3" : game == Trilogy::AITD2 ? "AITD2" : "AITD1") / kPortableGameFolder;
         if (!known && !chosen.empty() && pathExists(fs::u8path(chosen)))
             start = fs::u8path(chosen);
-        else if (!known && pathExists(portable))
+        // Only if the game is in it: an empty GAME (the launcher creates them)
+        // took the log and the rest, written into the data folder
+        else if (!known && (isGogRoot(portable, game) || pathExists(portable / gameMarker(game))))
             start = portable;
     }
     fs::current_path(start, error);

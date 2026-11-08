@@ -78,7 +78,8 @@
 	{ _renderer, BX_CONCATENATE(_name, _pssl), BX_CONCATENATE(_name, _pssl_size) },
 #endif // BGFX_PLATFORM_SUPPORTS_PSSL
 
-#if BGFX_PLATFORM_SUPPORTS_ESSL
+// OpenGL ES shaders (shaders/generated/essl) are only included on Android
+#if BGFX_PLATFORM_SUPPORTS_ESSL && BX_PLATFORM_ANDROID
 #	undef  BGFX_EMBEDDED_SHADER_ESSL
 #	define BGFX_EMBEDDED_SHADER_ESSL(_renderer, _name) \
 	{ _renderer, BX_CONCATENATE(_name, _essl), BX_COUNTOF(BX_CONCATENATE(_name, _essl) ) },
@@ -113,7 +114,7 @@
 			/*BGFX_EMBEDDED_SHADER_PSSL (bgfx::RendererType::Gnm,        _name)*/              \
 			BGFX_EMBEDDED_SHADER_METAL(bgfx::RendererType::Metal,      _name)              \
 			/*BGFX_EMBEDDED_SHADER_NVN  (bgfx::RendererType::Nvn,        _name)*/              \
-			/*BGFX_EMBEDDED_SHADER_ESSL (bgfx::RendererType::OpenGLES,   _name)*/              \
+			BGFX_EMBEDDED_SHADER_ESSL (bgfx::RendererType::OpenGLES,   _name)              \
 			BGFX_EMBEDDED_SHADER_GLSL (bgfx::RendererType::OpenGL,     _name)              \
 			BGFX_EMBEDDED_SHADER_SPIRV(bgfx::RendererType::Vulkan,     _name)              \
 			/*BGFX_EMBEDDED_SHADER_SPIRV(bgfx::RendererType::WebGPU,     _name)*/              \

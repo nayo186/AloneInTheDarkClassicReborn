@@ -9,3 +9,9 @@ release/
 
 # Visual Studio folder settings
 .vs/
+# Android build output (Gradle)
+TatouSource/android/.gradle/
+TatouSource/android/build/
+TatouSource/android/app/build/
+TatouSource/android/app/.cxx/
+TatouSource/android/local.properties

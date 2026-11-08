@@ -1,0 +1,78 @@
+// The app: the engine of TatouSource (../../CMakeLists.txt) as libmain.so,
+// which SDL's Java side (ThirdParty/SDL/android-project) loads and starts.
+plugins {
+    id 'com.android.application'
+}
+
+// The version (the release tag without its v, -PclassicRebornVersion=1.6.0;
+// "dev" builds never look for updates, Launcher/updater.h) and Android's
+// number for it, which must grow with each release: 1.6.0 -> 10600
+def classicRebornVersion = project.findProperty("classicRebornVersion") ?: "dev"
+def versionNumber = { String version ->
+    def parts = version.tokenize('.-')
+    if (parts.size() < 3 || !parts[0].isInteger() || !parts[1].isInteger() || !parts[2].isInteger())
+        return 1
+    return Math.max(1, parts[0].toInteger() * 10000 + parts[1].toInteger() * 100 + parts[2].toInteger())   // never 0 (0.0.0-check)
+}
+
+// The project's signing key: Android only updates an app with a new one
+// signed with the same key. Given by the release workflow (a GitHub secret)
+// or on the PC that builds it; without it, Android's debug key
+def keystore = System.getenv("CLASSIC_REBORN_KEYSTORE")
+
+android {
+    namespace = "com.classicreborn.game"
+    compileSdkVersion 35
+    ndkVersion "27.2.12479018"
+    defaultConfig {
+        applicationId "com.classicreborn.game"
+        minSdkVersion 24
+        targetSdkVersion 35
+        versionCode versionNumber(classicRebornVersion)
+        versionName classicRebornVersion
+        externalNativeBuild {
+            cmake {
+                arguments "-DANDROID_STL=c++_static", "-DCLASSIC_REBORN_DEV_TOOLS=OFF",
+                          "-DCLASSIC_REBORN_VERSION=" + classicRebornVersion
+                targets "Fitd"
+                abiFilters 'arm64-v8a'
+            }
+        }
+    }
+    signingConfigs {
+        project {
+            if (keystore) {
+                storeFile file(keystore)
+                storePassword System.getenv("CLASSIC_REBORN_KEYSTORE_PASSWORD")
+                keyAlias System.getenv("CLASSIC_REBORN_KEY_ALIAS")
+                keyPassword System.getenv("CLASSIC_REBORN_KEY_PASSWORD")
+            }
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            if (keystore)
+                signingConfig signingConfigs.project
+        }
+        debug {
+            // The same key as the releases on the PC that has it, so a test
+            // build and a release update each other
+            if (keystore)
+                signingConfig signingConfigs.project
+        }
+    }
+    sourceSets.main {
+        // SDL's Java classes, used as they come
+        java.srcDirs += ['../../ThirdParty/SDL/android-project/app/src/main/java']
+    }
+    externalNativeBuild {
+        cmake {
+            path '../../CMakeLists.txt'
+            version '3.22.1'
+        }
+    }
+    lint {
+        abortOnError = false
+    }
+}

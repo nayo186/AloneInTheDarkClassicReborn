@@ -23,8 +23,8 @@ IF(MSVC)
     endif()
 ENDIF(MSVC)
 
-# Linux-specific: find required system packages
-if(UNIX AND NOT APPLE)
+# Linux-specific: find required system packages (not Android, a Unix too)
+if(UNIX AND NOT APPLE AND NOT ANDROID)
     find_package(PkgConfig REQUIRED)
     find_package(Threads REQUIRED)
     find_package(X11 REQUIRED)
@@ -42,9 +42,23 @@ endif()
 
 set(THIRD_PARTY "${CMAKE_SOURCE_DIR}/ThirdParty")
 
+# char is signed on the PC (x86, as the DOS compiler of the games) but
+# unsigned on ARM Linux and Android: the game data read through char gave
+# other values and the scripts took other paths (a room went dark in the
+# AITD2 intro, BUGS.md C59). Signed everywhere, as on the PC. (Apple's ARM
+# already has it signed.)
+if(NOT MSVC AND NOT APPLE)
+    add_compile_options(-fsigned-char)
+endif()
+
 # bgfx: the renderer and its shader compiler (shaderc, used to build our
 # shaders); not its examples, model and texture tools nor convenience targets
 set(BGFX_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+# Android: no shader compiler (it would have to run on the PC while building
+# for the phone); the shaders already compiled in FitdLib/shaders/generated
+if(ANDROID)
+    set(BGFX_BUILD_TOOLS OFF CACHE BOOL "" FORCE)
+endif()
 set(BGFX_BUILD_TOOLS_BIN2C OFF CACHE BOOL "" FORCE)
 set(BGFX_BUILD_TOOLS_GEOMETRY OFF CACHE BOOL "" FORCE)
 set(BGFX_BUILD_TOOLS_TEXTURE OFF CACHE BOOL "" FORCE)
@@ -75,9 +89,15 @@ target_include_directories(zlibstatic PUBLIC "${THIRD_PARTY}/zlib" "${CMAKE_BINA
 if(MSVC)
     target_compile_definitions(zlibstatic PRIVATE _CRT_SECURE_NO_DEPRECATE _CRT_NONSTDC_NO_DEPRECATE)
 endif()
+# Its own CMake defines it outside Windows: lseek and the others come from
+# unistd.h (on Linux another header brought them in, on macOS none does)
+if(UNIX)
+    target_compile_definitions(zlibstatic PRIVATE Z_HAVE_UNISTD_H)
+endif()
 
 add_subdirectory( FitdLib )
 add_subdirectory( Fitd )
+# Android: one app, the launcher is a library inside the game (Fitd/fitd.cpp)
 add_subdirectory( Launcher )
 # F5 in Visual Studio starts the launcher; to debug the game itself use
 # Fitd > Debug > Start new instance

@@ -153,10 +153,7 @@ static void scanlineLevelSlider(float width, bool enabled, int& level)
 
 static void resolutionLabel(int resolution, char* label, size_t size)
 {
-    if (resolution > 0)
-        snprintf(label, size, "%d × %d", resolution, advancedResolutionHeight(resolution));
-    else
-        snprintf(label, size, "%s", text(AdvancedText::ResolutionAuto));
+    advancedResolutionLabel(resolution, textLanguage(), label, size);
 }
 
 static void resolutionCombo(float width, int& resolution)

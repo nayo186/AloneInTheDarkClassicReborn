@@ -65,6 +65,12 @@ static bool parseLine(const std::string& line, std::string& key, std::string& va
 
 std::string launcherFolder()
 {
+#ifdef __ANDROID__
+    // Android: the app's own folder in the shared storage, as the game's
+    // (platform/gameFolder.cpp)
+    if (const char* external = SDL_GetAndroidExternalStoragePath())
+        return std::string(external) + "/";
+#endif
     const char* base = SDL_GetBasePath();
     return base ? std::string(base) : std::string();
 }
@@ -249,6 +255,12 @@ int dataFolderGame(const std::string& folder)
 // Each game's portable copy (UserData\<game>\GAME): used when no data folder
 // is chosen, or the chosen one is gone; a chosen one gone with no copy there
 // is cleared, for the player to choose another
+std::string portableGameFolder(int game)
+{
+    static const char* const games[kGames] = { "AITD1", "AITD2", "AITD3" };
+    return (userDataFolder() / games[game] / kPortableGameFolder).u8string();
+}
+
 void findPortableGames(LauncherSettings& settings)
 {
     static const char* const games[kGames] = { "AITD1", "AITD2", "AITD3" };
@@ -258,7 +270,7 @@ void findPortableGames(LauncherSettings& settings)
         std::string& folder = *folders[game];
         if (!folder.empty() && dataFolderGame(folder) == game)
             continue;
-        const std::string portable = (userDataFolder() / games[game] / kPortableGameFolder).u8string();
+        const std::string portable = portableGameFolder(game);
         if (dataFolderGame(portable) == game)
         {
             logLine("%s: data folder %s (%s)", games[game], portable.c_str(),
@@ -539,15 +551,26 @@ static const char* const kTatouFile = "Tatou.exe";
 static const char* const kTatouFile = "Tatou";
 #endif
 
+#ifdef __ANDROID__
+static std::vector<std::string> s_gameArguments;
+
+const std::vector<std::string>& launchedGameArguments()
+{
+    return s_gameArguments;
+}
+#endif
+
 LaunchResult launchGame(const LauncherSettings& settings, const char* game)
 {
     std::error_code ec;
+#ifndef __ANDROID__
     fs::path tatou = toPath(launcherFolder() + kTatouFile);
     if (!fs::exists(tatou, ec))
     {
         logLine("ERROR: %s not found in %s", kTatouFile, launcherFolder().c_str());
         return LaunchResult::TatouMissing;
     }
+#endif
 
     std::string args = std::string("--game ") + game + (settings.debugMode ? " --debug" : " --final");
     if (!settings.gameLanguage.empty())
@@ -561,7 +584,16 @@ LaunchResult launchGame(const LauncherSettings& settings, const char* game)
     logLine("Starting %s %s (working folder %s%s)", kTatouFile, args.c_str(), startFolder.u8string().c_str(),
         install.gog ? ", GOG installation" : "");
 
-#ifdef _WIN32
+#if defined(__ANDROID__)
+    // The game runs in this same program once the launcher closes (Fitd/fitd.cpp)
+    fs::current_path(startFolder, ec);
+    s_gameArguments = { "Tatou", "--game", game, settings.debugMode ? "--debug" : "--final" };
+    if (!settings.gameLanguage.empty())
+    {
+        s_gameArguments.push_back("--lang");
+        s_gameArguments.push_back(settings.gameLanguage);
+    }
+#elif defined(_WIN32)
     std::wstring commandLine = L"\"" + tatou.wstring() + L"\" " + toPath(args).wstring();
     std::wstring workingFolder = startFolder.wstring();
 

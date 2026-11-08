@@ -58,6 +58,15 @@ enum class UiText
     AboutCredits,
     AboutThanks,
     AboutGithub,
+    ImportGame,
+    ImportCopying,
+    ImportDone,
+    ImportFailed,
+    UpdateConfirm,
+    ImportLanguageDone,
+    ImportNarratorDone,
+    ImportPicturesDone,
+    ImportNothing,
     Count
 };
 
@@ -227,6 +236,44 @@ static const char* const kLauncherTexts[(int)UiText::Count][(int)UiLanguage::Cou
       "Danke an alle, die es testen und Fehler melden: Jede Version wird dank euch besser." },
     // AboutGithub
     { "Open GitHub", "Abrir GitHub", "Ouvrir GitHub", "Apri GitHub", "GitHub öffnen" },
+    // ImportGame (Android: instead of Browse; also languages, narrators and pictures)
+    { "Import...", "Importar...", "Importer...", "Importa...", "Importieren..." },
+    // ImportCopying (%d: percent)
+    { "Copying the game... %d%%", "Copiando el juego... %d%%", "Copie du jeu... %d%%", "Copia del gioco... %d%%",
+      "Spiel wird kopiert... %d%%" },
+    // ImportDone
+    { "Game imported.", "Juego importado.", "Jeu importé.", "Gioco importato.", "Spiel importiert." },
+    // ImportFailed
+    { "The game could not be copied. See launcher.log.", "No se pudo copiar el juego. Ver launcher.log.",
+      "Le jeu n'a pas pu être copié. Voir launcher.log.", "Impossibile copiare il gioco. Vedi launcher.log.",
+      "Das Spiel konnte nicht kopiert werden. Siehe launcher.log." },
+    // UpdateConfirm (Android; %s: the new version)
+    { "Android will ask you to update the app to %s: accept it. Your games, saves and settings are kept.",
+      "Android te pedirá actualizar la app a la %s: acéptalo. Tus juegos, partidas y opciones se conservan.",
+      "Android va vous demander de mettre à jour l'application vers la %s : acceptez. Vos jeux, sauvegardes et options sont conservés.",
+      "Android ti chiederà di aggiornare l'app alla %s: accetta. Giochi, salvataggi e opzioni restano.",
+      "Android wird Sie bitten, die App auf %s zu aktualisieren: Bestätigen Sie. Spiele, Spielstände und Einstellungen bleiben erhalten." },
+    // ImportLanguageDone
+    { "Language imported: choose it in Game language (Alone in the Dark 3).",
+      "Idioma importado: elígelo en Idioma del juego (Alone in the Dark 3).",
+      "Langue importée : choisissez-la dans Langue du jeu (Alone in the Dark 3).",
+      "Lingua importata: sceglila in Lingua del gioco (Alone in the Dark 3).",
+      "Sprache importiert: Wählen Sie sie unter Spielsprache (Alone in the Dark 3)." },
+    // ImportNarratorDone
+    { "Narrator imported: choose it in the game's options (F1, Alone in the Dark).",
+      "Narrador importado: elígelo en las opciones del juego (F1, Alone in the Dark).",
+      "Narrateur importé : choisissez-le dans les options du jeu (F1, Alone in the Dark).",
+      "Narratore importato: sceglilo nelle opzioni del gioco (F1, Alone in the Dark).",
+      "Erzähler importiert: Wählen Sie ihn in den Spieloptionen (F1, Alone in the Dark)." },
+    // ImportPicturesDone
+    { "Backgrounds and masks imported.", "Fondos y máscaras importados.", "Décors et masques importés.",
+      "Sfondi e maschere importati.", "Hintergründe und Masken importiert." },
+    // ImportNothing
+    { "Nothing to import in that folder: choose the game's folder (GOG or Steam), a language, a narrator, or Backgrounds or Masks.",
+      "No hay nada que importar en esa carpeta: elige la del juego (GOG o Steam), un idioma, un narrador, o Backgrounds o Masks.",
+      "Rien à importer dans ce dossier : choisissez celui du jeu (GOG ou Steam), une langue, un narrateur, ou Backgrounds ou Masks.",
+      "Niente da importare in quella cartella: scegli quella del gioco (GOG o Steam), una lingua, un narratore, o Backgrounds o Masks.",
+      "In diesem Ordner gibt es nichts zu importieren: Wählen Sie den des Spiels (GOG oder Steam), eine Sprache, einen Erzähler oder Backgrounds oder Masks." },
 };
 
 inline UiLanguage& currentUiLanguage()

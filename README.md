@@ -1,8 +1,8 @@
 # Alone in the Dark: Classic Reborn
 
-Play the original **Alone in the Dark** (1992), **Jack in the Dark**, **Alone in the Dark 2** and **Alone in the Dark 3** on modern PCs, with their original graphics and a set of careful fixes and options.
+Play the original **Alone in the Dark** (1992), **Jack in the Dark**, **Alone in the Dark 2** and **Alone in the Dark 3** on modern PCs and Android phones, with their original graphics and a set of careful fixes and options.
 
-**[⬇ Download the latest version](https://github.com/nayo186/AloneInTheDarkClassicReborn/releases/latest)** for Windows or Linux: unpack it, run `Launcher.exe` (`Launcher` on Linux) and choose your GOG or Steam copy of the game. Nothing else to install.
+**[⬇ Download the latest version](https://github.com/nayo186/AloneInTheDarkClassicReborn/releases/latest)** for Windows, Linux, macOS (experimental) or Android (experimental): unpack it, run `Launcher.exe` (`Launcher` on Linux and macOS) and choose your GOG or Steam copy of the game. Nothing else to install. On Android, install the `.apk` and import your copy of the game (see [On Android](#on-android-experimental)).
 
 **Alone in the Dark, Jack in the Dark, Alone in the Dark 2 and Alone in the Dark 3 are playable from start to end.** If something behaves differently from the original, please [report it](#reporting-a-problem).
 
@@ -61,6 +61,8 @@ It is not a static recompilation: a static recompilation translates the machine 
 
 - **Windows** 10 or 11, 64-bit, and a graphics card with DirectX 11.
 - Or **Linux**, 64-bit (x86-64): Ubuntu 22.04, Linux Mint 21, Debian 12, Fedora 37 or newer, or any other distribution of the same age, with a graphics card that supports Vulkan or OpenGL.
+- Or **macOS** 11 or newer, Apple Silicon or Intel (experimental, see [On macOS](#on-macos-experimental)).
+- Or an **Android** phone or tablet with Android 7 or newer, 64-bit (almost every phone since 2017) and Vulkan (experimental, see [On Android](#on-android-experimental)).
 - Your own copy of *Alone in the Dark* (*Jack in the Dark* comes with it), *Alone in the Dark 2* and/or *Alone in the Dark 3*: the GOG or Steam editions.
 - Nothing else to install: no .NET, no Visual C++ Redistributable, no DirectX setup, no Linux packages. Unpack and run the launcher.
 
@@ -68,6 +70,8 @@ It is not a static recompilation: a static recompilation translates the machine 
 
 - On Windows: [Visual Studio 2022](https://visualstudio.microsoft.com/vs/) (the free Community edition works) with the **Desktop development with C++** workload. It includes CMake.
 - On Linux: GCC 11 or newer, CMake, Ninja and the development packages of X11, Wayland, OpenGL and the sound systems (the list is in [Building](#building)).
+- On macOS: Xcode (or its Command Line Tools), CMake and Ninja; `tools/makeRelease-macos.sh` builds the players' package.
+- For Android: JDK 17 and the Android SDK with its NDK (the versions are in `TatouSource/android/app/build.gradle`), on Windows, Linux or macOS.
 - [Git](https://git-scm.com/downloads) to download the repository.
 - Optional: [Python 3](https://www.python.org/downloads/) for the scripts in `tools/` (dictionary of methods, layer check).
 - Every library is included in the repository.
@@ -96,6 +100,7 @@ It is not a static recompilation: a static recompilation translates the machine 
 - ***Alone in the Dark 3* in any of its languages** over your GOG or Steam installation, with the files of that language (English, French, German, Italian, and Spanish from the original Spanish CD): texts, voices and narrator (see [Other languages in Alone in the Dark 3](#other-languages-in-alone-in-the-dark-3)).
 - **Saves** in the format of the GOG edition: saves made in the GOG game load here (the three *Alone in the Dark* games).
 - **Menus** that adapt to any window size and work with mouse, keyboard, controller and touch.
+- **Android**: the four games on a phone, with on-screen controls as a controller (see [On Android](#on-android-experimental)).
 
 ## Getting started
 
@@ -199,6 +204,46 @@ The game runs natively, without Wine or Proton: those are only needed to install
 - keep the game files inside Linux's disk, not on a Windows drive (`/mnt/c`, `/mnt/d`), so camera changes stay smooth;
 - try controllers on a real Linux PC: WSL does not pass them to Linux.
 
+### On macOS (experimental)
+
+**The Mac version is new and experimental.** It is built for every Mac with macOS 11 or newer, Apple Silicon (M1 and later) and Intel, from the same code as Windows and Linux, and it starts and draws with Metal on Apple's system. It is being polished: reports from Mac players are very welcome. Please open an issue with your Mac's model, its macOS version and `tatou.log` (see [Reporting a problem](#reporting-a-problem)).
+
+1. Unpack `ClassicReborn-<version>-macos.tar.gz` (a double click in Finder) into a folder of your own, for example in **Documents** (not in **Downloads**).
+2. **The first time**, macOS stops it, because it is not signed with a paid Apple developer account. Open **Terminal**, type `xattr -dr com.apple.quarantine ` (with a space at the end), drag the unpacked folder onto the Terminal window and press Return. This only tells macOS that you trust this folder; it is needed once.
+3. Double click **`Launcher`** (it opens with a Terminal window next to it; leave it open while you play).
+4. **The game files.** The simplest on a Mac is to copy them into the launcher's own folders: `UserData/AITD1/GAME`, `UserData/AITD2/GAME` or `UserData/AITD3/GAME` (see *Everything in one folder* in [Getting started](#getting-started)). Take them from your GOG or Steam installation on a Windows PC, or from the GOG version for Mac. The launcher finds them by itself. You can also press **Browse** and choose the folder where they are.
+
+Everything else works as on Windows and Linux: the options, the controllers, the saves in `UserData` and the updates from the launcher.
+
+### On Android (experimental)
+
+**The Android version is new and experimental.** It is the same game as on the PC, with the launcher inside the app and on-screen controls. It was played on a Redmi Note 13 (Android 15) with the three games; it is being polished, and reports from Android players are very welcome (see [Reporting a problem](#reporting-a-problem)). It needs Android 7 or newer on a 64-bit phone or tablet with Vulkan.
+
+1. **Install the app.** On the phone, download `ClassicReborn-<version>-android.apk` from the [latest release](https://github.com/nayo186/AloneInTheDarkClassicReborn/releases/latest) and open it. The first time, Android asks to allow your browser (or file manager) to install apps: allow it. It is not on Google Play, so Play Protect may warn about an unknown app: choose to install anyway. The app is called **Alone in the Dark: Classic Reborn**.
+2. **Bring the game to the phone.** Copy a folder with the game to the phone, in any way: with a USB cable to **Download**, on a memory card, from a cloud drive... Any of these:
+   - your **GOG or Steam installation** from a PC (the folder with `GAME.GOG`, or with `INDARK3` and `MUSIC` for *Alone in the Dark 3*);
+   - a game's folder of **`UserData`** from Classic Reborn on your PC, such as `UserData\AITD3`, with its `GAME` folder and everything you added (`Languages`, `Voices`, `Backgrounds`, `Masks`, `Saves`);
+   - the whole **`UserData`** folder, with every game at once.
+3. **Import it.** In the launcher, choose the game's tab, press **Import...** and choose that folder ("Use this folder"). The app copies what it recognises, in one go: the game (only the files it uses), and the languages, narrators, custom backgrounds, masks and saves its folder has. A folder named `AITD1`, `AITD2` or `AITD3` goes to that game, whatever the tab. You can also import only a language of *Alone in the Dark 3*, a narrator of *Alone in the Dark* or a `Backgrounds` or `Masks` folder later. When the cover turns to colour the game is ready, and the folder you copied can be deleted.
+4. Choose the language and press **Play**. The launcher turns with the phone; the game is always on its side.
+
+**Loading the games, step by step** (for example *Alone in the Dark* from GOG, with a USB cable):
+
+1. On the PC, find the game's folder: `C:\GOG Games\Alone in the Dark` for GOG, or `steamapps\common\Alone in the Dark` in your Steam library (the folder with `GAME.GOG` inside). If you already play with Classic Reborn on the PC, you can take `UserData\AITD1` from its folder instead: it brings your saves, narrators and backgrounds too.
+2. Connect the phone to the PC with a USB cable and, on the phone, choose **File transfer** in the USB notification.
+3. On the PC, the phone shows up as a drive: copy the whole folder into its **Download** folder.
+4. On the phone, open **Alone in the Dark: Classic Reborn**, choose the **Alone in the Dark** tab and press **Import...** at the bottom.
+5. Android's folder picker opens: go to **Download**, tap the game's folder (go *into* it) and press **Use this folder**, then **Allow**.
+6. Wait for "Copying the game... 100%" and "Game imported.": the cover turns to colour and the game is ready. The copy in **Download** can now be deleted.
+
+The same for *Alone in the Dark 2* and *3*, each on its own tab, or all at once by importing the whole `UserData` folder from the PC. Instead of a cable, the folder can come on a memory card, a USB stick or from a cloud drive: whatever lets you put it on the phone.
+
+**Why import?** Android keeps each app's files to itself: the game lives in the app's own folder (`Android/data/com.classicreborn.game/files`, with `UserData` inside, as on the PC), and since Android 11 other apps and the phone's file manager cannot copy into it. Import is the way in. Uninstalling the app deletes that folder, games and saves included.
+
+**On-screen controls.** A semi-transparent controller over the game, sized the same on every phone: in the black bars at the sides of the picture when they are wide enough, otherwise over its edges. It is a virtual controller with the same buttons as the [Controls](#controls) table: the **D-pad** (bottom left) is the tank control and the **stick** (it appears where you put your thumb on the left half) walks where you push it, as the modern left stick; **A**, **B**, **Y**, **Start**, **Back** and **RT** do what they do on a controller. Only the buttons that have an action show (Y only in *Alone in the Dark 3*), and a change in **Controls** changes them too. Several fingers work at once. They hide when a controller (Bluetooth or USB) or a keyboard is used, and come back with a touch. Android's **Back** key is **B** (pause). The menus (launcher and F1) work with the finger: tap to choose, drag to scroll.
+
+**Updates.** As on the PC, the launcher looks for a newer version when it opens (and with **Update**). Installing downloads the new app and Android asks you to update it: accept. Your games, saves and options are kept. The first time, Android asks to allow the app to install apps: allow it.
+
 ## Controls
 
 Every action can be changed in **Controls** (F1 window or launcher). Defaults:
@@ -231,6 +276,8 @@ Every action can be changed in **Controls** (F1 window or launcher). Defaults:
 **Modern left stick.** With the left stick the character walks where you push it, seen from the camera: up walks away from the camera, down towards it. When the camera changes, the direction is kept until you release the stick or push it elsewhere, so you never walk back into the room you left. While **Action** is held (to fight), the stick gives the tank directions, as the attacks need them. The D-pad and the keys are always tank controls: up walks forward, left and right turn. To use the left stick as tank controls too, untick **Modern left stick** in **Controls**.
 
 The menus (launcher and F1) also work with the controller: left stick or D-pad to move, right stick to scroll, A to choose, B to go back. The mouse cursor hides while the controller is in use and comes back when the mouse moves.
+
+**On Android**, the same controls are on the screen as a controller (see [On Android](#on-android-experimental)); a Bluetooth or USB controller works too.
 
 ## Options
 
@@ -384,8 +431,8 @@ Found a bug? Please open an [issue](https://github.com/nayo186/AloneInTheDarkCla
 
 - what happened and what you were doing (where in the game, if you can);
 - in which game: *Alone in the Dark*, *Jack in the Dark*, *Alone in the Dark 2* or *Alone in the Dark 3*;
-- on which system: **Windows** or **Linux** (and which distribution);
-- which copy of the game: GOG, Steam or a copy of the files.
+- on which system: **Windows**, **Linux** (and which distribution), **macOS** (and your Mac's model) or **Android** (your phone's model and Android version);
+- where you bought the game (GOG or Steam) and the language you play in. Just tell us which: there is no need to send the installed game.
 
 It helps a lot to attach these files: drag them into the issue's text box. Close the game first, so the logs are complete:
 
@@ -395,6 +442,8 @@ It helps a lot to attach these files: drag them into the issue's text box. Close
   - `crash_log.txt`, if the game closed by itself;
   - `launcher.log`, next to `Launcher.exe`, if the problem is in the launcher.
 - **A save** made just before the problem, if you can: `UserData\AITD1\Saves\SAVEn.ITD` (or `UserData\AITD2\Saves\...`, `UserData\AITD3\Saves\...`; n is the slot). GitHub does not accept `.ITD` files, so put the save in a `.zip` first. With it we can go straight to that spot.
+
+**On Android** the same files are in the app's folder, `Android/data/com.classicreborn.game/files` (with `UserData` inside, and `launcher.log`). The phone's file manager may not open it: connect the phone to a PC with a USB cable (choose *File transfer* on the phone) and copy them from there.
 
 The logs only name the game's folders and what the game did; they may show your user name inside a folder path (`C:\Users\<name>\...`). Nothing else from your PC is in them.
 
@@ -431,9 +480,15 @@ cmake -S TatouSource -B TatouSource\build\vs2022 -DCLASSIC_REBORN_DEV_TOOLS=OFF
 
 **Debug mode** is switched on by hand: `debugMode = 1` in `launcher.cfg`. With a copy of the game files it also keeps every file the game writes inside that copy.
 
-**Releases.** The packages of each release are built by GitHub Actions (`.github/workflows/release.yml`) with the same scripts: publishing a release with a tag like `v1.0.0-beta.1` attaches `ClassicReborn-1.0.0-beta.1-windows-x64.zip` (64-bit Windows) and `ClassicReborn-1.0.0-beta.1-linux-x64.tar.gz` (64-bit Linux, built on Ubuntu 22.04 so that it runs on that and every newer system) to it. Locally: `powershell -ExecutionPolicy Bypass -File tools\makeRelease.ps1 -Version 1.0.0-beta.1` on Windows, `tools/makeRelease.sh 1.0.0-beta.1` on Linux.
+**For Android** the project is `TatouSource/android` (Gradle; the engine and the launcher are built into the app as `libmain.so`, from the same CMake project). With JDK 17 and the Android SDK, from that folder:
 
-Android is planned; most of the libraries already support it.
+```
+gradlew assembleDebug
+```
+
+The app ends up in `app/build/outputs/apk/debug`. It is signed with Android's debug key unless the project's key is given (`CLASSIC_REBORN_KEYSTORE` and its passwords, see `tools/makeRelease-android.sh`); an app signed with another key cannot update the published one, so uninstall that first (which deletes its games and saves).
+
+**Releases.** The packages of each release are built by GitHub Actions (`.github/workflows/release.yml`) with the same scripts: publishing a release with a tag like `v1.0.0` attaches `ClassicReborn-1.0.0-windows-x64.zip` (64-bit Windows), `ClassicReborn-1.0.0-linux-x64.tar.gz` (64-bit Linux, built on Ubuntu 22.04 so that it runs on that and every newer system), `ClassicReborn-1.0.0-macos.tar.gz` and `ClassicReborn-1.0.0-android.apk` (signed with the project's key, kept as a secret of the repository) to it. Locally: `powershell -ExecutionPolicy Bypass -File tools\makeRelease.ps1 -Version 1.0.0` on Windows, `tools/makeRelease.sh 1.0.0` on Linux, `tools/makeRelease-macos.sh 1.0.0` on macOS and `tools/makeRelease-android.sh 1.0.0` for Android.
 
 ## Architecture
 

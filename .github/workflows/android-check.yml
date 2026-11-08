@@ -1,0 +1,50 @@
+# Builds the Android app as the release does (signed with the project's key
+# from the secrets) and keeps it as a download of the run, to see that it
+# builds on GitHub before a release. Run by hand, or on a push to the
+# android-build branch.
+
+name: Android check
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [android-build]
+
+jobs:
+  android:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Get the code
+        uses: actions/checkout@v4
+
+      - name: Install JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Install the NDK and CMake of the project
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;27.2.12479018" "cmake;3.22.1" > /dev/null
+
+      - name: Build and sign
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/classicreborn.jks"
+          export CLASSIC_REBORN_KEYSTORE="$RUNNER_TEMP/classicreborn.jks"
+          export CLASSIC_REBORN_KEYSTORE_PASSWORD="$KEYSTORE_PASSWORD"
+          export CLASSIC_REBORN_KEY_ALIAS=classicreborn
+          export CLASSIC_REBORN_KEY_PASSWORD="$KEYSTORE_PASSWORD"
+          bash tools/makeRelease-android.sh 0.0.0-check
+          rm -f "$RUNNER_TEMP/classicreborn.jks"
+
+      - name: Signature and version of the app
+        run: |
+          "$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)/apksigner" verify --print-certs release/ClassicReborn-0.0.0-check-android.apk | head -3
+
+      - name: Keep the app
+        uses: actions/upload-artifact@v4
+        with:
+          name: ClassicReborn-android
+          path: release/ClassicReborn-0.0.0-check-android.apk

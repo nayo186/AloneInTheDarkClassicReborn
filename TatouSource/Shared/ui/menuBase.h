@@ -17,7 +17,7 @@
 #pragma once
 
 #include <imgui.h>
-#include <imgui_internal.h>   // GetFocusID: the item the cursor is on
+#include <imgui_internal.h>   // GetFocusID: the item the cursor is on; ClearActiveID
 
 #include <algorithm>
 #include <cfloat>
@@ -179,14 +179,25 @@ constexpr ImGuiWindowFlags kPanelFlags = ImGuiWindowFlags_NoTitleBar | ImGuiWind
 // ── Widgets ─────────────────────────────────────────────────────────────────
 
 // Touch screens: dragging the current scrolling area moves it (phones have no
-// wheel). Call inside the area, after its items.
+// wheel). Call inside the area, after its items. A finger moving up or down
+// scrolls even when it started on a button, which then is not pressed (on a
+// phone almost all the screen is buttons); sideways drags stay with their
+// item (sliders).
 inline void dragScroll()
 {
     ImGuiIO& io = ImGui::GetIO();
     if (io.MouseSource != ImGuiMouseSource_TouchScreen || !ImGui::IsMouseDragging(ImGuiMouseButton_Left))
         return;
-    if (ImGui::IsWindowHovered(ImGuiHoveredFlags_ChildWindows) && !ImGui::IsAnyItemActive())
-        ImGui::SetScrollY(ImGui::GetScrollY() - io.MouseDelta.y);
+    if (!ImGui::IsWindowHovered(ImGuiHoveredFlags_ChildWindows | ImGuiHoveredFlags_AllowWhenBlockedByActiveItem))
+        return;
+    if (ImGui::IsAnyItemActive())
+    {
+        const ImVec2 drag = ImGui::GetMouseDragDelta(ImGuiMouseButton_Left);
+        if (drag.y * drag.y <= drag.x * drag.x)
+            return;
+        ImGui::ClearActiveID();
+    }
+    ImGui::SetScrollY(ImGui::GetScrollY() - io.MouseDelta.y);
 }
 
 // The controller / keyboard cursor on the last item, drawn by hand for the

@@ -8,6 +8,9 @@
 
 #pragma once
 
+#include <cstddef>
+#include <cstdio>
+
 enum class AdvancedText
 {
     Title,
@@ -26,6 +29,7 @@ enum class AdvancedText
     Resolution,
     ResolutionHelp,
     ResolutionAuto,
+    ResolutionOriginal,
     CustomBackgrounds,
     CustomBackgroundsHelp,
     EnhancedText,
@@ -103,13 +107,17 @@ enum class AdvancedText
 // 3 Italian, 4 German
 static const int kAdvancedTextLanguages = 5;
 
-// Widths of the resolution option, always 4:3 (height = width * 3 / 4); 0 = automatic
-static const int kAdvancedResolutions[] = { 0, 640, 1024, 1280, 1600, 1920 };
-static const int kAdvancedResolutionCount = 6;
+// Widths of the resolution option, 4:3 (height = width * 3 / 4); 0 = automatic.
+// 320 is the games' own 320 x 200 (VGA mode 13h), stretched to the screen as
+// in 1992: the 3D models on the same pixels as the backgrounds. 1440 is 4:3
+// at 1080 lines, the height of a Full HD screen
+static const int kAdvancedOriginalResolution = 320;
+static const int kAdvancedResolutions[] = { 0, 320, 640, 1024, 1280, 1440, 1600, 1920 };
+static const int kAdvancedResolutionCount = (int)(sizeof(kAdvancedResolutions) / sizeof(kAdvancedResolutions[0]));
 
 inline int advancedResolutionHeight(int width)
 {
-    return width * 3 / 4;
+    return width == kAdvancedOriginalResolution ? 200 : width * 3 / 4;
 }
 
 inline const char* advancedText(AdvancedText text, int language)
@@ -168,6 +176,8 @@ inline const char* advancedText(AdvancedText text, int language)
           "Schärfe der 3D-Modelle. Automatisch nutzt deinen Bildschirm." },
         // ResolutionAuto
         { "Automatic", "Automática", "Automatique", "Automatica", "Automatisch" },
+        // ResolutionOriginal
+        { "original", "original", "originale", "originale", "Original" },
         // CustomBackgrounds
         { "Custom backgrounds", "Fondos personalizados", "Décors personnalisés", "Sfondi personalizzati", "Eigene Hintergründe" },
         // CustomBackgroundsHelp
@@ -414,4 +424,16 @@ inline const char* advancedText(AdvancedText text, int language)
     if (language < 0 || language >= kAdvancedTextLanguages)
         language = 0;
     return texts[(int)text][language];
+}
+
+// The name of a resolution in the list: "Automatic", "320 × 200 (original)",
+// "1280 × 960"... (language: 0 English, 1 Spanish, 2 French, 3 Italian, 4 German)
+inline void advancedResolutionLabel(int width, int language, char* label, size_t size)
+{
+    if (width <= 0)
+        snprintf(label, size, "%s", advancedText(AdvancedText::ResolutionAuto, language));
+    else if (width == kAdvancedOriginalResolution)
+        snprintf(label, size, "%d × %d (%s)", width, advancedResolutionHeight(width), advancedText(AdvancedText::ResolutionOriginal, language));
+    else
+        snprintf(label, size, "%d × %d", width, advancedResolutionHeight(width));
 }

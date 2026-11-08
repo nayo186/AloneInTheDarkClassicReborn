@@ -41,67 +41,29 @@ if(MSVC)
     set( CMAKE_EXE_LINKER_FLAGS_SHIPPING "${CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO} /LTCG /OPT:ICF /OPT:REF /SUBSYSTEM:WINDOWS /DEBUG" )
 endif()
 
-add_executable (Fitd ${SOURCES})
+# Android: a library (libmain.so) that SDL's Java side loads and starts
+if(ANDROID)
+    add_library(Fitd SHARED ${SOURCES})
+else()
+    add_executable (Fitd ${SOURCES})
+endif()
 
-# Output executable as Tatou / Tatou.app on macOS, in Fitd/<config> with every
+# Output executable as Tatou (a plain program on macOS too, next to the launcher), in Fitd/<config> with every
 # generator (Visual Studio already does it; Ninja and Make on Linux need it),
 # next to the launcher
 set_target_properties(Fitd PROPERTIES
     OUTPUT_NAME "Tatou"
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/Fitd/$<CONFIG>")
 
-IF(${CMAKE_SYSTEM_NAME} MATCHES Darwin)
-    # Build as a proper .app bundle
-    set_target_properties(Fitd PROPERTIES
-        MACOSX_BUNDLE TRUE
-        MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/Info.plist"
-    )
-
-    # Collect game assets to embed in Resources when they exist at configure time.
-    # Release assets may be staged either next to the executable in the build tree
-    # or in the source tree, depending on which packaging path produced them.
-    set(MACOS_ASSETS
-        "${CMAKE_BINARY_DIR}/Fitd/aitd_remaster.cfg"
-        "${CMAKE_SOURCE_DIR}/aitd_remaster.cfg"
-        "${CMAKE_BINARY_DIR}/Fitd/atlases.hda"
-        "${CMAKE_SOURCE_DIR}/atlases.hda"
-        "${CMAKE_BINARY_DIR}/Fitd/audio.hda"
-        "${CMAKE_SOURCE_DIR}/audio.hda"
-        "${CMAKE_BINARY_DIR}/Fitd/audio_fre.hda"
-        "${CMAKE_SOURCE_DIR}/audio_fre.hda"
-        "${CMAKE_BINARY_DIR}/Fitd/backgrounds_hd.hda"
-        "${CMAKE_SOURCE_DIR}/backgrounds_hd.hda"
-        "${CMAKE_BINARY_DIR}/Fitd/BLKCHCRY.TTF"
-        "${CMAKE_SOURCE_DIR}/BLKCHCRY.TTF"
-        "${CMAKE_BINARY_DIR}/Fitd/version.txt"
-        "${CMAKE_SOURCE_DIR}/version.txt"
-    )
-
-    # Mark asset files so CMake places them in Contents/Resources
-    foreach(_asset ${MACOS_ASSETS})
-        if(EXISTS "${_asset}")
-            target_sources(Fitd PRIVATE "${_asset}")
-            set_source_files_properties("${_asset}" PROPERTIES
-                MACOSX_PACKAGE_LOCATION "Resources"
-            )
-        endif()
-    endforeach()
-
-    # Copy any assets that might not exist yet at configure time via a post-build step.
-    # Missing optional assets should not make the executable link fail.
-    add_custom_command(TARGET Fitd POST_BUILD
-        COMMAND ${CMAKE_COMMAND}
-            -DDESTINATION="$<TARGET_BUNDLE_CONTENT_DIR:Fitd>/Resources"
-            "-DFILES=${MACOS_ASSETS}"
-            -P "${CMAKE_SOURCE_DIR}/cmake/copy_existing_files.cmake"
-        COMMAND chmod +x
-            "$<TARGET_BUNDLE_CONTENT_DIR:Fitd>/MacOS/Tatou"
-        COMMENT "Copying game assets into Tatou.app/Contents/Resources"
-    )
+if(ANDROID)
+    set_target_properties(Fitd PROPERTIES OUTPUT_NAME "main")
 endif()
 
-
 TARGET_LINK_LIBRARIES(Fitd FitdLib bgfx zlibstatic SDL3-static soloud ${EXTRA_LIBS})
+if(ANDROID)
+    # The launcher's screen comes first (before FitdLib: it uses its ImGui)
+    target_link_libraries(Fitd Launcher FitdLib SDL3-static android log EGL GLESv3)
+endif()
 if(APPLE)
     target_link_libraries(Fitd "-framework CoreFoundation")
 endif()

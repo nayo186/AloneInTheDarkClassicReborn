@@ -7,6 +7,7 @@
 // SDL-based operating system abstraction layer
 ///////////////////////////////////////////////////////////////////////////////
 
+#include "exitProgram.h"
 #include "common.h"
 #include "exceptionHandler.h"
 #include "logFile.h"
@@ -158,7 +159,7 @@ static void exitIfGameThreadEnded()
         return;
     printf(SDL_ERR "The game thread ended (result %d): closing the window" CON_RESET "\n", s_gameThreadResult);
     logFileFlush();
-    exit(s_gameThreadResult);
+    exitProgram(s_gameThreadResult);
 }
 
 //SDL_sem* emptyCount = NULL;
@@ -199,8 +200,17 @@ int FitdInit(int argc, char* argv[])
     // (applyWindowAspectRatio, bgfxGlue.cpp); fullscreen fills the screen
     //flags |= SDL_WINDOW_ALLOW_HIGHDPI;
 
-#ifdef __IPHONEOS__
+#if defined(__IPHONEOS__) || defined(__ANDROID__)
+    // Phones: the whole screen, without the system's bars; the picture keeps
+    // its aspect ratio with black bars (computeSceneRect)
     flags |= SDL_WINDOW_FULLSCREEN;
+    gIsFullscreen = true;
+#endif
+#ifdef __ANDROID__
+    // The Back key is Pause (touchControls.cpp) instead of closing the app
+    SDL_SetHint(SDL_HINT_ANDROID_TRAP_BACK_BUTTON, "1");
+    // The game is always on its side, whichever way the launcher was
+    SDL_SetHint(SDL_HINT_ORIENTATIONS, "LandscapeLeft LandscapeRight");
 #endif
 
     // Game is running in dos resolution 13h, ie 320x200x256, but is displayed in 4:3, so pixel are not square (1.6:1)
@@ -454,7 +464,7 @@ bool fileExists(const char* name)
 void osystem_init()  // that's the constructor of the system dependent
 // object used for the SDL port
 {
-#if defined(__linux__)
+#if defined(__linux__) && !defined(__ANDROID__)
     // On Linux, prefer the Wayland backend with X11 as fallback. On modern
     // Wayland-first distros (e.g. CachyOS, Fedora, recent Ubuntu) some libX11
     // versions interact badly with the shipped SDL3 X11 path and can fault

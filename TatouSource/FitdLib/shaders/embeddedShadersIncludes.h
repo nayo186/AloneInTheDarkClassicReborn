@@ -433,6 +433,150 @@ SHADER_DATA_FALLBACK
 #endif
 #endif
 
+// OpenGL ES (Android only)
+#if BX_PLATFORM_ANDROID
+#if __has_include("shaders/generated/essl/ui_vs.sc.bin.h")
+#include "shaders/generated/essl/ui_vs.sc.bin.h"
+#else
+SHADER_DATA_FALLBACK
+#endif
+#if __has_include("shaders/generated/essl/ui_ps.sc.bin.h")
+#include "shaders/generated/essl/ui_ps.sc.bin.h"
+#else
+SHADER_DATA_FALLBACK
+#endif
+#if __has_include("shaders/generated/essl/textSmooth_ps.sc.bin.h")
+#include "shaders/generated/essl/textSmooth_ps.sc.bin.h"
+#else
+SHADER_DATA_FALLBACK
+#endif
+#if __has_include("shaders/generated/essl/background_vs.sc.bin.h")
+#include "shaders/generated/essl/background_vs.sc.bin.h"
+#else
+SHADER_DATA_FALLBACK
+#endif
+#if __has_include("shaders/generated/essl/background_ps.sc.bin.h")
+#include "shaders/generated/essl/background_ps.sc.bin.h"
+#else
+SHADER_DATA_FALLBACK
+#endif
+#if __has_include("shaders/generated/essl/imageBackground_ps.sc.bin.h")
+#include "shaders/generated/essl/imageBackground_ps.sc.bin.h"
+#else
+SHADER_DATA_FALLBACK
+#endif
+#if __has_include("shaders/generated/essl/maskBackground_vs.sc.bin.h")
+#include "shaders/generated/essl/maskBackground_vs.sc.bin.h"
+#else
+SHADER_DATA_FALLBACK
+#endif
+#if __has_include("shaders/generated/essl/maskBackground_ps.sc.bin.h")
+#include "shaders/generated/essl/maskBackground_ps.sc.bin.h"
+#else
+SHADER_DATA_FALLBACK
+#endif
+#if __has_include("shaders/generated/essl/ramp_vs.sc.bin.h")
+#include "shaders/generated/essl/ramp_vs.sc.bin.h"
+#else
+SHADER_DATA_FALLBACK
+#endif
+#if __has_include("shaders/generated/essl/ramp_ps.sc.bin.h")
+#include "shaders/generated/essl/ramp_ps.sc.bin.h"
+#else
+SHADER_DATA_FALLBACK
+#endif
+#if __has_include("shaders/generated/essl/noise_vs.sc.bin.h")
+#include "shaders/generated/essl/noise_vs.sc.bin.h"
+#else
+SHADER_DATA_FALLBACK
+#endif
+#if __has_include("shaders/generated/essl/noise_ps.sc.bin.h")
+#include "shaders/generated/essl/noise_ps.sc.bin.h"
+#else
+SHADER_DATA_FALLBACK
+#endif
+#if __has_include("shaders/generated/essl/flat_vs.sc.bin.h")
+#include "shaders/generated/essl/flat_vs.sc.bin.h"
+#else
+SHADER_DATA_FALLBACK
+#endif
+#if __has_include("shaders/generated/essl/flat_ps.sc.bin.h")
+#include "shaders/generated/essl/flat_ps.sc.bin.h"
+#else
+SHADER_DATA_FALLBACK
+#endif
+#if __has_include("shaders/generated/essl/glass_ps.sc.bin.h")
+#include "shaders/generated/essl/glass_ps.sc.bin.h"
+#else
+SHADER_DATA_FALLBACK
+#endif
+#if __has_include("shaders/generated/essl/customBackground_ps.sc.bin.h")
+#include "shaders/generated/essl/customBackground_ps.sc.bin.h"
+#else
+SHADER_DATA_FALLBACK
+#endif
+#if __has_include("shaders/generated/essl/customMask_ps.sc.bin.h")
+#include "shaders/generated/essl/customMask_ps.sc.bin.h"
+#else
+SHADER_DATA_FALLBACK
+#endif
+#if __has_include("shaders/generated/essl/sprite_ps.sc.bin.h")
+#include "shaders/generated/essl/sprite_ps.sc.bin.h"
+#else
+SHADER_DATA_FALLBACK
+#endif
+#if __has_include("shaders/generated/essl/effectsSides_ps.sc.bin.h")
+#include "shaders/generated/essl/effectsSides_ps.sc.bin.h"
+#else
+SHADER_DATA_FALLBACK
+#endif
+#if __has_include("shaders/generated/essl/sphere_vs.sc.bin.h")
+#include "shaders/generated/essl/sphere_vs.sc.bin.h"
+#else
+SHADER_DATA_FALLBACK
+#endif
+#if __has_include("shaders/generated/essl/sphere_ps.sc.bin.h")
+#include "shaders/generated/essl/sphere_ps.sc.bin.h"
+#else
+SHADER_DATA_FALLBACK
+#endif
+#if __has_include("shaders/generated/essl/effects_vs.sc.bin.h")
+#include "shaders/generated/essl/effects_vs.sc.bin.h"
+#else
+SHADER_DATA_FALLBACK
+#endif
+#if __has_include("shaders/generated/essl/effectsComposite_ps.sc.bin.h")
+#include "shaders/generated/essl/effectsComposite_ps.sc.bin.h"
+#else
+SHADER_DATA_FALLBACK
+#endif
+#if __has_include("shaders/generated/essl/effectsBloomDown_ps.sc.bin.h")
+#include "shaders/generated/essl/effectsBloomDown_ps.sc.bin.h"
+#else
+SHADER_DATA_FALLBACK
+#endif
+#if __has_include("shaders/generated/essl/effectsBloomUp_ps.sc.bin.h")
+#include "shaders/generated/essl/effectsBloomUp_ps.sc.bin.h"
+#else
+SHADER_DATA_FALLBACK
+#endif
+#if __has_include("shaders/generated/essl/effectsSsao_ps.sc.bin.h")
+#include "shaders/generated/essl/effectsSsao_ps.sc.bin.h"
+#else
+SHADER_DATA_FALLBACK
+#endif
+#if __has_include("shaders/generated/essl/effectsSsaoBlur_ps.sc.bin.h")
+#include "shaders/generated/essl/effectsSsaoBlur_ps.sc.bin.h"
+#else
+SHADER_DATA_FALLBACK
+#endif
+#if __has_include("shaders/generated/essl/effectsAntialias_ps.sc.bin.h")
+#include "shaders/generated/essl/effectsAntialias_ps.sc.bin.h"
+#else
+SHADER_DATA_FALLBACK
+#endif
+#endif
+
 #if BGFX_PLATFORM_SUPPORTS_DXBC
 #if __has_include("shaders/generated/dx11/ui_vs.sc.bin.h")
 #include "shaders/generated/dx11/ui_vs.sc.bin.h"

@@ -1,0 +1,3 @@
+// Alone in the Dark: Classic Reborn for Android: the same C++ engine
+// (../CMakeLists.txt, built as libmain.so) and SDL's Java side
+include ':app'

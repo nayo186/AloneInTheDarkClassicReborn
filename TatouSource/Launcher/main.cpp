@@ -18,12 +18,18 @@
 #include "controlsWindow.h"
 #include "audioWindow.h"
 #include "launcherSettings.h"
+#include "userFolder.h"
 #include "folderDialog.h"
 #include "gameCover.h"
 #include "updater.h"
+#ifdef __ANDROID__
+#include "androidJava.h"
+#endif
 
 #include <SDL3/SDL.h>
+#ifndef __ANDROID__
 #include <SDL3/SDL_main.h>
+#endif
 #include <imgui.h>
 #include <imgui_impl_sdl3.h>
 #include <imgui_impl_sdlrenderer3.h>
@@ -111,6 +117,8 @@ struct LauncherState
     bool jackFound = false;     // Jack in the Dark is there too (PERE.PAK)
     bool gogInstall = false;    // a GOG installation (never written to)
     std::string message;        // error shown at the bottom
+    std::string note;           // or a message that is not an error (the import's progress)
+    int importing = -1;         // Android: the game being imported (0-2), -1 none
     int selectedGame = 0;       // 0 AITD1 (with Jack), 1 AITD2, 2 AITD3
     bool quit = false;
     bool launched = false;      // Tatou.exe started (it saved the options already)
@@ -333,10 +341,7 @@ static void drawAdvancedOptions(LauncherState& state, const Fonts& fonts, const 
     // Resolution of the scene image
     {
         char current[64];
-        if (state.settings.resolution > 0)
-            snprintf(current, sizeof(current), "%d × %d", state.settings.resolution, advancedResolutionHeight(state.settings.resolution));
-        else
-            snprintf(current, sizeof(current), "%s", advText(AdvancedText::ResolutionAuto));
+        advancedResolutionLabel(state.settings.resolution, (int)uiLanguage(), current, sizeof(current));
         ImGui::AlignTextToFramePadding();
         ImGui::TextColored(color(kText), "%s", advText(AdvancedText::Resolution));
         helpMarker(advText(AdvancedText::ResolutionHelp));
@@ -348,10 +353,7 @@ static void drawAdvancedOptions(LauncherState& state, const Fonts& fonts, const 
             {
                 const int resolution = kAdvancedResolutions[i];
                 char label[64];
-                if (resolution > 0)
-                    snprintf(label, sizeof(label), "%d × %d", resolution, advancedResolutionHeight(resolution));
-                else
-                    snprintf(label, sizeof(label), "%s", advText(AdvancedText::ResolutionAuto));
+                advancedResolutionLabel(resolution, (int)uiLanguage(), label, sizeof(label));
                 if (ImGui::Selectable(label, state.settings.resolution == resolution))
                 {
                     state.settings.resolution = resolution;
@@ -468,7 +470,11 @@ static void drawUpdateWindow(LauncherState& state, const Fonts& fonts, const Met
     case UpdateState::CheckFailed: snprintf(text, sizeof(text), "%s", tr(UiText::UpdateCheckFailed)); break;
     case UpdateState::Available: snprintf(text, sizeof(text), tr(UiText::UpdateAvailable), latest.c_str(), launcherVersion()); break;
     case UpdateState::Installing: snprintf(text, sizeof(text), tr(UiText::UpdateInstalling), latest.c_str()); break;
+#ifdef __ANDROID__
+    case UpdateState::Installed: snprintf(text, sizeof(text), tr(UiText::UpdateConfirm), latest.c_str()); break;
+#else
     case UpdateState::Installed: snprintf(text, sizeof(text), tr(UiText::UpdateDone), latest.c_str()); break;
+#endif
     case UpdateState::InstallFailed: snprintf(text, sizeof(text), "%s", tr(UiText::UpdateFailed)); break;
     }
     ImGui::PushTextWrapPos(0.0f);
@@ -494,8 +500,13 @@ static void drawUpdateWindow(LauncherState& state, const Fonts& fonts, const Met
     }
     else if (update == UpdateState::Installed)
     {
+        // Android: its installer is the one that closes and updates the app
         if (goldButton("##updateAccept", tr(UiText::UpdateAccept), pos, ImVec2(full, buttonH), fonts.button, true) || closing)
+#ifdef __ANDROID__
+            ImGui::CloseCurrentPopup();
+#else
             state.quit = true;
+#endif
     }
     else if (update != UpdateState::Checking && update != UpdateState::Installing)
     {
@@ -582,6 +593,10 @@ static LauncherView makeView(LauncherState& state, const LauncherCover& cover)
     view.version = updatesEnabled() ? launcherVersion() : "";
     view.updateAvailable = (updaterState() == UpdateState::Available);
     view.cover = &cover;
+#ifdef __ANDROID__
+    view.importGame = true;
+    view.canBrowse = (state.importing < 0);
+#endif
     for (int i = 0; i < (int)state.languages.size(); i++)
     {
         view.gameLanguages.push_back(state.languages[i].displayName);
@@ -595,6 +610,11 @@ static LauncherView makeView(LauncherState& state, const LauncherCover& cover)
         view.message = state.message;
         view.messageColor = kError;
     }
+    else if (!state.note.empty())
+    {
+        view.message = state.note;
+        view.messageColor = kTextDim;
+    }
     else if (!view.dataFolder.empty() && !state.dataFolderValid)
     {
         view.message = tr(UiText::DataFolderInvalid);
@@ -607,6 +627,63 @@ static LauncherView makeView(LauncherState& state, const LauncherCover& cover)
     }
     return view;
 }
+
+#ifdef __ANDROID__
+// Android: the progress of an import; a game once copied: its portable
+// folder becomes its data folder; a language: the game's languages again
+static void followImport(LauncherState& state)
+{
+    if (state.importing < 0)
+        return;
+    const ImportProgress progress = androidImportProgress();
+    switch (progress.state)
+    {
+    case ImportState::Copying:
+    {
+        char text[128];
+        const int percent = progress.total > 0 ? (int)(progress.copied * 100 / progress.total) : 0;
+        snprintf(text, sizeof(text), tr(UiText::ImportCopying), percent);
+        state.note = text;
+        break;
+    }
+    case ImportState::Done:
+    {
+        static const UiText done[] = { UiText::ImportDone, UiText::ImportDone, UiText::ImportLanguageDone,
+                                       UiText::ImportNarratorDone, UiText::ImportPicturesDone };
+        logLine("Import: copied %lld bytes (kind %d)", progress.copied, (int)progress.kind);
+        // Every game now in its portable folder (the whole UserData brings several)
+        if (progress.kind == ImportKind::Game)
+        {
+            std::string* folders[3] = { &state.settings.aitd1DataFolder, &state.settings.aitd2DataFolder,
+                                        &state.settings.aitd3DataFolder };
+            for (int game = 0; game < 3; game++)
+                if (dataFolderGame(portableGameFolder(game)) == game)
+                    *folders[game] = portableGameFolder(game);
+            saveLauncherSettings(state.settings);
+        }
+        state.message.clear();
+        state.note = tr(done[(int)progress.kind]);
+        state.importing = -1;
+        refreshDataFolder(state);
+        break;
+    }
+    case ImportState::Failed:
+        logLine("Import: failed after %lld of %lld bytes%s", progress.copied, progress.total,
+            progress.kind == ImportKind::None ? " (nothing recognised in the folder)" : "");
+        state.note.clear();
+        state.message = tr(progress.kind == ImportKind::None ? UiText::ImportNothing : UiText::ImportFailed);
+        state.importing = -1;
+        break;
+    case ImportState::Cancelled:
+        logLine("Import: cancelled");
+        state.note.clear();
+        state.importing = -1;
+        break;
+    default:
+        break;
+    }
+}
+#endif
 
 // Saves the settings (shared by AITD1 and Jack) and starts the game
 static void startGame(LauncherState& state, const char* game)
@@ -636,6 +713,8 @@ static void handleIntent(LauncherState& state, const LauncherIntent& intent, SDL
             writeGameConfig(dataFolder(state), state.settings);
         state.selectedGame = intent.selectGame;
         state.message.clear();
+        if (state.importing < 0)
+            state.note.clear();
         refreshDataFolder(state);
     }
     if (intent.uiLanguage >= 0)
@@ -664,6 +743,16 @@ static void handleIntent(LauncherState& state, const LauncherIntent& intent, SDL
     }
     if (intent.about)
         ImGui::OpenPopup("##aboutPopup");
+#ifdef __ANDROID__
+    // Android: what the chosen folder holds is copied into UserData (androidJava.h)
+    if (intent.browse)
+    {
+        const std::string userData = launcherFolder() + kUserDataFolder;
+        logLine("Import: choosing a folder (game %d) for %s", state.selectedGame + 1, userData.c_str());
+        state.importing = state.selectedGame;
+        androidImportStart(userData, state.selectedGame);
+    }
+#else
     if (intent.browse)
     {
         // Explorer's dialog on Windows (a full path can be pasted), SDL's elsewhere
@@ -679,6 +768,10 @@ static void handleIntent(LauncherState& state, const LauncherIntent& intent, SDL
             SDL_ShowOpenFolderDialog(onFolderChosen, nullptr, window, folder.empty() ? nullptr : folder.c_str(), false);
 #endif
     }
+#endif
+    // Not while a game is being copied
+    if (state.importing >= 0)
+        return;
     if (intent.play)
         startGame(state, state.selectedGame == 2 ? "aitd3" : state.selectedGame == 1 ? "aitd2" : "aitd1");
     else if (intent.playJack)
@@ -703,7 +796,13 @@ static void initialWindowSize(const LauncherSettings& settings, int& width, int&
     height = std::clamp(height, kMinWindowHeight, (std::max)(kMinWindowHeight, usable.h * 95 / 100));
 }
 
+#ifdef __ANDROID__
+// Android: the app opens the launcher's screen first; when a game is chosen
+// it returns and the game starts in the same program (Fitd/fitd.cpp)
+int launcherMain()
+#else
 int main(int, char**)
+#endif
 {
     logOpen();
 
@@ -734,9 +833,22 @@ int main(int, char**)
 
     int windowWidth = kWindowWidth, windowHeight = kWindowHeight;
     initialWindowSize(state.settings, windowWidth, windowHeight);
+#ifdef __ANDROID__
+    // Android: the whole screen, upright or on its side as the phone is held
+    // (a resizable window without orientation hint: SDLActivity.setOrientationBis);
+    // the game turns to landscape (platform/osystemSDL.cpp)
+    SDL_Window* window = SDL_CreateWindow(tr(UiText::WindowTitle), windowWidth, windowHeight,
+        SDL_WINDOW_RESIZABLE | SDL_WINDOW_FULLSCREEN);
+#else
     SDL_Window* window = SDL_CreateWindow(tr(UiText::WindowTitle), windowWidth, windowHeight,
         SDL_WINDOW_RESIZABLE | (state.settings.windowMaximized ? SDL_WINDOW_MAXIMIZED : 0));
+#endif
+#ifdef __ANDROID__
+    // Android: SDL's own OpenGL ES (its Vulkan renderer failed on the window); the game uses bgfx
+    SDL_Renderer* renderer = window ? SDL_CreateRenderer(window, "opengles2") : nullptr;
+#else
     SDL_Renderer* renderer = window ? SDL_CreateRenderer(window, nullptr) : nullptr;
+#endif
     if (!window || !renderer)
     {
         logLine("ERROR: could not create the window: %s", SDL_GetError());
@@ -783,6 +895,10 @@ int main(int, char**)
             if (event.type == SDL_EVENT_QUIT || event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED)
                 state.quit = true;
         }
+
+#ifdef __ANDROID__
+        followImport(state);
+#endif
 
         // Folder chosen in the dialog
         SDL_LockMutex(s_dialogMutex);
@@ -882,6 +998,10 @@ int main(int, char**)
     SDL_DestroyMutex(s_dialogMutex);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
+#ifdef __ANDROID__
+    return state.launched ? 0 : 1;   // SDL stays on for the game
+#else
     SDL_Quit();
     return 0;
+#endif
 }

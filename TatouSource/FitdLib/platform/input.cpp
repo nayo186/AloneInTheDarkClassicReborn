@@ -17,6 +17,7 @@
 #include "controls.h"
 #include "bgfxGlue.h"
 #include "platformHooks.h"
+#include "touchControls.h"
 
 extern float nearVal;
 extern float farVal;
@@ -51,7 +52,10 @@ static void setControllerInUse(bool inUse)
     if (s_controllerInUse.exchange(inUse) == inUse)
         return;
     if (inUse)
+    {
         SDL_HideCursor();
+        touchControlsHide();
+    }
     else
         SDL_ShowCursor();
 }
@@ -106,13 +110,32 @@ void readKeyboard(void)
     Click = 0;
     key = 0;
 
+    // The on-screen controls placed for the window; the F1 window takes the screen
+    touchControlsFrame(g_isMenuCapturingInput && g_isMenuCapturingInput());
+
     while (SDL_PollEvent(&event)) {
 
         ImGui_ImplSDL3_ProcessEvent(&event);
 
         switch (event.type) {
         case SDL_EVENT_KEY_DOWN:
+            // Android's Back key is the on-screen controls' Pause; any other
+            // key hides them
+            if (event.key.scancode == SDL_SCANCODE_AC_BACK)
+                touchControlsEvent(event);
+            else
+                touchControlsHide();
             handleKeyDown(event);
+            break;
+        case SDL_EVENT_KEY_UP:
+            if (event.key.scancode == SDL_SCANCODE_AC_BACK)
+                touchControlsEvent(event);
+            break;
+        case SDL_EVENT_FINGER_DOWN:
+        case SDL_EVENT_FINGER_MOTION:
+        case SDL_EVENT_FINGER_UP:
+        case SDL_EVENT_FINGER_CANCELED:
+            touchControlsEvent(event);
             break;
         case SDL_EVENT_QUIT:
             cleanupAndExit();

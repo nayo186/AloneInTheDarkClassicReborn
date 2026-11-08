@@ -9,6 +9,7 @@
 // exit); the rest of the old main.cpp is split by subject in core/
 ///////////////////////////////////////////////////////////////////////////////
 
+#include "exitProgram.h"
 #include "common.h"
 #include "consoleLog.h"
 #include "fileNameCase.h"
@@ -284,6 +285,6 @@ void cleanupAndExit(void)
     osystem_clearVocCache();
     shutdownJobSystem();
 
-    exit(0);
+    exitProgram(0);
 }
 

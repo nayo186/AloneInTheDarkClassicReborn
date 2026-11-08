@@ -4,6 +4,18 @@ Alone in the Dark: Classic Reborn started on 2026-10-23 from [Alone in the Dark:
 
 This repository was published with a single starting commit, to keep it light: the early history carried large files that are no longer part of the project. Below are the changes of each release and, after them, the changes made in this fork before it was published, newest first, one line per change. The reasons behind larger removals are explained in `docs/DESCARTADO.md` and the fixes in `docs/baseline/BUGS.md`.
 
+## v1.6.0 (2026-11-08)
+
+Classic Reborn arrives on **macOS** and **Android**, both experimental: the same four games, from the same code as Windows and Linux. Reports from Mac and Android players are very welcome.
+
+- macOS (experimental): one package for every Mac with macOS 11 or newer, Apple Silicon and Intel, drawn with Metal; the launcher updates it as on Windows and Linux (see the README, BUGS.md C56)
+- Android (experimental): an app for Android 7 or newer (64-bit, Vulkan), with the launcher inside, which turns with the phone, while the game is always on its side (see the README, BUGS.md C58)
+- Android: on-screen controls as an Xbox controller, with the same buttons and meaning as a controller on the PC (D-pad as tank controls, stick as the modern left stick); only the buttons with an action show, and the Controls window changes them too (BUGS.md C58)
+- Android: **Import...** brings the game to the phone without a cable: choose your GOG or Steam folder, a game's folder of `UserData` from the PC or the whole `UserData`, and the app copies, in one go, the game and the languages, narrators, backgrounds, masks and saves it has (BUGS.md C58)
+- Android: the launcher's updates download the new app and Android asks to install it; games, saves and options are kept (BUGS.md C58)
+- All games: two more resolutions, 1440 x 1080 (4:3 at Full HD height) and the games' original 320 x 200, stretched to the screen as in 1992 (BUGS.md C53, C54)
+- All games: when a file of the game is missing, a message says which one and the game closes cleanly; it closed without a word. An empty `GAME` folder is no longer taken as the game's folder (BUGS.md C55)
+
 ## v1.5.0 (2026-11-08)
 
 *Alone in the Dark 3* has been played from start to end with no errors left: all four games (*Alone in the Dark*, *Jack in the Dark*, *Alone in the Dark 2* and *Alone in the Dark 3*) can now be played from start to end. This version adds its other languages and a portable folder for each game.

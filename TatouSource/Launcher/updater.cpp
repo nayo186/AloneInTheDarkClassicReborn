@@ -27,6 +27,9 @@
 #define NOMINMAX
 #include <windows.h>
 #endif
+#ifdef __ANDROID__
+#include "androidJava.h"
+#endif
 
 namespace fs = std::filesystem;
 
@@ -38,10 +41,17 @@ static const char* const kLatestReleaseUrl = "https://api.github.com/repos/nayo1
 static const char* const kDownloadUrl = "https://github.com/nayo186/AloneInTheDarkClassicReborn/releases/download/";
 static const char* const kUpdateFolder = "Update";
 
-#ifdef _WIN32
+#if defined(__ANDROID__)
+// The new app, handed to Android's installer (no files are replaced)
+static const char* const kPackageEnd = "-android.apk";
+#elif defined(_WIN32)
 static const char* const kPackageEnd = "-windows-x64.zip";
 static const char* const kLauncherFile = "Launcher.exe";
 static const char* const kGameFile = "Tatou.exe";
+#elif defined(__APPLE__)
+static const char* const kPackageEnd = "-macos.tar.gz";   // Apple Silicon and Intel in one
+static const char* const kLauncherFile = "Launcher";
+static const char* const kGameFile = "Tatou";
 #else
 static const char* const kPackageEnd = "-linux-x64.tar.gz";
 static const char* const kLauncherFile = "Launcher";
@@ -141,6 +151,15 @@ static int compareVersions(const std::string& a, const std::string& b)
     return compareParts(a.substr(dashA + 1), b.substr(dashB + 1));
 }
 
+#ifdef __ANDROID__
+static bool download(const std::string& url, const fs::path& file, int seconds)
+{
+    const bool ok = androidDownload(url, file.u8string(), seconds);
+    if (!ok)
+        logLine("Update: ERROR: download of %s failed", url.c_str());
+    return ok;
+}
+#else
 // ── Running curl and tar without a window ───────────────────────────────────
 static int runTool(const char* tool, const std::vector<std::string>& args)
 {
@@ -193,6 +212,7 @@ static bool download(const std::string& url, const fs::path& file, int seconds)
         logLine("Update: ERROR: download of %s failed (curl %d)", url.c_str(), result);
     return result == 0;
 }
+#endif
 
 static std::string readFile(const fs::path& file)
 {
@@ -268,6 +288,25 @@ void updaterStartCheck()
 }
 
 // ── Install ─────────────────────────────────────────────────────────────────
+#ifdef __ANDROID__
+// Android: the new app is downloaded and handed to Android's installer, which
+// asks the player; Android keeps the app's folder (games, saves, options).
+// The download stays in Update until the next start.
+static void installThread(std::string version)
+{
+    const fs::path package = updateFolder() / packageName(version);
+    logLine("Update: installing %s", version.c_str());
+    bool ok = download(kDownloadUrl + std::string("v") + version + "/" + packageName(version), package, 600);
+    if (ok)
+    {
+        ok = androidInstallPackage(package.u8string());
+        if (!ok)
+            logLine("Update: ERROR: Android's installer did not take the package");
+    }
+    logLine("Update: %s", ok ? "handed to Android's installer" : "failed, nothing was changed");
+    s_state = (int)(ok ? UpdateState::Installed : UpdateState::InstallFailed);
+}
+#else
 // The unpacked folder that holds the programs: the package itself (zip) or
 // its only folder (tar.gz)
 static fs::path findPackageRoot(const fs::path& unpacked)
@@ -371,6 +410,7 @@ static void installThread(std::string version)
     logLine("Update: %s", ok ? "done, the launcher must be opened again" : "failed, nothing was changed");
     s_state = (int)(ok ? UpdateState::Installed : UpdateState::InstallFailed);
 }
+#endif
 
 void updaterStartInstall()
 {

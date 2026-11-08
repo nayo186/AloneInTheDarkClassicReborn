@@ -35,7 +35,13 @@ add_custom_command(
     COMMENT "Embedding the menu font"
 )
 
-add_executable(Launcher
+# Android: a library linked into the app (libmain.so), shown before the game
+if(ANDROID)
+    add_library(Launcher STATIC)
+else()
+    add_executable(Launcher)
+endif()
+target_sources(Launcher PRIVATE
     main.cpp
     launcherSettings.cpp
     launcherSettings.h
@@ -47,14 +53,23 @@ add_executable(Launcher
     updater.h
     Launcher.rc
     "${COVER_DATA}"
-    "${MENU_FONT_DATA}"
-    "${THIRD_PARTY}/imgui/imgui.cpp"
-    "${THIRD_PARTY}/imgui/imgui_draw.cpp"
-    "${THIRD_PARTY}/imgui/imgui_tables.cpp"
-    "${THIRD_PARTY}/imgui/imgui_widgets.cpp"
-    "${THIRD_PARTY}/imgui/backends/imgui_impl_sdl3.cpp"
     "${THIRD_PARTY}/imgui/backends/imgui_impl_sdlrenderer3.cpp"
 )
+# Android: importing a game and the updates' downloads through the app's activity
+if(ANDROID)
+    target_sources(Launcher PRIVATE androidJava.cpp androidJava.h)
+endif()
+# On Android the game already has ImGui and the menu font (FitdLib)
+if(NOT ANDROID)
+    target_sources(Launcher PRIVATE
+        "${MENU_FONT_DATA}"
+        "${THIRD_PARTY}/imgui/imgui.cpp"
+        "${THIRD_PARTY}/imgui/imgui_draw.cpp"
+        "${THIRD_PARTY}/imgui/imgui_tables.cpp"
+        "${THIRD_PARTY}/imgui/imgui_widgets.cpp"
+        "${THIRD_PARTY}/imgui/backends/imgui_impl_sdl3.cpp"
+    )
+endif()
 
 target_include_directories(Launcher PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}/../Shared"
@@ -85,4 +100,6 @@ endif()
 
 # Building the launcher also builds the game next to it, so F5 (which starts
 # the launcher) always runs an up-to-date Tatou.exe
-add_dependencies(Launcher Fitd)
+if(NOT ANDROID)
+    add_dependencies(Launcher Fitd)
+endif()

@@ -41,22 +41,6 @@ extern void playMenuSound(const char* soundName);
 #define STB_IMAGE_IMPLEMENTATION
 #include "../ThirdParty/bgfx.cmake/bimg/3rdparty/stb/stb_image.h"
 
-static std::string g_versionString;
-
-static void loadVersionString()
-{
-    std::filesystem::path versionPath = std::filesystem::path(homePath) / "version.txt";
-    std::ifstream file(versionPath);
-    if (file.is_open())
-    {
-        std::getline(file, g_versionString);
-        // trim trailing whitespace
-        while (!g_versionString.empty() && (g_versionString.back() == '\r' || g_versionString.back() == '\n' || g_versionString.back() == ' '))
-            g_versionString.pop_back();
-    }
-}
-
-
 void startGame(int startupFloor, int startupRoom, int allowSystemMenu)
 {
     LoadWorld();
@@ -520,17 +504,11 @@ void detectGame(void)
     else
     {
         printf(MAIN_ERR "FATAL: Game detection failed..." CON_RESET "\n");
-        assert(0);
+        fatalError(0, "no game was found in the data folder");
         return;
     }
 
-    loadVersionString();
-
     std::string titleStr = gameName;
-    if (!g_versionString.empty())
-    {
-        titleStr += " - " + g_versionString;
-    }
 
     printf(MAIN_TAG "%s\n", titleStr.c_str());
 #ifndef AITD_UE4

@@ -9,23 +9,11 @@
 #include <cstdio>
 #include <exception>
 
-#if defined(__APPLE__)
-#include <CoreFoundation/CoreFoundation.h>
-#include <unistd.h>
-// Change working directory to the bundle's Resources folder so that
-// relative asset paths (HDA files, cfg, TTF, etc.) resolve correctly.
-static void macOSSetBundleWorkingDir()
-{
-    CFBundleRef bundle = CFBundleGetMainBundle();
-    if (!bundle) return;
-    CFURLRef resURL = CFBundleCopyResourcesDirectoryURL(bundle);
-    if (!resURL) return;
-    char path[4096];
-    if (CFURLGetFileSystemRepresentation(resURL, TRUE, (UInt8*)path, sizeof(path)))
-        chdir(path);
-    CFRelease(resURL);
-}
+// Android: SDL's Java side calls SDL_main (SDL_main.h renames main)
+#ifdef __ANDROID__
+#include <SDL3/SDL_main.h>
 #endif
+
 
 extern "C" {
     int FitdMain(int argc, char* argv[]);
@@ -120,12 +108,31 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 }
 #endif
 
+#ifdef __ANDROID__
+#include <string>
+#include <vector>
+int launcherMain();
+const std::vector<std::string>& launchedGameArguments();
+
+// Android: the launcher's screen first, then the game chosen there; with
+// arguments given to the app (adb) the game starts at once
+int main(int argc, char* argv[])
+{
+    if (argc > 1)
+        return runFitd(argc, argv);
+    if (launcherMain() != 0)
+        return 0;
+    std::vector<std::string> arguments = launchedGameArguments();
+    std::vector<char*> gameArgv;
+    for (std::string& argument : arguments)
+        gameArgv.push_back(&argument[0]);
+    gameArgv.push_back(nullptr);
+    return runFitd((int)arguments.size(), gameArgv.data());
+}
+#else
 // Console subsystem entry point (for debug builds)
 int main(int argc, char* argv[])
 {
-#if defined(__APPLE__)
-    macOSSetBundleWorkingDir();
-#endif
 #ifdef _WIN32
     // Hide the console window at startup; it will be shown after the main window is created
     HWND hConsole = GetConsoleWindow();
@@ -137,3 +144,4 @@ int main(int argc, char* argv[])
 
     return runFitd(argc, argv);
 }
+#endif

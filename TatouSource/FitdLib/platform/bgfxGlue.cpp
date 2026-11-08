@@ -7,6 +7,7 @@
 // BGFX graphics library initialization and window management
 ///////////////////////////////////////////////////////////////////////////////
 //Updated
+#include "advancedOptionsText.h"
 #include <SDL.h>
 #include <bgfx/bgfx.h>
 #include <bgfx/platform.h>
@@ -16,6 +17,7 @@
 #include <chrono>
 #include "imguiBGFX.h"
 #include "platformHooks.h"
+#include "touchControls.h"
 #include "ui/menuGamepad.h"
 #include "SDL3/SDL.h"
 #include "common.h"
@@ -189,7 +191,7 @@ static void computeSceneImageSize(const int rect[4], int size[2])
     if (width > 0)
     {
         size[0] = width;
-        size[1] = width * 3 / 4;
+        size[1] = advancedResolutionHeight(width);   // 4:3, or the original 320 x 200
     }
     else
     {
@@ -375,6 +377,9 @@ void EndFrame()
 #endif
 
 
+    // The on-screen controls of touch screens, over the game
+    touchControlsDraw();
+
     // The menus (F1 and the debug windows) are drawn last so they stay above
     // the game and its overlays at every resolution
     if (g_onDrawMenus)
@@ -453,6 +458,9 @@ void createBgfxInitParams()
 #elif BX_PLATFORM_OSX
     initparam.platformData.ndt = NULL;
     initparam.platformData.nwh = cbSetupMetalLayer((void*)SDL_GetPointerProperty(SDL_GetWindowProperties(gWindowBGFX), SDL_PROP_WINDOW_COCOA_WINDOW_POINTER, NULL));
+#elif BX_PLATFORM_ANDROID
+    initparam.platformData.ndt = NULL;
+    initparam.platformData.nwh = SDL_GetPointerProperty(SDL_GetWindowProperties(gWindowBGFX), SDL_PROP_WINDOW_ANDROID_WINDOW_POINTER, NULL);
 #elif BX_PLATFORM_WINDOWS
     initparam.platformData.ndt = NULL;
     initparam.platformData.nwh = (HWND)SDL_GetPointerProperty(SDL_GetWindowProperties(gWindowBGFX), SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL);
@@ -512,6 +520,8 @@ int initBgfxGlue(int argc, char* argv[])
             initparam.type = bgfx::RendererType::Vulkan; // Linux default (Wayland surface handled via platformData.type)
 #elif BX_PLATFORM_OSX
             initparam.type = bgfx::RendererType::Metal;
+#elif BX_PLATFORM_ANDROID
+            initparam.type = bgfx::RendererType::Vulkan; // OpenGL ES drew a black screen (BUGS.md C57)
 #else
             initparam.type = bgfx::RendererType::Direct3D11; // default fallback
 #endif

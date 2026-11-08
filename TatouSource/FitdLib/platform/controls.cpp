@@ -7,7 +7,9 @@
 
 #include "controls.h"
 #include "common.h"
+#include "touchControls.h"
 
+#include <algorithm>
 #include <cmath>
 
 // A trigger counts as pressed past half its travel; a stick direction past
@@ -67,11 +69,16 @@ static bool isStickAxis(int axis)
            axis == SDL_GAMEPAD_AXIS_RIGHTX || axis == SDL_GAMEPAD_AXIS_RIGHTY;
 }
 
-// A stick axis from -1 to 1 after the dead zone, sensitivity and inversion
+// A stick axis from -1 to 1 after the dead zone, sensitivity and inversion,
+// from the controller or the on-screen one (touchControls.cpp), whichever is
+// pushed further
 static float stickValue(SDL_Gamepad* gamepad, SDL_GamepadAxis axis)
 {
     const ControlsAnalog& analog = controlsAnalog();
-    float value = SDL_GetGamepadAxis(gamepad, axis) / 32768.0f;
+    float value = gamepad ? SDL_GetGamepadAxis(gamepad, axis) / 32768.0f : 0.0f;
+    const float touch = touchPadAxis(axis);
+    if (std::fabs(touch) > std::fabs(value))
+        value = touch;
     if (std::fabs(value) < analog.deadzone)
         return 0.0f;
     const float sign = (value > 0.0f) ? 1.0f : -1.0f;
@@ -98,11 +105,10 @@ static bool bindingHeld(const InputBinding& binding, GameAction action, const bo
     case InputBinding::Kind::Key:
         return binding.code >= 0 && binding.code < keyCount && keyboard[binding.code];
     case InputBinding::Kind::PadButton:
-        return gamepad && SDL_GetGamepadButton(gamepad, (SDL_GamepadButton)binding.code);
+        // The controller or the on-screen one (touchControls.cpp)
+        return (gamepad && SDL_GetGamepadButton(gamepad, (SDL_GamepadButton)binding.code)) || touchPadButton(binding.code);
     case InputBinding::Kind::PadAxis:
     {
-        if (!gamepad)
-            return false;
         if (isStickAxis(binding.code))
         {
             if (skipLeftStick && isLeftStickAxis(binding.code))
@@ -111,7 +117,8 @@ static bool bindingHeld(const InputBinding& binding, GameAction action, const bo
             return binding.positive ? (value > kStickPressed) : (value < -kStickPressed);
         }
         // Trigger: 0 released to 32767 fully pressed
-        const float value = SDL_GetGamepadAxis(gamepad, (SDL_GamepadAxis)binding.code) / 32767.0f;
+        const float value = (std::max)(gamepad ? SDL_GetGamepadAxis(gamepad, (SDL_GamepadAxis)binding.code) / 32767.0f : 0.0f,
+                                       touchPadAxis(binding.code));
         return binding.positive ? (value > kTriggerPressed) : (value < -kTriggerPressed);
     }
     }
@@ -146,7 +153,7 @@ static int directionsWithoutLeftStick(const bool* keyboard, int keyCount, SDL_Ga
 static void readLeftStick(const bool* keyboard, int keyCount, SDL_Gamepad* gamepad)
 {
     s_leftStick = ControlsLeftStick();
-    if (!gamepad || !controlsAnalog().modernStick)
+    if (!controlsAnalog().modernStick)
         return;
     const float x = stickValue(gamepad, SDL_GAMEPAD_AXIS_LEFTX);
     const float y = stickValue(gamepad, SDL_GAMEPAD_AXIS_LEFTY);

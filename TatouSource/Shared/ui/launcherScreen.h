@@ -9,6 +9,8 @@
 // Two layouts from the same parts (menuBase.h metrics):
 //  - landscape (a PC window, a phone on its side): cover on the left, menu on
 //    the right, data folder at the bottom, as the original design;
+//  - compact landscape (a phone on its side, a low window): the cover fills
+//    the height on the left, the rest is a column on the right that scrolls;
 //  - portrait (a narrow window, a phone upright): one column that scrolls.
 // Everything sits in a scrolling area, so nothing is ever cut off; on a touch
 // screen it scrolls by dragging.
@@ -45,6 +47,7 @@ struct LauncherView
     bool isDefault = true;             // no advanced option changed
     bool debugMode = false;            // noted at the bottom (launcher.cfg debugMode = 1)
     bool canBrowse = true;             // a folder picker exists (not on every system)
+    bool importGame = false;           // Android: the button imports (copies) the game instead
     std::string version;               // this build's version, shown at the bottom right
     bool canUpdate = false;            // an Update button (Launcher.exe of a published version)
     bool updateAvailable = false;      // a newer version was found: the button is gold
@@ -299,7 +302,7 @@ struct Parts
         {
             const ImVec2 browsePos = browseInline ? ImVec2(x + width - browseW, y) : ImVec2(x, pathY + lineH + u(8.0f));
             ImGui::SetCursorScreenPos(browsePos);
-            if (ImGui::Button(tr(UiText::Browse), ImVec2(browseW, browseH)))
+            if (ImGui::Button(tr(view.importGame ? UiText::ImportGame : UiText::Browse), ImVec2(browseW, browseH)))
                 intent.browse = true;
             y = browseInline ? y + browseH : browsePos.y + browseH;
         }
@@ -408,7 +411,8 @@ inline void landscape(Parts& p, ImVec2 origin, ImVec2 area)
     ImGui::Dummy(ImVec2(1.0f, 1.0f));
 }
 
-inline void portrait(Parts& p, ImVec2 origin, ImVec2 area)
+// One column: tabs, languages, title, cover (withCover), play, settings, data folder
+inline void portrait(Parts& p, ImVec2 origin, ImVec2 area, bool withCover = true)
 {
     const menu::Metrics& m = p.m;
     const float colW = (std::min)(area.x - m.px(32.0f), m.px(520.0f));
@@ -423,17 +427,42 @@ inline void portrait(Parts& p, ImVec2 origin, ImVec2 area)
     p.title(x + colW * 0.5f, y, colW);
     y += m.px(104.0f);
 
-    const float coverW = (std::min)(colW * 0.62f, m.px(270.0f));
-    const float coverH = coverW * 4.0f / 3.0f;
-    const float coverX = x + (colW - coverW) * 0.5f;
-    drawCover(p.draw, p.view, p.linked, ImVec2(coverX, y), ImVec2(coverX + coverW, y + coverH), m.px(5.0f));
-    y += coverH + m.px(20.0f);
+    if (withCover)
+    {
+        const float coverW = (std::min)(colW * 0.62f, m.px(270.0f));
+        const float coverH = coverW * 4.0f / 3.0f;
+        const float coverX = x + (colW - coverW) * 0.5f;
+        drawCover(p.draw, p.view, p.linked, ImVec2(coverX, y), ImVec2(coverX + coverW, y + coverH), m.px(5.0f));
+        y += coverH + m.px(20.0f);
+    }
 
     y = p.playButtons(x, y, colW);
     y = p.settings(x, y, colW);
     y = p.bottom(x, y + m.px(20.0f), colW, false);
     ImGui::SetCursorScreenPos(ImVec2(origin.x, y + m.px(16.0f)));
     ImGui::Dummy(ImVec2(1.0f, 1.0f));
+}
+
+// A landscape screen lower than the design (a phone on its side): the cover
+// fills the height on the left; the column on its right scrolls by itself
+inline void compactLandscape(Parts& p, ImVec2 origin, ImVec2 area)
+{
+    const menu::Metrics& m = p.m;
+    const float margin = m.px(16.0f);
+    const float coverH = area.y - margin * 2.0f;
+    const float coverW = coverH * 3.0f / 4.0f;
+    drawCover(p.draw, p.view, p.linked, ImVec2(origin.x + margin, origin.y + margin),
+        ImVec2(origin.x + margin + coverW, origin.y + margin + coverH), m.px(5.0f));
+
+    const float columnX = origin.x + margin + coverW + margin;
+    ImGui::SetCursorScreenPos(ImVec2(columnX, origin.y));
+    ImGui::BeginChild("##column", ImVec2(origin.x + area.x - columnX, area.y), ImGuiChildFlags_None,
+        ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NavFlattened);
+    Parts column = p;
+    column.draw = ImGui::GetWindowDrawList();
+    portrait(column, ImGui::GetCursorScreenPos(), ImGui::GetContentRegionAvail(), false);
+    menu::dragScroll();
+    ImGui::EndChild();
 }
 
 } // namespace launcherScreen
@@ -476,6 +505,8 @@ inline LauncherIntent drawLauncherScreen(const LauncherView& view, const menu::M
         view.dataFolderValid };
     if (metrics.portrait())
         launcherScreen::portrait(parts, origin, area);
+    else if (area.y < metrics.px(launcherScreen::kDesignLandscape.y))
+        launcherScreen::compactLandscape(parts, origin, area);
     else
         launcherScreen::landscape(parts, origin, area);
     menu::dragScroll();

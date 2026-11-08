@@ -115,6 +115,8 @@ void saveLauncherSettings(const LauncherSettings& settings);
 // user folder (Shared/userFolder.h), as the game's saves and log.
 // The game of the folder: 0 AITD1, 1 AITD2, 2 AITD3, -1 none
 int dataFolderGame(const std::string& folder);
+// The portable copy's folder of a game (0 AITD1, 1 AITD2, 2 AITD3): UserData\<game>\GAME, UTF-8
+std::string portableGameFolder(int game);
 // Each game's portable copy (UserData\<game>\GAME), when no data folder is
 // chosen or the chosen one is gone; a gone one with no copy is cleared
 void findPortableGames(LauncherSettings& settings);
@@ -155,3 +157,8 @@ enum class LaunchResult
 // game's data folder: game "aitd1", "jack" (Tatou enters the JACK subfolder
 // and shares the AITD1 configuration), "aitd2" or "aitd3"
 LaunchResult launchGame(const LauncherSettings& settings, const char* game);
+
+#ifdef __ANDROID__
+// Android: the game's arguments (argv) chosen by launchGame, empty if none
+const std::vector<std::string>& launchedGameArguments();
+#endif

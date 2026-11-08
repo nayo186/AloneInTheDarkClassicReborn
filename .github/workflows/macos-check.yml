@@ -1,0 +1,44 @@
+# Builds the macOS version and starts the launcher and the game for a few
+# seconds on a Mac of GitHub, to see in their logs that they open. No game
+# data is there (it is never uploaded): the game stops at "no data", after
+# its window and renderer. Run by hand, or on a push to the mac-build branch.
+
+name: macOS check
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [mac-build]
+
+jobs:
+  macos:
+    runs-on: macos-15
+    steps:
+      - name: Get the code
+        uses: actions/checkout@v4
+
+      - name: Install the build tools
+        run: brew install ninja
+
+      - name: Build and pack
+        run: bash tools/makeRelease-macos.sh 0.0.0-check
+
+      - name: Architectures of the programs
+        run: |
+          lipo -info TatouSource/build/release-macos/Fitd/Release/Launcher
+          lipo -info TatouSource/build/release-macos/Fitd/Release/Tatou
+
+      - name: Start the launcher and the game
+        run: |
+          mkdir -p check && tar -xzf release/ClassicReborn-0.0.0-check-macos.tar.gz -C check
+          cd check/ClassicReborn-0.0.0-check-macos
+          ./Launcher & pid=$!; sleep 10; kill $pid 2>/dev/null || true
+          ./Tatou --game aitd1 --final & pid=$!; sleep 10; kill $pid 2>/dev/null || true
+          echo "== launcher.log"; cat launcher.log || true
+          for f in $(find . -name "*.log" -o -name "crash_log.txt"); do echo "== $f"; cat "$f"; done
+
+      - name: Keep the package
+        uses: actions/upload-artifact@v4
+        with:
+          name: ClassicReborn-macos
+          path: release/ClassicReborn-0.0.0-check-macos.tar.gz

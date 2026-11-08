@@ -294,6 +294,17 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `loadSettings` | Reads aitd_remaster.cfg (defaults for anything missing) |
 | `saveSettings` | Writes the options and the controls to aitd_remaster.cfg |
 
+### `platform/touchControls.h`
+
+| Función | Para qué sirve |
+| --- | --- |
+| `touchControlsEvent` | A finger event or the Back key (window thread, readKeyboard) |
+| `touchControlsFrame` | Once per frame before the inputs are read (window thread): places the controls for the window; menuOpen: the F1 window owns the screen (all let go) |
+| `touchPadButton` | A button of the virtual controller (SDL_GamepadButton) is held |
+| `touchPadAxis` | An axis of the virtual controller (SDL_GamepadAxis): the left stick from -1 to 1, the right trigger 0 or 1; 0 for the rest |
+| `touchControlsHide` | The keyboard or a controller was used: the controls hide until a touch |
+| `touchControlsDraw` | Draws the controls over the game (game thread, inside the ImGui frame) |
+
 ## core: El juego de 1992
 
 ### `core/AITD1.h`
@@ -893,6 +904,15 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 
 ## Launcher: Launcher.exe
 
+### `Launcher/androidJava.h`
+
+| Función | Para qué sirve |
+| --- | --- |
+| `androidImportStart` | Opens the folder picker; what it holds goes into userData (the UTF-8 path of the app's UserData), for game (the launcher's tab: 0 AITD1, 1 AITD2, 2 AITD3) |
+| `androidImportProgress` | Where the import is (read every frame) |
+| `androidDownload` | Downloads url into the file at path (UTF-8); false if it failed (any thread) |
+| `androidInstallPackage` | Hands the app package at path to Android's installer, which asks the player to confirm; false if it could not (any thread) |
+
 ### `Launcher/gameCover.h`
 
 | Función | Para qué sirve |
@@ -910,6 +930,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `loadLauncherSettings` | Reads launcher.cfg |
 | `saveLauncherSettings` | Writes launcher.cfg |
 | `dataFolderGame` | The chosen folder can be a copy of the data (LISTBOD2.PAK in it for AITD1, Jack in its JACK subfolder; MER.PAK for AITD2; AN1.PAK for AITD3) or a GOG or Steam installation (GAME.GOG and GAME.INS, or GAME.INST on Steam; AITD1 in INDARK, Jack in JACK, AITD2 in INDARK2, AITD3 in INDARK3; that folder itself may be chosen too). A GOG installation is never written to: aitd_remaster.cfg goes to the user folder (Shared/userFolder.h), as the game's saves and log. The game of the folder: 0 AITD1, 1 AITD2, 2 AITD3, -1 none |
+| `portableGameFolder` | The portable copy's folder of a game (0 AITD1, 1 AITD2, 2 AITD3): UserData\<game>\GAME, UTF-8 |
 | `findPortableGames` | Each game's portable copy (UserData\<game>\GAME), when no data folder is chosen or the chosen one is gone; a gone one with no copy is cleared |
 | `isGogInstallFolder` | True if the folder is a GOG or Steam installation |
 | `hasJackData` | True if Jack in the Dark is there too (PERE.PAK) |
@@ -920,6 +941,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `readGameConfig` | Language and advanced options of the data folder's aitd_remaster.cfg |
 | `writeGameConfig` | Writes the launcher's options in the game's aitd_remaster.cfg, keeping every other line |
 | `launchGame` | Starts Tatou.exe with the default settings and the chosen language, in the game's data folder: game "aitd1", "jack" (Tatou enters the JACK subfolder and shares the AITD1 configuration), "aitd2" or "aitd3" |
+| `launchedGameArguments` | Android: the game's arguments (argv) chosen by launchGame, empty if none |
 
 ### `Launcher/updater.h`
 
