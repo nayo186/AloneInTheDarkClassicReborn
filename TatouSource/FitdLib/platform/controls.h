@@ -25,6 +25,7 @@ struct ControlsAnalog
     float sensitivity = 1.0f;
     bool invertY = false;
     bool modernStick = true;     // the left stick walks where it points, seen from the camera (controller.modernStick)
+    bool vibration = true;       // the controller vibrates when hit, dying or shooting (controller.vibration)
 };
 // The sticks' settings (dead zone, sensitivity, inverted Y, modern left stick)
 ControlsAnalog& controlsAnalog();

@@ -23,10 +23,8 @@ extern void playMenuSound(const char* soundName);
 #include <math.h>
 #include <SDL.h>
 
-#ifndef AITD_UE4
 #include "bgfxGlue.h"
 #include <bgfx/bgfx.h>
-#endif
 
 #include "settings.h"
 #include "jobSystemInit.h"
@@ -55,17 +53,12 @@ void drawProjectedLine(s32 x1s, s32 y1s, s32 z1s, s32 x2s, s32 y2s, s32 z2s, int
     x1 -= translateX;
     x2 -= translateX;
 
-#if !defined(AITD_UE4)
     y1 -= translateY;
     y2 -= translateY;
-#endif
 
     z1 -= translateZ;
     z2 -= translateZ;
 
-#if defined(AITD_UE4)
-    osystem_draw3dLine(x1, y1, z1, x2, y2, z2, c);
-#else
     transformPoint(&x1, &y1, &z1);
     transformPoint(&x2, &y2, &z2);
 
@@ -80,7 +73,6 @@ void drawProjectedLine(s32 x1s, s32 y1s, s32 z1s, s32 x2s, s32 y2s, s32 z2s, int
 
     if (z1 > 0 && z2 > 0)
         osystem_draw3dLine(transformedX1, transformedY1, z1, transformedX2, transformedY2, z2, c);
-#endif
 }
 
 #ifdef FITD_DEBUGGER

@@ -148,6 +148,15 @@ Antes de preparar la versión pública se quitaron los archivos que ya no eran c
 - **Scripts**: `build/vs2022.bat` y `vs2026.bat` (buscaban Visual Studio 2019 por error; la solución se genera con el comando de CMake), `run_linux.sh` (rutas del PC del autor original) y `build_linux.sh` (Linux se hará en la Fase 7).
 - **`TatouSource/LICENSE`**: copia idéntica de la licencia de la raíz.
 
+## Código muerto heredado de FITD (2026-11-08)
+
+Lo que FITD traía para otras plataformas y nunca se compila aquí (rama `cleanup/fitd-dead-code`):
+
+- **`AITD_UE4`**: la versión de FITD dentro de Unreal Engine 4. Nunca se define; sus bloques (29, en 16 archivos de `core/` y `common.h`) se quitaron y quedó el código que sí se usa.
+- **iOS y tvOS** (`TARGET_OS_IOS`, `TARGET_OS_TV`, `__IPHONEOS__`, `RUN_FULLSCREEN`, `USE_OPENGLES_3_0`): no hay versión para ellos (Android y macOS tienen su propio código).
+- **Macros siempre activas o sin uso** de `core/config.h`: `USE_SDL`, `USE_IMGUI`, `USE_OPENGL_3_2` (el dibujo es de bgfx), `HAS_STDINT`; `MACOSX` y `UNIX` (el macOS antiguo de FITD, con lectura de enteros al revés). `HAS_YM3812` pasó a `platform/fmopl.h`, el único que lo usa (el AdLib de Jack).
+- Líneas comentadas del FITD original en `platform/osystemSDL.cpp` (`ImGui_ImplSdlGL3_*`, `SDL_SemPost`) y variables sin uso de `osystem_init`.
+
 ## Intentos descartados
 
 - **Bordes suaves y ajustados por color en las máscaras con fondos personalizados (aparcado, 2026-10-26):** con un fondo nuevo, la máscara de 320×200 de una silla dejaba un anillo dentado de suelo sobre el personaje. Se probó, solo con fondos personalizados: (1) promediar la máscara en un píxel original y fundir el borde; (2) en la franja del borde, decidir por color si cada punto es del objeto o del suelo (primero con el color más parecido, luego con la media de cada lado y el color suavizado); (3) que cada punto decida junto a 4 vecinos para quitar los puntitos que dejaba un suelo con vetas. Mejoró mucho, pero quedaban algunos puntitos. Se aparca para probar antes las máscaras propias en alta definición, que dan el borde exacto. Código en la rama `feature/soft-mask-edges` (commit `d88296f7`, sin unir a `main`); puede servir para las máscaras que no se hagan a mano.

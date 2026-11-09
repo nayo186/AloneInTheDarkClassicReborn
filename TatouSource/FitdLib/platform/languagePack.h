@@ -5,7 +5,8 @@
 // The game's data files and a language from the player's CD (AITD3): with
 // that language chosen, the files and CD tracks its folder Languages\<name>
 // has (loose or in its CD image, Shared/languageFolder.h) are read before the
-// game's own, in homePath. Only read.
+// game's own, in homePath or, when the game runs from the player's CD, in its
+// image (gameFolder.h). Only read.
 ///////////////////////////////////////////////////////////////////////////////
 
 #pragma once
@@ -27,7 +28,7 @@ const std::string& languagePackFolder();
 SoLoud::AudioSource* languagePackCreateTrack(int track);
 
 // A data file opened for reading: loose in the language folder, else in its
-// CD image, else in homePath
+// CD image, else in homePath, else in the game's CD image
 class DataFile
 {
 public:

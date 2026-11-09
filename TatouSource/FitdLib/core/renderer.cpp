@@ -202,9 +202,7 @@ char primBuffer[30000];
 
 int renderVar3;
 
-#ifndef AITD_UE4
 void fillpoly(s16 * datas, int n, char c);
-#endif
 
 /*
 
@@ -591,11 +589,6 @@ int AnimNuage(int x,int y,int z,int alpha,int beta,int gamma, sBody* pBody)
             Z += renderZ;
             s_pointWorldY[i] = Y;
 
-#if defined(AITD_UE4)
-            *(outPtr++) = (s16)X;
-            *(outPtr++) = (s16)Y;
-            *(outPtr++) = (s16)Z;
-#else
             if(Y>10000) // height clamp
             {
                 *(outPtr++) = -10000;
@@ -615,7 +608,6 @@ int AnimNuage(int x,int y,int z,int alpha,int beta,int gamma, sBody* pBody)
                 s_pointCamera[i * 3 + 1] = (s16)Y;
                 s_pointCamera[i * 3 + 2] = (s16)Z;
             }
-#endif
         }
 
         s16* ptr = cameraSpaceBuffer;
@@ -633,11 +625,6 @@ int AnimNuage(int x,int y,int z,int alpha,int beta,int gamma, sBody* pBody)
             Z = ptr[2];
             ptr+=3;
 
-#if defined(AITD_UE4)
-            *(outPtr2++) = X;
-            *(outPtr2++) = Y;
-            *(outPtr2++) = Z;
-#else
             Z += cameraPerspective;
 
             if( Z<=50 ) // clipping
@@ -671,7 +658,6 @@ int AnimNuage(int x,int y,int z,int alpha,int beta,int gamma, sBody* pBody)
 
                 *(outPtr2++) = Z; 
             }
-#endif
 
             k--;
             if(k==0)
@@ -772,11 +758,6 @@ int RotateNuage(int x,int y,int z,int alpha,int beta,int gamma, sBody* pBody)
         Z += renderZ;
         s_pointWorldY[i] = Y;
 
-#if defined(AITD_UE4)
-        *(outPtr++) = X;
-        *(outPtr++) = Y;
-        *(outPtr++) = Z;
-#else
         if(Y>10000) // height clamp
         {
             *(outPtr++) = -10000;
@@ -824,7 +805,6 @@ int RotateNuage(int x,int y,int z,int alpha,int beta,int gamma, sBody* pBody)
             *(outPtr++) = Z; */
 
         }
-#endif
     }
     return(1);
 }
@@ -862,7 +842,6 @@ void processPrim_Line(int primType, sPrimitive* ptr, char** out)
 
     }
 
-#if !defined(AITD_UE4)
     // Exception: Lamp body (body 11) must never be depth-culled.
     // JACK mode uses body 11 for Grace (the player), not a lamp, so the
     // exception must not apply there.
@@ -873,7 +852,6 @@ void processPrim_Line(int primType, sPrimitive* ptr, char** out)
         return;
 
     if (depth > 100 || isLampBody)
-#endif
     {
         positionInPrimEntry++;
 
@@ -917,7 +895,6 @@ void processPrim_Poly(int primType, sPrimitive* ptr, char** out, int originalPri
 
     }
 
-#if !defined(AITD_UE4)
     // Exception: Lamp body (body 11) must never be depth-culled or clipped.
     // JACK mode uses body 11 for Grace (the player), not a lamp, so the
     // exception must not apply there.
@@ -928,7 +905,6 @@ void processPrim_Poly(int primType, sPrimitive* ptr, char** out, int originalPri
         return;
 
     if (depth > 100 || isLampBody)
-#endif
     {
         bool clipPoly = false;
 
@@ -976,13 +952,11 @@ void processPrim_Point(primTypeEnum primType, sPrimitive* ptr, char** out)
         depth = pCurrentPrimEntry->vertices[0].Z;
     }
 
-#if !defined(AITD_UE4)
     // Exception: Lamp body (body 11) must never be depth-culled
     const int LAMP_BODY_NUM = 11;
     bool isLampBody = (s_currentBodyNum == LAMP_BODY_NUM);
 
     if (depth > 100 || isLampBody)
-#endif
     {
         positionInPrimEntry++;
 
@@ -1018,12 +992,10 @@ void processPrim_Sphere(int primType, sPrimitive* ptr, char** out)
         depth = pCurrentPrimEntry->vertices[0].Z;
     }
 
-#if !defined(AITD_UE4)
     // Sphere primitives (e.g. character eyes) are always depth-culled normally.
     // The lamp-body exception does NOT apply here — sphere prims in body 11 are
     // character eye spheres, not the lamp itself (which is polygon-based).
     if (depth > 100)
-#endif
     {
         positionInPrimEntry++;
 

@@ -56,9 +56,6 @@ unsigned int PAK_getNumFiles(const char* name)
         {
             fileHandle.seek(4,SEEK_CUR);
             fileHandle.read(&fileOffset,4);
-#ifdef MACOSX
-            fileOffset = READ_LE_U32(&fileOffset);
-#endif
             fileHandle.close();
             // The entry table starts at offset 4 and ends where the first
             // entry begins, so it holds (fileOffset/4)-1 entries. The old

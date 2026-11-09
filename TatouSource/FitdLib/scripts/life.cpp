@@ -17,6 +17,7 @@
 #include "hybrid.h"
 #include "nativeLife.h"
 #include "lifeSafety.h"
+#include "vibration.h"
 
 // 100 as a new game sets it: a loaded game does not run that script
 int groundLevel = 100;
@@ -1776,7 +1777,13 @@ void processLife(int lifeNum, bool callFoundLife)
                 appendFormated("LM_LIFE ");
                 lifeTempVar1 = readNextArgument("newLife");
                 if (lifeTempVar1 != currentProcessedActorPtr->life)
+                {
                     printf(LIFE_TAG "Object %d: life %d -> %d (script %d)\n", currentProcessedActorPtr->indexInWorld, currentProcessedActorPtr->life, lifeTempVar1, currentLifeNum);
+                    // AITD3: every death starts script 8, the journey to the
+                    // land of the dead (music 16, the inventory emptied)
+                    if (g_gameId == AITD3 && lifeTempVar1 == 8)
+                        vibrateOnDeath();
+                }
                 currentProcessedActorPtr->life = lifeTempVar1;
                 break;
             }

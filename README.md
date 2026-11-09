@@ -63,7 +63,7 @@ It is not a static recompilation: a static recompilation translates the machine 
 - Or **Linux**, 64-bit (x86-64): Ubuntu 22.04, Linux Mint 21, Debian 12, Fedora 37 or newer, or any other distribution of the same age, with a graphics card that supports Vulkan or OpenGL.
 - Or **macOS** 11 or newer, Apple Silicon or Intel (experimental, see [On macOS](#on-macos-experimental)).
 - Or an **Android** phone or tablet with Android 7 or newer, 64-bit (almost every phone since 2017) and Vulkan (experimental, see [On Android](#on-android-experimental)).
-- Your own copy of *Alone in the Dark* (*Jack in the Dark* comes with it), *Alone in the Dark 2* and/or *Alone in the Dark 3*: the GOG or Steam editions.
+- Your own copy of *Alone in the Dark* (*Jack in the Dark* comes with it), *Alone in the Dark 2* and/or *Alone in the Dark 3*: the GOG or Steam editions, or your original CD as an image (see [Your original CD](#your-original-cd)).
 - Nothing else to install: no .NET, no Visual C++ Redistributable, no DirectX setup, no Linux packages. Unpack and run the launcher.
 
 **To build the project**
@@ -91,10 +91,13 @@ It is not a static recompilation: a static recompilation translates the machine 
 - **Launcher** to choose the game, its language (the five of the GOG and Steam editions: English, French, German, Italian, Spanish) and the data folder, with the same options as the in-game **F1** window. The menus are translated into the same five languages.
 - **Screen options**: resolution, aspect ratio (4:3, 16:10, stretched), fullscreen, frame limit, VSync.
 - **Optional effects**: edge smoothing (FXAA) on the 3D models, bloom from the painted backgrounds, film grain, CRT scanlines, ambient occlusion (SSAO), smoother animations, sharper text.
-- **Custom backgrounds**: export every background and mask of the game, enlarge or repaint them, and the game uses yours. Ready-made **HD packs** are available for *Alone in the Dark*, *Jack in the Dark*, *Alone in the Dark 2* and *Alone in the Dark 3* (see [Custom backgrounds](#custom-backgrounds)).
+- **Custom backgrounds**: export every background and mask of the game, enlarge or repaint them, and the game uses yours. Ready-made **HD packs** are available for *Alone in the Dark*, *Jack in the Dark*, *Alone in the Dark 2* and *Alone in the Dark 3* (see [Custom backgrounds](#custom-backgrounds)). Backgrounds, masks, animated sequences, music and narrators can all be changed: see the **[modding guide](MODDING.md)**.
 - **Controls**: keyboard and game controller (Xbox, PlayStation, Nintendo Switch Pro and most other USB or Bluetooth controllers), every action can be changed, several inputs per action.
 - **Modern left stick**: the character walks where you push the stick, seen from the camera, like the Resident Evil HD remasters; the D-pad and the keys stay tank controls (see [Controls](#controls)).
-- **Cheats** (F1): infinite life, behind an "Enable cheats" switch.
+- **Controller vibration**: a little when you are hit or shoot, more when you die; it can be turned off in **Controls**.
+- **Cheats** (F1): infinite life (in all four games), behind an "Enable cheats" switch.
+- **Your original CD**: play from an image of it (`.cue` and `.bin`, or `.iso`), read as it is (see [Your original CD](#your-original-cd)).
+- **Game file check**: the launcher checks the files of your game folder against the editions we know and warns if one is missing or different (see [Checking the game files](#checking-the-game-files)).
 - **Separate volumes** for music and for voices and effects.
 - **Narrators**: the French CD's narrator (from your own CD) or a fans' dubbing, with any text language; in *Alone in the Dark 2* and *3* the narrator reads the books from the CD, and fans can dub it too (see [Narrators](#narrators)).
 - ***Alone in the Dark 3* in any of its languages** over your GOG or Steam installation, with the files of that language (English, French, German, Italian, and Spanish from the original Spanish CD): texts, voices and narrator (see [Other languages in Alone in the Dark 3](#other-languages-in-alone-in-the-dark-3)).
@@ -108,7 +111,8 @@ It is not a static recompilation: a static recompilation translates the machine 
 2. Run **`Launcher.exe`** (next to `Tatou.exe`). On Linux: **`Launcher`** (next to `Tatou`), see [On Linux](#on-linux).
 3. Choose the game's tab (**Alone in the Dark**, **Alone in the Dark 2** or **Alone in the Dark 3**), press **Browse** and choose your game folder:
    - a **GOG or Steam installation**: the folder with `GAME.GOG` (or its `INDARK` subfolder; `INDARK2` for *Alone in the Dark 2*, `INDARK3` for *Alone in the Dark 3*). Music and voices are read straight from the CD image (for *Alone in the Dark 3*, from its `MUSIC` folder); nothing is extracted or written there;
-   - or a **copy of the game files** (a folder with the `.PAK` files; Jack in the Dark in its `JACK` subfolder).
+   - or a **copy of the game files** (a folder with the `.PAK` files; Jack in the Dark in its `JACK` subfolder);
+   - or a folder with **your original CD as an image** (`.cue` and `.bin`, or `.iso`; see [Your original CD](#your-original-cd)).
 4. Choose the language of the game and press **Play** (see [Languages](#languages)). *Jack in the Dark* has its own button, in the *Alone in the Dark* tab, when its files are found.
 
 **Everything in one folder (portable).** Each game can also live inside `UserData`, in its own **`GAME`** folder (the launcher creates them empty): `UserData\AITD1\GAME` (with *Jack in the Dark*), `UserData\AITD2\GAME` and `UserData\AITD3\GAME`. Copy your GOG or Steam installation there; only these files are needed (the rest, like DOSBox, GOG's saves or the installers, can be left out):
@@ -138,6 +142,26 @@ Only if you want something else for one entry, add it to the line:
 
 - `--data "<folder>"`: another game folder, the same kind you would choose with **Browse** (for example `--data "C:\GOG Games\Alone in the Dark"` or `--data "C:\GOG Games\Alone in the Dark 2"`);
 - `--lang <language>`: another language of the game for that session (`ENGLISH`, `FRANCAIS`, `DEUTSCH`, `ESPAGNOL` or `ITALIANO`).
+
+### Your original CD
+
+If you own the original CD of a game, you can play from an image of it instead of the GOG or Steam edition. Put the image in a folder of its own and choose that folder with **Browse** (or copy it into the game's `GAME` folder of `UserData`):
+
+- a **`.cue` with its `.bin`**: the whole CD, with the music. A `.bin` per track, as many programs make them, works too: keep them all next to the `.cue`;
+- or an **`.iso`** (or a `.bin` without `.cue`): the game files only, so the game plays without music.
+
+Everything is read straight from the image: the game files (from its `INDARK`, `INDARK2` or `INDARK3` folder, and *Jack in the Dark* from `JACK`), the voices and the music tracks. Nothing is extracted, and nothing is written next to the image: options, saves and the log go to `UserData`, as with GOG. The languages on the CD are offered in the launcher.
+
+**Editions.** The game knows the files of the GOG and Steam editions, which are the English CDs, and of the Spanish CD of *Alone in the Dark 3*. Other CDs (other countries, other years) should work too, but some may have small differences: the launcher checks the files of your CD as those of any game folder and warns you if one is in no edition we know (see [Checking the game files](#checking-the-game-files)). If something goes wrong, please open an issue saying which edition you have (language, year) and attach `launcher.log` and `tatou.log`: they list the files that differ, which is what we need to make it work. If everything works, please tell us too, so your edition can be added to the known ones.
+
+### Checking the game files
+
+When you choose a game folder (and when the launcher opens), the launcher checks its game files against the editions we know: every `.PAK` and `.ITD` (not the saves) and the game's `.EXE`, by size and checksum. It works the same with a copy, a GOG or Steam installation or your CD image. If it takes more than a moment (a slow drive, a pen drive, a phone), a window shows how far it got. The next time only the files that changed are read again, so it is instant.
+
+- **Files missing**: a file the game needs is not there (a copy that was cut short, for example). The launcher says so in red at the bottom and, before playing, warns that the game will close or freeze when it needs that file, listing the first ones. Copy the game folder again from your installation or your CD.
+- **Files in no edition we know**: from another edition, changed or damaged. The launcher says so in red and, before playing, warns that the game may not work well, freeze or close. You can play anyway, and if you changed those files on purpose (a mod), tick **Do not warn again for these files**: the warning comes back only if the files change again.
+
+Both lists, with each file's name, size and checksum, are in `launcher.log` and in `tatou.log` (the game checks too, without waiting, also when it is started without the launcher). Please attach them when you report a problem.
 
 ### Languages
 
@@ -222,6 +246,7 @@ Everything else works as on Windows and Linux: the options, the controllers, the
 1. **Install the app.** On the phone, download `ClassicReborn-<version>-android.apk` from the [latest release](https://github.com/nayo186/AloneInTheDarkClassicReborn/releases/latest) and open it. The first time, Android asks to allow your browser (or file manager) to install apps: allow it. It is not on Google Play, so Play Protect may warn about an unknown app: choose to install anyway. The app is called **Alone in the Dark: Classic Reborn**.
 2. **Bring the game to the phone.** Copy a folder with the game to the phone, in any way: with a USB cable to **Download**, on a memory card, from a cloud drive... Any of these:
    - your **GOG or Steam installation** from a PC (the folder with `GAME.GOG`, or with `INDARK3` and `MUSIC` for *Alone in the Dark 3*);
+   - a folder with **your original CD as an image** (`.cue` and `.bin`, or `.iso`; see [Your original CD](#your-original-cd)). Import it on the game's tab before anything else: once the game is there, a CD image on the *Alone in the Dark* tab is taken as a narrator and on the *Alone in the Dark 3* tab as a language;
    - a game's folder of **`UserData`** from Classic Reborn on your PC, such as `UserData\AITD3`, with its `GAME` folder and everything you added (`Languages`, `Voices`, `Backgrounds`, `Masks`, `Saves`);
    - the whole **`UserData`** folder, with every game at once.
 3. **Import it.** In the launcher, choose the game's tab, press **Import...** and choose that folder ("Use this folder"). The app copies what it recognises, in one go: the game (only the files it uses), and the languages, narrators, custom backgrounds, masks and saves its folder has. A folder named `AITD1`, `AITD2` or `AITD3` goes to that game, whatever the tab. You can also import only a language of *Alone in the Dark 3*, a narrator of *Alone in the Dark* or a `Backgrounds` or `Masks` folder later. When the cover turns to colour the game is ready, and the folder you copied can be deleted.
@@ -275,6 +300,8 @@ Every action can be changed in **Controls** (F1 window or launcher). Defaults:
 
 **Modern left stick.** With the left stick the character walks where you push it, seen from the camera: up walks away from the camera, down towards it. When the camera changes, the direction is kept until you release the stick or push it elsewhere, so you never walk back into the room you left. While **Action** is held (to fight), the stick gives the tank directions, as the attacks need them. The D-pad and the keys are always tank controls: up walks forward, left and right turn. To use the left stick as tank controls too, untick **Modern left stick** in **Controls**.
 
+**Vibration.** The controller vibrates a little when you are hit and at each of your shots (a weapon that fires several times in a row vibrates at each shot), and more when you die. To turn it off, untick **Controller vibration** in **Controls** (in the game with F1, or in the launcher's **Advanced options**).
+
 The menus (launcher and F1) also work with the controller: left stick or D-pad to move, right stick to scroll, A to choose, B to go back. The mouse cursor hides while the controller is in use and comes back when the mouse moves.
 
 **On Android**, the same controls are on the screen as a controller (see [On Android](#on-android-experimental)); a Bluetooth or USB controller works too.
@@ -296,7 +323,7 @@ The launcher's **Advanced options** and the in-game **F1** window share the same
 | Enhanced text | The game's letters redrawn sharp at screen resolution |
 | Custom backgrounds | Uses your pictures instead of the originals |
 | Audio | Music volume, voices and effects volume, narrator |
-| Controls | The inputs of every action, modern left stick |
+| Controls | The inputs of every action, modern left stick, controller vibration |
 | Cheats (F1 only) | **Enable cheats** turns them on or off; **Infinite life**: damage never kills you, the game's traps (deadly falls, scripted deaths) still do |
 
 ## Folders
@@ -326,6 +353,8 @@ UserData/
 
 `launcher.cfg` and `launcher.log`, next to `Launcher.exe`, keep the launcher's own settings.
 
+What you can put in these folders to change the games (backgrounds, masks, sequences, music, narrators) is explained in the **[modding guide](MODDING.md)**.
+
 ## Custom backgrounds
 
 **HD packs.** HD backgrounds ready to use, for each game:
@@ -345,6 +374,8 @@ To make your own:
 3. Save them with the same name in `Backgrounds/` (masks in `Masks/`; white covers the characters). Switch on **Custom backgrounds**: pictures saved while playing appear at once.
 
 Masks matter when your picture moves or redraws an object that stands in front of the characters.
+
+**All the details** (names, sizes, masks, sequences, music, narrators, and how to share a mod) are in the **[modding guide](MODDING.md)**.
 
 **Animated sequences** (*Jack in the Dark*, *Alone in the Dark 2* and *Alone in the Dark 3*: the intro, the cut scenes...) can be redrawn picture by picture too: **Export sequences** in F1 writes each one to `Exports/sequences/<NAME>/` (`000.png`, `001.png`...); a picture saved with the same name in `Backgrounds/sequences/<NAME>/` replaces it.
 

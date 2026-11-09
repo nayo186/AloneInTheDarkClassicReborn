@@ -35,7 +35,7 @@
 #include "common.h"
 #include "settings.h"
 #include "audioVolume.h"
-#include "gogImage.h"
+#include "gameImage.h"
 #include "gameFolder.h"
 #include "languagePack.h"
 #include <filesystem>
@@ -692,8 +692,13 @@ struct FoundTrack
     const char* from = "";
 };
 
+// The data folder (with a trailing separator); empty in debug mode with a
+// copy, where the working folder is the data folder itself (gameFolder.cpp)
+extern "C" { extern char homePath[512]; }
+
 // Where a CD track is, the first found: the language folder (its files,
-// then its CD image: a language from the player's CD), the track files of
+// then its CD image: a language from the player's CD), the working folder
+// (UserData\<game>: the player's own tracks), the track files of a copy of
 // the data, GOG's MUSIC\TrackNN.ogg (AITD3) and GOG's CD image
 static FoundTrack findTrack(int trackId)
 {
@@ -712,17 +717,21 @@ static FoundTrack findTrack(int trackId)
     }
     if ((found.file = openLooseTrack(std::string(), trackId, false)))
         return found;
-    if (isGogInstall())
+    // A copy of the data with its tracks: the working folder is UserData,
+    // the tracks are in the data folder (they were only found in debug mode)
+    if (homePath[0] && (found.file = openLooseTrack(homePath, trackId, false)))
+        return found;
+    if (!gogInstallFolder().empty())
     {
         char filename[32];
         sprintf_s(filename, sizeof(filename), "Track%02d.ogg", trackId);
-        const std::string path = (std::filesystem::u8path(gogImagePath()).parent_path() / "MUSIC" / filename).string();
+        const std::string path = (std::filesystem::u8path(gogInstallFolder()) / "MUSIC" / filename).string();
         fopen_s(&found.file, path.c_str(), "rb");
         if (found.file)
             return found;
     }
-    if ((found.source = gogImageCreateTrack(trackId)))
-        found.from = "the GOG image";
+    if ((found.source = gameImageCreateTrack(trackId)))
+        found.from = "the CD image";
     return found;
 }
 
@@ -772,6 +781,8 @@ int osystem_playTrack(int trackId)
     FILE* fHandle = track.file;
     if (fHandle == NULL)
         return 0;
+    // Named for whoever replaces it: the file is NN = the track minus 1
+    printf(AL_TAG "Music: CD track %d from its file (%02d.ogg, .wav or .mp3)\n", trackId, trackId - 1);
 
     pFile = new SoLoud::DiskFile(fHandle);
     pWavStream = new SoLoud::WavStream();
@@ -965,16 +976,16 @@ void osystem_playVocByIndex(int vocIndex)
     osystem_playVO(vocName);
 }
 
-// A voice from GOG's CD image, with or without its .VOC extension; the buffer
-// is the caller's (delete[])
-static unsigned char* loadVocFromGogImage(const char* vocName, size_t* outSize)
+// A voice from the CD image (GOG's or the player's), with or without its .VOC
+// extension; the buffer is the caller's (delete[])
+static unsigned char* loadVocFromCdImage(const char* vocName, size_t* outSize)
 {
     std::vector<unsigned char> data;
     std::string name = vocName;
-    if (!gogImageReadFile("INDARK", name.c_str(), data))
+    if (!gameImageReadFile("INDARK", name.c_str(), data))
     {
         name += ".VOC";
-        if (!gogImageReadFile("INDARK", name.c_str(), data))
+        if (!gameImageReadFile("INDARK", name.c_str(), data))
             return nullptr;
     }
     unsigned char* raw = new (std::nothrow) unsigned char[data.size()];
@@ -1128,8 +1139,8 @@ static unsigned char* loadVocFileData(const char* vocName, size_t* outSize)
         }
     }
 
-    // GOG installation: the voices are in GAME.GOG (INDARK folder of the CD)
-    if (unsigned char* raw = loadVocFromGogImage(vocName, outSize))
+    // The CD image (GOG's GAME.GOG or the player's CD): INDARK folder of the CD
+    if (unsigned char* raw = loadVocFromCdImage(vocName, outSize))
         return raw;
 
     return nullptr;
@@ -1341,15 +1352,15 @@ void osystem_playVO(const char* voFileName)
             return;
     }
 
-    // GOG installation: the voices are in GAME.GOG (INDARK folder of the CD)
-    size_t gogSize = 0;
-    if (unsigned char* raw = loadVocFromGogImage(voFileName, &gogSize))
+    // The CD image (GOG's GAME.GOG or the player's CD): INDARK folder of the CD
+    size_t imageSize = 0;
+    if (unsigned char* raw = loadVocFromCdImage(voFileName, &imageSize))
     {
-        const bool ok = tryPlayVocFromMemory(raw, gogSize, voFileName);
+        const bool ok = tryPlayVocFromMemory(raw, imageSize, voFileName);
         delete[] raw;
         if (ok)
         {
-            printf(VO_OK "Playing VO: %s (from the GOG image)" CON_RESET "\n", voFileName);
+            printf(VO_OK "Playing VO: %s (from the CD image)" CON_RESET "\n", voFileName);
             return;
         }
     }

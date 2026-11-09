@@ -5,7 +5,7 @@
 #define __FMOPL_H_
 
 /* --- select emulation chips --- */
-#define BUILD_YM3812 (HAS_YM3812)
+#define BUILD_YM3812 1   // the AdLib chip (Jack in the Dark's music)
 #define BUILD_YM3526 (HAS_YM3526)
 #define BUILD_Y8950  (HAS_Y8950)
 

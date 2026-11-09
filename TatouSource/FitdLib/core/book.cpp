@@ -24,10 +24,8 @@ extern void playMenuSound(const char* soundName);
 #include <math.h>
 #include <SDL.h>
 
-#ifndef AITD_UE4
 #include "bgfxGlue.h"
 #include <bgfx/bgfx.h>
-#endif
 
 #include "settings.h"
 #include "jobSystemInit.h"

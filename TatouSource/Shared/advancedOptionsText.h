@@ -73,6 +73,8 @@ enum class AdvancedText
     ControlsDefaults,
     ModernStick,
     ModernStickHelp,
+    Vibration,
+    VibrationHelp,
     ActionUp,
     ActionDown,
     ActionLeft,
@@ -346,6 +348,15 @@ inline const char* advancedText(AdvancedText text, int language)
           "Le personnage marche là où vous poussez le stick, vu de la caméra. La croix et le clavier restent en mode tank.",
           "Il personaggio cammina dove spingi la levetta, rispetto alla telecamera. Croce e tastiera restano a carro armato.",
           "Die Figur läuft dorthin, wohin du den Stick drückst, von der Kamera aus gesehen. Steuerkreuz und Tastatur bleiben Panzersteuerung." },
+        // Vibration
+        { "Controller vibration", "Vibración del mando", "Vibration de la manette", "Vibrazione del controller",
+          "Controller-Vibration" },
+        // VibrationHelp
+        { "The controller vibrates a little when you are hit or shoot, and more when you die.",
+          "El mando vibra un poco al recibir un golpe o al disparar, y más al morir.",
+          "La manette vibre un peu quand vous êtes touché ou tirez, et plus quand vous mourez.",
+          "Il controller vibra un po' quando vieni colpito o spari, e di più quando muori.",
+          "Der Controller vibriert leicht, wenn du getroffen wirst oder schießt, und stärker, wenn du stirbst." },
         // ActionUp
         { "Forward", "Avanzar", "Avancer", "Avanti", "Vorwärts" },
         // ActionDown

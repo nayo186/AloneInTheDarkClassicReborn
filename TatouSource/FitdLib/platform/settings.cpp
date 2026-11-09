@@ -62,6 +62,7 @@ static void setDefaults()
 
     controlsResetDefaults();
     controlsAnalog().modernStick = true;
+    controlsAnalog().vibration = true;
 }
 
 static bool isTrue(const char* value)
@@ -151,6 +152,7 @@ void loadSettings()
         else if (strcmp(key, "audio.soundVolume") == 0) c.audio.soundVolume = atoi(value);
         else if (strcmp(key, "audio.voices") == 0) copyText(c.audio.voices, sizeof(c.audio.voices), value);
         else if (strcmp(key, "controller.modernStick") == 0) controlsAnalog().modernStick = isTrue(value);
+        else if (strcmp(key, "controller.vibration") == 0) controlsAnalog().vibration = isTrue(value);
         else if (strcmp(key, "cheats.enabled") == 0) c.cheats.enabled = isTrue(value);
         else if (strcmp(key, "cheats.infiniteLife") == 0) c.cheats.infiniteLife = isTrue(value);
         else if (strcmp(key, "gamedata.language") == 0) copyText(c.gameData.language, sizeof(c.gameData.language), value);
@@ -220,8 +222,10 @@ void saveSettings()
     fprintf(file, "cheats.enabled = %s\n", flag(c.cheats.enabled));
     fprintf(file, "cheats.infiniteLife = %s\n\n", flag(c.cheats.infiniteLife));
 
-    fprintf(file, "# Controls (modernStick: the left stick walks where it points, seen from the camera)\n");
+    fprintf(file, "# Controls (modernStick: the left stick walks where it points, seen from the camera;\n");
+    fprintf(file, "# vibration: the controller vibrates when hit, dying or shooting)\n");
     fprintf(file, "controller.modernStick = %s\n", flag(controlsAnalog().modernStick));
+    fprintf(file, "controller.vibration = %s\n", flag(controlsAnalog().vibration));
     for (int a = 0; a < kGameActionCount; a++)
         fprintf(file, "controls.%s = %s\n", gameActionId((GameAction)a), bindingsToText(controlsBindings((GameAction)a)).c_str());
 

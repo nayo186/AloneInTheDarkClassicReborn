@@ -4,7 +4,8 @@
 //
 // Cheats chosen in F1 (g_settings.cheats): none acts while cheats are off.
 // Infinite life: the player's life never goes down from a hit; a script
-// death (a trap, a deadly fall or item) still kills.
+// death (a trap, a deadly fall or item) still kills. AITD3: only the life a
+// hit of the engine takes is put back.
 ///////////////////////////////////////////////////////////////////////////////
 
 #pragma once

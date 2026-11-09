@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <ctime>
 #include "gameFolder.h"
+#include "vibration.h"
 
 std::string saveFilePath(int slot, const char* extension)
 {
@@ -339,6 +340,7 @@ void saveInterpolatedValue(RealValue* pRotateStruct, FILE* fHandle)
 
 int loadSave(int saveNumber)
 {
+    forgetPlayerLife();   // the life it brings is not a hit (vibration.cpp)
     char buffer[256];
     FILE* fHandle;
     unsigned int var28;

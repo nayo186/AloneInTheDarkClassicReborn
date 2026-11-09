@@ -442,7 +442,6 @@ void startAITD1()
     // No background preload of the intro screens: it decompressed at the same
     // time as make3dTatou and corrupted the tatou model (BUGS.md V18)
 
-#ifndef AITD_UE4
     // No screen effects during tatou/credits (2D overlay screens)
     osystem_suspendScreenEffects(true);
 
@@ -454,15 +453,10 @@ void startAITD1()
     }
 
     osystem_suspendScreenEffects(false);
-#endif
 
     while (1)
     {
-#ifndef AITD_UE4
         int startupMenuResult = MainMenu();
-#else
-        int startupMenuResult = 0;
-#endif
         switch (startupMenuResult)
         {
         case -1: // timeout
@@ -489,9 +483,7 @@ void startAITD1()
         {
             // here, original would ask for protection
 
-#if !TARGET_OS_IOS && !AITD_UE4
             if(ChoosePerso()!=-1)
-#endif
             {
                 process_events();
                 while (key)
@@ -499,9 +491,7 @@ void startAITD1()
                     process_events();
                 }
 
-#if !TARGET_OS_IOS
                 startGame(7, 1, 0);
-#endif
 
                 // here, original would quit if protection flag was false
 

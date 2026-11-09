@@ -17,6 +17,7 @@
 #include "menuMouse.h"
 #include "modernStick.h"
 #include "cheats.h"
+#include "vibration.h"
 #include <set>
 
 #ifndef WIN32
@@ -546,11 +547,13 @@ void PlayWorld(int allowSystemMenu, int deltaTime)
                                     if(g_gameId != AITD2)
                                     {
                                         processLife(currentProcessedActorPtr->life, false);
+                                        vibrateOnLifeChange();   // a hit or a death vibrates the controller
                                         applyCheats();   // a hit taken in this script is put back (infinite life)
                                     }
                                     else if(aitd2ScriptRuns(scriptTick))
                                     {
                                         runAITD2Script();
+                                        vibrateOnLifeChange();   // a hit or a death vibrates the controller
                                         applyCheats();
                                     }
                                 break;
@@ -562,6 +565,7 @@ void PlayWorld(int allowSystemMenu, int deltaTime)
                                     if(currentProcessedActorPtr->lifeMode != -1)
                                     {
                                         processLife(currentProcessedActorPtr->life, false);
+                                        vibrateOnLifeChange();   // a hit or a death vibrates the controller
                                         applyCheats();   // a hit taken in this script is put back (infinite life)
                                     }
                                 break;

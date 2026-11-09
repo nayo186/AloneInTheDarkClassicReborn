@@ -118,17 +118,20 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `customMasksFolder` | Folder of the player's masks (Masks, or backgrounds_custom in debug mode) |
 | `exportsFolder` | Folder of the exported backgrounds and masks |
 | `usesPortableFolders` | True when the working folder is UserData (outside the debug mode or with GOG/Steam) |
-| `isGogInstall` | GOG installation: the CD image and its track list (empty for a copy) |
-| `gogImagePath` | Path of the CD image (...\GAME.GOG) |
-| `gogCuePath` | Path of the track list (...\GAME.INS on GOG, GAME.INST on Steam) |
+| `gameImagePath` | The CD image of a GOG installation (GAME.GOG) or the player's CD; empty for a copy |
+| `gameCuePath` | Its track list (GAME.INS on GOG, GAME.INST on Steam, the player's .cue); empty if none |
+| `gameImageFolder` | The player's CD: the folder of the CD with the game's files ("INDARK", "INDARK2", "INDARK3", "JACK"), read from the image; empty otherwise |
+| `gogInstallFolder` | The GOG or Steam installation's folder (empty for a copy or a CD image) |
+| `startGameFileCheck` | Checks the game's files against the editions we know (Shared/gameFiles.h) in a thread of its own and notes in tatou.log what differs or is missing |
 
-### `platform/gogImage.h`
+### `platform/gameImage.h`
 
 | Función | Para qué sirve |
 | --- | --- |
-| `gogImageAvailable` | True once GAME.GOG and GAME.INS were read (only for a GOG installation) |
-| `gogImageReadFile` | A file of the CD, e.g. ("INDARK", "000123.VOC"); false if not there |
-| `gogImageCreateTrack` | A music track of the CD (CD numbering: 2 = the first music track) as a SoLoud source that reads it from the image while it plays; null if there is no such track. The caller deletes it (after stopping it). |
+| `gameImageAvailable` | True once the CD image was read (a GOG installation or the player's CD) |
+| `gameImageHasFile` | True if the CD has this file, e.g. ("INDARK2", "MER.PAK") |
+| `gameImageReadFile` | A file of the CD, e.g. ("INDARK", "000123.VOC"); false if not there |
+| `gameImageCreateTrack` | A music track of the CD (CD numbering: 2 = the first music track) as a SoLoud source that reads it from the image while it plays; null if there is no such track. The caller deletes it (after stopping it). |
 | `createCdTrack` | The same for a track of any CD image read with its track list (a language's CD: languagePack.h) |
 
 ### `platform/imguiBGFX.h`
@@ -149,6 +152,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `resetWindowResizeFlag` | Reset the window resize flag (call after handling resize) |
 | `initController` | Opens the first controller connected (and the ones connected later) |
 | `shutdownController` | Closes the controller |
+| `controllerRumble` | Makes the controller vibrate (both motors 0-1) for some milliseconds, if one is connected and its vibration is on (controller.vibration) |
 | `handleControllerDeviceEvent` | A controller was connected or disconnected |
 
 ### `platform/languagePack.h`
@@ -565,7 +569,6 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `addActorToBgInscrust` | Pastes an object into the background (drawn once, not every frame) |
 | `setupPointRotate` | Sets the angles for pointRotate |
 | `pointRotate` | Turns a point by the angles of setupPointRotate |
-| `Open` | Opens a file of the game data folder (homePath) |
 | `isInViewList` | True if the room is seen from the current camera |
 | `loadCamera` | Loads the camera picture (CAMERAnn.PAK) into the background |
 | `loadMask` | Loads the foreground masks of a camera (Jack and later: MASKnn.PAK) |
@@ -635,6 +638,16 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `copyPalette` | Copies a palette |
 | `convertPaletteIfRequired` | Converts the palette of Jack and later games from 6-bit to 8-bit colours |
 | `SetLevelDestPal` | Makes the palette `coef`/256 of the way to black (fades) |
+
+### `core/playerLife.h`
+
+| Función | Para qué sirve |
+| --- | --- |
+| `playerLife` | The player's life of AITD1, Jack and AITD2, in a variable of their own; null in the other games |
+| `playerLifeValue` | The player's life now in any of the four games (AITD3: the variable its C_VAR 2 names, that of the hero being played); null if unknown |
+| `notePlayerHit` | The engine hit the player (animAction.cpp, through vibration.cpp) |
+| `playerHitRecently` | True within a second of that hit: the life the player's script takes then is the hit's (vibration.cpp, AITD3's infinite life in cheats.cpp) |
+| `forgetPlayerHit` | A saved game was loaded: no hit before it counts |
 
 ### `core/renderer.h`
 
@@ -732,6 +745,16 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `stopShaking` | Stops the screen shake |
 | `setupShaking` | Starts a screen shake that lasts until stopShaking (script instruction SHAKING) |
 | `pauseShaking` | Removes the shake offset while paused |
+
+### `core/vibration.h`
+
+| Función | Para qué sirve |
+| --- | --- |
+| `vibrateOnLifeChange` | After an object's script (mainLoop.cpp): the player's life went down (a hit) or to 0 or below (death) |
+| `vibrateOnShot` | A shot left (animAction.cpp, DO_TIR): only the player's vibrates |
+| `vibrateOnHit` | An object was hit (animAction.cpp, where HIT_BY is set): the player's hit vibrates |
+| `vibrateOnDeath` | A death of the scripts that never touches the life (AITD3's script 8, the journey to the land of the dead; life.cpp): it vibrates now |
+| `forgetPlayerLife` | A saved game was loaded: the life it brings is not a hit |
 
 ### `core/zv.h`
 
@@ -874,10 +897,9 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 
 | Función | Para qué sirve |
 | --- | --- |
-| `path` | — |
-| `fileCount` | — |
-| `tracks` | — |
-| `sectorSize` | Bytes of one raw sector (2352) or 2048 for an .iso: where a track starts |
+| `path` | The image file |
+| `fileCount` | How many files its first level of folders has |
+| `tracks` | Its tracks, from the track list (empty without one) |
 
 ### `Shared/narrators.h`
 
@@ -913,6 +935,15 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `androidDownload` | Downloads url into the file at path (UTF-8); false if it failed (any thread) |
 | `androidInstallPackage` | Hands the app package at path to Android's installer, which asks the player to confirm; false if it could not (any thread) |
 
+### `Launcher/fileCheck.h`
+
+| Función | Para qué sirve |
+| --- | --- |
+| `fileCheckStart` | Starts checking these files (gameFilesSources) in a thread, keeping what it reads in cacheFile; a check still running is stopped first |
+| `fileCheckStop` | Stops the check if it is running (on leaving, or when there is no game) |
+| `fileCheckState` | How the check goes; its result once finished |
+| `fileCheckAccept` | The player chose not to be warned again about the problems found: kept with what the check read (they are warned again if the files change) |
+
 ### `Launcher/gameCover.h`
 
 | Función | Para qué sirve |
@@ -929,10 +960,13 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `logLine` | Writes a line to launcher.log |
 | `loadLauncherSettings` | Reads launcher.cfg |
 | `saveLauncherSettings` | Writes launcher.cfg |
-| `dataFolderGame` | The chosen folder can be a copy of the data (LISTBOD2.PAK in it for AITD1, Jack in its JACK subfolder; MER.PAK for AITD2; AN1.PAK for AITD3) or a GOG or Steam installation (GAME.GOG and GAME.INS, or GAME.INST on Steam; AITD1 in INDARK, Jack in JACK, AITD2 in INDARK2, AITD3 in INDARK3; that folder itself may be chosen too). A GOG installation is never written to: aitd_remaster.cfg goes to the user folder (Shared/userFolder.h), as the game's saves and log. The game of the folder: 0 AITD1, 1 AITD2, 2 AITD3, -1 none |
+| `dataFolderGame` | The chosen folder can be a copy of the data (LISTBOD2.PAK in it for AITD1, Jack in its JACK subfolder; MER.PAK for AITD2; AN1.PAK for AITD3), a GOG or Steam installation (GAME.GOG and GAME.INS, or GAME.INST on Steam; AITD1 in INDARK, Jack in JACK, AITD2 in INDARK2, AITD3 in INDARK3; that folder itself may be chosen too) or a folder with the player's CD as an image (.cue and .bin, or .iso: Shared/gameDisc.h). A GOG installation or a CD is never written to: aitd_remaster.cfg goes to the user folder (Shared/userFolder.h), as the game's saves and log. The game of the folder: 0 AITD1, 1 AITD2, 2 AITD3, -1 none |
 | `portableGameFolder` | The portable copy's folder of a game (0 AITD1, 1 AITD2, 2 AITD3): UserData\<game>\GAME, UTF-8 |
 | `findPortableGames` | Each game's portable copy (UserData\<game>\GAME), when no data folder is chosen or the chosen one is gone; a gone one with no copy is cleared |
 | `isGogInstallFolder` | True if the folder is a GOG or Steam installation |
+| `isGameDiscFolder` | True if the folder holds the player's CD of the game as an image |
+| `gameFilesSources` | The game files of a data folder to check against the editions we know (Shared/gameFiles.h): the game's, and Jack's with AITD1 if it is there (its lines start with JACK/); loose files or the player's CD image; empty if the folder has no game |
+| `gameFilesCacheFile` | Where the check of a game's files (0 AITD1 with Jack, 1 AITD2, 2 AITD3) keeps what it read: UserData\<game>\fileCheck.cfg, UTF-8 |
 | `hasJackData` | True if Jack in the Dark is there too (PERE.PAK) |
 | `findAitd1Narrators` | The narrators with voices in AITD1's working folder (Voices: in UserData\AITD1, or in the copy itself in debug mode; Shared/narrators.h) |
 | `setLauncherDebugMode` | Debug mode (launcher.cfg "debugMode = 1", only by hand): with a copy of the data, the game writes inside the copy; otherwise everything goes to UserData next to the launcher (Shared/userFolder.h) |

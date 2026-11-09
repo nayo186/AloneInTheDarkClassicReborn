@@ -20,9 +20,7 @@ unsigned int musicChrono;
 
 typedef int(*musicDrvFunctionType)(void * ptr);
 
-#ifndef AITD_UE4
 struct FM_OPL* virtualOpl;
-#endif
 
 char OPLinitialized = 0;
 
@@ -1261,6 +1259,30 @@ int fadeParam[3];
 // The music that is playing comes from a CD track (else from the AdLib)
 static bool s_musicFromTrack = false;
 
+// AITD1 without its CD tracks: the CD version's scripts ask for CD tracks
+// (music N is track N, file NN-1), and INDARK.EXE plays nothing without the
+// CD; LISTMUS.PAK is the floppy version's AdLib music, with fewer pieces
+// than tracks. The piece of each track, matched by ear (BUGS.md C23): a
+// piece, none (silence, as in the floppy version) or the one playing goes on
+// (the intro's two tracks are one AdLib piece)
+static const int kAdlibNone = -1;
+static const int kAdlibGoesOn = -2;
+static const int kAitd1AdlibPiece[] = {
+	kAdlibNone, kAdlibNone,
+	7,              // 2  (CD01) the intro
+	kAdlibGoesOn,   // 3  (CD02) the intro goes on
+	0,              // 4  (CD03) the mansion
+	kAdlibNone, kAdlibNone, kAdlibNone,   // 5 to 7
+	2,              // 8  (CD07)
+	6,              // 9  (CD08)
+	kAdlibNone, kAdlibNone,               // 10, 11
+	1,              // 12 (CD11)
+	kAdlibNone, kAdlibNone,               // 13, 14
+	3,              // 15 (CD14)
+	5,              // 16 (CD15)
+	4,              // 17 (CD16)
+};
+
 int fadeMusic(int param1, int param2, int param3)
 {
     fadeParam[0] = param1;
@@ -1305,6 +1327,25 @@ void playMusic(int musicNumber)
 	}
 	s_musicFromTrack = false;
 
+	// AITD1: the AdLib piece of the CD track asked for (kAitd1AdlibPiece)
+	int adlibPiece = musicNumber;
+	if(g_gameId == AITD1 && musicNumber >= 0)
+	{
+		const int count = (int)(sizeof(kAitd1AdlibPiece) / sizeof(kAitd1AdlibPiece[0]));
+		adlibPiece = musicNumber < count ? kAitd1AdlibPiece[musicNumber] : kAdlibNone;
+		if(adlibPiece == kAdlibGoesOn && fadeMusic(0,0,0x10) != -1)
+		{
+			printf(MUSIC_TAG "Music %d: the AdLib piece playing goes on\n", musicNumber);
+			return;
+		}
+		if(adlibPiece < 0)
+		{
+			fadeMusic(0,0,0x40);
+			printf(MUSIC_TAG "Music %d: no AdLib piece, silence\n", musicNumber);
+			return;
+		}
+	}
+
 	//  if(musicEnabled)
 	{
 		//if(currentMusic != musicNumber)
@@ -1323,11 +1364,11 @@ void playMusic(int musicNumber)
 
 				fadeMusic(0,0,0x40);
 
-				musicPtr = HQR_Get(listMus,musicNumber);
+				musicPtr = HQR_Get(listMus,adlibPiece);
 
 				if(musicPtr)
 				{
-					printf(MUSIC_TAG "Music %d: AdLib (LISTMUS)%s\n", musicNumber, OPLinitialized ? "" : ", but the AdLib emulation is not running");
+					printf(MUSIC_TAG "Music %d: AdLib (LISTMUS %d)%s\n", musicNumber, adlibPiece, OPLinitialized ? "" : ", but the AdLib emulation is not running");
 					loadMusic(0,musicPtr);
 
 					fadeMusic(musicVolume,0,0x80);
@@ -1337,7 +1378,7 @@ void playMusic(int musicNumber)
 				}
 				else
 				{
-					printf(MUSIC_WARN "LISTMUS entry %d not found, skipping" CON_RESET "\n", musicNumber);
+					printf(MUSIC_WARN "LISTMUS entry %d not found, skipping" CON_RESET "\n", adlibPiece);
 				}
 			}
 		}

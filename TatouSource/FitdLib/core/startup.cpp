@@ -9,6 +9,7 @@
 
 #include "common.h"
 #include "consoleLog.h"
+#include "languagePack.h"
 
 // Menu sound helper (from systemMenu.cpp)
 extern void playMenuSound(const char* soundName);
@@ -22,10 +23,8 @@ extern void playMenuSound(const char* soundName);
 #include <math.h>
 #include <SDL.h>
 
-#ifndef AITD_UE4
 #include "bgfxGlue.h"
 #include <bgfx/bgfx.h>
-#endif
 
 #include "settings.h"
 #include "jobSystemInit.h"
@@ -426,7 +425,6 @@ void allocTextes(void)
 void OpenProgram(void)
 {
     //time_t ltime;
-    FILE* fHandle;
 
     setupScreen();
     //setupInterrupt();
@@ -523,19 +521,18 @@ void OpenProgram(void)
     PtrPrioritySample = loadFromItd("PRIORITY.ITD");
     prioritySampleCount = fileSize;
 
-    // read cvars definitions
+    // read cvars definitions (through DataFile: also from the player's CD image)
     {
-        fHandle = Open("DEFINES.ITD", "rb");
-        if (!fHandle)
+        DataFile defines;
+        if (!defines.open("DEFINES.ITD"))
         {
             fatalError(0, "DEFINES.ITD");
         }
         for (int i = 0; i < CVars.size(); i++) {
             s16 cvarValue = 0;
-            fread(&cvarValue, 2, 1, fHandle);
+            defines.read(&cvarValue, 2);
             CVars[i] = READ_BE_S16(&cvarValue);
         }
-        fclose(fHandle);
     }
 
     allocTextes();

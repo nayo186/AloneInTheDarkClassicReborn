@@ -171,8 +171,6 @@ void pointRotate(int x, int y, int z, int* destX, int* destY, int* destZ);
 extern "C" {
     extern char homePath[512];
 }
-// Opens a file of the game data folder (homePath)
-FILE* Open(const char* filename, const char* mode);
 extern const unsigned char defaultPalette[0x30];
 extern const unsigned char defaultPaletteAITD3[0x30];
 // True if the room is seen from the current camera

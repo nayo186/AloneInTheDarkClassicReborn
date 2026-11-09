@@ -7,37 +7,43 @@
 
 #include "common.h"
 #include "cheats.h"
+#include "playerLife.h"
 #include "settings.h"
 
-// The player's life in the scripts' variables (VARS.ITD)
-struct PlayerLife
+// AITD3: its life (the variable its C_VAR 2 names, vars[14] for Carnby) is
+// put back only when the engine's hit on the player took it, within a
+// second; any other change of the scripts goes on, so their deaths (the
+// gunman after 12 shots, being swallowed, a fall) still kill: the hero is
+// never left alive in a scene made for his death
+static void applyCheatsAITD3()
 {
-    int var;         // its index in vars
-    s16 start;       // the life a game starts with
-    s16 deadlyDrop;  // a drop this big is a script's death (0: life set to exactly 0)
-};
-
-// AITD1 vars[21] (Carnby and Emily; a hit subtracts its force), Jack vars[6]
-// (Grace; each time she is caught, one less): both start at 20 and a script's
-// death sets 0. AITD2 vars[8] (Carnby; life 288 subtracts the hit's force):
-// starts at 50, healing raises it up to 60 and a deadly item or trap
-// subtracts 1000.
-static const PlayerLife* playerLife()
-{
-    static const PlayerLife kAITD1 = { 21, 20, 0 };
-    static const PlayerLife kJack = { 6, 20, 0 };
-    static const PlayerLife kAITD2 = { 8, 50, 1000 };
-    switch (g_gameId)
+    static s16 s_kept = 0;
+    static const s16* s_keptVar = nullptr;
+    s16* life = playerLifeValue();
+    if (!g_settings.cheats.enabled || !g_settings.cheats.infiniteLife || !life)
     {
-    case AITD1: return &kAITD1;
-    case JACK: return &kJack;
-    case AITD2: return &kAITD2;
-    default: return nullptr;
+        s_keptVar = nullptr;
+        return;
     }
+    if (life != s_keptVar)
+    {
+        s_keptVar = life;
+        s_kept = *life;
+        return;
+    }
+    if (*life < s_kept && playerHitRecently())
+        *life = s_kept;
+    else
+        s_kept = *life;
 }
 
 void applyCheats()
 {
+    if (g_gameId == AITD3)
+    {
+        applyCheatsAITD3();
+        return;
+    }
     // The life kept: the most the player had (healing raises it), at least
     // the starting one
     static s16 s_kept = 0;

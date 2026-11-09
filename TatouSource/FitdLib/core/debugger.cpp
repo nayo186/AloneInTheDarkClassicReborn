@@ -109,7 +109,6 @@ void SaveScene()
 
 }
 
-#ifdef USE_IMGUI
 void InputS16(const char* name, s16* value)
 {
     int intValue = *value;
@@ -118,11 +117,9 @@ void InputS16(const char* name, s16* value)
 
     *value = intValue;
 }
-#endif
 
 void debugger_draw(void)
 {
-#ifdef USE_IMGUI
     if (ImGui::BeginMainMenuBar())
     {
         if (ImGui::BeginMenu("Debug"))
@@ -327,7 +324,6 @@ void debugger_draw(void)
         }
 
     }
-#endif
 }
 
 #endif

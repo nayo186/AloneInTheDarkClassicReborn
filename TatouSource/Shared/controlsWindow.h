@@ -136,13 +136,14 @@ struct ControlsWindowStyle
 
 // Draws the window while state.open (call every frame). bindings: one list
 // per action, edited in place; modernStick: the left stick walks where it
-// points (controller.modernStick). Returns true when either changed.
+// points (controller.modernStick); vibration: the controller vibrates when
+// hit, dying or shooting (controller.vibration). Returns true when any changed.
 // asPopup: a modal popup inside the caller's popup (the launcher's advanced
 // options); otherwise a window of its own (the game's F1 window, hidden
 // meanwhile so they never overlap). Never larger than the screen: the list
 // scrolls inside.
 inline bool drawControlsWindow(ControlsWindowState& state, std::vector<std::vector<InputBinding>>& bindings,
-                               bool& modernStick, int language, SDL_Gamepad* gamepad, bool asPopup,
+                               bool& modernStick, bool& vibration, int language, SDL_Gamepad* gamepad, bool asPopup,
                                const ControlsWindowStyle& style = ControlsWindowStyle())
 {
     auto text = [language](AdvancedText t) { return advancedText(t, language); };
@@ -269,6 +270,10 @@ inline bool drawControlsWindow(ControlsWindowState& state, std::vector<std::vect
         changed = true;
     menu::helpWhenFocused(text(AdvancedText::ModernStickHelp));
     menu::helpMarker(text(AdvancedText::ModernStickHelp));
+    if (ImGui::Checkbox(text(AdvancedText::Vibration), &vibration))
+        changed = true;
+    menu::helpWhenFocused(text(AdvancedText::VibrationHelp));
+    menu::helpMarker(text(AdvancedText::VibrationHelp));
     ImGui::EndDisabled();
     ImGui::TextWrapped("%s", text(AdvancedText::ControlsHelp));
     ImGui::Separator();
@@ -366,6 +371,7 @@ inline bool drawControlsWindow(ControlsWindowState& state, std::vector<std::vect
         for (int a = 0; a < kGameActionCount; a++)
             bindings[a] = defaultBindings((GameAction)a);
         modernStick = true;
+        vibration = true;
         changed = true;
     }
     if (ImGui::Button(text(AdvancedText::Close), ImVec2(-1.0f, 0.0f))

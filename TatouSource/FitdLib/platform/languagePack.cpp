@@ -9,9 +9,10 @@
 #include "languagePack.h"
 #include "consoleLog.h"
 #include "fileNameCase.h"
-#include "gogImage.h"
+#include "gameImage.h"
 #include "userFolder.h"
 #include "languageFolder.h"
+#include "gameFolder.h"
 
 #include <algorithm>
 #include <cstring>
@@ -27,7 +28,8 @@ static std::string s_folder;
 static CdImage s_image;
 static bool s_hasImage = false;
 static std::mutex s_cacheMutex;
-static std::map<std::string, std::vector<unsigned char>> s_cache;   // files read from the image
+static std::map<std::string, std::vector<unsigned char>> s_cache;   // files read from the language's image
+static std::map<std::string, std::vector<unsigned char>> s_discCache;   // files read from the game's CD image
 
 const std::string& languagePackFolder() { return s_folder; }
 
@@ -88,11 +90,32 @@ static const std::vector<unsigned char>* imageFile(const char* name)
     return &found->second;
 }
 
+// A file of the game's CD image (the player's CD: gameFolder.h), read once
+// and kept; null if not there
+static const std::vector<unsigned char>* discFile(const char* name)
+{
+    const std::string& folder = gameImageFolder();
+    if (folder.empty() || !gameImageHasFile(folder.c_str(), name))
+        return nullptr;
+    std::lock_guard<std::mutex> lock(s_cacheMutex);
+    auto found = s_discCache.find(name);
+    if (found == s_discCache.end())
+    {
+        std::vector<unsigned char> data;
+        if (!gameImageReadFile(folder.c_str(), name, data))
+            return nullptr;
+        found = s_discCache.emplace(name, std::move(data)).first;
+    }
+    return &found->second;
+}
+
 bool dataFileExists(const char* name)
 {
     if (!s_folder.empty() && (pathExists(matchFileCase(s_folder + name)) || imageFile(name)))
         return true;
-    return pathExists(matchFileCase(std::string(homePath) + name));
+    if (pathExists(matchFileCase(std::string(homePath) + name)))
+        return true;
+    return !gameImageFolder().empty() && gameImageHasFile(gameImageFolder().c_str(), name);
 }
 
 SoLoud::AudioSource* languagePackCreateTrack(int track)
@@ -103,7 +126,8 @@ SoLoud::AudioSource* languagePackCreateTrack(int track)
 bool DataFile::open(const char* name)
 {
     close();
-    // Loose in the language folder, else in its image, else in homePath
+    // Loose in the language folder, else in its image, else in homePath, else
+    // in the game's CD image
     if (!s_folder.empty())
     {
         const std::string loose = matchFileCase(s_folder + name);
@@ -116,7 +140,10 @@ bool DataFile::open(const char* name)
             return true;
     }
     m_file = fopen(matchFileCase(std::string(homePath) + name).c_str(), "rb");
-    return m_file != nullptr;
+    if (m_file)
+        return true;
+    m_memory = discFile(name);
+    return m_memory != nullptr;
 }
 
 void DataFile::seek(long offset, int origin)

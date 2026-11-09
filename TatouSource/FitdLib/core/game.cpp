@@ -22,10 +22,8 @@ extern void playMenuSound(const char* soundName);
 #include <math.h>
 #include <SDL.h>
 
-#ifndef AITD_UE4
 #include "bgfxGlue.h"
 #include <bgfx/bgfx.h>
-#endif
 
 #include "settings.h"
 #include "jobSystemInit.h"
@@ -511,7 +509,5 @@ void detectGame(void)
     std::string titleStr = gameName;
 
     printf(MAIN_TAG "%s\n", titleStr.c_str());
-#ifndef AITD_UE4
     SDL_SetWindowTitle(gWindowBGFX, titleStr.c_str());
-#endif
 }

@@ -8,6 +8,8 @@
 #include "gameFolder.h"
 #include "consoleLog.h"
 #include "userFolder.h"
+#include "gameDisc.h"
+#include "gameFiles.h"
 
 #include <SDL3/SDL.h>
 
@@ -15,6 +17,7 @@
 #include <cstring>
 #include <filesystem>
 #include <fstream>
+#include <thread>
 
 #ifdef _WIN32
 #define NOMINMAX
@@ -29,16 +32,22 @@ extern "C" { extern char homePath[512]; }
 static bool s_debug = false;
 static bool s_portable = false;
 static std::string s_configFolder;
-static std::string s_gogImage;
-static std::string s_gogCue;
+static std::string s_image;          // GAME.GOG or the player's CD image
+static std::string s_cue;
+static std::string s_imageFolder;    // the player's CD: its folder with the game
+static std::string s_gogFolder;
 static std::string s_message;   // logged by logGameFolder
+static bool s_checkFiles = false;           // startGameFileCheck: the data folder is known
+static GameFilesSource s_checkSource;       // its game files
+static fs::path s_checkCache;               // what the check read (fileCheck.cfg)
 
 bool isDebugMode() { return s_debug; }
 bool usesPortableFolders() { return s_portable; }
 const std::string& configFolder() { return s_configFolder; }
-bool isGogInstall() { return !s_gogImage.empty(); }
-const std::string& gogImagePath() { return s_gogImage; }
-const std::string& gogCuePath() { return s_gogCue; }
+const std::string& gameImagePath() { return s_image; }
+const std::string& gameCuePath() { return s_cue; }
+const std::string& gameImageFolder() { return s_imageFolder; }
+const std::string& gogInstallFolder() { return s_gogFolder; }
 
 static std::string s_picturesFolder = "backgrounds_custom/";
 static std::string s_masksFolder = "backgrounds_custom/";
@@ -156,6 +165,20 @@ static bool isGogRoot(const fs::path& folder, Trilogy game)
     return (image || music) && pathExists(folder / gogDataFolder(game) / gameMarker(game));
 }
 
+// The player's CD image of this game in the folder, opened in `image`
+static bool hasGameDisc(const fs::path& folder, Trilogy game, CdImage& image, GameDisc& disc)
+{
+    disc = findGameDisc(folder, image);
+    return disc.game == (int)game;
+}
+
+static bool hasGameDisc(const fs::path& folder, Trilogy game)
+{
+    CdImage image;
+    GameDisc disc;
+    return hasGameDisc(folder, game, image, disc);
+}
+
 static void setHomePath(const fs::path& dataFolder)
 {
     const std::string path = (dataFolder / "").string();
@@ -197,7 +220,8 @@ void selectGameFolder(int argc, char* argv[])
         start = fs::current_path(error);
         if (error)
             return;
-        const bool known = pathExists(start / gameMarker(game)) || isGogRoot(start, game) || isGogRoot(start.parent_path(), game);
+        const bool known = pathExists(start / gameMarker(game)) || isGogRoot(start, game) || isGogRoot(start.parent_path(), game)
+            || hasGameDisc(start, game);
         const std::string chosen = launcherSetting((std::string(gameKey(game)) + ".dataFolder").c_str());
         // The game's portable copy (UserData\<game>\GAME; Jack's is AITD1's),
         // when none is chosen or the chosen one is gone, as the launcher does
@@ -207,7 +231,7 @@ void selectGameFolder(int argc, char* argv[])
             start = fs::u8path(chosen);
         // Only if the game is in it: an empty GAME (the launcher creates them)
         // took the log and the rest, written into the data folder
-        else if (!known && (isGogRoot(portable, game) || pathExists(portable / gameMarker(game))))
+        else if (!known && (isGogRoot(portable, game) || pathExists(portable / gameMarker(game)) || hasGameDisc(portable, game)))
             start = portable;
     }
     fs::current_path(start, error);
@@ -221,18 +245,35 @@ void selectGameFolder(int argc, char* argv[])
     if (!isGogRoot(start, game) && isGogRoot(start.parent_path(), game))
         start = start.parent_path();
     const bool gog = isGogRoot(start, game);
+    // The player's CD as an image (only where there are no loose files)
+    CdImage discImage;
+    GameDisc disc;
+    const bool cd = !gog && !pathExists(start / gameMarker(game)) && hasGameDisc(start, game, discImage, disc);
 
-    // Where the game data is
-    fs::path dataFolder = gog ? start / (jack ? "JACK" : gogDataFolder(game)) : (jack ? start / "JACK" : start);
-    if (jack && !pathExists(dataFolder / "PERE.PAK"))
+    // Where the game data is (with the CD, in the image: homePath is its
+    // folder, which has no game files)
+    fs::path dataFolder = gog ? start / (jack ? "JACK" : gogDataFolder(game)) : (jack && !cd ? start / "JACK" : start);
+    if (jack && !(cd ? discImage.hasFile("JACK", "PERE.PAK") : pathExists(dataFolder / "PERE.PAK")))
     {
         s_message = MAIN_WARN "Jack in the Dark: no JACK\\PERE.PAK in the data folder" CON_RESET "\n";
         return;
     }
-    if (!jack && !pathExists(dataFolder / gameMarker(game)))
+    if (!jack && !cd && !pathExists(dataFolder / gameMarker(game)))
         return;   // not a known layout: the working directory as it is
 
-    if (s_debug && !gog)
+    // The game files to check (startGameFileCheck)
+    s_checkFiles = true;
+    s_checkSource.game = jack ? GameFilesOf::Jack : game == Trilogy::AITD3 ? GameFilesOf::Aitd3
+        : game == Trilogy::AITD2 ? GameFilesOf::Aitd2 : GameFilesOf::Aitd1;
+    s_checkSource.folder = cd ? disc.image : dataFolder;
+    if (cd)
+    {
+        s_checkSource.image = std::make_shared<CdImage>(discImage);
+        s_checkSource.imageFolder = jack ? "JACK" : kGameDiscFolder[(int)game];
+    }
+    s_checkCache = dataFolder / "fileCheck.cfg";
+
+    if (s_debug && !gog && !cd)
     {
         // Debug mode with a copy: everything inside the copy, as before
         if (jack)
@@ -256,6 +297,7 @@ void selectGameFolder(int argc, char* argv[])
     }
     setHomePath(dataFolder);
     s_portable = true;
+    s_checkCache = userFolder / "fileCheck.cfg";
     s_configFolder = (userRoot / "").string();
     s_picturesFolder = std::string(kPicturesFolder) + "/";
     s_masksFolder = std::string(kMasksFolder) + "/";
@@ -264,14 +306,23 @@ void selectGameFolder(int argc, char* argv[])
     fs::create_directories(userFolder / kSavesFolder, error);
     if (gog)
     {
-        s_gogImage = (start / "GAME.GOG").string();
-        s_gogCue = cueFile(start).string();
+        s_gogFolder = start.string();
+        if (pathExists(start / "GAME.GOG"))
+            s_image = (start / "GAME.GOG").string();
+        s_cue = cueFile(start).string();
+    }
+    if (cd)
+    {
+        s_image = disc.image.string();
+        s_cue = disc.cue.string();
+        s_imageFolder = jack ? "JACK" : kGameDiscFolder[(int)game];
     }
     // AITD3's music is in MUSIC; its CD image may be left out of a copy
-    const std::string audioFrom = !gog ? std::string()
-        : pathExists(start / "GAME.GOG") ? ", music and voices from " + s_gogImage
+    const std::string audioFrom = cd ? ", everything from the CD image " + s_image + " (" + s_imageFolder + ")"
+        : !gog ? std::string()
+        : !s_image.empty() ? ", music and voices from " + s_image
         : ", music from " + (start / "MUSIC").string();
-    s_message = std::string(MAIN_OK) + (gog ? "GOG/Steam installation" : "Copy of the data") + (s_debug ? " (debug mode)" : "") +
+    s_message = std::string(MAIN_OK) + (cd ? "Player's CD" : gog ? "GOG/Steam installation" : "Copy of the data") + (s_debug ? " (debug mode)" : "") +
         ": data in " + dataFolder.string() + " (read only), everything written in " + userFolder.string() +
         ", configuration in " + s_configFolder + audioFrom + "\n";
 }
@@ -280,4 +331,35 @@ void logGameFolder()
 {
     if (!s_message.empty())
         printf("%s", s_message.c_str());
+}
+
+void startGameFileCheck()
+{
+    if (!s_checkFiles)
+        return;
+    // A thread of its own, so the game does not wait; unchanged files are not
+    // read again (fileCheck.cfg, shared with the launcher)
+    std::thread([]
+    {
+        GameFilesCache cache;
+        cache.load(s_checkCache);
+        const GameFilesResult result = checkGameFiles({ s_checkSource }, cache);
+        cache.save(s_checkCache);
+        if (result.unknown.empty() && result.missing.empty())
+            printf(MAIN_OK "Game files: a known edition\n");
+        if (!result.missing.empty())
+        {
+            printf(MAIN_WARN "Game files: %d needed files are missing (the game will close or freeze when it needs them):" CON_RESET "\n",
+                (int)result.missing.size());
+            for (const std::string& name : result.missing)
+                printf(MAIN_WARN "  %s" CON_RESET "\n", name.c_str());
+        }
+        if (!result.unknown.empty())
+        {
+            printf(MAIN_WARN "Game files: %d are in no edition we know (another edition, changed or damaged; it may not work well):" CON_RESET "\n",
+                (int)result.unknown.size());
+            for (const std::string& line : result.unknown)
+                printf(MAIN_WARN "  %s" CON_RESET "\n", line.c_str());
+        }
+    }).detach();
 }

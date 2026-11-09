@@ -18,51 +18,15 @@
 #include <optional>
 #endif
 
-#ifdef __APPLE__
-#include <TargetConditionals.h>
-#include <stdint.h>
-#define HAS_STDINT
-#endif
-
 #ifdef _WIN32
 #define _CRT_SECURE_NO_WARNINGS
-//#include "config.h"
 #endif
 
-// Config IMGUI
 // FITD_DEBUGGER is enabled only in Debug builds
 // Release builds will have no debug menu, no collision visualization, no ImGui overhead
 #ifdef _DEBUG
     #define FITD_DEBUGGER
 #endif
-
-#ifdef __APPLE__
-    #if TARGET_OS_OSX
-        #define USE_SDL 1
-        #define USE_IMGUI
-        #define USE_OPENGL_3_2
-    #endif
-    #if TARGET_OS_TV || TARGET_OS_IOS
-        #define USE_SDL 1
-        #define USE_OPENGLES_3_0
-        #define RUN_FULLSCREEN  
-        #define USE_IMGUI
-    #endif
-#else
-    #define USE_SDL 1
-    #define USE_IMGUI
-    #define USE_OPENGL_3_2
-#endif
-
-#ifdef AITD_UE4
-#undef USE_IMGUI
-#endif
-
-#ifdef MACOSX
-#define UNIX
-#endif
-
-#define HAS_YM3812 1
 
 #include "types.h"
 

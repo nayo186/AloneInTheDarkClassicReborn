@@ -74,13 +74,13 @@ Cuando un archivo tiene `.cpp` y `.h`, va en una sola fila.
 | `imguiBGFX.cpp/.h` | Dear ImGui dibujado con bgfx (los menús). |
 | `menuMouse.h` | Ayudas de ratón para los menús del juego de 1992 (lista, botones, clic). |
 | `input.cpp/.h` | Teclado, ratón y mando con SDL: F11, Alt+Intro, cursor oculto con mando, bloqueo de entradas con un menú abierto. |
-| `controls.cpp/.h` | Asignaciones de controles en uso; cada imagen convierte teclado y mando en las entradas de 1992 (`JoyD`, `key`, `Click`) y lee el stick izquierdo para el movimiento moderno (`controlsLeftStick`, `controller.modernStick`). |
+| `controls.cpp/.h` | Asignaciones de controles en uso; cada imagen convierte teclado y mando en las entradas de 1992 (`JoyD`, `key`, `Click`) y lee el stick izquierdo para el movimiento moderno (`controlsLeftStick`, `controller.modernStick`); la opción de vibración (`controller.vibration`, la vibración en sí en `input.cpp`). |
 | `settings.cpp/.h` | Las opciones (`g_settings`), guardadas en `aitd_remaster.cfg`: pantalla, efectos, animación, volumen, idioma, controles y ajustes de desarrollador. |
 | `platformHooks.cpp/.h` | Los ganchos del sistema (ver sección 1). |
 | `gameFolder.cpp/.h` | Carpetas: datos (copia o instalación de GOG/Steam), carpeta de trabajo (`UserData` o la copia en modo depuración), Jack en `JACK`. |
 | `languagePack.cpp/.h` | Los archivos de datos (`DataFile`, lo usan `pak.cpp` y `loadFromItd`) y un idioma del CD del jugador (AITD3): con él elegido, lo que tenga `Languages\<nombre>` (suelto o en su imagen del CD) se lee antes que los datos. |
 | `fileAccess.cpp/.h` | Cargar archivos `.ITD` y entradas de `.PAK` en memoria, y el error fatal si falta uno. |
-| `gogImage.cpp/.h` | La música y las voces de la imagen del CD de GOG (`GAME.GOG`, leída con `Shared/cdImage.h`), sin extraer nada; las pistas de cualquier imagen (`createCdTrack`, también la del CD de un idioma). |
+| `gameImage.cpp/.h` | La imagen del CD del juego: la de GOG (`GAME.GOG`) o el CD del jugador (`Shared/gameDisc.h`), leída con `Shared/cdImage.h`, sin extraer nada: música, voces y, con el CD del jugador, los archivos del juego (`languagePack.cpp`). Las pistas de cualquier imagen (`createCdTrack`, también la del CD de un idioma). |
 | `osystemAL.cpp/.h` | Audio con SoLoud: efectos, voces (narrador del juego o de `Voices`, página por página), música del CD, dos grupos de volumen (música / voces y efectos). |
 | `osystemAL_adlib.cpp` | Música AdLib de Jack in the Dark, como fuente de sonido de SoLoud. |
 | `fmopl.cpp/.h` | Emulador del chip AdLib (OPL2) de MAME, para la música de Jack. |
@@ -100,7 +100,9 @@ Cuando un archivo tiene `.cpp` y `.h`, va en una sola fila.
 | `startup.cpp` | Inicio: variables del juego (`DEFINES.ITD`), textos del idioma, paletas, cronómetro del objeto en la mano. |
 | `game.cpp` | Detección del juego, inicio de partida, pantalla de guardar y cargar (con fecha en números pequeños). |
 | `world.cpp` | Carga del mundo (objetos del mundo, variables) al empezar una partida. |
-| `cheats.cpp/.h` | Trucos de F1 (`g_settings.cheats`, ninguno actúa con los trucos apagados): vida infinita repone lo que quita un golpe (AITD1 `vars[21]`, Jack `vars[6]`); si un script pone la vida en 0 (trampa) la muerte sigue. |
+| `cheats.cpp/.h` | Trucos de F1 (`g_settings.cheats`, ninguno actúa con los trucos apagados): vida infinita repone lo que quita un golpe (variable de `playerLife.h`); si un script pone la vida en 0 (trampa) la muerte sigue. AITD3: solo repone la vida que quita un golpe del motor en el segundo siguiente; sus muertes de guion (script 8) siguen. |
+| `playerLife.cpp/.h` | La variable con la vida del personaje en cada juego (AITD1 `vars[21]`, Jack `vars[6]`, AITD2 `vars[8]`, AITD3 la que nombra su `C_VAR 2`, `vars[14]` para Carnby) y cuándo el motor golpeó al personaje: los usan la vida infinita y la vibración. |
+| `vibration.cpp/.h` | Vibración del mando (`controller.vibration`, activada por defecto): pequeña cuando el motor golpea al personaje (donde se pone `HIT_BY`) o la vida baja sin golpe (trampa); moderada si la vida llega a 0 o menos, o en AITD3 al empezar el script 8 (el viaje al país de los muertos, toda muerte); un toque en cada disparo del personaje (`DO_TIR`). |
 | `mainLoop.cpp/.h` | Bucle principal: cada imagen procesa objetos, scripts, cámaras, salas y dibuja. |
 | `modernStick.cpp/.h` | Stick izquierdo moderno: el personaje camina hacia donde apunta el stick según la cámara (proyecta el paso de cada ángulo con la cámara actual) y conserva la dirección al cambiar de cámara; la cruceta y el teclado siguen tipo tanque. |
 | `AITD1.cpp/.h`, `AITD1_Tatou.cpp` | Lo propio de AITD1: pantallas de introducción, elección de personaje, libros; el armadillo 3D del menú de inicio. |
@@ -176,6 +178,9 @@ Cuando un archivo tiene `.cpp` y `.h`, va en una sola fila.
 | `audioVolume.h` | Volúmenes (0-100) y su ganancia. |
 | `audioWindow.h` | Ventana "Audio" (música, voces y efectos, narrador). |
 | `cdImage.h` | Lee una imagen de CD (`.iso`, `.bin` MODE1 o MODE2, `GAME.GOG`): sus archivos y, con su `.cue`, sus pistas. |
+| `gameDisc.h` | El CD original del jugador como imagen en la carpeta del juego (`.cue` + `.bin`, `.iso`): la encuentra y reconoce de qué juego es. |
+| `gameFiles.h` | Comprobación de los archivos del juego de una carpeta (copia, GOG/Steam o CD) contra las ediciones conocidas: archivos de ninguna edición y archivos necesarios que faltan; lo leído se guarda en `UserData\<juego>\fileCheck.cfg` por tamaño y fecha. |
+| `knownEditions.h` | Nombre, tamaño y CRC-32 de los archivos de las ediciones conocidas (GOG/Steam, que son el CD inglés, y el CD español de AITD3). |
 | `controlsBindings.h` | Acciones del juego, sus entradas, valores por defecto y su forma de texto en `aitd_remaster.cfg`. |
 | `controlsWindow.h` | Ventana "Controles" para cambiar las asignaciones. |
 | `languageFolder.h` | Idiomas del CD del jugador (AITD3): qué lleva cada carpeta de `Languages` (archivos sueltos y pistas `NN`/`TrackNN`, o la imagen del CD con su `.cue`) y cómo encontrar la imagen. |
@@ -198,6 +203,7 @@ Cuando un archivo tiene `.cpp` y `.h`, va en una sola fila.
 | `Launcher/launcherSettings.cpp/.h` | `launcher.cfg`, las líneas que el launcher escribe en `aitd_remaster.cfg` y el arranque de `Tatou.exe`. |
 | `Launcher/gameCover.cpp/.h` | Portadas de los juegos (compiladas dentro del exe; en grises sin datos enlazados). |
 | `Launcher/folderDialog.cpp/.h` | Selector de carpeta del Explorador de Windows. |
+| `Launcher/fileCheck.cpp/.h` | La comprobación de los archivos del juego (`Shared/gameFiles.h`) en un hilo propio, con su progreso para la ventana de carga. |
 | `Launcher/updater.cpp/.h` | Actualizaciones: busca la última versión en GitHub y la instala (lo único que se conecta a internet). |
 | `Launcher/embedCovers.cmake`, `assets/covers/` | Mete las portadas en `Launcher.exe` al compilar. |
 | `Fitd/fitd.cpp` | Punto de entrada de `Tatou.exe`: conecta el remaster y arranca el motor. |

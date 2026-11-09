@@ -16,7 +16,9 @@
 // - in debug mode with a copy of the data, the copy itself, as before.
 // The debug mode comes from --debug / --final (the launcher passes one), or
 // else from launcher.cfg next to the exe. It also enables test tools (F9).
-// Music and voices of a GOG installation come from GAME.GOG (gogImage.cpp).
+// Music and voices of a GOG installation come from GAME.GOG (gameImage.cpp).
+// The folder can also hold the player's own CD as an image (.cue with its
+// .bin, or an .iso: Shared/gameDisc.h): everything is read from it.
 ///////////////////////////////////////////////////////////////////////////////
 
 #pragma once
@@ -52,7 +54,15 @@ const char* exportsFolder();
 // True when the working folder is UserData (outside the debug mode or with GOG/Steam)
 bool usesPortableFolders();
 
-// GOG installation: the CD image and its track list (empty for a copy)
-bool isGogInstall();
-const std::string& gogImagePath();   // Path of the CD image (...\GAME.GOG)
-const std::string& gogCuePath();     // Path of the track list (...\GAME.INS on GOG, GAME.INST on Steam)
+// The CD image of a GOG installation (GAME.GOG) or the player's CD; empty for a copy
+const std::string& gameImagePath();
+// Its track list (GAME.INS on GOG, GAME.INST on Steam, the player's .cue); empty if none
+const std::string& gameCuePath();
+// The player's CD: the folder of the CD with the game's files ("INDARK",
+// "INDARK2", "INDARK3", "JACK"), read from the image; empty otherwise
+const std::string& gameImageFolder();
+// The GOG or Steam installation's folder (empty for a copy or a CD image)
+const std::string& gogInstallFolder();
+// Checks the game's files against the editions we know (Shared/gameFiles.h)
+// in a thread of its own and notes in tatou.log what differs or is missing
+void startGameFileCheck();

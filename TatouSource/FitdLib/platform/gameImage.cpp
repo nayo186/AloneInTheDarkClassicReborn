@@ -2,11 +2,11 @@
 // Alone in the Dark: Classic Reborn
 // Based on FITD by yaz0r and AloneInTheDarkReHaunted, released under GPL
 //
-// GOG's CD image (see gogImage.h); the image itself is read by
+// The game's CD image (see gameImage.h); the image itself is read by
 // Shared/cdImage.h
 ///////////////////////////////////////////////////////////////////////////////
 
-#include "gogImage.h"
+#include "gameImage.h"
 #include "gameFolder.h"
 #include "consoleLog.h"
 #include "cdImage.h"
@@ -22,35 +22,39 @@ static CdImage s_image;
 
 static void openImage()
 {
-    if (!isGogInstall())
+    if (gameImagePath().empty())
         return;
-    if (!s_image.open(std::filesystem::u8path(gogImagePath()), std::filesystem::u8path(gogCuePath())))
+    if (!s_image.open(std::filesystem::u8path(gameImagePath()), std::filesystem::u8path(gameCuePath())))
     {
-        printf(AL_WARN "GOG image: no CD file system in %s" CON_RESET "\n", gogImagePath().c_str());
+        printf(AL_WARN "CD image: no CD file system in %s" CON_RESET "\n", gameImagePath().c_str());
         return;
     }
-    if (s_image.tracks().empty() || s_image.tracks()[0].audio)
-    {
-        printf(AL_WARN "GOG image: cannot read the track list %s" CON_RESET "\n", gogCuePath().c_str());
-        return;
-    }
+    // GOG's always has its track list; the player's CD may have none (an
+    // .iso): the game then plays without music
+    if (!gameCuePath().empty() && (s_image.tracks().empty() || s_image.tracks()[0].audio))
+        printf(AL_WARN "CD image: cannot read the track list %s" CON_RESET "\n", gameCuePath().c_str());
     int musicTracks = 0;
     for (const CdTrack& track : s_image.tracks())
         musicTracks += track.audio ? 1 : 0;
     s_available = true;
-    printf(AL_OK "GOG image: %d files and %d music tracks in %s\n", s_image.fileCount(), musicTracks,
-        gogImagePath().c_str());
+    printf(AL_OK "CD image: %d files and %d music tracks in %s\n", s_image.fileCount(), musicTracks,
+        gameImagePath().c_str());
 }
 
-bool gogImageAvailable()
+bool gameImageAvailable()
 {
     std::call_once(s_openOnce, openImage);
     return s_available;
 }
 
-bool gogImageReadFile(const char* folder, const char* name, std::vector<unsigned char>& data)
+bool gameImageHasFile(const char* folder, const char* name)
 {
-    return gogImageAvailable() && s_image.readFile(folder, name, data);
+    return gameImageAvailable() && s_image.hasFile(folder, name);
+}
+
+bool gameImageReadFile(const char* folder, const char* name, std::vector<unsigned char>& data)
+{
+    return gameImageAvailable() && s_image.readFile(folder, name, data);
 }
 
 // ---- CD tracks -------------------------------------------------------------
@@ -58,9 +62,9 @@ bool gogImageReadFile(const char* folder, const char* name, std::vector<unsigned
 class CdTrackInstance : public SoLoud::AudioSourceInstance
 {
 public:
-    CdTrackInstance(const std::filesystem::path& image, long long start, long long end) : m_position(start), m_end(end)
+    CdTrackInstance(const std::filesystem::path& file, long long start, long long end) : m_position(start), m_end(end)
     {
-        m_image.open(image, std::ios::binary);
+        m_image.open(file, std::ios::binary);
         m_image.seekg(start);
     }
 
@@ -103,7 +107,7 @@ private:
 class CdTrackSource : public SoLoud::AudioSource
 {
 public:
-    CdTrackSource(const std::filesystem::path& image, long long start, long long end) : m_image(image), m_start(start), m_end(end)
+    CdTrackSource(const std::filesystem::path& file, long long start, long long end) : m_file(file), m_start(start), m_end(end)
     {
         mChannels = 2;
         mBaseSamplerate = 44100.0f;
@@ -116,27 +120,26 @@ public:
 
     SoLoud::AudioSourceInstance* createInstance() override
     {
-        return new CdTrackInstance(m_image, m_start, m_end);
+        return new CdTrackInstance(m_file, m_start, m_end);
     }
 
 private:
-    std::filesystem::path m_image;
+    std::filesystem::path m_file;   // the image, or the track's own .bin
     long long m_start;
     long long m_end;
 };
 
 SoLoud::AudioSource* createCdTrack(const CdImage& image, int track)
 {
-    const long long sectorSize = image.sectorSize();
     for (const CdTrack& cdTrack : image.tracks())
     {
-        if (cdTrack.number == track && cdTrack.audio && cdTrack.endSector > cdTrack.startSector)
-            return new CdTrackSource(image.path(), cdTrack.startSector * sectorSize, cdTrack.endSector * sectorSize);
+        if (cdTrack.number == track && cdTrack.audio && !cdTrack.file.empty() && cdTrack.end > cdTrack.start)
+            return new CdTrackSource(cdTrack.file, cdTrack.start, cdTrack.end);
     }
     return nullptr;
 }
 
-SoLoud::AudioSource* gogImageCreateTrack(int track)
+SoLoud::AudioSource* gameImageCreateTrack(int track)
 {
-    return gogImageAvailable() ? createCdTrack(s_image, track) : nullptr;
+    return gameImageAvailable() ? createCdTrack(s_image, track) : nullptr;
 }

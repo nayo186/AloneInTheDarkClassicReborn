@@ -184,6 +184,7 @@ int FitdInit(int argc, char* argv[])
 
     printf(SDL_OK "Log file: tatou.log (previous session: tatou.prev.log)\n");
     logGameFolder();
+    startGameFileCheck();
     printf(SDL_OK "Exception handler initialized - crash logs will be written to crash_log.txt\n");
     startOfRender = SDL_CreateSemaphore(0);
     endOfRender = SDL_CreateSemaphore(0);
@@ -198,15 +199,12 @@ int FitdInit(int argc, char* argv[])
     unsigned int flags = 0;
     // Not resizable: a window keeps the size and shape of the aspect ratio
     // (applyWindowAspectRatio, bgfxGlue.cpp); fullscreen fills the screen
-    //flags |= SDL_WINDOW_ALLOW_HIGHDPI;
 
-#if defined(__IPHONEOS__) || defined(__ANDROID__)
+#ifdef __ANDROID__
     // Phones: the whole screen, without the system's bars; the picture keeps
     // its aspect ratio with black bars (computeSceneRect)
     flags |= SDL_WINDOW_FULLSCREEN;
     gIsFullscreen = true;
-#endif
-#ifdef __ANDROID__
     // The Back key is Pause (touchControls.cpp) instead of closing the app
     SDL_SetHint(SDL_HINT_ANDROID_TRAP_BACK_BUTTON, "1");
     // The game is always on its side, whichever way the launcher was
@@ -393,10 +391,6 @@ u32 osystem_startOfFrame()
     static bool firstFrame = true;
     if (firstFrame)
     {
-        //
-#ifdef USE_IMGUI
-        //ImGui_ImplSdlGL3_Init(sdl_window);
-#endif
         lastFrameTimeNS = SDL_GetTicksNS();
 
         firstFrame = false;
@@ -413,10 +407,6 @@ u32 osystem_startOfFrame()
         lastFrameTimeNS = now;
     }
 
-#ifdef USE_IMGUI
-    //ImGui_ImplSdlGL3_NewFrame(sdl_window);
-#endif
-
     return static_cast<u32>(ticks);
 }
 
@@ -430,20 +420,12 @@ void osystem_endOfFrame()
     debugger_draw();
 #endif
 
-#ifdef USE_IMGUI
-    //ImGui::Render();
-#endif
-
-   // osystem_flip(NULL);
-
-
     EndFrame();
 
     if (bFirst)
         bFirst = false;
 
     SDL_SignalSemaphore(endOfRender);
-    //SDL_SemPost(emptyCount);
 
 }
 
@@ -480,20 +462,7 @@ void osystem_init()  // that's the constructor of the system dependent
         assert(0);
     }
 
-    // SDL_ShowCursor (SDL_DISABLE);
-
-    // SDL_EnableUNICODE (SDL_ENABLE); // not much used in fact
-
     SDL_PumpEvents();
-
-    int screen_width = 800;
-    int screen_height = 600;
-
-    Uint32 windowFlags = SDL_WINDOW_OPENGL;
-
-#ifdef RUN_FULLSCREEN
-    windowFlags |= SDL_WINDOW_FULLSCREEN | SDL_WINDOW_ALLOW_HIGHDPI;
-#endif
 
     osystem_mouseLeft = 0;
     osystem_mouseRight = 0;

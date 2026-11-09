@@ -10,6 +10,7 @@
 #include "common.h"
 #include "consoleLog.h"
 #include "coreHooks.h"
+#include "vibration.h"
 #include <stdio.h>
 
 #define		NO_FRAPPE			0
@@ -104,6 +105,7 @@ void GereFrappe(void)
 
                 actorPtr2->HIT_BY = currentProcessedActorIdx;
                 actorPtr2->hitForce = difficultyHitForce(actorPtr2, currentProcessedActorPtr->hitForce);
+                vibrateOnHit(currentProcessedActorPtr->COL[i]);   // the player hit: the controller vibrates
 
 
                 if(actorPtr2->objectType & AF_ANIMATED)
@@ -127,6 +129,7 @@ void GereFrappe(void)
             }
 
             currentProcessedActorPtr->animActionType = 5;
+            vibrateOnShot(currentProcessedActorIdx);   // the player's shot: a short touch
 
             // AITD3: the Lone Miner's shots (anim 1147, script 1169) had no
             // sound in any script, the other gunmen play sample 0 when they
@@ -173,6 +176,7 @@ void GereFrappe(void)
                 currentProcessedActorPtr->HIT = touchedActor;
                 hitActorPtr->HIT_BY = currentProcessedActorIdx;
                 hitActorPtr->hitForce = difficultyHitForce(hitActorPtr, currentProcessedActorPtr->hitForce);
+                vibrateOnHit((int)(hitActorPtr - ListObjets.data()));   // the player hit: the controller vibrates
 
 
                 playSound(CVars[getCVarsIdx((enumCVars)SAMPLE_CHOC)]);
@@ -382,6 +386,7 @@ void GereFrappe(void)
                 currentProcessedActorPtr->HIT = hitActorIdx;
                 hitActorPtr->HIT_BY = currentProcessedActorIdx;
                 hitActorPtr->hitForce = difficultyHitForce(hitActorPtr, currentProcessedActorPtr->hitForce);
+                vibrateOnHit((int)(hitActorPtr - ListObjets.data()));   // the player hit: the controller vibrates
             }
 
             break;
@@ -562,6 +567,7 @@ void GereFrappe(void)
                             actorPtr = &ListObjets[currentActorCol];
                             actorPtr->HIT_BY = isGunProjectile ? currentProcessedActorPtr->HIT_BY : currentProcessedActorIdx;
                             actorPtr->hitForce = difficultyHitForce(actorPtr, currentProcessedActorPtr->hitForce);
+                            vibrateOnHit((int)(actorPtr - ListObjets.data()));   // the player hit: the controller vibrates
 
 
                             // Gun projectiles stop on first hit (bullets don't continue)

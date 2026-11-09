@@ -9,6 +9,7 @@
 #include "userFolder.h"
 #include "narrators.h"
 #include "languageFolder.h"
+#include "gameDisc.h"
 
 #include <SDL3/SDL.h>
 #include <algorithm>
@@ -167,6 +168,7 @@ struct GameInstall
 {
     bool valid = false;
     bool gog = false;
+    bool disc = false;      // the player's CD as an image (Shared/gameDisc.h)
     int game = -1;          // 0 AITD1 (with Jack), 1 AITD2, 2 AITD3
     fs::path root;          // the folder Tatou starts in
     fs::path gameData;      // the game's PAKs, with the language PAKs
@@ -242,9 +244,25 @@ static GameInstall findGameInstall(const std::string& folder)
         install.jackData = path / "JACK";
         // Debug mode keeps a copy's options inside it; otherwise UserData
         install.configFolder = s_debugMode ? path : userDataFolder();
-        break;
+        return install;
+    }
+    // The player's CD: everything is read from the image, nothing written there
+    CdImage image;
+    const GameDisc disc = findGameDisc(path, image);
+    if (disc.game >= 0)
+    {
+        install.valid = install.disc = true;
+        install.game = disc.game;
+        install.root = path;
+        install.configFolder = userDataFolder();
     }
     return install;
+}
+
+// The player's CD image of a folder, opened; false if it has none
+static bool openFolderDisc(const GameInstall& install, CdImage& image)
+{
+    return install.disc && findGameDisc(install.root, image).game >= 0;
 }
 
 int dataFolderGame(const std::string& folder)
@@ -290,10 +308,60 @@ bool isGogInstallFolder(const std::string& folder)
     return findGameInstall(folder).gog;
 }
 
+bool isGameDiscFolder(const std::string& folder)
+{
+    return findGameInstall(folder).disc;
+}
+
+std::vector<GameFilesSource> gameFilesSources(const std::string& folder)
+{
+    const GameInstall install = findGameInstall(folder);
+    if (!install.valid)
+        return {};
+    static const GameFilesOf games[kGames] = { GameFilesOf::Aitd1, GameFilesOf::Aitd2, GameFilesOf::Aitd3 };
+    GameFilesSource game, jack;
+    game.game = games[install.game];
+    jack.game = GameFilesOf::Jack;
+    jack.prefix = "JACK/";
+    bool hasJack = false;
+    if (install.disc)
+    {
+        auto image = std::make_shared<CdImage>();
+        const GameDisc disc = findGameDisc(install.root, *image);
+        if (disc.game < 0)
+            return {};
+        game.folder = jack.folder = disc.image;
+        game.image = jack.image = image;
+        game.imageFolder = kGogDataFolder[install.game];
+        jack.imageFolder = "JACK";
+        hasJack = image->hasFile("JACK", "PERE.PAK");
+    }
+    else
+    {
+        game.folder = install.gameData;
+        jack.folder = install.jackData;
+        hasJack = pathExists(install.jackData / "PERE.PAK");
+    }
+    if (install.game == 0 && hasJack)
+        return { game, jack };
+    return { game };
+}
+
+std::string gameFilesCacheFile(int game)
+{
+    static const char* const games[kGames] = { "AITD1", "AITD2", "AITD3" };
+    return (userDataFolder() / games[game] / "fileCheck.cfg").u8string();
+}
+
 bool hasJackData(const std::string& folder)
 {
     const GameInstall install = findGameInstall(folder);
-    return install.game == 0 && pathExists(install.jackData / "PERE.PAK");
+    if (install.game != 0)
+        return false;
+    CdImage image;
+    if (install.disc)
+        return openFolderDisc(install, image) && image.hasFile("JACK", "PERE.PAK");
+    return pathExists(install.jackData / "PERE.PAK");
 }
 
 std::vector<std::string> findAitd1Narrators(const std::string& folder)
@@ -301,7 +369,7 @@ std::vector<std::string> findAitd1Narrators(const std::string& folder)
     const GameInstall install = findGameInstall(folder);
     if (install.game != 0)
         return {};
-    const fs::path workFolder = (!install.gog && s_debugMode) ? install.gameData : userDataFolder() / "AITD1";
+    const fs::path workFolder = (!install.gog && !install.disc && s_debugMode) ? install.gameData : userDataFolder() / "AITD1";
     return findNarrators(workFolder / kVoicesFolder);
 }
 
@@ -338,8 +406,11 @@ std::vector<GameLanguage> findGameLanguages(const std::string& folder)
     // AITD3: also a language from the player's CD, in Languages\<name> of
     // the working folder (the copy in debug mode, else UserData\AITD3), with
     // its files or its CD image (Shared/languageFolder.h)
-    const fs::path languages = ((!install.gog && s_debugMode) ? install.gameData : userDataFolder() / "AITD3") / kLanguagesFolder;
-    std::string installed = (install.game == 2) ? installedLanguageAITD3(install.gameData) : std::string();
+    const fs::path languages = ((!install.gog && !install.disc && s_debugMode) ? install.gameData : userDataFolder() / "AITD3") / kLanguagesFolder;
+    // The player's CD: the languages on it
+    CdImage discImage;
+    const bool disc = openFolderDisc(install, discImage);
+    std::string installed = (install.game == 2 && !disc) ? installedLanguageAITD3(install.gameData) : std::string();
     if (!installed.empty() && !pathExists(install.gameData / (installed + ".PAK")))
         installed.clear();
     for (const GameLanguage& language : all)
@@ -348,7 +419,8 @@ std::vector<GameLanguage> findGameLanguages(const std::string& folder)
         // AITD3 is sold one language at a time and changing it leaves the
         // other's PAK behind: only the installed one, whose voices and
         // tracks are there (BUGS.md T46)
-        bool has = pathExists(install.gameData / pak) && (installed.empty() || installed == language.pakName);
+        bool has = disc ? discImage.hasFile(kGogDataFolder[install.game], pak)
+            : pathExists(install.gameData / pak) && (installed.empty() || installed == language.pakName);
         if (!has && install.game == 2)
         {
             // A language folder: its CD image, or its loose files if none of
@@ -451,6 +523,8 @@ void readGameConfig(const std::string& folder, LauncherSettings& settings)
             settings.voices = value;
         else if (key == "controller.modernStick")
             settings.modernStick = isTrue(value);
+        else if (key == "controller.vibration")
+            settings.vibration = isTrue(value);
         else if (key.compare(0, 9, "controls.") == 0)
         {
             for (int a = 0; a < kGameActionCount; a++)
@@ -503,6 +577,7 @@ bool writeGameConfig(const std::string& folder, const LauncherSettings& settings
     wanted.push_back({ "audio.soundVolume", "audio.soundVolume = " + std::to_string(settings.soundVolume), false });
     wanted.push_back({ "audio.voices", "audio.voices = \"" + settings.voices + "\"", false });
     wanted.push_back({ "controller.modernStick", std::string("controller.modernStick = ") + boolText(settings.modernStick), false });
+    wanted.push_back({ "controller.vibration", std::string("controller.vibration = ") + boolText(settings.vibration), false });
     if (settings.controls.size() == (size_t)kGameActionCount)
     {
         for (int a = 0; a < kGameActionCount; a++)
@@ -582,7 +657,7 @@ LaunchResult launchGame(const LauncherSettings& settings, const char* game)
     const GameInstall install = findGameInstall(folder);
     const fs::path startFolder = install.valid ? install.root : toPath(folder);
     logLine("Starting %s %s (working folder %s%s)", kTatouFile, args.c_str(), startFolder.u8string().c_str(),
-        install.gog ? ", GOG installation" : "");
+        install.gog ? ", GOG installation" : install.disc ? ", the player's CD image" : "");
 
 #if defined(__ANDROID__)
     // The game runs in this same program once the launcher closes (Fitd/fitd.cpp)

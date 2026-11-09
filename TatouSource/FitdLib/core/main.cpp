@@ -12,7 +12,6 @@
 #include "exitProgram.h"
 #include "common.h"
 #include "consoleLog.h"
-#include "fileNameCase.h"
 
 // Menu sound helper (from systemMenu.cpp)
 extern void playMenuSound(const char* soundName);
@@ -27,30 +26,18 @@ extern void playMenuSound(const char* soundName);
 #include <math.h>
 #include <SDL.h>
 
-#ifndef AITD_UE4
 #include "bgfxGlue.h"
 #include <bgfx/bgfx.h>
-#endif
 
 #include "settings.h"
 #include "jobSystemInit.h"
 
 #include <array>
-#include <filesystem>
 #include <string>
 #include <fstream>
 #include <ctime>
 
 // stb_image for loading save slot preview PNGs (static, one copy per file that needs it)
-
-extern "C" {
-    extern char homePath[512];
-}
-
-FILE* Open(const char* filename, const char* mode) {
-    std::filesystem::path path = std::filesystem::path(homePath) / filename;
-    return fopen(mode[0] == 'r' ? matchFileCase(path.string()).c_str() : path.string().c_str(), mode);
-}
 
 
 int AntiRebond;
@@ -73,9 +60,7 @@ int FitdMain(int argc, char* argv[])
     parseLaunchOptions(argc, argv);
     applyLaunchOptions();
 
-#ifndef AITD_UE4
     initBgfxGlue(argc, argv);
-#endif
 
 
     osystem_startOfFrame();

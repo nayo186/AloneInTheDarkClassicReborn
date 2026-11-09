@@ -16,6 +16,7 @@
 
 #include "controlsBindings.h"
 #include "audioVolume.h"
+#include "gameFiles.h"
 
 #include <string>
 #include <vector>
@@ -66,6 +67,7 @@ struct LauncherSettings
     // settings button: they are reset in their own window)
     std::vector<std::vector<InputBinding>> controls;
     bool modernStick = true;   // controller.modernStick: the left stick walks where it points
+    bool vibration = true;     // controller.vibration: the controller vibrates when hit, dying or shooting
     void restoreDefaultControls()
     {
         controls.assign(kGameActionCount, {});
@@ -108,11 +110,13 @@ void loadLauncherSettings(LauncherSettings& settings);
 void saveLauncherSettings(const LauncherSettings& settings);
 
 // The chosen folder can be a copy of the data (LISTBOD2.PAK in it for AITD1,
-// Jack in its JACK subfolder; MER.PAK for AITD2; AN1.PAK for AITD3) or a GOG
+// Jack in its JACK subfolder; MER.PAK for AITD2; AN1.PAK for AITD3), a GOG
 // or Steam installation (GAME.GOG and GAME.INS, or GAME.INST on Steam; AITD1 in
 // INDARK, Jack in JACK, AITD2 in INDARK2, AITD3 in INDARK3; that folder itself may be chosen
-// too). A GOG installation is never written to: aitd_remaster.cfg goes to the
-// user folder (Shared/userFolder.h), as the game's saves and log.
+// too) or a folder with the player's CD as an image (.cue and .bin, or .iso:
+// Shared/gameDisc.h). A GOG installation or a CD is never written to:
+// aitd_remaster.cfg goes to the user folder (Shared/userFolder.h), as the
+// game's saves and log.
 // The game of the folder: 0 AITD1, 1 AITD2, 2 AITD3, -1 none
 int dataFolderGame(const std::string& folder);
 // The portable copy's folder of a game (0 AITD1, 1 AITD2, 2 AITD3): UserData\<game>\GAME, UTF-8
@@ -122,6 +126,16 @@ std::string portableGameFolder(int game);
 void findPortableGames(LauncherSettings& settings);
 // True if the folder is a GOG or Steam installation
 bool isGogInstallFolder(const std::string& folder);
+// True if the folder holds the player's CD of the game as an image
+bool isGameDiscFolder(const std::string& folder);
+// The game files of a data folder to check against the editions we know
+// (Shared/gameFiles.h): the game's, and Jack's with AITD1 if it is there
+// (its lines start with JACK/); loose files or the player's CD image; empty
+// if the folder has no game
+std::vector<GameFilesSource> gameFilesSources(const std::string& folder);
+// Where the check of a game's files (0 AITD1 with Jack, 1 AITD2, 2 AITD3)
+// keeps what it read: UserData\<game>\fileCheck.cfg, UTF-8
+std::string gameFilesCacheFile(int game);
 
 // True if Jack in the Dark is there too (PERE.PAK)
 bool hasJackData(const std::string& folder);

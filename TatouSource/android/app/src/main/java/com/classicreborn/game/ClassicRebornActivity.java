@@ -316,8 +316,9 @@ public class ClassicRebornActivity extends SDLActivity {
     }
 
     // The game's files among entries into gameData (its GAME folder): an
-    // installation's items (GAME_ITEMS), or loose data (a copy: every file
-    // but manuals); returns false if there are none
+    // installation's items (GAME_ITEMS), the player's CD as an image (.cue
+    // and .bin, or .iso), or loose data (a copy: every file but manuals);
+    // returns false if there are none
     private boolean planGameData(List<Entry> entries, File gameData, List<Copy> plan) {
         boolean found = false;
         for (Entry entry : entries)
@@ -325,6 +326,14 @@ public class ClassicRebornActivity extends SDLActivity {
                 plan.add(new Copy(entry, gameData));
                 found = true;
             }
+        if (!found && !hasExtension(entries, ".pak") && hasExtension(entries, ".cue", ".bin", ".img", ".iso")) {
+            for (Entry entry : entries) {
+                String lower = entry.name.toLowerCase(Locale.ROOT);
+                if (!entry.folder && (lower.endsWith(".cue") || lower.endsWith(".bin") || lower.endsWith(".img") || lower.endsWith(".iso")))
+                    plan.add(new Copy(entry, gameData));
+            }
+            return true;
+        }
         if (found || !hasExtension(entries, ".pak"))
             return found;
         for (Entry entry : entries)
@@ -357,9 +366,10 @@ public class ClassicRebornActivity extends SDLActivity {
     //   Voices, Backgrounds, Masks and Saves it has: into the folder of the
     //   game named so (AITD1...), otherwise of the launcher's tab;
     // - only a language of AITD3 (its PAK without the game's floors, or a CD
-    //   image on the AITD3 tab): AITD3/Languages/<language>;
+    //   image on the AITD3 tab once the game is there): AITD3/Languages/<language>;
     // - only a narrator of AITD1 (its first voice 000000, or a CD image on the
-    //   AITD1 tab): AITD1/Voices/<folder>;
+    //   AITD1 tab once the game is there): AITD1/Voices/<folder>;
+    // - a CD image of a game not there yet: the player's CD, as the game;
     // - only a Backgrounds or Masks folder: into the tab's game.
     // Manuals (PDF) are left out. False if nothing was recognised (nothing is
     // copied).
@@ -370,6 +380,10 @@ public class ClassicRebornActivity extends SDLActivity {
         File tabGame = new File(userData, GAME_FOLDERS[sImportGame]);
         List<Copy> plan = new ArrayList<>();
         boolean image = hasExtension(top, ".cue", ".bin", ".img", ".iso");
+        // A CD image is a narrator (AITD1) or a language (AITD3) once the
+        // game is there; before, it is the game itself (the player's CD)
+        String[] tabGameFiles = new File(tabGame, "GAME").list();
+        boolean tabHasGame = tabGameFiles != null && tabGameFiles.length > 0;
         String language = null;
         for (String[] pair : LANGUAGES)
             if (language == null && find(top, pair[0]) != null)
@@ -389,10 +403,10 @@ public class ClassicRebornActivity extends SDLActivity {
             sImportKind = IMPORT_KIND_LANGUAGE;
             addAll(plan, top, new File(new File(userData, "AITD3/Languages"), language));
         } else if (find(top, "000000.VOC") != null || find(top, "000000.WAV") != null || find(top, "000000.OGG") != null
-                || (image && sImportGame == 0)) {
+                || (image && sImportGame == 0 && tabHasGame)) {
             sImportKind = IMPORT_KIND_NARRATOR;
             addAll(plan, top, new File(new File(userData, "AITD1/Voices"), name));
-        } else if (image && sImportGame == 2) {
+        } else if (image && sImportGame == 2 && tabHasGame) {
             sImportKind = IMPORT_KIND_LANGUAGE;
             addAll(plan, top, new File(new File(userData, "AITD3/Languages"), name));
         } else if (name.equalsIgnoreCase("Backgrounds") || name.equalsIgnoreCase("Masks")) {

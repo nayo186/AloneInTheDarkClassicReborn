@@ -4,6 +4,18 @@ Alone in the Dark: Classic Reborn started on 2026-10-23 from [Alone in the Dark:
 
 This repository was published with a single starting commit, to keep it light: the early history carried large files that are no longer part of the project. Below are the changes of each release and, after them, the changes made in this fork before it was published, newest first, one line per change. The reasons behind larger removals are explained in `docs/DESCARTADO.md` and the fixes in `docs/baseline/BUGS.md`.
 
+## v1.6.1 (2026-11-09)
+
+Play from your original CD, a check of the game files, controller vibration, the AdLib music of *Alone in the Dark* without the CD, infinite life in *Alone in the Dark 3*, and a modding guide.
+
+- All games: play from your original CD as an image (`.cue` and `.bin`, also one `.bin` per track, or `.iso`), read straight from the image with its music; a CD edition we have not checked is said in red, with a warning before playing (see the README, BUGS.md C61, issue #6)
+- All games: the launcher checks the files of the game folder (a copy, GOG or Steam, or a CD image) against the editions we know, with a window while it checks: a missing file or one of no known edition is said in red, with a warning before playing; a changed file can be accepted for good. `launcher.log` and `tatou.log` list each one (see the README, BUGS.md C62)
+- All games: controller vibration, a little when hit or shooting (at each shot of a weapon that fires several times) and more on dying; on by default, it can be turned off in Controls (BUGS.md C63)
+- Alone in the Dark 3: infinite life works too; the deaths of the story (being swallowed, a fall, the gunman of the mine) still kill (BUGS.md C63)
+- Alone in the Dark: without the CD tracks, each music plays its AdLib piece, matched by ear, or silence; it played pieces of other scenes, or nothing (BUGS.md C23)
+- All games: a copy of the game with its music tracks as files (`01.wav`...) in its folder plays them; they were only found in debug mode (BUGS.md C64)
+- A modding guide, `MODDING.md`: backgrounds, full-screen pictures, masks, animated sequences, music and narrators, with their names and sizes, and how to share a mod. `tatou.log` names the file of each music track played
+
 ## v1.6.0 (2026-11-08)
 
 Classic Reborn arrives on **macOS** and **Android**, both experimental: the same four games, from the same code as Windows and Linux. Reports from Mac and Android players are very welcome.

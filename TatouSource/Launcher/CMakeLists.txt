@@ -51,6 +51,8 @@ target_sources(Launcher PRIVATE
     folderDialog.h
     updater.cpp
     updater.h
+    fileCheck.cpp
+    fileCheck.h
     Launcher.rc
     "${COVER_DATA}"
     "${THIRD_PARTY}/imgui/backends/imgui_impl_sdlrenderer3.cpp"

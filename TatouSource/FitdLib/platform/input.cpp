@@ -296,6 +296,14 @@ void initController()
     }
 }
 
+void controllerRumble(float low, float high, int milliseconds)
+{
+    if (!controlsAnalog().vibration || !g_controllerState.connected || !g_controllerState.gamepad)
+        return;
+    auto motor = [](float value) { return (Uint16)(SDL_clamp(value, 0.0f, 1.0f) * 0xFFFF); };
+    SDL_RumbleGamepad(g_controllerState.gamepad, motor(low), motor(high), (Uint32)milliseconds);
+}
+
 void shutdownController()
 {
     if (g_controllerState.gamepad)

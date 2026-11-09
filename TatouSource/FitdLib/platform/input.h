@@ -46,6 +46,9 @@ void resetWindowResizeFlag();
 void initController();
 // Closes the controller
 void shutdownController();
+// Makes the controller vibrate (both motors 0-1) for some milliseconds, if
+// one is connected and its vibration is on (controller.vibration)
+void controllerRumble(float low, float high, int milliseconds);
 // A controller was connected or disconnected
 void handleControllerDeviceEvent(SDL_Event& event);
 

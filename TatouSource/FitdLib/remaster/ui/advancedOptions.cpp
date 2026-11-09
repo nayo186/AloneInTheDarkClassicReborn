@@ -293,7 +293,8 @@ void advancedOptionsDraw()
             s_controls.open = false;
             s_controls.capturing = -1;
             s_controls.waitRelease = false;
-            drawControlsWindow(s_controls, s_controlBindings, controlsAnalog().modernStick, textLanguage(), nullptr, false);
+            drawControlsWindow(s_controls, s_controlBindings, controlsAnalog().modernStick, controlsAnalog().vibration,
+                textLanguage(), nullptr, false);
             s_audio.open = false;
             s_cheatsOpen = false;
             saveSettings();
@@ -511,8 +512,11 @@ void advancedOptionsDraw()
     controlsStyle.titleColor = kGoldLight;
     controlsStyle.titleFont = menuFonts().header;
     SDL_Gamepad* gamepad = g_controllerState.connected ? g_controllerState.gamepad : nullptr;
-    if (drawControlsWindow(s_controls, s_controlBindings, controlsAnalog().modernStick, textLanguage(), gamepad, false, controlsStyle))
+    if (drawControlsWindow(s_controls, s_controlBindings, controlsAnalog().modernStick, controlsAnalog().vibration,
+        textLanguage(), gamepad, false, controlsStyle))
     {
+        printf(CFG_TAG "Controls: modern left stick %s, vibration %s\n", controlsAnalog().modernStick ? "on" : "off",
+            controlsAnalog().vibration ? "on" : "off");
         for (int a = 0; a < kGameActionCount; a++)
         {
             controlsSetBindings((GameAction)a, s_controlBindings[a]);

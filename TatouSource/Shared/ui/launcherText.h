@@ -67,6 +67,17 @@ enum class UiText
     ImportNarratorDone,
     ImportPicturesDone,
     ImportNothing,
+    InstallDisc,
+    FilesUnknown,
+    FilesUnknownTitle,
+    FilesUnknownText,
+    PlayAnyway,
+    Cancel,
+    FilesChecking,
+    FilesMissing,
+    FilesMissingTitle,
+    FilesMissingText,
+    FilesDontWarn,
     Count
 };
 
@@ -274,6 +285,46 @@ static const char* const kLauncherTexts[(int)UiText::Count][(int)UiLanguage::Cou
       "Rien à importer dans ce dossier : choisissez celui du jeu (GOG ou Steam), une langue, un narrateur, ou Backgrounds ou Masks.",
       "Niente da importare in quella cartella: scegli quella del gioco (GOG o Steam), una lingua, un narratore, o Backgrounds o Masks.",
       "In diesem Ordner gibt es nichts zu importieren: Wählen Sie den des Spiels (GOG oder Steam), eine Sprache, einen Erzähler oder Backgrounds oder Masks." },
+    // InstallDisc
+    { "Your CD (image)", "Tu CD (imagen)", "Votre CD (image)", "Il tuo CD (immagine)", "Ihre CD (Abbild)" },
+    // FilesUnknown
+    { "Some game files are in no edition we know (see launcher.log)",
+      "Hay archivos del juego que no son de ninguna edición conocida (ver launcher.log)",
+      "Des fichiers du jeu ne sont d'aucune édition connue (voir launcher.log)",
+      "Alcuni file del gioco non sono di nessuna edizione conosciuta (vedi launcher.log)",
+      "Einige Spieldateien gehören zu keiner bekannten Ausgabe (siehe launcher.log)" },
+    // FilesUnknownTitle
+    { "Game files we do not know", "Archivos del juego que no conocemos", "Des fichiers du jeu inconnus",
+      "File del gioco che non conosciamo", "Spieldateien, die wir nicht kennen" },
+    // FilesUnknownText
+    { "Some game files are different from the editions we know (GOG, Steam and the CDs we have checked): they may be from another edition, changed or damaged. The game may not work well, freeze or close. If it is your original edition and something goes wrong, please tell us on GitHub which one you have (language, year) and send launcher.log and tatou.log: they list the files that differ, so we can make it work.",
+      "Algunos archivos del juego son distintos de los de las ediciones que conocemos (GOG, Steam y los CD que hemos comprobado): pueden ser de otra edición, estar modificados o dañados. El juego podría no funcionar bien, quedarse trabado o cerrarse. Si es tu edición original y algo falla, cuéntanos en GitHub cuál tienes (idioma, año) y envía launcher.log y tatou.log: dicen qué archivos son distintos, para poder hacerla funcionar.",
+      "Certains fichiers du jeu diffèrent de ceux des éditions que nous connaissons (GOG, Steam et les CD que nous avons vérifiés) : ils peuvent venir d'une autre édition, être modifiés ou endommagés. Le jeu peut mal fonctionner, se bloquer ou se fermer. Si c'est votre édition d'origine et qu'il y a un problème, dites-nous sur GitHub laquelle vous avez (langue, année) et envoyez launcher.log et tatou.log : ils indiquent les fichiers différents, pour que nous puissions la faire fonctionner.",
+      "Alcuni file del gioco sono diversi da quelli delle edizioni che conosciamo (GOG, Steam e i CD che abbiamo verificato): possono essere di un'altra edizione, modificati o danneggiati. Il gioco potrebbe non funzionare bene, bloccarsi o chiudersi. Se è la tua edizione originale e qualcosa va storto, dicci su GitHub quale hai (lingua, anno) e invia launcher.log e tatou.log: elencano i file diversi, così potremo farla funzionare.",
+      "Einige Spieldateien unterscheiden sich von den Ausgaben, die wir kennen (GOG, Steam und die CDs, die wir geprüft haben): Sie können aus einer anderen Ausgabe stammen, verändert oder beschädigt sein. Das Spiel funktioniert vielleicht nicht richtig, hängt sich auf oder schließt sich. Wenn es Ihre Originalausgabe ist und etwas schiefgeht, sagen Sie uns auf GitHub, welche Sie haben (Sprache, Jahr), und senden Sie launcher.log und tatou.log: Sie nennen die abweichenden Dateien, damit wir sie zum Laufen bringen können." },
+    // PlayAnyway
+    { "Play anyway", "Jugar igualmente", "Jouer quand même", "Gioca comunque", "Trotzdem spielen" },
+    // Cancel
+    { "Cancel", "Cancelar", "Annuler", "Annulla", "Abbrechen" },
+    // FilesChecking
+    { "Checking the game files...", "Comprobando los archivos del juego...", "Vérification des fichiers du jeu...",
+      "Controllo dei file del gioco...", "Spieldateien werden geprüft..." },
+    // FilesMissing (%d: how many)
+    { "%d game files are missing (see launcher.log)", "Faltan %d archivos del juego (ver launcher.log)",
+      "Il manque %d fichiers du jeu (voir launcher.log)", "Mancano %d file del gioco (vedi launcher.log)",
+      "%d Spieldateien fehlen (siehe launcher.log)" },
+    // FilesMissingTitle
+    { "Game files are missing", "Faltan archivos del juego", "Il manque des fichiers du jeu",
+      "Mancano file del gioco", "Es fehlen Spieldateien" },
+    // FilesMissingText
+    { "Files the game needs are not in this folder. When the game needs them it will close or freeze. Copy the game's folder again from your installation or your CD.",
+      "En esta carpeta faltan archivos que el juego necesita. Cuando el juego los necesite se cerrará o se quedará trabado. Vuelve a copiar la carpeta del juego desde tu instalación o tu CD.",
+      "Des fichiers dont le jeu a besoin manquent dans ce dossier. Quand le jeu en aura besoin, il se fermera ou se bloquera. Copiez à nouveau le dossier du jeu depuis votre installation ou votre CD.",
+      "In questa cartella mancano file di cui il gioco ha bisogno. Quando il gioco ne avrà bisogno si chiuderà o si bloccherà. Copia di nuovo la cartella del gioco dalla tua installazione o dal tuo CD.",
+      "In diesem Ordner fehlen Dateien, die das Spiel braucht. Wenn das Spiel sie braucht, schließt es sich oder hängt sich auf. Kopieren Sie den Ordner des Spiels erneut aus Ihrer Installation oder von Ihrer CD." },
+    // FilesDontWarn
+    { "Do not warn again for these files", "No volver a avisar para estos archivos", "Ne plus avertir pour ces fichiers",
+      "Non avvisare più per questi file", "Für diese Dateien nicht mehr warnen" },
 };
 
 inline UiLanguage& currentUiLanguage()

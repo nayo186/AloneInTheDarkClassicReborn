@@ -22,6 +22,7 @@
 #include "folderDialog.h"
 #include "gameCover.h"
 #include "updater.h"
+#include "fileCheck.h"
 #ifdef __ANDROID__
 #include "androidJava.h"
 #endif
@@ -116,6 +117,12 @@ struct LauncherState
     bool dataFolderValid = false;
     bool jackFound = false;     // Jack in the Dark is there too (PERE.PAK)
     bool gogInstall = false;    // a GOG installation (never written to)
+    bool disc = false;          // the player's CD as an image (never written to)
+    bool checking = false;      // its game files are being checked (fileCheck.h)
+    Uint64 checkStart = 0;      // since when (ms): the window shows after a moment
+    GameFilesResult files;      // what the check found: files in no known edition, files missing
+    bool filesAccepted = false; // the player chose not to be warned about those files again
+    std::string pendingGame;    // the game to start once the check ends or its warning is accepted
     std::string message;        // error shown at the bottom
     std::string note;           // or a message that is not an error (the import's progress)
     int importing = -1;         // Android: the game being imported (0-2), -1 none
@@ -140,14 +147,24 @@ static void refreshDataFolder(LauncherState& state)
     state.dataFolderValid = !folder.empty() && dataFolderGame(folder) == state.selectedGame;
     state.jackFound = state.dataFolderValid && hasJackData(folder);
     state.gogInstall = state.dataFolderValid && isGogInstallFolder(folder);
+    state.disc = state.dataFolderValid && isGameDiscFolder(folder);
+    state.files = GameFilesResult();
+    state.filesAccepted = false;
+    state.pendingGame.clear();
     state.languages.clear();
     if (!state.dataFolderValid)
     {
+        fileCheckStop();
+        state.checking = false;
         logLine("Game %d: data folder not valid: '%s'", state.selectedGame + 1, folder.c_str());
         return;
     }
     readGameConfig(folder, state.settings);
     state.languages = findGameLanguages(folder);
+    // Its game files against the editions we know, in a thread (followFileCheck)
+    fileCheckStart(gameFilesSources(folder), gameFilesCacheFile(state.selectedGame));
+    state.checking = true;
+    state.checkStart = SDL_GetTicks();
 
     // Keep the saved language if it exists here, otherwise the first one
     bool found = false;
@@ -156,8 +173,15 @@ static void refreshDataFolder(LauncherState& state)
     if (!found)
         state.settings.gameLanguage = state.languages.empty() ? "" : state.languages[0].pakName;
     logLine("Game %d: data folder OK: %s (%s, %d languages, Jack in the Dark %s)", state.selectedGame + 1, folder.c_str(),
-        state.gogInstall ? "GOG installation" : "copy of the data", (int)state.languages.size(),
+        state.gogInstall ? "GOG installation" : state.disc ? "the player's CD image" : "copy of the data", (int)state.languages.size(),
         state.jackFound ? "found" : "not found");
+}
+
+// True if the game files found need a warning before playing: files missing,
+// or files in no known edition the player did not accept
+static bool filesNeedWarning(const LauncherState& state)
+{
+    return !state.files.missing.empty() || (!state.files.unknown.empty() && !state.filesAccepted);
 }
 
 // Advanced option texts (shared with the in-game F1 window) in the interface language
@@ -420,12 +444,14 @@ static void drawAdvancedOptions(LauncherState& state, const Fonts& fonts, const 
     controlsStyle.fontScale = 1.0f;
     controlsStyle.titleColor = color(kGoldLight);
     controlsStyle.titleFont = fonts.header;
-    if (drawControlsWindow(s_controlsWindow, state.settings.controls, state.settings.modernStick, (int)uiLanguage(), s_gamepad,
+    if (drawControlsWindow(s_controlsWindow, state.settings.controls, state.settings.modernStick, state.settings.vibration,
+        (int)uiLanguage(), s_gamepad,
         true, controlsStyle))
     {
         for (int a = 0; a < kGameActionCount; a++)
             logLine("Controls: %s = %s", gameActionId((GameAction)a), bindingsToText(state.settings.controls[a]).c_str());
-        logLine("Controls: modern left stick %s", state.settings.modernStick ? "on" : "off");
+        logLine("Controls: modern left stick %s, vibration %s", state.settings.modernStick ? "on" : "off",
+            state.settings.vibration ? "on" : "off");
     }
     if (drawAudioWindow(s_audioWindow, state.settings.musicVolume, state.settings.soundVolume, state.settings.voices,
         s_narrators, (int)uiLanguage(), true, controlsStyle))
@@ -620,9 +646,27 @@ static LauncherView makeView(LauncherState& state, const LauncherCover& cover)
         view.message = tr(UiText::DataFolderInvalid);
         view.messageColor = kError;
     }
+    else if (state.dataFolderValid && state.checking)
+    {
+        view.message = tr(UiText::FilesChecking);
+        view.messageColor = kTextDim;
+    }
+    else if (state.dataFolderValid && !state.files.missing.empty())
+    {
+        char text[160];
+        snprintf(text, sizeof(text), tr(UiText::FilesMissing), (int)state.files.missing.size());
+        view.message = text;
+        view.messageColor = kError;
+    }
+    else if (state.dataFolderValid && !state.files.unknown.empty())
+    {
+        // Accepted by the player: still said, but not as an error
+        view.message = tr(UiText::FilesUnknown);
+        view.messageColor = state.filesAccepted ? kTextDim : kError;
+    }
     else if (state.dataFolderValid)
     {
-        view.message = tr(state.gogInstall ? UiText::InstallGog : UiText::InstallCopy);
+        view.message = tr(state.gogInstall ? UiText::InstallGog : state.disc ? UiText::InstallDisc : UiText::InstallCopy);
         view.messageColor = kTextDim;
     }
     return view;
@@ -704,6 +748,154 @@ static void startGame(LauncherState& state, const char* game)
         state.message = tr(result == LaunchResult::TatouMissing ? UiText::TatouMissing : UiText::LaunchFailed);
 }
 
+// The check of the game files ended: noted in launcher.log; a game the player
+// asked for meanwhile starts, or its warning opens
+static void followFileCheck(LauncherState& state)
+{
+    if (!state.checking)
+        return;
+    const FileCheckState check = fileCheckState();
+    if (!check.finished)
+        return;
+    state.checking = false;
+    state.files = check.result;
+    state.filesAccepted = check.accepted;
+    if (state.files.unknown.empty() && state.files.missing.empty())
+        logLine("Game files: a known edition (%d files checked)", check.total);
+    if (!state.files.missing.empty())
+    {
+        logLine("Game files: %d needed files are missing:", (int)state.files.missing.size());
+        for (const std::string& name : state.files.missing)
+            logLine("  %s", name.c_str());
+    }
+    if (!state.files.unknown.empty())
+    {
+        logLine("Game files: %d are in no edition we know (another edition, changed or damaged)%s:", (int)state.files.unknown.size(),
+            state.filesAccepted ? "; the player chose not to be warned again" : "");
+        for (const std::string& line : state.files.unknown)
+            logLine("  %s", line.c_str());
+    }
+    if (state.pendingGame.empty())
+        return;
+    if (filesNeedWarning(state))
+        ImGui::OpenPopup("##filesPopup");
+    else
+    {
+        const std::string game = state.pendingGame;
+        state.pendingGame.clear();
+        startGame(state, game.c_str());
+    }
+}
+
+// A panel in the middle of the window, for the popups below; false if closed
+static bool beginCentredPopup(const char* id, const Metrics& metrics)
+{
+    ImGuiIO& io = ImGui::GetIO();
+    const float width = (std::min)(metrics.px(480.0f), io.DisplaySize.x * 0.94f);
+    ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+    ImGui::SetNextWindowSizeConstraints(ImVec2(width, 0.0f), ImVec2(width, io.DisplaySize.y * 0.94f));
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, metrics.px(24.0f, 20.0f));
+    if (ImGui::BeginPopupModal(id, nullptr, menu::kPanelFlags | ImGuiWindowFlags_AlwaysAutoResize))
+        return true;
+    ImGui::PopStyleVar();
+    return false;
+}
+
+static void endCentredPopup()
+{
+    ImGui::EndPopup();
+    ImGui::PopStyleVar();
+}
+
+// While the game files are checked (if it takes more than a moment): what the
+// launcher is doing and how far it got, so it is not taken for frozen
+static void drawFileCheck(LauncherState& state, const Fonts& fonts, const Metrics& metrics)
+{
+    if (state.checking && SDL_GetTicks() - state.checkStart > 300 && !ImGui::IsPopupOpen("", ImGuiPopupFlags_AnyPopupId))
+        ImGui::OpenPopup("##checkPopup");
+    if (!beginCentredPopup("##checkPopup", metrics))
+        return;
+    if (!state.checking)
+        ImGui::CloseCurrentPopup();
+    ImGui::PushFont(fonts.header);
+    ImGui::TextColored(color(kGoldLight), "%s", tr(UiText::FilesChecking));
+    ImGui::PopFont();
+    ImGui::Spacing();
+    const FileCheckState check = fileCheckState();
+    char progress[32];
+    snprintf(progress, sizeof(progress), "%d / %d", check.done, check.total);
+    ImGui::PushStyleColor(ImGuiCol_PlotHistogram, color(kGold));
+    ImGui::ProgressBar(check.total > 0 ? (float)check.done / (float)check.total : 0.0f, ImVec2(-1.0f, metrics.px(22.0f)),
+        check.total > 0 ? progress : "");
+    ImGui::PopStyleColor();
+    ImGui::Dummy(ImVec2(0.0f, metrics.px(4.0f)));
+    endCentredPopup();
+}
+
+// Before playing with game files missing or in no edition we know: what may
+// happen, and Play anyway or Cancel; files that only differ can be accepted
+// for good ("Do not warn again", until they change)
+static void drawFilesWarning(LauncherState& state, const Fonts& fonts, const Metrics& metrics)
+{
+    if (!beginCentredPopup("##filesPopup", metrics))
+        return;
+    const bool missing = !state.files.missing.empty();
+    ImGui::PushFont(fonts.header);
+    ImGui::PushTextWrapPos(0.0f);
+    ImGui::TextColored(color(kGoldLight), "%s", tr(missing ? UiText::FilesMissingTitle : UiText::FilesUnknownTitle));
+    ImGui::PopTextWrapPos();
+    ImGui::PopFont();
+    ImGui::Spacing();
+    ImGui::PushTextWrapPos(0.0f);
+    ImGui::TextColored(color(kText), "%s", tr(missing ? UiText::FilesMissingText : UiText::FilesUnknownText));
+    if (missing)
+    {
+        // The first few missing, the rest in launcher.log
+        std::string names;
+        const size_t shown = (std::min)(state.files.missing.size(), (size_t)6);
+        for (size_t i = 0; i < shown; i++)
+            names += (i ? ", " : "") + state.files.missing[i];
+        if (state.files.missing.size() > shown)
+            names += ", ...";
+        ImGui::Spacing();
+        ImGui::TextColored(color(kTextDim), "%s", names.c_str());
+    }
+    ImGui::PopTextWrapPos();
+    ImGui::Spacing();
+    static bool dontWarn = false;
+    if (!missing)
+        ImGui::Checkbox(tr(UiText::FilesDontWarn), &dontWarn);
+    ImGui::Spacing();
+
+    // Play anyway and Cancel side by side
+    const ImVec2 pos = ImGui::GetCursorScreenPos();
+    const float gap = metrics.px(10.0f);
+    const ImVec2 half((ImGui::GetContentRegionAvail().x - gap) * 0.5f, metrics.pressHeight(40.0f));
+    if (goldButton("##filesPlay", tr(UiText::PlayAnyway), pos, half, fonts.button, true))
+    {
+        ImGui::CloseCurrentPopup();
+        if (!missing && dontWarn)
+        {
+            fileCheckAccept();
+            state.filesAccepted = true;
+            logLine("Game files in no known edition: the player chose not to be warned again");
+        }
+        dontWarn = false;
+        logLine("Game files %s: playing anyway", missing ? "missing" : "in no known edition");
+        const std::string game = state.pendingGame;
+        state.pendingGame.clear();
+        startGame(state, game.c_str());
+    }
+    else if (darkButton("##filesCancel", tr(UiText::Cancel), ImVec2(pos.x + half.x + gap, pos.y), half, fonts.button, true))
+    {
+        ImGui::CloseCurrentPopup();
+        dontWarn = false;
+        state.pendingGame.clear();
+    }
+    ImGui::Dummy(ImVec2(0.0f, metrics.px(4.0f)));
+    endCentredPopup();
+}
+
 static void handleIntent(LauncherState& state, const LauncherIntent& intent, SDL_Window* window)
 {
     if (intent.selectGame >= 0 && intent.selectGame != state.selectedGame)
@@ -772,10 +964,19 @@ static void handleIntent(LauncherState& state, const LauncherIntent& intent, SDL
     // Not while a game is being copied
     if (state.importing >= 0)
         return;
-    if (intent.play)
-        startGame(state, state.selectedGame == 2 ? "aitd3" : state.selectedGame == 1 ? "aitd2" : "aitd1");
-    else if (intent.playJack)
-        startGame(state, "jack");
+    const char* game = intent.play ? (state.selectedGame == 2 ? "aitd3" : state.selectedGame == 1 ? "aitd2" : "aitd1")
+        : intent.playJack ? "jack" : nullptr;
+    // While the files are checked the game waits for the result
+    // (followFileCheck); files missing or unknown: warned first (drawFilesWarning)
+    if (game && state.checking)
+        state.pendingGame = game;
+    else if (game && filesNeedWarning(state))
+    {
+        state.pendingGame = game;
+        ImGui::OpenPopup("##filesPopup");
+    }
+    else if (game)
+        startGame(state, game);
     if (intent.exit)
         state.quit = true;
 }
@@ -852,6 +1053,7 @@ int main(int, char**)
     if (!window || !renderer)
     {
         logLine("ERROR: could not create the window: %s", SDL_GetError());
+        fileCheckStop();
         SDL_Quit();
         return 1;
     }
@@ -958,6 +1160,7 @@ int main(int, char**)
         }
         const LauncherIntent intent = drawLauncherScreen(makeView(state, screenCovers[state.selectedGame]), metrics, fonts);
         handleIntent(state, intent, window);
+        followFileCheck(state);
         // The check at start found a newer version: asked once
         if (offerUpdate && updaterState() != UpdateState::Checking)
         {
@@ -969,6 +1172,8 @@ int main(int, char**)
         drawAdvancedOptions(state, fonts, metrics);
         drawUpdateWindow(state, fonts, metrics);
         drawAboutWindow(fonts, metrics);
+        drawFilesWarning(state, fonts, metrics);
+        drawFileCheck(state, fonts, metrics);
         ImGui::PopFont();
         ImGui::Render();
 
@@ -988,6 +1193,7 @@ int main(int, char**)
     if (!state.launched && state.dataFolderValid)
         writeGameConfig(dataFolder(state), state.settings);
 
+    fileCheckStop();
     updaterShutdown();
     logLine("Launcher closed");
     for (GameCover& cover : covers)
