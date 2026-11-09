@@ -16,13 +16,21 @@ Classic Reborn is a C++17 source port of the Infogrames engine, built on a decom
 
 ## Screenshots
 
-### Alone in the Dark
-
 <table>
   <tr>
     <td align="center"><img src="docs/images/aitd1-compare-gog.jpg" alt="The GOG edition" width="100%"><br><sub>The GOG edition</sub></td>
     <td align="center"><img src="docs/images/aitd1-compare-hd.jpg" alt="Classic Reborn with the HD pack" width="100%"><br><sub>Classic Reborn with the HD pack</sub></td>
   </tr>
+</table>
+
+<p align="center"><img src="docs/images/launcher.jpg" alt="The launcher" width="70%"><br><sub>The launcher</sub></p>
+
+<details>
+<summary><b>More screenshots</b> (Alone in the Dark, Alone in the Dark 2 and 3)</summary>
+
+### Alone in the Dark
+
+<table>
   <tr>
     <td align="center"><img src="docs/images/aitd1-bedroom-hd.jpg" alt="Emily in the bedroom" width="100%"></td>
     <td align="center"><img src="docs/images/aitd1-fight-hd.jpg" alt="A fight" width="100%"></td>
@@ -47,7 +55,7 @@ Classic Reborn is a C++17 source port of the Infogrames engine, built on a decom
   </tr>
 </table>
 
-<p align="center"><img src="docs/images/launcher.jpg" alt="The launcher" width="70%"><br><sub>The launcher</sub></p>
+</details>
 
 ## How it was made
 
