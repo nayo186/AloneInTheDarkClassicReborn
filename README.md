@@ -10,6 +10,10 @@ Classic Reborn is a C++17 source port of the Infogrames engine, built on a decom
 
 > **The game data is not included.** You need your own copy of *Alone in the Dark*, *Alone in the Dark 2* and/or *Alone in the Dark 3* (the GOG or Steam editions). Nothing of the original games is in this repository.
 
+## Trailer
+
+<p align="center"><a href="https://youtu.be/WBA-nOCI12k"><img src="docs/images/trailer.jpg" alt="Watch the trailer on YouTube" width="80%"></a></p>
+
 ## Screenshots
 
 ### Alone in the Dark
