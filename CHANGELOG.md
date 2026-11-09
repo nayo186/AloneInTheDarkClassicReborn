@@ -4,6 +4,12 @@ Alone in the Dark: Classic Reborn started on 2026-10-23 from [Alone in the Dark:
 
 This repository was published with a single starting commit, to keep it light: the early history carried large files that are no longer part of the project. Below are the changes of each release and, after them, the changes made in this fork before it was published, newest first, one line per change. The reasons behind larger removals are explained in `docs/DESCARTADO.md` and the fixes in `docs/baseline/BUGS.md`.
 
+## v1.6.2 (2026-11-09)
+
+Android phones without Vulkan can play: OpenGL ES works.
+
+- Android: OpenGL ES works. Phones that cannot start Vulkan fall back to it; it showed a black screen, closed in rooms with spheres (*Alone in the Dark 2*), showed the picture upside down for an instant at camera changes and drew *Alone in the Dark 3*'s inventory and the save thumbnails black (BUGS.md C57)
+
 ## v1.6.1 (2026-11-09)
 
 Play from your original CD, a check of the game files, controller vibration, the AdLib music of *Alone in the Dark* without the CD, infinite life in *Alone in the Dark 3*, and a modding guide.

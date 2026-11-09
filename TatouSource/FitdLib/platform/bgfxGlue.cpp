@@ -511,6 +511,8 @@ int initBgfxGlue(int argc, char* argv[])
             initparam.type = bgfx::RendererType::Direct3D12;
         else if (strcmp(backend, "opengl") == 0)
             initparam.type = bgfx::RendererType::OpenGL;
+        else if (strcmp(backend, "opengles") == 0)
+            initparam.type = bgfx::RendererType::OpenGLES;
         else if (strcmp(backend, "vulkan") == 0)
             initparam.type = bgfx::RendererType::Vulkan;
         else if (strcmp(backend, "metal") == 0)
@@ -521,7 +523,7 @@ int initBgfxGlue(int argc, char* argv[])
 #elif BX_PLATFORM_OSX
             initparam.type = bgfx::RendererType::Metal;
 #elif BX_PLATFORM_ANDROID
-            initparam.type = bgfx::RendererType::Vulkan; // OpenGL ES drew a black screen (BUGS.md C57)
+            initparam.type = bgfx::RendererType::Vulkan; // if it does not start, bgfx falls back to OpenGL ES
 #else
             initparam.type = bgfx::RendererType::Direct3D11; // default fallback
 #endif

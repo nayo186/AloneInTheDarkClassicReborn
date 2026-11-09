@@ -23,7 +23,7 @@ struct Settings
         bool enhancedText;      // the game's letters rebuilt smooth (textSmooth_ps)
         bool customBackgrounds; // the player's pictures (customBackgrounds.cpp)
         // Developer setting, by hand: "auto" lets bgfx choose; or d3d11,
-        // d3d12, opengl, vulkan, metal
+        // d3d12, opengl, opengles, vulkan, metal
         char rendererBackend[32];
     } graphics;
 

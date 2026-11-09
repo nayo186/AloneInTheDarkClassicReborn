@@ -62,7 +62,7 @@ It is not a static recompilation: a static recompilation translates the machine 
 - **Windows** 10 or 11, 64-bit, and a graphics card with DirectX 11.
 - Or **Linux**, 64-bit (x86-64): Ubuntu 22.04, Linux Mint 21, Debian 12, Fedora 37 or newer, or any other distribution of the same age, with a graphics card that supports Vulkan or OpenGL.
 - Or **macOS** 11 or newer, Apple Silicon or Intel (experimental, see [On macOS](#on-macos-experimental)).
-- Or an **Android** phone or tablet with Android 7 or newer, 64-bit (almost every phone since 2017) and Vulkan (experimental, see [On Android](#on-android-experimental)).
+- Or an **Android** phone or tablet with Android 7 or newer, 64-bit (almost every phone since 2017), with Vulkan or OpenGL ES 3.0 (experimental, see [On Android](#on-android-experimental)).
 - Your own copy of *Alone in the Dark* (*Jack in the Dark* comes with it), *Alone in the Dark 2* and/or *Alone in the Dark 3*: the GOG or Steam editions, or your original CD as an image (see [Your original CD](#your-original-cd)).
 - Nothing else to install: no .NET, no Visual C++ Redistributable, no DirectX setup, no Linux packages. Unpack and run the launcher.
 
@@ -241,7 +241,7 @@ Everything else works as on Windows and Linux: the options, the controllers, the
 
 ### On Android (experimental)
 
-**The Android version is new and experimental.** It is the same game as on the PC, with the launcher inside the app and on-screen controls. It was played on a Redmi Note 13 (Android 15) with the three games; it is being polished, and reports from Android players are very welcome (see [Reporting a problem](#reporting-a-problem)). It needs Android 7 or newer on a 64-bit phone or tablet with Vulkan.
+**The Android version is new and experimental.** It is the same game as on the PC, with the launcher inside the app and on-screen controls. It was played on a Redmi Note 13 (Android 15) with the three games; it is being polished, and reports from Android players are very welcome (see [Reporting a problem](#reporting-a-problem)). It needs Android 7 or newer on a 64-bit phone or tablet. It draws with Vulkan, or with OpenGL ES 3.0 on phones where Vulkan does not start.
 
 1. **Install the app.** On the phone, download `ClassicReborn-<version>-android.apk` from the [latest release](https://github.com/nayo186/AloneInTheDarkClassicReborn/releases/latest) and open it. The first time, Android asks to allow your browser (or file manager) to install apps: allow it. It is not on Google Play, so Play Protect may warn about an unknown app: choose to install anyway. The app is called **Alone in the Dark: Classic Reborn**.
 2. **Bring the game to the phone.** Copy a folder with the game to the phone, in any way: with a USB cable to **Download**, on a memory card, from a cloud drive... Any of these:

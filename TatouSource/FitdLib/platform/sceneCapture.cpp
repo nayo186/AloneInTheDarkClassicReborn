@@ -39,6 +39,8 @@ email                : yaz0r@yaz0r.net
 #include "input.h"
 #include "screenEffects.h"
 #include <array>
+#include <cstring>
+#include <vector>
 #include <SDL.h>
 #include <string>
 
@@ -168,6 +170,21 @@ void osystem_finalizeScenePreview()
 {
     if (s_previewData && s_snapshotWidth > 0 && s_snapshotHeight > 0)
     {
+        // On OpenGL the copy starts at the bottom row: turn it upright for
+        // the save thumbnails and the inventory of AITD3 (BUGS.md C57)
+        if (!s_previewReady && bgfx::getCaps()->originBottomLeft)
+        {
+            const size_t row = (size_t)s_snapshotWidth * 4;
+            std::vector<unsigned char> swap(row);
+            for (int y = 0; y < s_snapshotHeight / 2; y++)
+            {
+                unsigned char* a = s_previewData + (size_t)y * row;
+                unsigned char* b = s_previewData + (size_t)(s_snapshotHeight - 1 - y) * row;
+                memcpy(swap.data(), a, row);
+                memcpy(a, b, row);
+                memcpy(b, swap.data(), row);
+            }
+        }
         s_previewReady = true;
     }
 }
@@ -242,29 +259,36 @@ void osystem_drawFrozenSceneBackground()
 
     sVertice* pVertices = (sVertice*)transientBuffer.data;
 
+    // The frozen scene is a copy of a render target, which starts at the
+    // bottom on OpenGL: flip V to show it upright (it showed upside down for
+    // an instant at camera changes, BUGS.md C57)
+    const bool flip = bgfx::getCaps()->originBottomLeft;
+    const float top = flip ? 1.f : 0.f;
+    const float bottom = flip ? 0.f : 1.f;
+
     // Full-screen quad at Z=1000 (same depth as normal background)
     pVertices->position[0] = 0.f;   pVertices->position[1] = 0.f;   pVertices->position[2] = 1000.f;
-    pVertices->texcoord[0] = 0.f;   pVertices->texcoord[1] = 0.f;
+    pVertices->texcoord[0] = 0.f;   pVertices->texcoord[1] = top;
     pVertices++;
 
     pVertices->position[0] = 320.f; pVertices->position[1] = 200.f; pVertices->position[2] = 1000.f;
-    pVertices->texcoord[0] = 1.f;   pVertices->texcoord[1] = 1.f;
+    pVertices->texcoord[0] = 1.f;   pVertices->texcoord[1] = bottom;
     pVertices++;
 
     pVertices->position[0] = 320.f; pVertices->position[1] = 0.f;   pVertices->position[2] = 1000.f;
-    pVertices->texcoord[0] = 1.f;   pVertices->texcoord[1] = 0.f;
+    pVertices->texcoord[0] = 1.f;   pVertices->texcoord[1] = top;
     pVertices++;
 
     pVertices->position[0] = 0.f;   pVertices->position[1] = 0.f;   pVertices->position[2] = 1000.f;
-    pVertices->texcoord[0] = 0.f;   pVertices->texcoord[1] = 0.f;
+    pVertices->texcoord[0] = 0.f;   pVertices->texcoord[1] = top;
     pVertices++;
 
     pVertices->position[0] = 0.f;   pVertices->position[1] = 200.f; pVertices->position[2] = 1000.f;
-    pVertices->texcoord[0] = 0.f;   pVertices->texcoord[1] = 1.f;
+    pVertices->texcoord[0] = 0.f;   pVertices->texcoord[1] = bottom;
     pVertices++;
 
     pVertices->position[0] = 320.f; pVertices->position[1] = 200.f; pVertices->position[2] = 1000.f;
-    pVertices->texcoord[0] = 1.f;   pVertices->texcoord[1] = 1.f;
+    pVertices->texcoord[0] = 1.f;   pVertices->texcoord[1] = bottom;
     pVertices++;
 
     static bgfx::UniformHandle frozenSceneTexUniform = BGFX_INVALID_HANDLE;

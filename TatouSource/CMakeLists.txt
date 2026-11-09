@@ -65,6 +65,13 @@ set(BGFX_BUILD_TOOLS_TEXTURE OFF CACHE BOOL "" FORCE)
 set(BGFX_CUSTOM_TARGETS OFF CACHE BOOL "" FORCE)
 set(BGFX_INSTALL OFF CACHE BOOL "" FORCE)
 add_subdirectory( ${THIRD_PARTY}/bgfx.cmake )
+# OpenGL ES cannot read a texture back: bgfx then reads it through a frame
+# buffer (glReadPixels) only with this on; without it the copy of the scene
+# stayed black (AITD3's inventory and pause behind them, save thumbnails,
+# BUGS.md C57)
+if(ANDROID)
+    target_compile_definitions(bgfx PRIVATE BGFX_GL_CONFIG_TEXTURE_READ_BACK_EMULATION=1)
+endif()
 # bgfx forces its example-common project while its tools are on; it is not
 # compiled (nothing here uses it)
 if(TARGET example-common)

@@ -294,7 +294,7 @@ static bool setPicture(Picture& picture, const char* pakName, int index, const u
 
     memcpy(picture.originalPixels, pixels, sizeof(picture.originalPixels));
     if (!bgfx::isValid(picture.original))
-        picture.original = bgfx::createTexture2D(320, 200, false, 1, bgfx::TextureFormat::R8U);
+        picture.original = bgfx::createTexture2D(320, 200, false, 1, bgfx::TextureFormat::R8U, BGFX_SAMPLER_POINT);
     bgfx::updateTexture2D(picture.original, 0, 0, 0, 0, 320, 200, bgfx::copy(pixels, 320 * 200));
 
     if (same)

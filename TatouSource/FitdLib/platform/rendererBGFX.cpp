@@ -667,10 +667,12 @@ bgfx::TextureHandle fieldModelInspector_Depth = BGFX_INVALID_HANDLE;
 
 void initBgfxMainResources()
 {
-    // create background texture
-    g_backgroundTexture = bgfx::createTexture2D(320, 200, false, 1, bgfx::TextureFormat::R8U);
-    g_uiLayerTexture = bgfx::createTexture2D(320, 200, false, 1, bgfx::TextureFormat::R8U);
-    g_paletteTexture = bgfx::createTexture2D(3, 256, false, 1, bgfx::TextureFormat::R8U);
+    // create background texture. Integer textures (palette indexes) are
+    // point-sampled: OpenGL ES reads an integer texture with a linear filter
+    // as incomplete, all 0, and the screen was black (BUGS.md C57)
+    g_backgroundTexture = bgfx::createTexture2D(320, 200, false, 1, bgfx::TextureFormat::R8U, BGFX_SAMPLER_POINT);
+    g_uiLayerTexture = bgfx::createTexture2D(320, 200, false, 1, bgfx::TextureFormat::R8U, BGFX_SAMPLER_POINT);
+    g_paletteTexture = bgfx::createTexture2D(3, 256, false, 1, bgfx::TextureFormat::R8U, BGFX_SAMPLER_POINT);
 }
 
 ImVec2 gameResolution = { 320, 200 };
@@ -1044,7 +1046,7 @@ void osystem_flushPendingPrimitives()
             for (int i = 0; i < noiseTextureData.size(); i++) {
                 noiseTextureData[i] = rand();
             }
-            noiseTexture = bgfx::createTexture2D(noiseTextureDim, noiseTextureDim, false, 1, bgfx::TextureFormat::R8U, 0, bgfx::copy(noiseTextureData.data(), noiseTextureDim * noiseTextureDim));
+            noiseTexture = bgfx::createTexture2D(noiseTextureDim, noiseTextureDim, false, 1, bgfx::TextureFormat::R8U, BGFX_SAMPLER_POINT, bgfx::copy(noiseTextureData.data(), noiseTextureDim * noiseTextureDim));
         }
         static bgfx::UniformHandle noiseTextureUniform = BGFX_INVALID_HANDLE;
         if (!bgfx::isValid(noiseTextureUniform)) {
@@ -1915,7 +1917,7 @@ void osystem_drawMask(int roomId, int maskId)
 void osystem_drawSpriteLayer(const u8* layer)
 {
     if (s_spriteLayersThisFrame >= (int)s_spriteLayerTextures.size())
-        s_spriteLayerTextures.push_back(bgfx::createTexture2D(320, 200, false, 1, bgfx::TextureFormat::RG8U));
+        s_spriteLayerTextures.push_back(bgfx::createTexture2D(320, 200, false, 1, bgfx::TextureFormat::RG8U, BGFX_SAMPLER_POINT));
     const bgfx::TextureHandle texture = s_spriteLayerTextures[s_spriteLayersThisFrame++];
     bgfx::updateTexture2D(texture, 0, 0, 0, 0, 320, 200, bgfx::copy(layer, 320 * 200 * 2));
 

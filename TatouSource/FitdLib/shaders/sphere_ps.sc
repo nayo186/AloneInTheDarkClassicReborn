@@ -26,22 +26,15 @@ void main()
     int color = int(v_texcoord0.x * 15.f);
     int bank = int(v_texcoord0.y * 15.f);
 
-    switch(material) {
-    case 0: // flat
-        gl_FragColor = getColor(bank, color);
-        break;
-    case 2: //transparent
-        gl_FragColor = getColor(bank, color);
-        gl_FragColor.w = 0.5f;
-        break;
-    case 3: //marbre
+    // if/else, not switch: the OpenGL ES translation of a switch came out
+    // broken and the shader did not compile (BUGS.md C57)
+    if (material == 3) // marbre
+    {
         float angle = asin(normalizedPosition.y);
         distanceToCircleOnScanline = ((normalizedPosition.x / cos(angle)) / 2.f) + 0.5f;
         color = int((distanceToCircleOnScanline) * 15.f);
-        gl_FragColor = getColor(bank, color);
-        break;
-    default:
-        gl_FragColor = getColor(bank, color);
-        break;
     }
+    gl_FragColor = getColor(bank, color);
+    if (material == 2) // transparent
+        gl_FragColor.w = 0.5f;
 }
