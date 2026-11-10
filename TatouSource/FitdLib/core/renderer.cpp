@@ -110,6 +110,23 @@ static float s_waterY = 0.f;
 static float s_pointWorldY[NUM_MAX_POINT_IN_POINT_BUFFER];
 static float s_pointCamera[NUM_MAX_POINT_IN_POINT_BUFFER * 3];
 
+// Each point of the model being drawn as the body file has it, before the
+// animation and the turns: the grain of stone polygons is fixed to it
+static float s_pointModel[NUM_MAX_POINT_IN_POINT_BUFFER * 3];
+
+static void keepModelPoints(const sBody* pBody)
+{
+    int count = (int)pBody->m_vertices.size();
+    if (count > NUM_MAX_POINT_IN_POINT_BUFFER)
+        count = NUM_MAX_POINT_IN_POINT_BUFFER;
+    for (int i = 0; i < count; i++)
+    {
+        s_pointModel[i * 3] = pBody->m_vertices[i].x;
+        s_pointModel[i * 3 + 1] = pBody->m_vertices[i].y;
+        s_pointModel[i * 3 + 2] = pBody->m_vertices[i].z;
+    }
+}
+
 void setWaterSurface(bool on, int worldY)
 {
     s_waterOn = on;
@@ -121,10 +138,16 @@ static bool underWater(u16 point)
     return s_pointWorldY[point] > s_waterY;
 }
 
+// Where along the edge between two points (0 at a, 1 at b) the surface is
+static float waterCrossingPart(u16 a, u16 b)
+{
+    return (s_waterY - s_pointWorldY[a]) / (s_pointWorldY[b] - s_pointWorldY[a]);
+}
+
 // Where the edge between two points crosses the surface, on the screen
 static rendererPointStruct waterCrossing(u16 a, u16 b)
 {
-    const float t = (s_waterY - s_pointWorldY[a]) / (s_pointWorldY[b] - s_pointWorldY[a]);
+    const float t = waterCrossingPart(a, b);
     const float* pa = &s_pointCamera[a * 3];
     const float* pb = &s_pointCamera[b * 3];
     const float x = pa[0] + (pb[0] - pa[0]) * t;
@@ -146,9 +169,10 @@ static rendererPointStruct projectedPoint(u16 point)
     return out;
 }
 
-// The part of a polygon (closed) or line (open) above the water, into out;
+// The part of a polygon (closed) or line (open) above the water, into out
+// (and its points on the model into outModel, as primEntryStruct::model);
 // returns its number of vertices (0: all under water)
-static int cutAtWater(const std::vector<u16>& points, bool closed, rendererPointStruct* out)
+static int cutAtWater(const std::vector<u16>& points, bool closed, rendererPointStruct* out, float* outModel)
 {
     const int count = (int)points.size();
     int kept = 0;
@@ -156,12 +180,26 @@ static int cutAtWater(const std::vector<u16>& points, bool closed, rendererPoint
     {
         const u16 current = points[i];
         if (!underWater(current) && kept < NUM_MAX_VERTEX_IN_PRIM)
-            out[kept++] = projectedPoint(current);
+        {
+            for (int axis = 0; axis < 3; axis++)
+                outModel[kept * 4 + axis] = s_pointModel[current * 3 + axis];
+            out[kept] = projectedPoint(current);
+            outModel[kept * 4 + 3] = out[kept].Z / (float)cameraFovX;
+            kept++;
+        }
         if (!closed && i == count - 1)
             break;
         const u16 next = points[(i + 1) % count];
         if (underWater(current) != underWater(next) && kept < NUM_MAX_VERTEX_IN_PRIM)
-            out[kept++] = waterCrossing(current, next);
+        {
+            const float t = waterCrossingPart(current, next);
+            for (int axis = 0; axis < 3; axis++)
+                outModel[kept * 4 + axis] = s_pointModel[current * 3 + axis] +
+                    (s_pointModel[next * 3 + axis] - s_pointModel[current * 3 + axis]) * t;
+            out[kept] = waterCrossing(current, next);
+            outModel[kept * 4 + 3] = out[kept].Z / (float)cameraFovX;
+            kept++;
+        }
     }
     return kept;
 }
@@ -178,11 +216,14 @@ static bool keepAboveWater(primEntryStruct* entry, const std::vector<u16>& point
     if (!anyUnder)
         return true;
     rendererPointStruct cut[NUM_MAX_VERTEX_IN_PRIM];
-    const int kept = cutAtWater(points, closed, cut);
+    float cutModel[NUM_MAX_VERTEX_IN_PRIM * 4];
+    const int kept = cutAtWater(points, closed, cut, cutModel);
     if (kept < (closed ? 3 : 2))
         return false;
     for (int i = 0; i < kept; i++)
         entry->vertices[i] = cut[i];
+    for (int i = 0; i < kept * 4; i++)
+        entry->model[i] = cutModel[i];
     entry->numOfVertices = (u16)kept;
     return true;
 }
@@ -474,6 +515,7 @@ int AnimNuage(int x,int y,int z,int alpha,int beta,int gamma, sBody* pBody)
     {
         pointBuffer[i] = pBody->m_vertices[i];
     }
+    keepModelPoints(pBody);
 
     numOfPoints = pBody->m_vertices.size();
     numOfBones = pBody->m_groupOrder.size();
@@ -705,6 +747,7 @@ int RotateNuage(int x,int y,int z,int alpha,int beta,int gamma, sBody* pBody)
     }
 
     outPtr = renderPointList;
+    keepModelPoints(pBody);
 
     const bool scaled = objectScaled();
     if (scaled)
@@ -836,6 +879,9 @@ void processPrim_Line(int primType, sPrimitive* ptr, char** out)
         pCurrentPrimEntry->vertices[i].X = renderPointList[pointIndex / 2];
         pCurrentPrimEntry->vertices[i].Y = renderPointList[(pointIndex / 2) + 1];
         pCurrentPrimEntry->vertices[i].Z = renderPointList[(pointIndex / 2) + 2];
+        for (int axis = 0; axis < 3; axis++)
+            pCurrentPrimEntry->model[i * 4 + axis] = s_pointModel[ptr->m_points[i] * 3 + axis];
+        pCurrentPrimEntry->model[i * 4 + 3] = pCurrentPrimEntry->vertices[i].Z / (float)cameraFovX;
 
         if (pCurrentPrimEntry->vertices[i].Z < depth)
             depth = pCurrentPrimEntry->vertices[i].Z;
@@ -889,6 +935,9 @@ void processPrim_Poly(int primType, sPrimitive* ptr, char** out, int originalPri
         pCurrentPrimEntry->vertices[i].X = renderPointList[pointIndex / 2];
         pCurrentPrimEntry->vertices[i].Y = renderPointList[(pointIndex / 2) + 1];
         pCurrentPrimEntry->vertices[i].Z = renderPointList[(pointIndex / 2) + 2];
+        for (int axis = 0; axis < 3; axis++)
+            pCurrentPrimEntry->model[i * 4 + axis] = s_pointModel[ptr->m_points[i] * 3 + axis];
+        pCurrentPrimEntry->model[i * 4 + 3] = pCurrentPrimEntry->vertices[i].Z / (float)cameraFovX;
 
         if (pCurrentPrimEntry->vertices[i].Z < depth)
             depth = pCurrentPrimEntry->vertices[i].Z;
@@ -1068,7 +1117,7 @@ void renderPoly(primEntryStruct* pEntry) // poly
     // the atlas texture on top. Transparent atlas pixels naturally let the base show through.
 
     // Always render the base material layer first
-    osystem_fillPoly((float*)pEntry->vertices, pEntry->numOfVertices, pEntry->color, pEntry->material);
+    osystem_fillPoly((float*)pEntry->vertices, pEntry->numOfVertices, pEntry->color, pEntry->material, pEntry->model);
 
 }
 

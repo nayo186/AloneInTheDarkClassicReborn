@@ -101,7 +101,7 @@ It is not a static recompilation: a static recompilation translates the machine 
 
 - **Fixes** to the original: objects drawn in the wrong order, monsters stuck at windows, gaps in 3D models, lines at the edges of masks, game speed tied to the frame rate, and many more (see `docs/baseline/BUGS.md`).
 - **Launcher** to choose the game, its language (the five of the GOG and Steam editions: English, French, German, Italian, Spanish) and the data folder, with the same options as the in-game **F1** window. The menus are translated into the same five languages.
-- **Screen options**: resolution, aspect ratio (4:3, 16:10, stretched), fullscreen, frame limit, VSync.
+- **Screen options**: resolution, aspect ratio (4:3, 16:10, stretched), integer scaling, fullscreen, frame limit, VSync.
 - **Optional effects**: edge smoothing (FXAA) on the 3D models, bloom from the painted backgrounds, film grain, CRT scanlines, ambient occlusion (SSAO), smoother animations, sharper text.
 - **Custom backgrounds**: export every background and mask of the game, enlarge or repaint them, and the game uses yours. Ready-made **HD packs** are available for *Alone in the Dark*, *Jack in the Dark*, *Alone in the Dark 2* and *Alone in the Dark 3* (see [Custom backgrounds](#custom-backgrounds)). Backgrounds, masks, animated sequences, music and narrators can all be changed: see the **[modding guide](MODDING.md)**.
 - **Controls**: keyboard and game controller (Xbox, PlayStation, Nintendo Switch Pro and most other USB or Bluetooth controllers), every action can be changed, several inputs per action.
@@ -326,6 +326,7 @@ The launcher's **Advanced options** and the in-game **F1** window share the same
 | --- | --- |
 | Frames per second, VSync | Smoothness; the game speed never depends on them |
 | Aspect ratio, resolution, fullscreen | How the 4:3 scene is shown |
+| Integer scaling | Every pixel of the game the same size, with black borders around (like pixel-perfect scaling in DOSBox): Automatic, the largest that fits, or a size of your choice; off by default |
 | Edge smoothing | FXAA on the 3D models |
 | Bloom | A soft glow from the bright parts of the painted backgrounds |
 | Film grain | A light grain over the picture |

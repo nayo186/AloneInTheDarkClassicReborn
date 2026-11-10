@@ -4,8 +4,10 @@ Alone in the Dark: Classic Reborn started on 2026-10-23 from [Alone in the Dark:
 
 This repository was published with a single starting commit, to keep it light: the early history carried large files that are no longer part of the project. Below are the changes of each release and, after them, the changes made in this fork before it was published, newest first, one line per change. The reasons behind larger removals are explained in `docs/DESCARTADO.md` and the fixes in `docs/baseline/BUGS.md`.
 
-## Unreleased
+## v1.6.3 (2026-11-10)
 
+- All games: new **Integer scaling** option in Advanced options (off by default): every pixel of the game the same size, with black borders around, like pixel-perfect scaling in DOSBox. Automatic (the largest size that fits) or a size of your choice (issue #7)
+- All games: the "stone" parts of the 3D models (some furniture, frames, clothes, doors...) have their grain of darker pixels again, as in the original game; it now stays on the object as it moves and turns (BUGS.md C67)
 - All games: when the launcher cannot save your options (a read-only or protected folder, such as one guarded by an antivirus), it says so and which file, and you can play anyway with the options you had; it did not start the game (BUGS.md C66)
 
 ## v1.6.2 (2026-11-09)

@@ -9,6 +9,7 @@
 #include "consoleLog.h"
 #include "controls.h"
 #include "gameFolder.h"
+#include "advancedOptionsText.h"
 
 #include <algorithm>
 #include <cstdio>
@@ -31,6 +32,7 @@ static void setDefaults()
     c.graphics.vsync = true;
     c.graphics.aspect = 0;
     c.graphics.resolution = 0;
+    c.graphics.integerScale = 0;
     c.graphics.enhancedText = false;
     c.graphics.customBackgrounds = false;
     strcpy(c.graphics.rendererBackend, "auto");
@@ -138,6 +140,7 @@ void loadSettings()
         else if (strcmp(key, "graphics.vsync") == 0) c.graphics.vsync = isTrue(value);
         else if (strcmp(key, "graphics.aspect") == 0) c.graphics.aspect = atoi(value);
         else if (strcmp(key, "graphics.resolution") == 0) c.graphics.resolution = atoi(value);
+        else if (strcmp(key, "graphics.integerScale") == 0) c.graphics.integerScale = atoi(value);
         else if (strcmp(key, "graphics.enhancedText") == 0) c.graphics.enhancedText = isTrue(value);
         else if (strcmp(key, "graphics.customBackgrounds") == 0) c.graphics.customBackgrounds = isTrue(value);
         else if (strcmp(key, "graphics.renderer") == 0) copyText(c.graphics.rendererBackend, sizeof(c.graphics.rendererBackend), value);
@@ -173,6 +176,8 @@ void loadSettings()
         c.graphics.aspect = 0;
     if (c.graphics.resolution != 0 && (c.graphics.resolution < 320 || c.graphics.resolution > 3840))
         c.graphics.resolution = 0;
+    if (c.graphics.integerScale < kIntegerScaleAuto || c.graphics.integerScale > kIntegerScaleMax)
+        c.graphics.integerScale = 0;
     if (c.postProcessing.antialiasing < 0 || c.postProcessing.antialiasing > 1)
         c.postProcessing.antialiasing = 0;
     c.audio.musicVolume = clampInt(c.audio.musicVolume, 0, 100);
@@ -200,6 +205,7 @@ void saveSettings()
     fprintf(file, "graphics.vsync = %s\n", flag(c.graphics.vsync));
     fprintf(file, "graphics.aspect = %d\n", c.graphics.aspect);
     fprintf(file, "graphics.resolution = %d\n", c.graphics.resolution);
+    fprintf(file, "graphics.integerScale = %d\n", c.graphics.integerScale);
     fprintf(file, "graphics.enhancedText = %s\n", flag(c.graphics.enhancedText));
     fprintf(file, "graphics.customBackgrounds = %s\n\n", flag(c.graphics.customBackgrounds));
 

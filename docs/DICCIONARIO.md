@@ -204,7 +204,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `osystem_stopFrame` | Empty: the renderer needs nothing at the end of a frame |
 | `osystem_setClip` | Sets the drawing clip rectangle (320x200 coordinates) |
 | `osystem_clearClip` | Removes the drawing clip rectangle |
-| `osystem_fillPoly` | Adds a filled polygon of a 3D model (plain, noise, ramp or glass by polyType) |
+| `osystem_fillPoly` | Adds a filled polygon of a 3D model (plain, stone, ramp or glass by polyType); modelPoints: its vertices on the model and the model's size of a pixel of the game there (x, y, z, size each), for the grain of stone |
 | `osystem_draw3dLine` | Adds a 3D line |
 | `osystem_draw3dQuad` | Adds the four edges of a 3D quad as lines |
 | `osystem_drawSphere` | Adds a sphere of a 3D model (a disc facing the camera) |

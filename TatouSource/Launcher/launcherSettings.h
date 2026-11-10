@@ -46,6 +46,7 @@ struct LauncherSettings
     bool vsync = true;
     int aspect = 0;            // 0 = 4:3 (original), 1 = 16:10, 2 = stretched
     int resolution = 0;        // scene image width (4:3), 0 = automatic
+    int integerScale = 0;      // every pixel the same size: 0 off, -1 automatic, N = 200 lines N times
     bool fullscreen = false;
     bool filmGrain = false;
     bool scanlines = false;
@@ -78,7 +79,7 @@ struct LauncherSettings
     static const int kDefaultFrameLimit = 60;
     bool isDefault() const
     {
-        return frameLimit == kDefaultFrameLimit && vsync && aspect == 0 && resolution == 0 && !fullscreen &&
+        return frameLimit == kDefaultFrameLimit && vsync && aspect == 0 && resolution == 0 && integerScale == 0 && !fullscreen &&
             !filmGrain && !scanlines && scanlineLevel == 2 && !bloom && !ssao && antialiasing == 0 && !animationSmoothing && !customBackgrounds &&
             !enhancedText;
     }
@@ -88,6 +89,7 @@ struct LauncherSettings
         vsync = true;
         aspect = 0;
         resolution = 0;
+        integerScale = 0;
         fullscreen = false;
         filmGrain = scanlines = bloom = ssao = animationSmoothing = customBackgrounds = false;
         enhancedText = false;

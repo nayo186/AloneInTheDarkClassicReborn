@@ -135,7 +135,23 @@ struct sphereVertex
 #define NUM_MAX_SPHERES_VERTICES 3000*3
 
 std::array<polyVertex, NUM_MAX_FLAT_VERTICES> flatVertices;
-std::array<polyVertex, NUM_MAX_NOISE_VERTICES> noiseVertices;
+// A vertex of a stone polygon: also its place on the model (the grain is
+// fixed to it) and how much of the model a pixel of the game covers there
+struct noiseVertex
+{
+    float X;
+    float Y;
+    float Z;
+
+    float U;
+    float V;
+
+    float modelX;
+    float modelY;
+    float modelZ;
+    float gamePixel;
+};
+std::array<noiseVertex, NUM_MAX_NOISE_VERTICES> noiseVertices;
 std::array<polyVertex, NUM_MAX_TRANSPARENT_VERTICES> transparentVertices;
 std::array<polyVertex, NUM_MAX_RAMP_VERTICES> rampVertices;
 std::array<sphereVertex, NUM_MAX_SPHERES_VERTICES> sphereVertices;
@@ -1013,13 +1029,14 @@ void osystem_flushPendingPrimitives()
             .begin()
             .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
             .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
+            .add(bgfx::Attrib::TexCoord1, 4, bgfx::AttribType::Float)
             .end();
 
         bgfx::TransientVertexBuffer transientBuffer;
         bgfx::allocTransientVertexBuffer(&transientBuffer, numUsedNoiseVertices, layout);
 
-        memcpy(transientBuffer.data, &noiseVertices[0], sizeof(polyVertex) * numUsedNoiseVertices);
-        applyShakeToVertices(transientBuffer.data, numUsedNoiseVertices, sizeof(polyVertex));
+        memcpy(transientBuffer.data, &noiseVertices[0], sizeof(noiseVertex) * numUsedNoiseVertices);
+        applyShakeToVertices(transientBuffer.data, numUsedNoiseVertices, sizeof(noiseVertex));
 
         bgfx::setState(0 | BGFX_STATE_WRITE_RGB
             | BGFX_STATE_WRITE_A
@@ -1249,7 +1266,7 @@ void osystem_flushPendingPrimitives()
     g_lineVertices.clear();
 }
 
-void osystem_fillPoly(float* buffer, int numPoint, unsigned char color, u8 polyType)
+void osystem_fillPoly(float* buffer, int numPoint, unsigned char color, u8 polyType, const float* modelPoints)
 {
 #define MAX_POINTS_PER_POLY 50
 
@@ -1320,27 +1337,32 @@ void osystem_fillPoly(float* buffer, int numPoint, unsigned char color, u8 polyT
         }
         break;
     }
-    case 1: // dither (pierre/tele) - use flat shader instead of noise to avoid transparency
+    case 1: // pierre (stone): the colour with a grain of darker pixels (noise_ps)
     {
         int needed = (numPoint - 2) * 3;
-        if (numUsedFlatVertices + needed > NUM_MAX_FLAT_VERTICES)
+        if (numUsedNoiseVertices + needed > NUM_MAX_NOISE_VERTICES)
             return;
-        polyVertex* pVertex = &flatVertices[numUsedFlatVertices];
-        numUsedFlatVertices += needed;
+        noiseVertex* pVertex = &noiseVertices[numUsedNoiseVertices];
+        numUsedNoiseVertices += needed;
 
         for (int i = 0; i < numPoint; i++)
         {
             if (i >= 3)
             {
-                memcpy(pVertex, &pVertex[-3], sizeof(polyVertex));
+                memcpy(pVertex, &pVertex[-3], sizeof(noiseVertex));
                 pVertex++;
-                memcpy(pVertex, &pVertex[-2], sizeof(polyVertex));
+                memcpy(pVertex, &pVertex[-2], sizeof(noiseVertex));
                 pVertex++;
             }
 
             pVertex->X = buffer[i * 3 + 0];
             pVertex->Y = buffer[i * 3 + 1];
             pVertex->Z = buffer[i * 3 + 2];
+            // Without the model, the screen place: the grain stays on the screen
+            pVertex->modelX = modelPoints ? modelPoints[i * 4 + 0] : pVertex->X;
+            pVertex->modelY = modelPoints ? modelPoints[i * 4 + 1] : pVertex->Y;
+            pVertex->modelZ = modelPoints ? modelPoints[i * 4 + 2] : 0.0f;
+            pVertex->gamePixel = modelPoints ? modelPoints[i * 4 + 3] : 1.0f;
 
             int bank = (color & 0xF0) >> 4;
             int startColor = color & 0xF;

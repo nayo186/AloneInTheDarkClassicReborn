@@ -30,6 +30,10 @@ enum class AdvancedText
     ResolutionHelp,
     ResolutionAuto,
     ResolutionOriginal,
+    IntegerScale,
+    IntegerScaleHelp,
+    IntegerScaleOff,
+    IntegerScaleAuto,
     CustomBackgrounds,
     CustomBackgroundsHelp,
     EnhancedText,
@@ -122,6 +126,33 @@ inline int advancedResolutionHeight(int width)
     return width == kAdvancedOriginalResolution ? 200 : width * 3 / 4;
 }
 
+// Integer scaling (graphics.integerScale): every pixel of the game's
+// 320 x 200 the same number of screen pixels wide and tall, black borders
+// around. 0 off, -1 automatic (the largest that fits), N = the 200 lines N
+// times (the largest that fits if it is too big). Aspect 16:10 (and
+// Stretched) has square pixels: N x N. 4:3 has pixels 1.2 times taller than
+// wide: the width is the nearest whole number, N / 1.2 (5 lines: 4, 1280 x
+// 1000; 6: 5, 1600 x 1200).
+static const int kIntegerScaleAuto = -1;
+static const int kIntegerScaleMax = 12;
+
+inline void integerScaleSize(int aspect, int tall, int* width, int* height)
+{
+    const int wide = (aspect == 0) ? (tall * 5 + 3) / 6 : tall;
+    *width = 320 * (wide < 1 ? 1 : wide);
+    *height = 200 * tall;
+}
+
+// In 4:3 only the sizes within 5% of its shape are offered (from 5 lines up)
+inline bool integerScaleOffered(int aspect, int tall)
+{
+    if (aspect != 0)
+        return true;
+    const int wide = (tall * 5 + 3) / 6;
+    const int error = 6 * wide - 5 * tall;
+    return (error < 0 ? -error : error) * 4 <= tall;
+}
+
 inline const char* advancedText(AdvancedText text, int language)
 {
     static const char* const texts[(int)AdvancedText::Count][kAdvancedTextLanguages] =
@@ -180,6 +211,18 @@ inline const char* advancedText(AdvancedText text, int language)
         { "Automatic", "Automática", "Automatique", "Automatica", "Automatisch" },
         // ResolutionOriginal
         { "original", "original", "originale", "originale", "Original" },
+        // IntegerScale
+        { "Integer scaling", "Integer scaling", "Integer scaling", "Integer scaling", "Integer scaling" },
+        // IntegerScaleHelp
+        { "Every pixel the same size, black borders around.",
+          "Todos los píxeles iguales, con bordes negros.",
+          "Tous les pixels identiques, bords noirs autour.",
+          "Tutti i pixel uguali, bordi neri intorno.",
+          "Alle Pixel gleich groß, schwarze Ränder." },
+        // IntegerScaleOff
+        { "Off", "Desactivado", "Désactivé", "Disattivato", "Aus" },
+        // IntegerScaleAuto
+        { "Automatic", "Automático", "Automatique", "Automatico", "Automatisch" },
         // CustomBackgrounds
         { "Custom backgrounds", "Fondos personalizados", "Décors personnalisés", "Sfondi personalizzati", "Eigene Hintergründe" },
         // CustomBackgroundsHelp
@@ -447,4 +490,19 @@ inline void advancedResolutionLabel(int width, int language, char* label, size_t
         snprintf(label, size, "%d × %d (%s)", width, advancedResolutionHeight(width), advancedText(AdvancedText::ResolutionOriginal, language));
     else
         snprintf(label, size, "%d × %d", width, advancedResolutionHeight(width));
+}
+
+// The name of a choice of the list: "Off", "Automatic", "1280 × 1000"...
+inline void integerScaleLabel(int value, int aspect, int language, char* label, size_t size)
+{
+    if (value == 0)
+        snprintf(label, size, "%s", advancedText(AdvancedText::IntegerScaleOff, language));
+    else if (value < 0)
+        snprintf(label, size, "%s", advancedText(AdvancedText::IntegerScaleAuto, language));
+    else
+    {
+        int width, height;
+        integerScaleSize(aspect, value, &width, &height);
+        snprintf(label, size, "%d × %d", width, height);
+    }
 }

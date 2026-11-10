@@ -126,8 +126,10 @@
 	void osystem_clearClip();
 
 
-	// Adds a filled polygon of a 3D model (plain, noise, ramp or glass by polyType)
-	void osystem_fillPoly(float* buffer, int numPoint, unsigned char color,u8 polyType);
+	// Adds a filled polygon of a 3D model (plain, stone, ramp or glass by
+	// polyType); modelPoints: its vertices on the model and the model's size of
+	// a pixel of the game there (x, y, z, size each), for the grain of stone
+	void osystem_fillPoly(float* buffer, int numPoint, unsigned char color,u8 polyType, const float* modelPoints);
 	// Adds a 3D line
 	void osystem_draw3dLine(float x1, float y1, float z1, float x2, float y2, float z2, unsigned char color);
 	// Adds the four edges of a 3D quad as lines

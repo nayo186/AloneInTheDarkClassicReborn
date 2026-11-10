@@ -49,6 +49,11 @@ struct primEntryStruct
 	bool isRampPrim;  // Track if this primitive is ramp-shaded (material 3-6)
 	bool nearClipped;  // Flagged by floating polygon detection (suppressed at render time)
 	rendererPointStruct vertices[NUM_MAX_VERTEX_IN_PRIM];
+	// The same vertices on the model itself, as the body file has them (x, y,
+	// z), and how much of the model a pixel of the game covers there (its
+	// distance / the camera's zoom): the grain of stone polygons stays on the
+	// object and keeps its size on the screen (noise_ps)
+	float model[NUM_MAX_VERTEX_IN_PRIM * 4];
 };
 
 extern primEntryStruct primTable[];

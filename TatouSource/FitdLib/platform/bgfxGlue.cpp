@@ -161,11 +161,52 @@ static float aspectRatioValue()
     }
 }
 
+// Integer scaling (graphics.integerScale, advancedOptionsText.h): the size
+// of the scene in the screen or the window. Automatic: the largest that
+// fits (Stretched fills each side with its own factor); a chosen size: that
+// one or, if too big, the largest smaller one that fits. In 4:3 the sizes of
+// its shape are preferred; with none that fits (a small window), any. False
+// if off or not even 320 x 200 fits.
+static bool integerSceneSize(int areaWidth, int areaHeight, int size[2])
+{
+    const int value = g_settings.graphics.integerScale;
+    const int aspect = g_settings.graphics.aspect;
+    if (value == 0)
+        return false;
+    int tallest = areaHeight / 200;
+    if (value > 0 && value < tallest)
+        tallest = value;
+    for (int pass = 0; pass < 2; pass++)
+    {
+        for (int tall = tallest; tall >= 1; tall--)
+        {
+            if (pass == 0 && !integerScaleOffered(aspect, tall))
+                continue;
+            integerScaleSize(aspect, tall, &size[0], &size[1]);
+            if (value < 0 && aspect == 2)
+                size[0] = 320 * (areaWidth / 320);
+            if (size[0] >= 320 && size[0] <= areaWidth)
+                return true;
+        }
+    }
+    return false;
+}
+
 // Scene rectangle: in fullscreen centred with the aspect ratio (black bars);
 // in a window the whole window (its shape follows the aspect ratio,
-// applyWindowAspectRatio)
+// applyWindowAspectRatio). With integer scaling, its size centred in the
+// screen or the window, black around it.
 static void computeSceneRect(int windowWidth, int windowHeight, int rect[4])
 {
+    int integerSize[2];
+    if (integerSceneSize(windowWidth, windowHeight, integerSize))
+    {
+        rect[0] = (windowWidth - integerSize[0]) / 2;
+        rect[1] = (windowHeight - integerSize[1]) / 2;
+        rect[2] = integerSize[0];
+        rect[3] = integerSize[1];
+        return;
+    }
     const float ratio = gIsFullscreen ? aspectRatioValue() : 0.0f;
     rect[0] = 0;
     rect[1] = 0;
@@ -185,10 +226,20 @@ static void computeSceneRect(int windowWidth, int windowHeight, int rect[4])
     }
 }
 
+// With integer scaling the image is the scene rectangle itself (shown pixel
+// for pixel, so the backgrounds keep their whole factor), except the original
+// 320 x 200, which is enlarged by whole pixels anyway; the other resolutions
+// are not used then.
 static void computeSceneImageSize(const int rect[4], int size[2])
 {
     const int width = g_settings.graphics.resolution;
-    if (width > 0)
+    if (g_settings.graphics.integerScale != 0 && width != kAdvancedOriginalResolution &&
+        rect[2] % 320 == 0 && rect[3] % 200 == 0)
+    {
+        size[0] = rect[2];
+        size[1] = rect[3];
+    }
+    else if (width > 0)
     {
         size[0] = width;
         size[1] = advancedResolutionHeight(width);   // 4:3, or the original 320 x 200

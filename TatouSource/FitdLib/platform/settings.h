@@ -20,6 +20,7 @@ struct Settings
         bool vsync;             // wait for the monitor refresh (default on)
         int aspect;             // 0 = 4:3 (the original), 1 = 16:10, 2 = stretched
         int resolution;         // width of the scene image (always 4:3): 0 = the screen's, 640 ... 1920
+        int integerScale;       // every pixel of the game the same size: 0 off, -1 automatic, N = 200 lines N times (advancedOptionsText.h)
         bool enhancedText;      // the game's letters rebuilt smooth (textSmooth_ps)
         bool customBackgrounds; // the player's pictures (customBackgrounds.cpp)
         // Developer setting, by hand: "auto" lets bgfx choose; or d3d11,

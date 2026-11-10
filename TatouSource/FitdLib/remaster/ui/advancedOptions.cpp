@@ -182,6 +182,39 @@ static void resolutionCombo(float width, int& resolution)
     menu::helpWhenFocused(text(AdvancedText::ResolutionHelp));
 }
 
+// Integer scaling: off, automatic or a size (those of the chosen aspect
+// ratio); live (bgfxGlue.cpp places the scene again)
+static void integerScaleCombo(float width, int& value, int aspect)
+{
+    const int language = textLanguage();
+    char current[64];
+    integerScaleLabel(value, aspect, language, current, sizeof(current));
+    ImGui::AlignTextToFramePadding();
+    ImGui::TextUnformatted(text(AdvancedText::IntegerScale));
+    helpMarker(text(AdvancedText::IntegerScaleHelp));
+    comboColumn(width * 0.4f);
+    ImGui::SetNextItemWidth(-1.0f);
+    if (ImGui::BeginCombo("##integerScale", current))
+    {
+        for (int entry = -1; entry <= kIntegerScaleMax; entry++)
+        {
+            // First Off (0), then Automatic (-1), then the sizes
+            const int choice = (entry == -1) ? 0 : (entry == 0 ? kIntegerScaleAuto : entry);
+            if (choice > 0 && !integerScaleOffered(aspect, choice))
+                continue;
+            char label[64];
+            integerScaleLabel(choice, aspect, language, label, sizeof(label));
+            if (ImGui::Selectable(label, value == choice))
+            {
+                value = choice;
+                printf(CFG_TAG "Advanced option (F1): integerScale=%d\n", value);
+            }
+        }
+        ImGui::EndCombo();
+    }
+    menu::helpWhenFocused(text(AdvancedText::IntegerScaleHelp));
+}
+
 // Antialiasing of the 3D models: off or FXAA (enough for these flat polygons)
 static const char* antialiasingLabel(int value)
 {
@@ -399,6 +432,7 @@ void advancedOptionsDraw()
 
         // Resolution of the scene image (live: bgfxGlue.cpp resizes it)
         resolutionCombo(width, g_settings.graphics.resolution);
+        integerScaleCombo(width, g_settings.graphics.integerScale, g_settings.graphics.aspect);
 
         // Fullscreen: the window thread switches it (g_pendingFullscreenToggle)
         bool fullscreen = gIsFullscreen;

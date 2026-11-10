@@ -390,6 +390,36 @@ static void drawAdvancedOptions(LauncherState& state, const Fonts& fonts, const 
         menu::helpWhenFocused(advText(AdvancedText::ResolutionHelp));
     }
 
+    // Integer scaling: off, automatic or a size (those of the chosen aspect ratio)
+    {
+        char current[64];
+        integerScaleLabel(state.settings.integerScale, state.settings.aspect, (int)uiLanguage(), current, sizeof(current));
+        ImGui::AlignTextToFramePadding();
+        ImGui::TextColored(color(kText), "%s", advText(AdvancedText::IntegerScale));
+        helpMarker(advText(AdvancedText::IntegerScaleHelp));
+        comboColumn(column);
+        ImGui::SetNextItemWidth(-1.0f);
+        if (ImGui::BeginCombo("##integerScale", current))
+        {
+            for (int entry = -1; entry <= kIntegerScaleMax; entry++)
+            {
+                // First Off (0), then Automatic (-1), then the sizes
+                const int choice = (entry == -1) ? 0 : (entry == 0 ? kIntegerScaleAuto : entry);
+                if (choice > 0 && !integerScaleOffered(state.settings.aspect, choice))
+                    continue;
+                char label[64];
+                integerScaleLabel(choice, state.settings.aspect, (int)uiLanguage(), label, sizeof(label));
+                if (ImGui::Selectable(label, state.settings.integerScale == choice))
+                {
+                    state.settings.integerScale = choice;
+                    logLine("Advanced option: integerScale=%d", choice);
+                }
+            }
+            ImGui::EndCombo();
+        }
+        menu::helpWhenFocused(advText(AdvancedText::IntegerScaleHelp));
+    }
+
     optionCheckbox(AdvancedText::Fullscreen, AdvancedText::FullscreenHelp, &state.settings.fullscreen, "fullscreen");
 
     // Screen effects and animation smoothing (all off by default)
