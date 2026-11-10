@@ -216,7 +216,7 @@ static void integerScaleCombo(float width, int& value, int aspect)
         {
             // First Off (0), then Automatic (-1), then the sizes
             const int choice = (entry == -1) ? 0 : (entry == 0 ? kIntegerScaleAuto : entry);
-            if (choice > 0 && !integerScaleFits(aspect, choice, screenWidth, screenHeight))
+            if (choice > 0 && !integerScaleOffered(aspect, choice, screenWidth, screenHeight))
                 continue;
             char label[64];
             integerScaleLabel(choice, aspect, language, label, sizeof(label));

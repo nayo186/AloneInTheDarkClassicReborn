@@ -147,8 +147,10 @@ inline void integerScaleSize(int aspect, int tall, int* width, int* height)
     *height = 200 * tall;
 }
 
-// In 4:3, the sizes within 5% of its shape (from 5 lines up): Automatic
-// prefers them; the smaller ones are flatter but can still be chosen
+// In 4:3, the sizes within 5% of its shape (from 5 lines up). The smaller
+// ones (640 x 400, 960 x 600...) have the shape of 16:10, so the 4:3 list
+// leaves them out (issue #7: they looked right and the 4:3 ones stretched);
+// only Automatic in a small window falls back on them
 inline bool integerScaleTrueShape(int aspect, int tall)
 {
     if (aspect != 0)
@@ -158,9 +160,12 @@ inline bool integerScaleTrueShape(int aspect, int tall)
     return (error < 0 ? -error : error) * 4 <= tall;
 }
 
-// The lists offer only the sizes that fit the screen (size unknown, 0: all)
-inline bool integerScaleFits(int aspect, int tall, int screenWidth, int screenHeight)
+// The lists offer only the sizes of the aspect ratio's shape that fit the
+// screen (size unknown, 0: all that have its shape)
+inline bool integerScaleOffered(int aspect, int tall, int screenWidth, int screenHeight)
 {
+    if (!integerScaleTrueShape(aspect, tall))
+        return false;
     int width, height;
     integerScaleSize(aspect, tall, &width, &height);
     return screenWidth <= 0 || screenHeight <= 0 || (width <= screenWidth && height <= screenHeight);

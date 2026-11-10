@@ -4,6 +4,10 @@ Alone in the Dark: Classic Reborn started on 2026-10-23 from [Alone in the Dark:
 
 This repository was published with a single starting commit, to keep it light: the early history carried large files that are no longer part of the project. Below are the changes of each release and, after them, the changes made in this fork before it was published, newest first, one line per change. The reasons behind larger removals are explained in `docs/DESCARTADO.md` and the fixes in `docs/baseline/BUGS.md`.
 
+## v1.6.5 (2026-11-10)
+
+- All games: with the 4:3 aspect ratio, the Integer scaling list only offers 4:3 sizes; 640 × 400 and 960 × 600, which have the shape of 16:10, looked stretched next to them. For square pixels choose 16:10 (issue #7, BUGS.md C69)
+
 ## v1.6.4 (2026-11-10)
 
 - All games: **Integer scaling** has its own section in Advanced options. **Size** lists only the sizes that fit your screen (up to 8K), and the one you choose is used; **3D resolution** sets how sharp the 3D models are, with only the resolutions that keep every pixel the same size, down to the original 320 × 200. The normal Resolution, which integer scaling does not use, is greyed out while it is on (issue #7, BUGS.md C68)

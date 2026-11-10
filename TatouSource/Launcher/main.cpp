@@ -420,7 +420,7 @@ static void drawAdvancedOptions(LauncherState& state, const Fonts& fonts, const 
             {
                 // First Off (0), then Automatic (-1), then the sizes
                 const int choice = (entry == -1) ? 0 : (entry == 0 ? kIntegerScaleAuto : entry);
-                if (choice > 0 && !integerScaleFits(state.settings.aspect, choice, screenWidth, screenHeight))
+                if (choice > 0 && !integerScaleOffered(state.settings.aspect, choice, screenWidth, screenHeight))
                     continue;
                 char label[64];
                 integerScaleLabel(choice, state.settings.aspect, (int)uiLanguage(), label, sizeof(label));
