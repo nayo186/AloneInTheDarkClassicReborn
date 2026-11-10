@@ -326,7 +326,7 @@ The launcher's **Advanced options** and the in-game **F1** window share the same
 | --- | --- |
 | Frames per second, VSync | Smoothness; the game speed never depends on them |
 | Aspect ratio, resolution, fullscreen | How the 4:3 scene is shown |
-| Integer scaling | Every pixel of the game the same size, with black borders around (like pixel-perfect scaling in DOSBox): Automatic, the largest that fits, or a size of your choice; off by default |
+| Integer scaling | Every pixel of the game the same size, with black borders around (like pixel-perfect scaling in DOSBox): **Size**: Automatic, the largest that fits, or a size of your choice; **3D resolution**: how sharp the 3D models are, down to the original 320 × 200. Off by default; while it is on, Resolution is not used |
 | Edge smoothing | FXAA on the 3D models |
 | Bloom | A soft glow from the bright parts of the painted backgrounds |
 | Film grain | A light grain over the picture |

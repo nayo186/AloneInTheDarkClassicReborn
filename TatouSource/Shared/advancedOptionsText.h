@@ -34,6 +34,9 @@ enum class AdvancedText
     IntegerScaleHelp,
     IntegerScaleOff,
     IntegerScaleAuto,
+    IntegerSize,
+    IntegerResolution,
+    IntegerResolutionHelp,
     CustomBackgrounds,
     CustomBackgroundsHelp,
     EnhancedText,
@@ -132,9 +135,10 @@ inline int advancedResolutionHeight(int width)
 // times (the largest that fits if it is too big). Aspect 16:10 (and
 // Stretched) has square pixels: N x N. 4:3 has pixels 1.2 times taller than
 // wide: the width is the nearest whole number, N / 1.2 (5 lines: 4, 1280 x
-// 1000; 6: 5, 1600 x 1200).
+// 1000; 6: 5, 1600 x 1200). With it the normal resolution is not used: the
+// 3D models follow graphics.integerResolution (integerResolutionImage).
 static const int kIntegerScaleAuto = -1;
-static const int kIntegerScaleMax = 12;
+static const int kIntegerScaleMax = 21;   // 4320 lines, an 8K screen
 
 inline void integerScaleSize(int aspect, int tall, int* width, int* height)
 {
@@ -143,14 +147,82 @@ inline void integerScaleSize(int aspect, int tall, int* width, int* height)
     *height = 200 * tall;
 }
 
-// In 4:3 only the sizes within 5% of its shape are offered (from 5 lines up)
-inline bool integerScaleOffered(int aspect, int tall)
+// In 4:3, the sizes within 5% of its shape (from 5 lines up): Automatic
+// prefers them; the smaller ones are flatter but can still be chosen
+inline bool integerScaleTrueShape(int aspect, int tall)
 {
     if (aspect != 0)
         return true;
     const int wide = (tall * 5 + 3) / 6;
     const int error = 6 * wide - 5 * tall;
     return (error < 0 ? -error : error) * 4 <= tall;
+}
+
+// The lists offer only the sizes that fit the screen (size unknown, 0: all)
+inline bool integerScaleFits(int aspect, int tall, int screenWidth, int screenHeight)
+{
+    int width, height;
+    integerScaleSize(aspect, tall, &width, &height);
+    return screenWidth <= 0 || screenHeight <= 0 || (width <= screenWidth && height <= screenHeight);
+}
+
+// The size of the scene in a screen or window (area). Automatic: the largest
+// that fits (Stretched fills the width with its own factor; in 4:3 the sizes
+// of its true shape first, with none that fits any); a chosen size: that one
+// or, if too big (a window), the largest smaller one that fits. False if off
+// or not even 320 x 200 fits.
+inline bool integerScaleResolve(int value, int aspect, int areaWidth, int areaHeight, int size[2])
+{
+    if (value == 0)
+        return false;
+    int tallest = areaHeight / 200;
+    if (value > 0 && value < tallest)
+        tallest = value;
+    for (int pass = (value > 0) ? 1 : 0; pass < 2; pass++)
+    {
+        for (int tall = tallest; tall >= 1; tall--)
+        {
+            if (pass == 0 && !integerScaleTrueShape(aspect, tall))
+                continue;
+            integerScaleSize(aspect, tall, &size[0], &size[1]);
+            if (value < 0 && aspect == 2)
+                size[0] = 320 * (areaWidth / 320);
+            if (size[0] >= 320 && size[0] <= areaWidth)
+                return true;
+        }
+    }
+    return false;
+}
+
+// The 3D image with integer scaling (graphics.integerResolution): 0 the whole
+// size of the scene (the sharpest); N the 320 x 200 N times, enlarged by whole
+// pixels (1 the original). N must divide both factors of the scene (in 4:3 the
+// width and the height are enlarged differently); if not, the nearest lower
+// one that does.
+inline void integerResolutionImage(int value, int sceneWidth, int sceneHeight, int size[2])
+{
+    size[0] = sceneWidth;
+    size[1] = sceneHeight;
+    if (value <= 0)
+        return;
+    const int wide = sceneWidth / 320;
+    const int tall = sceneHeight / 200;
+    int lines = (wide < 1 || tall < 1) ? 1 : value;
+    while (lines > 1 && (wide % lines != 0 || tall % lines != 0))
+        lines--;
+    size[0] = 320 * lines;
+    size[1] = 200 * lines;
+}
+
+// A choice of the 3D resolution list for that scene: those that fit exactly,
+// without repeating the whole size (image: the 3D image it gives)
+inline bool integerResolutionOffered(int value, int sceneWidth, int sceneHeight, int image[2])
+{
+    integerResolutionImage(value, sceneWidth, sceneHeight, image);
+    if (value <= 0)
+        return true;
+    return image[0] == 320 * value && image[1] == 200 * value &&
+        !(image[0] == sceneWidth && image[1] == sceneHeight);
 }
 
 inline const char* advancedText(AdvancedText text, int language)
@@ -223,6 +295,16 @@ inline const char* advancedText(AdvancedText text, int language)
         { "Off", "Desactivado", "Désactivé", "Disattivato", "Aus" },
         // IntegerScaleAuto
         { "Automatic", "Automático", "Automatique", "Automatico", "Automatisch" },
+        // IntegerSize
+        { "Size", "Tamaño", "Taille", "Dimensione", "Größe" },
+        // IntegerResolution
+        { "3D resolution", "Resolución 3D", "Résolution 3D", "Risoluzione 3D", "3D-Auflösung" },
+        // IntegerResolutionHelp
+        { "Sharpness of the 3D models; only those that keep every pixel equal.",
+          "Nitidez de los modelos 3D; solo las que dejan todos los píxeles iguales.",
+          "Netteté des modèles 3D ; seulement celles qui gardent les pixels égaux.",
+          "Nitidezza dei modelli 3D; solo quelle che lasciano i pixel uguali.",
+          "Schärfe der 3D-Modelle; nur solche mit gleich großen Pixeln." },
         // CustomBackgrounds
         { "Custom backgrounds", "Fondos personalizados", "Décors personnalisés", "Sfondi personalizzati", "Eigene Hintergründe" },
         // CustomBackgroundsHelp
@@ -490,6 +572,18 @@ inline void advancedResolutionLabel(int width, int language, char* label, size_t
         snprintf(label, size, "%d × %d (%s)", width, advancedResolutionHeight(width), advancedText(AdvancedText::ResolutionOriginal, language));
     else
         snprintf(label, size, "%d × %d", width, advancedResolutionHeight(width));
+}
+
+// The name of a 3D image of the list: "1280 × 1000", "640 × 400",
+// "320 × 200 (original)"; "Automatic" while the scene size is not known
+inline void integerResolutionLabel(const int image[2], int language, char* label, size_t size)
+{
+    if (image[0] <= 0 || image[1] <= 0)
+        snprintf(label, size, "%s", advancedText(AdvancedText::ResolutionAuto, language));
+    else if (image[0] == kAdvancedOriginalResolution && image[1] == 200)
+        advancedResolutionLabel(kAdvancedOriginalResolution, language, label, size);
+    else
+        snprintf(label, size, "%d × %d", image[0], image[1]);
 }
 
 // The name of a choice of the list: "Off", "Automatic", "1280 × 1000"...

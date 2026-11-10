@@ -21,6 +21,7 @@ struct Settings
         int aspect;             // 0 = 4:3 (the original), 1 = 16:10, 2 = stretched
         int resolution;         // width of the scene image (always 4:3): 0 = the screen's, 640 ... 1920
         int integerScale;       // every pixel of the game the same size: 0 off, -1 automatic, N = 200 lines N times (advancedOptionsText.h)
+        int integerResolution;  // the 3D models with integer scaling: 0 the whole size, N = 320 x 200 N times (1 the original)
         bool enhancedText;      // the game's letters rebuilt smooth (textSmooth_ps)
         bool customBackgrounds; // the player's pictures (customBackgrounds.cpp)
         // Developer setting, by hand: "auto" lets bgfx choose; or d3d11,

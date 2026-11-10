@@ -156,8 +156,10 @@ static void resolutionLabel(int resolution, char* label, size_t size)
     advancedResolutionLabel(resolution, textLanguage(), label, size);
 }
 
-static void resolutionCombo(float width, int& resolution)
+// Disabled with integer scaling, which does not use it (integerResolutionCombo)
+static void resolutionCombo(float width, int& resolution, bool disabled)
 {
+    ImGui::BeginDisabled(disabled);
     char current[64];
     resolutionLabel(resolution, current, sizeof(current));
     ImGui::AlignTextToFramePadding();
@@ -180,17 +182,31 @@ static void resolutionCombo(float width, int& resolution)
         ImGui::EndCombo();
     }
     menu::helpWhenFocused(text(AdvancedText::ResolutionHelp));
+    ImGui::EndDisabled();
 }
 
-// Integer scaling: off, automatic or a size (those of the chosen aspect
-// ratio); live (bgfxGlue.cpp places the scene again)
+// The size of the screen the game window is on, in pixels (0 if unknown)
+static void windowScreenSize(int& screenWidth, int& screenHeight)
+{
+    screenWidth = screenHeight = 0;
+    if (const SDL_DisplayMode* mode = SDL_GetDesktopDisplayMode(SDL_GetDisplayForWindow(gWindowBGFX)))
+    {
+        screenWidth = (int)(mode->w * mode->pixel_density);
+        screenHeight = (int)(mode->h * mode->pixel_density);
+    }
+}
+
+// Integer scaling, size: off, automatic or a size (of the chosen aspect
+// ratio, those that fit the screen); live (bgfxGlue.cpp places the scene again)
 static void integerScaleCombo(float width, int& value, int aspect)
 {
     const int language = textLanguage();
+    int screenWidth, screenHeight;
+    windowScreenSize(screenWidth, screenHeight);
     char current[64];
     integerScaleLabel(value, aspect, language, current, sizeof(current));
     ImGui::AlignTextToFramePadding();
-    ImGui::TextUnformatted(text(AdvancedText::IntegerScale));
+    ImGui::TextUnformatted(text(AdvancedText::IntegerSize));
     helpMarker(text(AdvancedText::IntegerScaleHelp));
     comboColumn(width * 0.4f);
     ImGui::SetNextItemWidth(-1.0f);
@@ -200,7 +216,7 @@ static void integerScaleCombo(float width, int& value, int aspect)
         {
             // First Off (0), then Automatic (-1), then the sizes
             const int choice = (entry == -1) ? 0 : (entry == 0 ? kIntegerScaleAuto : entry);
-            if (choice > 0 && !integerScaleOffered(aspect, choice))
+            if (choice > 0 && !integerScaleFits(aspect, choice, screenWidth, screenHeight))
                 continue;
             char label[64];
             integerScaleLabel(choice, aspect, language, label, sizeof(label));
@@ -213,6 +229,51 @@ static void integerScaleCombo(float width, int& value, int aspect)
         ImGui::EndCombo();
     }
     menu::helpWhenFocused(text(AdvancedText::IntegerScaleHelp));
+}
+
+// Integer scaling, 3D resolution: the whole size, the ones that divide it
+// exactly and the original 320 x 200; disabled while integer scaling is off.
+// The scene size is that of the full screen: in a smaller window the engine
+// takes the nearest lower one that fits (integerResolutionImage).
+static void integerResolutionCombo(float width, int& value, int integerScale, int aspect)
+{
+    const int language = textLanguage();
+    int screenWidth, screenHeight;
+    windowScreenSize(screenWidth, screenHeight);
+    int scene[2] = { 0, 0 };
+    if (!integerScaleResolve(integerScale, aspect, screenWidth, screenHeight, scene))
+        scene[0] = scene[1] = 0;
+    int currentImage[2];
+    integerResolutionImage(value, scene[0], scene[1], currentImage);
+    char current[64];
+    integerResolutionLabel(currentImage, language, current, sizeof(current));
+    ImGui::BeginDisabled(integerScale == 0);
+    ImGui::AlignTextToFramePadding();
+    ImGui::TextUnformatted(text(AdvancedText::IntegerResolution));
+    helpMarker(text(AdvancedText::IntegerResolutionHelp));
+    comboColumn(width * 0.4f);
+    ImGui::SetNextItemWidth(-1.0f);
+    if (ImGui::BeginCombo("##integerResolution", current))
+    {
+        // First the whole size (0), then from the sharpest down to the original (1)
+        for (int entry = kIntegerScaleMax + 1; entry >= 1; entry--)
+        {
+            const int choice = (entry == kIntegerScaleMax + 1) ? 0 : entry;
+            int image[2];
+            if (!integerResolutionOffered(choice, scene[0], scene[1], image))
+                continue;
+            char label[64];
+            integerResolutionLabel(image, language, label, sizeof(label));
+            if (ImGui::Selectable(label, image[0] == currentImage[0] && image[1] == currentImage[1]))
+            {
+                value = choice;
+                printf(CFG_TAG "Advanced option (F1): integerResolution=%d\n", value);
+            }
+        }
+        ImGui::EndCombo();
+    }
+    menu::helpWhenFocused(text(AdvancedText::IntegerResolutionHelp));
+    ImGui::EndDisabled();
 }
 
 // Antialiasing of the 3D models: off or FXAA (enough for these flat polygons)
@@ -431,8 +492,7 @@ void advancedOptionsDraw()
         menu::helpWhenFocused(text(AdvancedText::AspectRatioHelp));
 
         // Resolution of the scene image (live: bgfxGlue.cpp resizes it)
-        resolutionCombo(width, g_settings.graphics.resolution);
-        integerScaleCombo(width, g_settings.graphics.integerScale, g_settings.graphics.aspect);
+        resolutionCombo(width, g_settings.graphics.resolution, g_settings.graphics.integerScale != 0);
 
         // Fullscreen: the window thread switches it (g_pendingFullscreenToggle)
         bool fullscreen = gIsFullscreen;
@@ -442,6 +502,13 @@ void advancedOptionsDraw()
             printf(CFG_TAG "Advanced option (F1): fullscreen=%s\n", fullscreen ? "true" : "false");
         }
         helpMarker(text(AdvancedText::FullscreenHelp));
+
+        // Integer scaling: its size and the 3D resolution that fits it
+        ImGui::Spacing();
+        ImGui::TextColored(kGold, "%s", text(AdvancedText::IntegerScale));
+        ImGui::Separator();
+        integerScaleCombo(width, g_settings.graphics.integerScale, g_settings.graphics.aspect);
+        integerResolutionCombo(width, g_settings.graphics.integerResolution, g_settings.graphics.integerScale, g_settings.graphics.aspect);
 
         // Screen effects and animation smoothing
         ImGui::Spacing();

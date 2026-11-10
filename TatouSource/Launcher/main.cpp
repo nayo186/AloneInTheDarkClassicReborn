@@ -363,8 +363,9 @@ static void drawAdvancedOptions(LauncherState& state, const Fonts& fonts, const 
     }
     menu::helpWhenFocused(advText(AdvancedText::AspectRatioHelp));
 
-    // Resolution of the scene image
+    // Resolution of the scene image (disabled with integer scaling, which does not use it)
     {
+        ImGui::BeginDisabled(state.settings.integerScale != 0);
         char current[64];
         advancedResolutionLabel(state.settings.resolution, (int)uiLanguage(), current, sizeof(current));
         ImGui::AlignTextToFramePadding();
@@ -388,14 +389,28 @@ static void drawAdvancedOptions(LauncherState& state, const Fonts& fonts, const 
             ImGui::EndCombo();
         }
         menu::helpWhenFocused(advText(AdvancedText::ResolutionHelp));
+        ImGui::EndDisabled();
     }
 
-    // Integer scaling: off, automatic or a size (those of the chosen aspect ratio)
+    optionCheckbox(AdvancedText::Fullscreen, AdvancedText::FullscreenHelp, &state.settings.fullscreen, "fullscreen");
+
+    // Integer scaling: its size and the 3D resolution that fits it, for the
+    // main screen (where the game opens; in a smaller window the engine takes
+    // the nearest lower ones that fit)
+    ImGui::Spacing();
+    ImGui::TextColored(color(kGold), "%s", advText(AdvancedText::IntegerScale));
+    ImGui::Separator();
+    int screenWidth = 0, screenHeight = 0;
+    if (const SDL_DisplayMode* mode = SDL_GetDesktopDisplayMode(SDL_GetPrimaryDisplay()))
+    {
+        screenWidth = (int)(mode->w * mode->pixel_density);
+        screenHeight = (int)(mode->h * mode->pixel_density);
+    }
     {
         char current[64];
         integerScaleLabel(state.settings.integerScale, state.settings.aspect, (int)uiLanguage(), current, sizeof(current));
         ImGui::AlignTextToFramePadding();
-        ImGui::TextColored(color(kText), "%s", advText(AdvancedText::IntegerScale));
+        ImGui::TextColored(color(kText), "%s", advText(AdvancedText::IntegerSize));
         helpMarker(advText(AdvancedText::IntegerScaleHelp));
         comboColumn(column);
         ImGui::SetNextItemWidth(-1.0f);
@@ -405,7 +420,7 @@ static void drawAdvancedOptions(LauncherState& state, const Fonts& fonts, const 
             {
                 // First Off (0), then Automatic (-1), then the sizes
                 const int choice = (entry == -1) ? 0 : (entry == 0 ? kIntegerScaleAuto : entry);
-                if (choice > 0 && !integerScaleOffered(state.settings.aspect, choice))
+                if (choice > 0 && !integerScaleFits(state.settings.aspect, choice, screenWidth, screenHeight))
                     continue;
                 char label[64];
                 integerScaleLabel(choice, state.settings.aspect, (int)uiLanguage(), label, sizeof(label));
@@ -419,8 +434,43 @@ static void drawAdvancedOptions(LauncherState& state, const Fonts& fonts, const 
         }
         menu::helpWhenFocused(advText(AdvancedText::IntegerScaleHelp));
     }
-
-    optionCheckbox(AdvancedText::Fullscreen, AdvancedText::FullscreenHelp, &state.settings.fullscreen, "fullscreen");
+    {
+        // 3D resolution: the whole size, the ones that divide it exactly and the original
+        int scene[2] = { 0, 0 };
+        if (!integerScaleResolve(state.settings.integerScale, state.settings.aspect, screenWidth, screenHeight, scene))
+            scene[0] = scene[1] = 0;
+        int currentImage[2];
+        integerResolutionImage(state.settings.integerResolution, scene[0], scene[1], currentImage);
+        char current[64];
+        integerResolutionLabel(currentImage, (int)uiLanguage(), current, sizeof(current));
+        ImGui::BeginDisabled(state.settings.integerScale == 0);
+        ImGui::AlignTextToFramePadding();
+        ImGui::TextColored(color(kText), "%s", advText(AdvancedText::IntegerResolution));
+        helpMarker(advText(AdvancedText::IntegerResolutionHelp));
+        comboColumn(column);
+        ImGui::SetNextItemWidth(-1.0f);
+        if (ImGui::BeginCombo("##integerResolution", current))
+        {
+            // First the whole size (0), then from the sharpest down to the original (1)
+            for (int entry = kIntegerScaleMax + 1; entry >= 1; entry--)
+            {
+                const int choice = (entry == kIntegerScaleMax + 1) ? 0 : entry;
+                int image[2];
+                if (!integerResolutionOffered(choice, scene[0], scene[1], image))
+                    continue;
+                char label[64];
+                integerResolutionLabel(image, (int)uiLanguage(), label, sizeof(label));
+                if (ImGui::Selectable(label, image[0] == currentImage[0] && image[1] == currentImage[1]))
+                {
+                    state.settings.integerResolution = choice;
+                    logLine("Advanced option: integerResolution=%d", choice);
+                }
+            }
+            ImGui::EndCombo();
+        }
+        menu::helpWhenFocused(advText(AdvancedText::IntegerResolutionHelp));
+        ImGui::EndDisabled();
+    }
 
     // Screen effects and animation smoothing (all off by default)
     ImGui::Spacing();

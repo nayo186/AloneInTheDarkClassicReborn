@@ -497,6 +497,8 @@ void readGameConfig(const std::string& folder, LauncherSettings& settings)
             settings.resolution = atoi(value.c_str());
         else if (key == "graphics.integerScale")
             settings.integerScale = atoi(value.c_str());
+        else if (key == "graphics.integerResolution")
+            settings.integerResolution = atoi(value.c_str());
         else if (key == "graphics.fullscreen")
             settings.fullscreen = isTrue(value);
         else if (key == "postprocessing.filmGrain")
@@ -570,6 +572,7 @@ bool writeGameConfig(const std::string& folder, const LauncherSettings& settings
         { "graphics.aspect", "graphics.aspect = " + std::to_string(settings.aspect), false },
         { "graphics.resolution", "graphics.resolution = " + std::to_string(settings.resolution), false },
         { "graphics.integerScale", "graphics.integerScale = " + std::to_string(settings.integerScale), false },
+        { "graphics.integerResolution", "graphics.integerResolution = " + std::to_string(settings.integerResolution), false },
         { "graphics.fullscreen", std::string("graphics.fullscreen = ") + boolText(settings.fullscreen), false },
         { "postprocessing.filmGrain", std::string("postprocessing.filmGrain = ") + boolText(settings.filmGrain), false },
         { "postprocessing.scanlines", std::string("postprocessing.scanlines = ") + boolText(settings.scanlines), false },
