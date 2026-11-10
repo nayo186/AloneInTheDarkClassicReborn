@@ -1212,6 +1212,38 @@ void osystem_flushPendingPrimitives()
     // its object goes into Z so it stays behind nearer objects and masks.
     if (numUsedTransparentVertices && s_depthSlice[2] > 0.5f)
     {
+        // The glass marks its pixels as its object's now, without drawing
+        // anything: a mask of that object (a curtain, a wall) then covers it
+        // there and the glass, drawn later, stays behind (BUGS.md C70)
+        if (s_objectStencil != 0)
+        {
+            bgfx::VertexLayout layout;
+            layout
+                .begin()
+                .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
+                .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
+                .end();
+            if (bgfx::getAvailTransientVertexBuffer(numUsedTransparentVertices, layout) >= (uint32_t)numUsedTransparentVertices)
+            {
+                bgfx::TransientVertexBuffer markBuffer;
+                bgfx::allocTransientVertexBuffer(&markBuffer, numUsedTransparentVertices, layout);
+                memcpy(markBuffer.data, &transparentVertices[0], sizeof(polyVertex) * numUsedTransparentVertices);
+                applyShakeToVertices(markBuffer.data, numUsedTransparentVertices, sizeof(polyVertex));
+                bgfx::setState(0
+                    | BGFX_STATE_DEPTH_TEST_LEQUAL
+                    | BGFX_STATE_MSAA
+                    | BGFX_STATE_CULL_CCW);
+                static bgfx::UniformHandle markPaletteUniform = BGFX_INVALID_HANDLE;
+                if (!bgfx::isValid(markPaletteUniform))
+                    markPaletteUniform = bgfx::createUniform("s_paletteTexture", bgfx::UniformType::Sampler);
+                bgfx::setTexture(1, markPaletteUniform, g_paletteTexture);
+                bgfx::setVertexBuffer(0, &markBuffer);
+                applyObjectStencil();
+                applyDepthSlice();
+                bgfx::submit(gameViewId, getFlatShader());
+            }
+        }
+
         const float sliceZ = s_depthSlice[0] * 40960.0f;
         for (int i = 0; i < numUsedTransparentVertices; i++)
         {

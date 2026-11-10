@@ -11,6 +11,7 @@
 #include "common.h"
 #include "consoleLog.h"
 #include "osystemAL.h"
+#include "settings.h"
 
 bool g_gameUseCDA = false;
 
@@ -1259,6 +1260,18 @@ int fadeParam[3];
 // The music that is playing comes from a CD track (else from the AdLib)
 static bool s_musicFromTrack = false;
 
+// AITD1 and AITD2 bring both musics: the AdLib one (LISTMUS.PAK) instead of
+// the CD tracks when the player chooses it (audio.music, audio window).
+// Jack only has AdLib music and AITD3 only CD tracks
+static bool adlibMusicChosen()
+{
+	return g_settings.audio.adlibMusic && (g_gameId == AITD1 || g_gameId == AITD2);
+}
+// The choice when the music that is playing started
+static bool s_adlibWhenStarted = false;
+// The music asked for has no AdLib piece: silence that has not ended
+static bool s_noAdlibPiece = false;
+
 // AITD1 without its CD tracks: the CD version's scripts ask for CD tracks
 // (music N is track N, file NN-1), and INDARK.EXE plays nothing without the
 // CD; LISTMUS.PAK is the floppy version's AdLib music, with fewer pieces
@@ -1298,6 +1311,8 @@ void playMusic(int musicNumber)
 		return;
 
 	currentMusic = musicNumber;
+	s_adlibWhenStarted = adlibMusicChosen();
+	s_noAdlibPiece = false;
 	printf(MUSIC_TAG "Music %d requested\n", musicNumber);
 
 	int trackNumber = musicNumber;
@@ -1317,7 +1332,7 @@ void playMusic(int musicNumber)
 	// JACK mode: skip MP3/CD audio path and play MIDI/AdLib music from
 	// LISTMUS.PAK directly so JACK uses its own MIDI tracks instead of
 	// falling back to AITD1's mp3 audio that may be in the working dir.
-	if(g_gameId != JACK)
+	if(g_gameId != JACK && !s_adlibWhenStarted)
 	{
 		if(osystem_playTrack(trackNumber))
 		{
@@ -1340,6 +1355,7 @@ void playMusic(int musicNumber)
 		}
 		if(adlibPiece < 0)
 		{
+			s_noAdlibPiece = true;
 			fadeMusic(0,0,0x40);
 			printf(MUSIC_TAG "Music %d: no AdLib piece, silence\n", musicNumber);
 			return;
@@ -1397,6 +1413,22 @@ bool isMusicOver()
 	if(s_musicFromTrack)
 		return !osystem_isTrackPlaying();
 	return fadeMusic(0,0,0x10)==-1;
+}
+
+void updateMusicSource()
+{
+	const bool adlib = adlibMusicChosen();
+	if(adlib == s_adlibWhenStarted)
+		return;
+	s_adlibWhenStarted = adlib;
+	// Only a music still playing (or one without an AdLib piece, silent):
+	// one that has ended stays ended
+	const int music = currentMusic;
+	if(music < 0 || (isMusicOver() && !s_noAdlibPiece))
+		return;
+	printf(MUSIC_TAG "Music %d: now from the %s\n", music, adlib ? "AdLib" : "CD");
+	stopMusic();
+	playMusic(music);
 }
 
 int updateLoop = 0;

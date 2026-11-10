@@ -111,6 +111,7 @@ It is not a static recompilation: a static recompilation translates the machine 
 - **Your original CD**: play from an image of it (`.cue` and `.bin`, or `.iso`), read as it is (see [Your original CD](#your-original-cd)).
 - **Game file check**: the launcher checks the files of your game folder against the editions we know and warns if one is missing or different (see [Checking the game files](#checking-the-game-files)).
 - **Separate volumes** for music and for voices and effects.
+- **CD or AdLib music** in *Alone in the Dark* and *Alone in the Dark 2*, which come with both.
 - **Narrators**: the French CD's narrator (from your own CD) or a fans' dubbing, with any text language; in *Alone in the Dark 2* and *3* the narrator reads the books from the CD, and fans can dub it too (see [Narrators](#narrators)).
 - ***Alone in the Dark 3* in any of its languages** over your GOG or Steam installation, with the files of that language (English, French, German, Italian, and Spanish from the original Spanish CD): texts, voices and narrator (see [Other languages in Alone in the Dark 3](#other-languages-in-alone-in-the-dark-3)).
 - **Saves** in the format of the GOG edition: saves made in the GOG game load here (the three *Alone in the Dark* games).
@@ -335,7 +336,7 @@ The launcher's **Advanced options** and the in-game **F1** window share the same
 | Smooth animations | Poses blended between the original key frames |
 | Enhanced text | The game's letters redrawn sharp at screen resolution |
 | Custom backgrounds | Uses your pictures instead of the originals |
-| Audio | Music volume, voices and effects volume, narrator |
+| Audio | Music volume, voices and effects volume, music type (CD or AdLib, in *Alone in the Dark* 1 and 2), narrator |
 | Controls | The inputs of every action, modern left stick, controller vibration |
 | Cheats (F1 only) | **Enable cheats** turns them on or off; **Infinite life**: damage never kills you, the game's traps (deadly falls, scripted deaths) still do |
 

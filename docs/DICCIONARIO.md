@@ -612,6 +612,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `fadeMusic` | Fades the music in or out |
 | `stopMusic` | Silences the music, CD track and AdLib alike (BUGS.md C33) |
 | `isMusicOver` | True when the music that was playing has ended (CD track or AdLib) |
+| `updateMusicSource` | The music chosen in the audio window (CD or AdLib) changed: the music that is playing starts again with the other one (called every frame) |
 
 ### `core/object.h`
 

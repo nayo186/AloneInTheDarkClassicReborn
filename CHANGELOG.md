@@ -4,6 +4,14 @@ Alone in the Dark: Classic Reborn started on 2026-10-23 from [Alone in the Dark:
 
 This repository was published with a single starting commit, to keep it light: the early history carried large files that are no longer part of the project. Below are the changes of each release and, after them, the changes made in this fork before it was published, newest first, one line per change. The reasons behind larger removals are explained in `docs/DESCARTADO.md` and the fixes in `docs/baseline/BUGS.md`.
 
+## v1.7.0 (2026-11-10)
+
+Choose between CD and AdLib music, and a fix for see-through glass in *Alone in the Dark*.
+
+- *Alone in the Dark* and *Alone in the Dark 2*: new **Music type** option in the **Audio** window (F1 or the launcher's Advanced options): **CD** (default) or **AdLib**, the synthesized music of the original sound cards. Changed during a game, the music switches at once. With AdLib a few places in *Alone in the Dark* have no music, as in the floppy version. *Jack in the Dark* only has AdLib music and *Alone in the Dark 3* only CD music, so the option does not appear there (issue #9, BUGS.md C71)
+- *Alone in the Dark*: glass, such as the bedroom window, was drawn over what was in front of it: the curtain next to the window looked tinted, and a see-through figure showed through a wall by the stairs. It now stays behind; where nothing is in front it is still see-through, so you can see what comes through a window (issue #8, BUGS.md C70)
+- All games: the help of **Aspect ratio** explains the difference: 4:3 is the shape the game was drawn for, 16:10 shows square pixels, as in GOG/DOSBox (issue #7, BUGS.md C72)
+
 ## v1.6.5 (2026-11-10)
 
 - All games: with the 4:3 aspect ratio, the Integer scaling list only offers 4:3 sizes; 640 × 400 and 960 × 600, which have the shape of 16:10, looked stretched next to them. For square pixels choose 16:10 (issue #7, BUGS.md C69)

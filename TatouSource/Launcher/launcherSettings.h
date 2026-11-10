@@ -64,6 +64,7 @@ struct LauncherSettings
     int musicVolume = kDefaultAudioVolume;
     int soundVolume = kDefaultAudioVolume;
     std::string voices;   // narrator (audio.voices): a folder of Voices, empty = the game's (English)
+    bool adlibMusic = false;   // audio.music: AdLib instead of the CD tracks (AITD1 and AITD2)
 
     // Game controls ("controls.<action>" lines; not part of the default
     // settings button: they are reset in their own window)

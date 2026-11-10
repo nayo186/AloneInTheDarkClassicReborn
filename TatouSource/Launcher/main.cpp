@@ -534,9 +534,13 @@ static void drawAdvancedOptions(LauncherState& state, const Fonts& fonts, const 
         logLine("Controls: modern left stick %s, vibration %s", state.settings.modernStick ? "on" : "off",
             state.settings.vibration ? "on" : "off");
     }
-    if (drawAudioWindow(s_audioWindow, state.settings.musicVolume, state.settings.soundVolume, state.settings.voices,
+    // CD or AdLib music: only on the pages of the games that have both
+    // (AITD1 with Jack, which only has AdLib and ignores it; AITD2)
+    if (drawAudioWindow(s_audioWindow, state.settings.musicVolume, state.settings.soundVolume,
+        state.selectedGame != 2 ? &state.settings.adlibMusic : nullptr, state.settings.voices,
         s_narrators, (int)uiLanguage(), true, controlsStyle))
-        logLine("Audio: music %d, voices and effects %d, narrator %s", state.settings.musicVolume, state.settings.soundVolume,
+        logLine("Audio: music %d (%s), voices and effects %d, narrator %s", state.settings.musicVolume,
+            state.settings.adlibMusic ? "AdLib" : "CD", state.settings.soundVolume,
             state.settings.voices.empty() ? "of the game" : state.settings.voices.c_str());
 
     ImGui::EndPopup();

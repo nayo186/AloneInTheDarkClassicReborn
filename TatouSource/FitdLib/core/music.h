@@ -31,4 +31,7 @@ int fadeMusic(int param1, int param2, int param3);
 void stopMusic();
 // True when the music that was playing has ended (CD track or AdLib)
 bool isMusicOver();
+// The music chosen in the audio window (CD or AdLib) changed: the music that
+// is playing starts again with the other one (called every frame)
+void updateMusicSource();
 #endif

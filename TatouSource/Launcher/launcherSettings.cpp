@@ -473,6 +473,7 @@ void readGameConfig(const std::string& folder, LauncherSettings& settings)
     settings.restoreDefaultControls();
     settings.musicVolume = settings.soundVolume = kDefaultAudioVolume;
     settings.voices.clear();
+    settings.adlibMusic = false;
 
     std::ifstream file(gameConfigPath(folder));
     if (!file)
@@ -525,6 +526,8 @@ void readGameConfig(const std::string& folder, LauncherSettings& settings)
             settings.soundVolume = std::clamp(atoi(value.c_str()), 0, 100);
         else if (key == "audio.voices")
             settings.voices = value;
+        else if (key == "audio.music")
+            settings.adlibMusic = value == "adlib";
         else if (key == "controller.modernStick")
             settings.modernStick = isTrue(value);
         else if (key == "controller.vibration")
@@ -586,6 +589,7 @@ bool writeGameConfig(const std::string& folder, const LauncherSettings& settings
     };
     wanted.push_back({ "audio.musicVolume", "audio.musicVolume = " + std::to_string(settings.musicVolume), false });
     wanted.push_back({ "audio.soundVolume", "audio.soundVolume = " + std::to_string(settings.soundVolume), false });
+    wanted.push_back({ "audio.music", std::string("audio.music = ") + (settings.adlibMusic ? "adlib" : "cd"), false });
     wanted.push_back({ "audio.voices", "audio.voices = \"" + settings.voices + "\"", false });
     wanted.push_back({ "controller.modernStick", std::string("controller.modernStick = ") + boolText(settings.modernStick), false });
     wanted.push_back({ "controller.vibration", std::string("controller.vibration = ") + boolText(settings.vibration), false });

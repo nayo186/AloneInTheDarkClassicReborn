@@ -104,6 +104,10 @@ enum class AdvancedText
     VoicesSpanish,
     VoicesItalian,
     VoicesGerman,
+    MusicSource,
+    MusicSourceHelp,
+    MusicSourceCD,
+    MusicSourceAdlib,
     Cheats,
     CheatsEnabled,
     CheatsEnabledHelp,
@@ -257,11 +261,11 @@ inline const char* advancedText(AdvancedText text, int language)
         // AspectRatio
         { "Aspect ratio", "Relación de aspecto", "Format d'image", "Rapporto d'aspetto", "Seitenverhältnis" },
         // AspectRatioHelp
-        { "4:3 is the original shape. Stretched: fullscreen only.",
-          "4:3 es la forma original. Estirada: solo en pantalla completa.",
-          "4:3 est le format d'origine. Étirée : plein écran seulement.",
-          "4:3 è la forma originale. Allungata: solo a schermo intero.",
-          "4:3 ist das Originalformat. Gestreckt: nur im Vollbild." },
+        { "4:3 is the shape it was drawn for. 16:10: square pixels, as in GOG/DOSBox. Stretched: fullscreen only.",
+          "4:3 es la forma para la que se dibujó. 16:10: píxeles cuadrados, como en GOG/DOSBox. Estirada: solo en pantalla completa.",
+          "4:3 est le format pour lequel il a été dessiné. 16:10 : pixels carrés, comme dans GOG/DOSBox. Étirée : plein écran seulement.",
+          "4:3 è la forma per cui è stato disegnato. 16:10: pixel quadrati, come in GOG/DOSBox. Allungata: solo a schermo intero.",
+          "4:3 ist das Format, für das es gezeichnet wurde. 16:10: quadratische Pixel, wie in GOG/DOSBox. Gestreckt: nur im Vollbild." },
         // Aspect4x3
         { "4:3 (original)", "4:3 (original)", "4:3 (original)", "4:3 (originale)", "4:3 (Original)" },
         // Aspect16x10
@@ -543,6 +547,18 @@ inline const char* advancedText(AdvancedText text, int language)
         { "Italian", "Italiano", "Italien", "Italiano", "Italienisch" },
         // VoicesGerman
         { "German", "Alemán", "Allemand", "Tedesco", "Deutsch" },
+        // MusicSource
+        { "Music type", "Tipo de música", "Type de musique", "Tipo di musica", "Musikart" },
+        // MusicSourceHelp
+        { "CD: recorded music. AdLib: the synthesized one of 1992; some places are silent, as on floppy disks.",
+          "CD: música grabada. AdLib: la sintetizada de 1992; algunos lugares sin música, como en disquetes.",
+          "CD : musique enregistrée. AdLib : celle synthétisée de 1992 ; certains lieux sans musique, comme sur disquettes.",
+          "CD: musica registrata. AdLib: quella sintetizzata del 1992; alcuni luoghi senza musica, come su dischetti.",
+          "CD: aufgenommene Musik. AdLib: die synthetisierte von 1992; manche Orte ohne Musik, wie auf Disketten." },
+        // MusicSourceCD
+        { "CD", "CD", "CD", "CD", "CD" },
+        // MusicSourceAdlib
+        { "AdLib", "AdLib", "AdLib", "AdLib", "AdLib" },
         // Cheats
         { "CHEATS", "TRUCOS", "ASTUCES", "TRUCCHI", "CHEATS" },
         // CheatsEnabled

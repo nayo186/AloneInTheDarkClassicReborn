@@ -150,6 +150,9 @@ void process_events( void )
 	timer=timeGlobal;
 	ticksThisFrame = (int)timeIncrease;
 
+	// CD or AdLib music, changed in the audio window (F1)
+	updateMusicSource();
+
 	// Every loop of the game passes here: while F1 is open it waits (once:
 	// the wait itself calls process_events)
 	static bool waiting = false;

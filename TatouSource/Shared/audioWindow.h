@@ -52,12 +52,13 @@ struct AudioWindowState
 };
 
 // Draws the window while state.open (call every frame). Returns true when a
-// volume or the narrator changed. voices: the chosen narrator's folder (empty:
-// the game's), narrators: the folders with voices (the list is greyed out
-// without any). asPopup: a modal popup inside the caller's popup (the
+// volume, the music type or the narrator changed. adlibMusic: CD or AdLib
+// music (audio.music), nullptr for a game without both (Jack, AITD3): the row
+// is not shown. voices: the chosen narrator's folder (empty: the game's),
+// narrators: the folders with voices (the list is greyed out without any). asPopup: a modal popup inside the caller's popup (the
 // launcher); otherwise a window of its own (the game's F1 window, hidden
 // meanwhile so they never overlap).
-inline bool drawAudioWindow(AudioWindowState& state, int& musicVolume, int& soundVolume, std::string& voices,
+inline bool drawAudioWindow(AudioWindowState& state, int& musicVolume, int& soundVolume, bool* adlibMusic, std::string& voices,
                             const std::vector<std::string>& narrators, int language, bool asPopup,
                             const ControlsWindowStyle& style = ControlsWindowStyle())
 {
@@ -70,7 +71,7 @@ inline bool drawAudioWindow(AudioWindowState& state, int& musicVolume, int& soun
     if (state.justOpened && asPopup)
         ImGui::OpenPopup(popupId);
 
-    // Centred, its height follows the content (three rows: it always fits)
+    // Centred, its height follows the content (four rows at most: it always fits)
     const float width = (std::min)(460.0f * style.scale, io.DisplaySize.x * 0.94f);
     ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
     ImGui::SetNextWindowSize(ImVec2(width, 0.0f), ImGuiCond_Always);
@@ -118,6 +119,32 @@ inline bool drawAudioWindow(AudioWindowState& state, int& musicVolume, int& soun
     };
     volumeRow("##musicVolume", AdvancedText::MusicVolume, AdvancedText::MusicVolumeHelp, musicVolume);
     volumeRow("##soundVolume", AdvancedText::SoundVolume, AdvancedText::SoundVolumeHelp, soundVolume);
+
+    // Music type: the CD tracks or the AdLib music (AITD1 and AITD2)
+    if (adlibMusic)
+    {
+        ImGui::AlignTextToFramePadding();
+        ImGui::TextUnformatted(text(AdvancedText::MusicSource));
+        menu::helpMarker(text(AdvancedText::MusicSourceHelp));
+        ImGui::SameLine(column);
+        ImGui::SetNextItemWidth(-1.0f);
+        const AdvancedText current = *adlibMusic ? AdvancedText::MusicSourceAdlib : AdvancedText::MusicSourceCD;
+        if (ImGui::BeginCombo("##musicSource", text(current)))
+        {
+            for (int i = 0; i < 2; i++)
+            {
+                const bool adlib = i == 1;
+                if (ImGui::Selectable(text(adlib ? AdvancedText::MusicSourceAdlib : AdvancedText::MusicSourceCD), *adlibMusic == adlib)
+                    && *adlibMusic != adlib)
+                {
+                    *adlibMusic = adlib;
+                    changed = true;
+                }
+            }
+            ImGui::EndCombo();
+        }
+        menu::helpWhenFocused(text(AdvancedText::MusicSourceHelp));
+    }
 
     // Narrator: the game's own (English, empty name) and each folder found;
     // a chosen folder that is gone goes back to the game's

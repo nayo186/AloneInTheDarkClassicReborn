@@ -49,6 +49,7 @@ static void setDefaults()
 
     c.audio.musicVolume = 100;
     c.audio.soundVolume = 100;
+    c.audio.adlibMusic = false;
     c.audio.voices[0] = '\0';
 
     c.cheats.enabled = false;
@@ -155,6 +156,7 @@ void loadSettings()
         else if (strcmp(key, "animation.poseSmoothing") == 0) c.animation.enablePoseSmoothing = isTrue(value);
         else if (strcmp(key, "audio.musicVolume") == 0) c.audio.musicVolume = atoi(value);
         else if (strcmp(key, "audio.soundVolume") == 0) c.audio.soundVolume = atoi(value);
+        else if (strcmp(key, "audio.music") == 0) c.audio.adlibMusic = strcmp(value, "adlib") == 0;
         else if (strcmp(key, "audio.voices") == 0) copyText(c.audio.voices, sizeof(c.audio.voices), value);
         else if (strcmp(key, "controller.modernStick") == 0) controlsAnalog().modernStick = isTrue(value);
         else if (strcmp(key, "controller.vibration") == 0) controlsAnalog().vibration = isTrue(value);
@@ -226,7 +228,8 @@ void saveSettings()
     fprintf(file, "# Audio (0-100), narrator (a folder of Voices, empty = English) and language\n");
     fprintf(file, "audio.musicVolume = %d\n", c.audio.musicVolume);
     fprintf(file, "audio.soundVolume = %d\n", c.audio.soundVolume);
-    fprintf(file, "audio.voices = \"%s\"\n", c.audio.voices);
+    fprintf(file, "audio.music = %s\n", c.audio.adlibMusic ? "adlib" : "cd");
+    fprintf(file, "audio.voices =\"%s\"\n", c.audio.voices);
     fprintf(file, "gamedata.language = \"%s\"\n\n", c.gameData.language);
 
     fprintf(file, "# Cheats (F1): enabled turns them on\n");

@@ -625,9 +625,16 @@ void advancedOptionsDraw()
         }
     }
     std::string voices = g_settings.audio.voices;
-    if (drawAudioWindow(s_audio, g_settings.audio.musicVolume, g_settings.audio.soundVolume, voices, s_narrators,
-        textLanguage(), false, controlsStyle))
+    // CD or AdLib music: only the games that have both (core/music.cpp)
+    const bool bothMusics = g_gameId == AITD1 || g_gameId == AITD2;
+    const bool adlibBefore = g_settings.audio.adlibMusic;
+    if (drawAudioWindow(s_audio, g_settings.audio.musicVolume, g_settings.audio.soundVolume,
+        bothMusics ? &g_settings.audio.adlibMusic : nullptr, voices, s_narrators, textLanguage(), false, controlsStyle))
+    {
         snprintf(g_settings.audio.voices, sizeof(g_settings.audio.voices), "%s", voices.c_str());
+        if (g_settings.audio.adlibMusic != adlibBefore)
+            printf(CFG_TAG "Audio: %s music\n", g_settings.audio.adlibMusic ? "AdLib" : "CD");
+    }
 
     drawCheatsWindow(scale);
 
