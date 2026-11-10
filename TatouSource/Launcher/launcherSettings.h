@@ -159,6 +159,8 @@ std::vector<GameLanguage> findGameLanguages(const std::string& folder);
 void readGameConfig(const std::string& folder, LauncherSettings& settings);
 // Writes the launcher's options in the game's aitd_remaster.cfg, keeping every other line
 bool writeGameConfig(const std::string& folder, const LauncherSettings& settings);
+// The game's aitd_remaster.cfg for that data folder (the file writeGameConfig writes)
+std::string gameConfigFile(const std::string& folder);
 
 enum class LaunchResult
 {

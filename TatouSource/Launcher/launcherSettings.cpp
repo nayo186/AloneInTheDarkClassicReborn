@@ -538,6 +538,11 @@ void readGameConfig(const std::string& folder, LauncherSettings& settings)
         settings.animationSmoothing);
 }
 
+std::string gameConfigFile(const std::string& folder)
+{
+    return gameConfigPath(folder).u8string();
+}
+
 bool writeGameConfig(const std::string& folder, const LauncherSettings& settings)
 {
     // Keep every other line of the game's config as it is
@@ -609,7 +614,7 @@ bool writeGameConfig(const std::string& folder, const LauncherSettings& settings
     std::ofstream out(gameConfigPath(folder));
     if (!out)
     {
-        logLine("ERROR: could not write aitd_remaster.cfg in %s", folder.c_str());
+        logLine("ERROR: could not write %s (read-only, or a protected folder)", gameConfigFile(folder).c_str());
         return false;
     }
     for (const std::string& line : lines)

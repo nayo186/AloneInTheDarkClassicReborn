@@ -974,6 +974,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `findGameLanguages` | Language PAKs present in the data folder, in a fixed order |
 | `readGameConfig` | Language and advanced options of the data folder's aitd_remaster.cfg |
 | `writeGameConfig` | Writes the launcher's options in the game's aitd_remaster.cfg, keeping every other line |
+| `gameConfigFile` | The game's aitd_remaster.cfg for that data folder (the file writeGameConfig writes) |
 | `launchGame` | Starts Tatou.exe with the default settings and the chosen language, in the game's data folder: game "aitd1", "jack" (Tatou enters the JACK subfolder and shares the AITD1 configuration), "aitd2" or "aitd3" |
 | `launchedGameArguments` | Android: the game's arguments (argv) chosen by launchGame, empty if none |
 

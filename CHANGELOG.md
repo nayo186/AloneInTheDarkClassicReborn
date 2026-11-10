@@ -4,6 +4,10 @@ Alone in the Dark: Classic Reborn started on 2026-10-23 from [Alone in the Dark:
 
 This repository was published with a single starting commit, to keep it light: the early history carried large files that are no longer part of the project. Below are the changes of each release and, after them, the changes made in this fork before it was published, newest first, one line per change. The reasons behind larger removals are explained in `docs/DESCARTADO.md` and the fixes in `docs/baseline/BUGS.md`.
 
+## Unreleased
+
+- All games: when the launcher cannot save your options (a read-only or protected folder, such as one guarded by an antivirus), it says so and which file, and you can play anyway with the options you had; it did not start the game (BUGS.md C66)
+
 ## v1.6.2 (2026-11-09)
 
 Android phones without Vulkan can play: OpenGL ES works.

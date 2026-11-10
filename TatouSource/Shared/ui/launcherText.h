@@ -78,6 +78,8 @@ enum class UiText
     FilesMissingTitle,
     FilesMissingText,
     FilesDontWarn,
+    OptionsNotSavedTitle,
+    OptionsNotSavedText,
     Count
 };
 
@@ -325,6 +327,15 @@ static const char* const kLauncherTexts[(int)UiText::Count][(int)UiLanguage::Cou
     // FilesDontWarn
     { "Do not warn again for these files", "No volver a avisar para estos archivos", "Ne plus avertir pour ces fichiers",
       "Non avvisare più per questi file", "Für diese Dateien nicht mehr warnen" },
+    // OptionsNotSavedTitle
+    { "Your options could not be saved", "No se pudieron guardar tus opciones", "Vos options n'ont pas pu être enregistrées",
+      "Non è stato possibile salvare le tue opzioni", "Ihre Optionen konnten nicht gespeichert werden" },
+    // OptionsNotSavedText
+    { "The launcher could not write the file below. Its folder may be read-only or protected, for example by an antivirus or by Windows' controlled folder access. The game will start with the options it had before, and your saves may not be kept either. To fix it, move the game's folder to another place (for example C:\\Games) or allow it in the antivirus.",
+      "El lanzador no pudo escribir el archivo de abajo. Su carpeta puede ser de solo lectura o estar protegida, por ejemplo por un antivirus o por el acceso controlado a carpetas de Windows. El juego empezará con las opciones que tenía, y puede que tus partidas tampoco se guarden. Para arreglarlo, mueve la carpeta del juego a otro sitio (por ejemplo C:\\Juegos) o permítela en el antivirus.",
+      "Le lanceur n'a pas pu écrire le fichier ci-dessous. Son dossier est peut-être en lecture seule ou protégé, par exemple par un antivirus ou par l'accès contrôlé aux dossiers de Windows. Le jeu démarrera avec les options qu'il avait, et vos sauvegardes pourraient ne pas être gardées non plus. Pour corriger cela, déplacez le dossier du jeu ailleurs (par exemple C:\\Jeux) ou autorisez-le dans l'antivirus.",
+      "L'avvio non è riuscito a scrivere il file qui sotto. La sua cartella potrebbe essere di sola lettura o protetta, per esempio da un antivirus o dall'accesso controllato alle cartelle di Windows. Il gioco partirà con le opzioni che aveva, e anche i salvataggi potrebbero non essere conservati. Per risolvere, sposta la cartella del gioco in un altro posto (per esempio C:\\Giochi) o consentila nell'antivirus.",
+      "Der Starter konnte die Datei unten nicht schreiben. Ihr Ordner ist vielleicht schreibgeschützt oder geschützt, zum Beispiel durch ein Antivirenprogramm oder den überwachten Ordnerzugriff von Windows. Das Spiel startet mit den bisherigen Optionen, und auch Ihre Spielstände werden vielleicht nicht gespeichert. Verschieben Sie den Ordner des Spiels an einen anderen Ort (zum Beispiel C:\\Spiele) oder erlauben Sie ihn im Antivirenprogramm." },
 };
 
 inline UiLanguage& currentUiLanguage()

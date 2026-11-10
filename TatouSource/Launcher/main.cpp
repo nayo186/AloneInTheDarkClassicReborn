@@ -123,6 +123,7 @@ struct LauncherState
     GameFilesResult files;      // what the check found: files in no known edition, files missing
     bool filesAccepted = false; // the player chose not to be warned about those files again
     std::string pendingGame;    // the game to start once the check ends or its warning is accepted
+    std::string optionsNotSaved; // aitd_remaster.cfg that could not be written: its warning shows
     std::string message;        // error shown at the bottom
     std::string note;           // or a message that is not an error (the import's progress)
     int importing = -1;         // Android: the game being imported (0-2), -1 none
@@ -729,12 +730,15 @@ static void followImport(LauncherState& state)
 }
 #endif
 
-// Saves the settings (shared by AITD1 and Jack) and starts the game
-static void startGame(LauncherState& state, const char* game)
+// Saves the settings (shared by AITD1 and Jack) and starts the game. If they
+// cannot be saved (a read-only or protected folder), the game waits for the
+// player's answer (drawOptionsWarning) and may start with its old options
+static void startGame(LauncherState& state, const char* game, bool withOldOptions = false)
 {
-    if (!writeGameConfig(dataFolder(state), state.settings))
+    if (!withOldOptions && !writeGameConfig(dataFolder(state), state.settings))
     {
-        state.message = tr(UiText::LaunchFailed);
+        state.pendingGame = game;
+        state.optionsNotSaved = gameConfigFile(dataFolder(state));
         return;
     }
     saveLauncherSettings(state.settings);
@@ -891,6 +895,49 @@ static void drawFilesWarning(LauncherState& state, const Fonts& fonts, const Met
         ImGui::CloseCurrentPopup();
         dontWarn = false;
         state.pendingGame.clear();
+    }
+    ImGui::Dummy(ImVec2(0.0f, metrics.px(4.0f)));
+    endCentredPopup();
+}
+
+// The options could not be saved before playing (startGame): which file and
+// why it may be, and Play anyway (with the options the game had) or Cancel
+static void drawOptionsWarning(LauncherState& state, const Fonts& fonts, const Metrics& metrics)
+{
+    if (!state.optionsNotSaved.empty() && !ImGui::IsPopupOpen("##optionsPopup"))
+        ImGui::OpenPopup("##optionsPopup");
+    if (!beginCentredPopup("##optionsPopup", metrics))
+        return;
+    ImGui::PushFont(fonts.header);
+    ImGui::PushTextWrapPos(0.0f);
+    ImGui::TextColored(color(kGoldLight), "%s", tr(UiText::OptionsNotSavedTitle));
+    ImGui::PopTextWrapPos();
+    ImGui::PopFont();
+    ImGui::Spacing();
+    ImGui::PushTextWrapPos(0.0f);
+    ImGui::TextColored(color(kText), "%s", tr(UiText::OptionsNotSavedText));
+    ImGui::Spacing();
+    ImGui::TextColored(color(kTextDim), "%s", state.optionsNotSaved.c_str());
+    ImGui::PopTextWrapPos();
+    ImGui::Spacing();
+
+    const ImVec2 pos = ImGui::GetCursorScreenPos();
+    const float gap = metrics.px(10.0f);
+    const ImVec2 half((ImGui::GetContentRegionAvail().x - gap) * 0.5f, metrics.pressHeight(40.0f));
+    if (goldButton("##optionsPlay", tr(UiText::PlayAnyway), pos, half, fonts.button, true))
+    {
+        ImGui::CloseCurrentPopup();
+        logLine("Options not saved: playing anyway with the old ones");
+        const std::string game = state.pendingGame;
+        state.pendingGame.clear();
+        state.optionsNotSaved.clear();
+        startGame(state, game.c_str(), true);
+    }
+    else if (darkButton("##optionsCancel", tr(UiText::Cancel), ImVec2(pos.x + half.x + gap, pos.y), half, fonts.button, true))
+    {
+        ImGui::CloseCurrentPopup();
+        state.pendingGame.clear();
+        state.optionsNotSaved.clear();
     }
     ImGui::Dummy(ImVec2(0.0f, metrics.px(4.0f)));
     endCentredPopup();
@@ -1173,6 +1220,7 @@ int main(int, char**)
         drawUpdateWindow(state, fonts, metrics);
         drawAboutWindow(fonts, metrics);
         drawFilesWarning(state, fonts, metrics);
+        drawOptionsWarning(state, fonts, metrics);
         drawFileCheck(state, fonts, metrics);
         ImGui::PopFont();
         ImGui::Render();
