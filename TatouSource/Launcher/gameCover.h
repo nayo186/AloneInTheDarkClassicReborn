@@ -16,6 +16,7 @@ struct GameCover
 {
     SDL_Texture* colour = nullptr;
     SDL_Texture* grey = nullptr;   // shown while the game has no data folder
+    SDL_Texture* background = nullptr;   // blurred and darkened, behind the window
     int width = 0;
     int height = 0;
 };
@@ -25,3 +26,7 @@ GameCover loadGameCover(SDL_Renderer* renderer, int game);
 
 // Frees the textures of a cover
 void freeGameCover(GameCover& cover);
+
+// The controls window's controller drawing (Shared/ui/controllerPicture.h)
+// as a texture, and its height / width; nullptr if it could not be read
+SDL_Texture* loadControllerDrawing(SDL_Renderer* renderer, float& aspect);

@@ -12,3 +12,8 @@
 
 // Registers the start menu hook (remasterHooks.cpp)
 void controllerHintRegister();
+
+#include <imgui.h>
+// The controls window's controller drawing (Shared/ui/controllerPicture.h)
+// as an ImGui texture, made the first time; false if it could not be read
+bool controllerDrawingTexture(ImTextureID* texture, float* aspect);

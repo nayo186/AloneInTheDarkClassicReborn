@@ -28,13 +28,6 @@ static float s_scale = 1.0f;
 const menu::Fonts& menuFonts() { return s_fonts; }
 float menuFontsScale() { return s_scale; }
 
-static ImFont* addFont(const std::string& path, float size)
-{
-    std::error_code error;
-    if (path.empty() || !std::filesystem::exists(std::filesystem::u8path(path), error))
-        return nullptr;
-    return ImGui::GetIO().Fonts->AddFontFromFileTTF(path.c_str(), size);
-}
 
 void menuFontsLoad()
 {
@@ -45,27 +38,12 @@ void menuFontsLoad()
     const float contentScale = SDL_GetDisplayContentScale(display);
     s_scale = (std::max)({ 1.0f, mode ? mode->h / 900.0f : 1.0f, contentScale > 0.0f ? contentScale : 1.0f });
 
-    std::string dir;
-#ifdef _WIN32
-    char windir[MAX_PATH] = {};
-    if (GetWindowsDirectoryA(windir, MAX_PATH) > 0)
-        dir = std::string(windir) + "\\Fonts\\";
-#endif
-    s_fonts.text = addFont(dir.empty() ? "" : dir + "georgia.ttf", 17.0f * s_scale);
-    s_fonts.button = addFont(dir.empty() ? "" : dir + "georgiab.ttf", 21.0f * s_scale);
-    s_fonts.header = addFont(dir.empty() ? "" : dir + "georgia.ttf", 30.0f * s_scale);
+    // Inter, the launcher's font (compiled in, the same on every system)
+    s_fonts.text = menu::addModernFont(false, 15.0f * s_scale);
+    s_fonts.smallText = menu::addModernFont(false, 13.0f * s_scale);
+    s_fonts.button = menu::addModernFont(true, 16.0f * s_scale);
+    s_fonts.header = menu::addModernFont(true, 20.0f * s_scale);
     s_fonts.title = s_fonts.header;
-    if (!s_fonts.text)
-    {
-        // No Georgia (Linux): the project's own font, made to its measures
-        s_fonts.text = menu::addEmbeddedFont(false, 17.0f * s_scale);
-        s_fonts.button = menu::addEmbeddedFont(true, 21.0f * s_scale);
-        s_fonts.header = menu::addEmbeddedFont(false, 30.0f * s_scale);
-        printf(MAIN_OK "Menu fonts: Georgia not found, Gelasio used\n");
-    }
-    if (!s_fonts.button) s_fonts.button = s_fonts.text;
-    if (!s_fonts.header) s_fonts.header = s_fonts.text;
-    if (!s_fonts.title) s_fonts.title = s_fonts.header;
+    printf(MAIN_OK "Menu fonts (Inter) made at scale %.2f\n", s_scale);
     imguiRebuildFontTexture();
-    printf(MAIN_OK "Menu fonts made at scale %.2f\n", s_scale);
 }

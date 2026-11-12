@@ -4,6 +4,15 @@ Alone in the Dark: Classic Reborn started on 2026-10-23 from [Alone in the Dark:
 
 This repository was published with a single starting commit, to keep it light: the early history carried large files that are no longer part of the project. Below are the changes of each release and, after them, the changes made in this fork before it was published, newest first, one line per change. The reasons behind larger removals are explained in `docs/DESCARTADO.md` and the fixes in `docs/baseline/BUGS.md`.
 
+## v1.7.1 (2026-11-12)
+
+A new launcher, and a fix for a death scene in *Alone in the Dark 2*.
+
+- All games: new launcher. A library on the left with the three games, their GOG covers and whether their folder is ready; the chosen game over its own cover, with **Play**, *Jack in the Dark*, the game language and **Options**, **Controls** and **Audio** cards. Each game has the colour of its cover, also in the windows the launcher opens and in the F1 window. Smaller, sharper text with the Inter font (BUGS.md C73)
+- All games: the **Controls** window (launcher and F1) has two tabs, **Keyboard** and **Controller**, switched with LB and RB. The controller tab is a picture of the controller where each button says what it does, and choosing it changes that (BUGS.md C73)
+- All games: in F1 the **Controls** window came out as narrow as the options window, with its texts cut; the help of some checkboxes showed twice (BUGS.md C73)
+- *Alone in the Dark 2*: in the death scene where a zombie carries Carnby away, Carnby could float behind the zombie instead of riding on his shoulder (issue #10, BUGS.md A56)
+
 ## v1.7.0 (2026-11-10)
 
 Choose between CD and AdLib music, and a fix for see-through glass in *Alone in the Dark*.

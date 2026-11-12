@@ -40,7 +40,7 @@ The launcher creates these folders the first time it opens. A mod is shared as t
 
 ## Before you start
 
-1. Switch on **Custom backgrounds** in **F1** (or in the launcher's **Advanced options**). Backgrounds, full-screen pictures, masks and sequences are only used while it is on.
+1. Switch on **Custom backgrounds** in **F1** (or in the launcher, with its **Options** card). Backgrounds, full-screen pictures, masks and sequences are only used while it is on.
 2. In F1, use **Export backgrounds**, **Export masks** and, in *Jack*, *AITD2* and *AITD3*, **Export sequences**. They write the game's own pictures, at their original 320×200, to `UserData\<game>\Exports`: they are your starting point, and their names are the names your files must have.
 3. Keep F1's export running until it says it is done: it goes through every floor of the game.
 

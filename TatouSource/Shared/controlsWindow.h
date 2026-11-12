@@ -5,7 +5,10 @@
 // The controls window, shared by the game (F1 window) and the launcher
 // (advanced options): each action with its inputs; click one to remove it,
 // "+ Add" then press a key, a controller button, a trigger or a stick
-// direction; restore the defaults. Header-only (both use ImGui and SDL).
+// direction; restore the defaults. Two tabs: the keyboard (each action and
+// its keys) and the controller, a drawing of it where each part says what it
+// does and a press on it changes that (AITD3's map is one of its jobs). Header-only (both use
+// ImGui and SDL).
 // While waiting for an input, ImGui's keyboard and controller navigation is
 // off, so Space, Enter or A do not also press the focused button.
 ///////////////////////////////////////////////////////////////////////////////
@@ -37,6 +40,9 @@ struct ControlsWindowState
     ImGuiConfigFlags savedNavFlags = 0;
     bool navSuppressed = false;
     bool requestClose = false;   // close at the next frame (B in the launcher)
+    int padChoice = -1;          // the part of the controller whose list is open
+    int tab = 0;                 // the tab shown: 0 keyboard, 1 controller
+    int tabRequest = -1;         // the tab LB / RB asked for, -1 none
 };
 
 // Short name of an input for the window
@@ -132,7 +138,366 @@ struct ControlsWindowStyle
     float fontScale = 0.0f;         // font scale, 0 = the same (the launcher makes its fonts at the scale)
     ImVec4 titleColor = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
     ImFont* titleFont = nullptr;
+    ImTextureID padPicture = 0;      // the controller drawing (ui/controllerPicture.h), as a texture of the host
+    float padPictureAspect = 0.0f;   // its height / width
 };
+
+// ── The controller drawing ───────────────────────────────────────
+// Each part of the controller in the picture (ui/controllerPicture.h): what
+// it is, where it is (0-1 of the picture's width and height, measured once),
+// the size of its ring and the side of its text. A button, trigger or stick
+// press does one action; a stick or the D-pad moves (its four directions).
+struct PadPart
+{
+    AdvancedText name;
+    const char* letter;          // drawn on the face buttons, else nullptr
+    bool movement;               // stick or D-pad: its four directions
+    InputBinding input;          // a button or a trigger
+    InputBinding directions[4];  // up, down, left, right (movement)
+    float x, y;
+    float ring;                  // radius, in widths of the picture
+    bool pictureButton;          // pressed on the drawing too (not a stick's press: same place)
+};
+
+// The parts in the order of their texts: the left column, then the right one
+static const int kPadPartsLeft = 6;
+inline const std::vector<PadPart>& padParts()
+{
+    static const std::vector<PadPart> parts = {
+        // Left column, from the top
+        { AdvancedText::PadNone, "LT", false, padAxisBinding(SDL_GAMEPAD_AXIS_LEFT_TRIGGER, true), {}, 0.196f, 0.073f, 0.040f, true },
+        { AdvancedText::PadNone, "LB", false, padButtonBinding(SDL_GAMEPAD_BUTTON_LEFT_SHOULDER), {}, 0.219f, 0.202f, 0.045f, true },
+        { AdvancedText::PadLeftStick, nullptr, true, {},
+          { padAxisBinding(SDL_GAMEPAD_AXIS_LEFTY, false), padAxisBinding(SDL_GAMEPAD_AXIS_LEFTY, true),
+            padAxisBinding(SDL_GAMEPAD_AXIS_LEFTX, false), padAxisBinding(SDL_GAMEPAD_AXIS_LEFTX, true) }, 0.208f, 0.518f, 0.064f, true },
+        { AdvancedText::PadLeftStickPress, nullptr, false, padButtonBinding(SDL_GAMEPAD_BUTTON_LEFT_STICK), {}, 0.208f, 0.518f, 0.040f, false },
+        { AdvancedText::PadView, nullptr, false, padButtonBinding(SDL_GAMEPAD_BUTTON_BACK), {}, 0.418f, 0.513f, 0.024f, true },
+        { AdvancedText::PadDpad, nullptr, true, {},
+          { padButtonBinding(SDL_GAMEPAD_BUTTON_DPAD_UP), padButtonBinding(SDL_GAMEPAD_BUTTON_DPAD_DOWN),
+            padButtonBinding(SDL_GAMEPAD_BUTTON_DPAD_LEFT), padButtonBinding(SDL_GAMEPAD_BUTTON_DPAD_RIGHT) }, 0.358f, 0.720f, 0.073f, true },
+        // Right column, from the top
+        { AdvancedText::PadNone, "RT", false, padAxisBinding(SDL_GAMEPAD_AXIS_RIGHT_TRIGGER, true), {}, 0.790f, 0.073f, 0.040f, true },
+        { AdvancedText::PadNone, "RB", false, padButtonBinding(SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER), {}, 0.773f, 0.202f, 0.045f, true },
+        { AdvancedText::PadNone, "Y", false, padButtonBinding(SDL_GAMEPAD_BUTTON_NORTH), {}, 0.790f, 0.404f, 0.036f, true },
+        { AdvancedText::PadNone, "B", false, padButtonBinding(SDL_GAMEPAD_BUTTON_EAST), {}, 0.862f, 0.503f, 0.036f, true },
+        { AdvancedText::PadNone, "X", false, padButtonBinding(SDL_GAMEPAD_BUTTON_WEST), {}, 0.710f, 0.507f, 0.036f, true },
+        { AdvancedText::PadNone, "A", false, padButtonBinding(SDL_GAMEPAD_BUTTON_SOUTH), {}, 0.783f, 0.610f, 0.036f, true },
+        { AdvancedText::PadMenu, nullptr, false, padButtonBinding(SDL_GAMEPAD_BUTTON_START), {}, 0.581f, 0.513f, 0.024f, true },
+        { AdvancedText::PadRightStick, nullptr, true, {},
+          { padAxisBinding(SDL_GAMEPAD_AXIS_RIGHTY, false), padAxisBinding(SDL_GAMEPAD_AXIS_RIGHTY, true),
+            padAxisBinding(SDL_GAMEPAD_AXIS_RIGHTX, false), padAxisBinding(SDL_GAMEPAD_AXIS_RIGHTX, true) }, 0.642f, 0.774f, 0.064f, true },
+        { AdvancedText::PadRightStickPress, nullptr, false, padButtonBinding(SDL_GAMEPAD_BUTTON_RIGHT_STICK), {}, 0.642f, 0.774f, 0.040f, false },
+    };
+    return parts;
+}
+
+// The actions a button can do, as the list offers them (-1: none)
+static const int kPadChoices[] = { (int)GameAction::Action, (int)GameAction::Confirm, (int)GameAction::Cancel,
+                                   (int)GameAction::Run, (int)GameAction::Map, (int)GameAction::Options, -1 };
+
+// What an action is called on the drawing (-1: not used)
+inline AdvancedText padActionText(int action)
+{
+    switch (action)
+    {
+    case (int)GameAction::Action: return AdvancedText::PadAction;
+    case (int)GameAction::Confirm: return AdvancedText::PadConfirm;
+    case (int)GameAction::Cancel: return AdvancedText::PadCancel;
+    case (int)GameAction::Run: return AdvancedText::ActionRun;
+    case (int)GameAction::Options: return AdvancedText::PadOptions;
+    case (int)GameAction::Map: return AdvancedText::ActionMap;
+    case (int)GameAction::Up: return AdvancedText::ActionUp;
+    case (int)GameAction::Down: return AdvancedText::ActionDown;
+    case (int)GameAction::Left: return AdvancedText::ActionLeft;
+    case (int)GameAction::Right: return AdvancedText::ActionRight;
+    default: return AdvancedText::PadNone;
+    }
+}
+
+inline bool padHas(const std::vector<InputBinding>& list, const InputBinding& input)
+{
+    return std::find(list.begin(), list.end(), input) != list.end();
+}
+
+// The action of a button (the first that has it), -1 none
+inline int padActionOf(const std::vector<std::vector<InputBinding>>& bindings, const InputBinding& input)
+{
+    for (int a = 0; a < kGameActionCount; a++)
+    {
+        if (padHas(bindings[a], input))
+            return a;
+    }
+    return -1;
+}
+
+// A stick or the D-pad moves when its four directions are the four of moving
+inline bool padMoves(const std::vector<std::vector<InputBinding>>& bindings, const PadPart& part)
+{
+    for (int d = 0; d < 4; d++)
+        if (!padHas(bindings[(int)GameAction::Up + d], part.directions[d]))
+            return false;
+    return true;
+}
+
+inline bool padUsed(const std::vector<std::vector<InputBinding>>& bindings, const PadPart& part)
+{
+    return part.movement ? padMoves(bindings, part) : padActionOf(bindings, part.input) >= 0;
+}
+
+inline void padRemove(std::vector<std::vector<InputBinding>>& bindings, const InputBinding& input)
+{
+    for (std::vector<InputBinding>& list : bindings)
+        list.erase(std::remove(list.begin(), list.end(), input), list.end());
+}
+
+// Gives a part its new job: an action (or none) to a button; moving (or
+// not) to a stick or the D-pad. What it did before is taken away.
+inline void padAssign(std::vector<std::vector<InputBinding>>& bindings, const PadPart& part, int choice)
+{
+    if (part.movement)
+    {
+        for (int d = 0; d < 4; d++)
+        {
+            padRemove(bindings, part.directions[d]);
+            if (choice >= 0)
+                bindings[(int)GameAction::Up + d].push_back(part.directions[d]);
+        }
+        return;
+    }
+    padRemove(bindings, part.input);
+    if (choice >= 0)
+        bindings[choice].push_back(part.input);
+}
+
+// The drawing is one controller (Xbox's layout); a PlayStation or Nintendo
+// controller connected gets its own names on it. The buttons are the same
+// by place (SDL calls them south, east...), so the controls do not change.
+enum class PadFamily { Xbox, PlayStation, Nintendo };
+
+inline PadFamily padFamily(SDL_Gamepad* gamepad)
+{
+    switch (gamepad ? SDL_GetGamepadType(gamepad) : SDL_GAMEPAD_TYPE_UNKNOWN)
+    {
+    case SDL_GAMEPAD_TYPE_PS3:
+    case SDL_GAMEPAD_TYPE_PS4:
+    case SDL_GAMEPAD_TYPE_PS5:
+        return PadFamily::PlayStation;
+    case SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_PRO:
+    case SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_LEFT:
+    case SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_RIGHT:
+    case SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_PAIR:
+        return PadFamily::Nintendo;
+    default:
+        return PadFamily::Xbox;
+    }
+}
+
+// The name of a part on that controller: its letters (LT, A...) or its name
+inline const char* padPartName(const PadPart& part, int language, PadFamily family, SDL_Gamepad* gamepad)
+{
+    if (part.movement)
+        return advancedText(part.name, language);
+    const bool button = part.input.kind == InputBinding::Kind::PadButton;
+    const bool trigger = part.input.kind == InputBinding::Kind::PadAxis;
+    const int code = part.input.code;
+    if (family == PadFamily::PlayStation)
+    {
+        if (trigger)
+            return code == SDL_GAMEPAD_AXIS_LEFT_TRIGGER ? "L2" : "R2";
+        switch (button ? code : -1)
+        {
+        case SDL_GAMEPAD_BUTTON_LEFT_SHOULDER: return "L1";
+        case SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER: return "R1";
+        case SDL_GAMEPAD_BUTTON_SOUTH: return advancedText(AdvancedText::PadCross, language);
+        case SDL_GAMEPAD_BUTTON_EAST: return advancedText(AdvancedText::PadCircle, language);
+        case SDL_GAMEPAD_BUTTON_WEST: return advancedText(AdvancedText::PadSquare, language);
+        case SDL_GAMEPAD_BUTTON_NORTH: return advancedText(AdvancedText::PadTriangle, language);
+        case SDL_GAMEPAD_BUTTON_BACK: return SDL_GetGamepadType(gamepad) == SDL_GAMEPAD_TYPE_PS5 ? "Create" : "Share";
+        case SDL_GAMEPAD_BUTTON_START: return "Options";
+        }
+    }
+    else if (family == PadFamily::Nintendo)
+    {
+        if (trigger)
+            return code == SDL_GAMEPAD_AXIS_LEFT_TRIGGER ? "ZL" : "ZR";
+        switch (button ? code : -1)
+        {
+        case SDL_GAMEPAD_BUTTON_LEFT_SHOULDER: return "L";
+        case SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER: return "R";
+        case SDL_GAMEPAD_BUTTON_SOUTH: return "B";
+        case SDL_GAMEPAD_BUTTON_EAST: return "A";
+        case SDL_GAMEPAD_BUTTON_WEST: return "Y";
+        case SDL_GAMEPAD_BUTTON_NORTH: return "X";
+        case SDL_GAMEPAD_BUTTON_BACK: return "-";
+        case SDL_GAMEPAD_BUTTON_START: return "+";
+        }
+    }
+    return part.name == AdvancedText::PadNone ? part.letter : advancedText(part.name, language);
+}
+
+// The mark on a face button over the drawing: its letter, or PlayStation's
+// shapes (cross, circle, square, triangle), drawn in white
+inline void padFaceMark(ImDrawList* draw, ImVec2 centre, float size, const PadPart& part, PadFamily family)
+{
+    const ImU32 white = IM_COL32(255, 255, 255, 235);
+    const int code = part.input.code;
+    if (family == PadFamily::PlayStation)
+    {
+        const float r = size * 0.42f;
+        const float thickness = (std::max)(1.5f, size * 0.12f);
+        if (code == SDL_GAMEPAD_BUTTON_SOUTH)
+        {
+            draw->AddLine(ImVec2(centre.x - r, centre.y - r), ImVec2(centre.x + r, centre.y + r), white, thickness);
+            draw->AddLine(ImVec2(centre.x - r, centre.y + r), ImVec2(centre.x + r, centre.y - r), white, thickness);
+        }
+        else if (code == SDL_GAMEPAD_BUTTON_EAST)
+            draw->AddCircle(centre, r, white, 0, thickness);
+        else if (code == SDL_GAMEPAD_BUTTON_WEST)
+            draw->AddRect(ImVec2(centre.x - r * 0.85f, centre.y - r * 0.85f), ImVec2(centre.x + r * 0.85f, centre.y + r * 0.85f), white, 0.0f, 0, thickness);
+        else
+            draw->AddTriangle(ImVec2(centre.x, centre.y - r), ImVec2(centre.x + r, centre.y + r * 0.75f),
+                ImVec2(centre.x - r, centre.y + r * 0.75f), white, thickness);
+        return;
+    }
+    static const char* const xbox[] = { "A", "B", "X", "Y" };
+    static const char* const nintendo[] = { "B", "A", "Y", "X" };
+    const int index = code == SDL_GAMEPAD_BUTTON_SOUTH ? 0 : code == SDL_GAMEPAD_BUTTON_EAST ? 1 : code == SDL_GAMEPAD_BUTTON_WEST ? 2 : 3;
+    const char* letter = family == PadFamily::Nintendo ? nintendo[index] : xbox[index];
+    const ImVec2 textSize = ImGui::CalcTextSize(letter);
+    draw->AddText(ImVec2(centre.x - textSize.x * 0.5f, centre.y - textSize.y * 0.5f), white, letter);
+}
+
+// What the part does now, as its text says it
+inline const char* padPartAction(const std::vector<std::vector<InputBinding>>& bindings, const PadPart& part, int language)
+{
+    if (part.movement)
+        return advancedText(padMoves(bindings, part) ? AdvancedText::PadMove : AdvancedText::PadNone, language);
+    return advancedText(padActionText(padActionOf(bindings, part.input)), language);
+}
+
+// The drawing with its two columns of texts, in the space left in the window.
+// A press on a part or on its text opens the list of what it can do.
+inline bool drawPadTab(ControlsWindowState& state, std::vector<std::vector<InputBinding>>& bindings,
+                       const ControlsWindowStyle& style, int language, SDL_Gamepad* gamepad, ImVec2 size)
+{
+    bool changed = false;
+    const PadFamily family = padFamily(gamepad);
+    const std::vector<PadPart>& parts = padParts();
+    ImDrawList* draw = ImGui::GetWindowDrawList();
+    const ImVec2 origin = ImGui::GetCursorScreenPos();
+    const float lineH = ImGui::GetTextLineHeight();
+    const float labelH = lineH * 2.0f + 2.0f;
+
+    // The picture in the middle, as big as fits next to the two columns
+    float longest = 0.0f;
+    for (int choice : kPadChoices)
+        longest = (std::max)(longest, ImGui::CalcTextSize(advancedText(padActionText(choice), language)).x);
+    for (AdvancedText name : { AdvancedText::PadMove, AdvancedText::PadLeftStickPress, AdvancedText::PadRightStickPress })
+        longest = (std::max)(longest, ImGui::CalcTextSize(advancedText(name, language)).x);
+    const float columnW = (std::min)(longest + lineH, size.x * 0.3f);
+    float pictureW = (std::max)(size.x - columnW * 2.0f - lineH * 2.0f, size.x * 0.3f);
+    const float aspect = style.padPictureAspect > 0.0f ? style.padPictureAspect : 0.616f;
+    pictureW = (std::min)(pictureW, size.y / aspect);
+    const float pictureH = pictureW * aspect;
+    const ImVec2 pictureMin(origin.x + (size.x - pictureW) * 0.5f, origin.y + (size.y - pictureH) * 0.5f);
+    if (style.padPicture)
+        draw->AddImage(style.padPicture, pictureMin, ImVec2(pictureMin.x + pictureW, pictureMin.y + pictureH));
+    auto at = [&](const PadPart& part) { return ImVec2(pictureMin.x + part.x * pictureW, pictureMin.y + part.y * pictureH); };
+
+    // The texts: each column spread over the height, top to bottom
+    const int rightCount = (int)parts.size() - kPadPartsLeft;
+    const float top = origin.y + labelH * 0.5f;
+    const float bottom = origin.y + size.y - labelH * 0.5f;
+    const ImU32 used = menu::kGold, unused = (menu::kTextDisabled & 0x00FFFFFF) | (200u << 24);
+    int pressed = -1;
+    for (int i = 0; i < (int)parts.size(); i++)
+    {
+        const PadPart& part = parts[i];
+        const bool right = i >= kPadPartsLeft;
+        const int index = right ? i - kPadPartsLeft : i;
+        const int count = right ? rightCount : kPadPartsLeft;
+        const float y = count > 1 ? top + (bottom - top) * index / (count - 1) : (top + bottom) * 0.5f;
+        const bool isUsed = padUsed(bindings, part);
+        const ImU32 lineColour = isUsed ? used : unused;
+
+        // The text, its line to the part and the part's ring
+        const float textX = right ? origin.x + size.x - columnW : origin.x;
+        const float elbowX = right ? textX - lineH * 0.6f : textX + columnW + lineH * 0.6f;
+        const ImVec2 point = at(part);
+        draw->AddLine(point, ImVec2(elbowX, y), lineColour, 1.0f);
+        draw->AddLine(ImVec2(elbowX, y), ImVec2(right ? textX - 2.0f : textX + columnW + 2.0f, y), lineColour, 1.0f);
+        draw->AddCircleFilled(point, 3.0f, lineColour);
+        if (isUsed && part.ring > 0.0f)
+            draw->AddCircle(point, part.ring * pictureW, (used & 0x00FFFFFF) | (230u << 24), 0, 2.0f);
+
+        ImGui::SetCursorScreenPos(ImVec2(textX, y - labelH * 0.5f));
+        ImGui::PushID(i);
+        if (ImGui::InvisibleButton("##padText", ImVec2(columnW, labelH)))
+            pressed = i;
+        const bool hovered = ImGui::IsItemHovered() || (ImGui::IsItemFocused() && ImGui::GetIO().NavVisible);
+        menu::navCursor(ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), 4.0f);
+        const char* name = padPartName(part, language, family, gamepad);
+        const char* action = padPartAction(bindings, part, language);
+        const float nameW = ImGui::CalcTextSize(name).x, actionW = ImGui::CalcTextSize(action).x;
+        draw->AddText(ImVec2(right ? textX : textX + columnW - nameW, y - lineH), hovered ? menu::kGoldLight : menu::kTextDim, name);
+        draw->AddText(ImVec2(right ? textX : textX + columnW - actionW, y + 1.0f),
+            hovered ? menu::kGoldLight : (isUsed ? menu::kText : menu::kTextDisabled), action);
+        if (part.pictureButton)
+        {
+            const float r = (std::max)(part.ring * pictureW, lineH * 0.6f);
+            ImGui::SetCursorScreenPos(ImVec2(point.x - r, point.y - r));
+            if (ImGui::InvisibleButton("##padPart", ImVec2(r * 2.0f, r * 2.0f), ImGuiButtonFlags_None))
+                pressed = i;
+            if (ImGui::IsItemHovered())
+                draw->AddCircle(point, r, menu::kGoldLight, 0, 1.5f);
+        }
+        ImGui::PopID();
+    }
+    // The marks of the face buttons, over the picture
+    for (const PadPart& part : parts)
+        if (part.letter && part.letter[1] == 0)
+            padFaceMark(draw, at(part), ImGui::GetTextLineHeight(), part, family);
+
+    if (pressed >= 0)
+    {
+        state.padChoice = pressed;
+        ImGui::OpenPopup("##padChoice");
+    }
+    if (ImGui::BeginPopup("##padChoice"))
+    {
+        const PadPart& part = parts[(std::max)(0, (std::min)(state.padChoice, (int)parts.size() - 1))];
+        ImGui::TextColored(style.titleColor, "%s", padPartName(part, language, family, gamepad));
+        ImGui::Separator();
+        if (part.movement)
+        {
+            const bool moves = padMoves(bindings, part);
+            if (ImGui::Selectable(advancedText(AdvancedText::PadMove, language), moves) && !moves)
+            {
+                padAssign(bindings, part, 0);
+                changed = true;
+            }
+            if (ImGui::Selectable(advancedText(AdvancedText::PadNone, language), !moves) && moves)
+            {
+                padAssign(bindings, part, -1);
+                changed = true;
+            }
+        }
+        else
+        {
+            const int current = padActionOf(bindings, part.input);
+            for (int choice : kPadChoices)
+                if (ImGui::Selectable(advancedText(padActionText(choice), language), current == choice) && current != choice)
+                {
+                    padAssign(bindings, part, choice);
+                    changed = true;
+                }
+        }
+        ImGui::EndPopup();
+    }
+    ImGui::SetCursorScreenPos(origin);
+    ImGui::Dummy(size);
+    return changed;
+}
 
 // Draws the window while state.open (call every frame). bindings: one list
 // per action, edited in place; modernStick: the left stick walks where it
@@ -235,9 +600,9 @@ inline bool drawControlsWindow(ControlsWindowState& state, std::vector<std::vect
     std::copy(axes, axes + SDL_GAMEPAD_AXIS_COUNT, state.prevAxes);
     const bool busy = (state.capturing >= 0 || state.waitRelease);
 
-    // Centred, never larger than the screen
-    const float width = (std::min)(600.0f * style.scale, io.DisplaySize.x * 0.94f);
-    const float height = (std::min)(540.0f * style.scale, io.DisplaySize.y * 0.90f);
+    // Centred, never larger than the screen (wide, for the controller drawing)
+    const float width = (std::min)(960.0f * style.scale, io.DisplaySize.x * 0.96f);
+    const float height = (std::min)(640.0f * style.scale, io.DisplaySize.y * 0.92f);
     ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
     ImGui::SetNextWindowSize(ImVec2(width, height), ImGuiCond_Always);
     if (!asPopup && state.justOpened)
@@ -265,104 +630,102 @@ inline bool drawControlsWindow(ControlsWindowState& state, std::vector<std::vect
     ImGui::TextColored(style.titleColor, "%s", text(AdvancedText::Controls));
     if (style.titleFont)
         ImGui::PopFont();
-    ImGui::BeginDisabled(state.capturing >= 0 || state.waitRelease);
-    if (ImGui::Checkbox(text(AdvancedText::ModernStick), &modernStick))
-        changed = true;
-    menu::helpWhenFocused(text(AdvancedText::ModernStickHelp));
-    menu::helpMarker(text(AdvancedText::ModernStickHelp));
-    if (ImGui::Checkbox(text(AdvancedText::Vibration), &vibration))
-        changed = true;
-    menu::helpWhenFocused(text(AdvancedText::VibrationHelp));
-    menu::helpMarker(text(AdvancedText::VibrationHelp));
-    ImGui::EndDisabled();
-    ImGui::TextWrapped("%s", text(AdvancedText::ControlsHelp));
-    ImGui::Separator();
-    if (state.capturing >= 0)
-    {
-        ImGui::TextColored(style.titleColor, text(state.capturePad ? AdvancedText::ControlsPressPad : AdvancedText::ControlsPressKey),
-                           text(controlsActionText((GameAction)state.capturing)));
-        ImGui::Separator();
-    }
-
-    // Action list in three columns: the action, its keys and its controller
-    // inputs (a click removes one; each column has its own "+ Add", so a key
-    // A and the controller's A are never confused). Inputs wrap inside their
-    // column when it is full.
     const float footer = ImGui::GetFrameHeightWithSpacing() * 2.0f + ImGui::GetStyle().ItemSpacing.y * 2.0f;
-    ImGui::BeginChild("##controlsList", ImVec2(0.0f, -footer));
-    ImGui::BeginDisabled(busy);
-    if (ImGui::BeginTable("##controlsTable", 3, ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH))
+    // LB / RB switch between the tabs, as the launcher's games (not while
+    // an input is awaited or a button's list is open)
+    if (!busy && state.padChoice < 0
+        && (ImGui::IsKeyPressed(ImGuiKey_GamepadL1, false) || ImGui::IsKeyPressed(ImGuiKey_GamepadR1, false)))
+        state.tabRequest = 1 - state.tab;
+    if (ImGui::BeginTabBar("##controlsTabs"))
     {
-        ImGui::TableSetupColumn("##action", ImGuiTableColumnFlags_WidthStretch, 0.30f);
-        ImGui::TableSetupColumn(text(AdvancedText::ControlsKeyboard), ImGuiTableColumnFlags_WidthStretch, 0.32f);
-        ImGui::TableSetupColumn(text(AdvancedText::ControlsController), ImGuiTableColumnFlags_WidthStretch, 0.38f);
-        ImGui::TableNextRow(ImGuiTableRowFlags_Headers);
-        ImGui::TableSetColumnIndex(1);
-        ImGui::TextColored(style.titleColor, "%s", text(AdvancedText::ControlsKeyboard));
-        ImGui::TableSetColumnIndex(2);
-        ImGui::TextColored(style.titleColor, "%s", text(AdvancedText::ControlsController));
-
-        // A button on the same line if it fits in the column, else below
-        auto placeButton = [](const char* label, bool first)
+        if (ImGui::BeginTabItem(text(AdvancedText::KeyboardTab), nullptr,
+            state.tabRequest == 0 ? ImGuiTabItemFlags_SetSelected : ImGuiTabItemFlags_None))
         {
-            if (first)
-                return;
-            const float buttonWidth = ImGui::CalcTextSize(label).x + ImGui::GetStyle().FramePadding.x * 2.0f;
-            ImGui::SameLine();
-            if (ImGui::GetContentRegionAvail().x < buttonWidth)
-                ImGui::NewLine();
-        };
-
-        for (int a = 0; a < kGameActionCount; a++)
-        {
-            ImGui::PushID(a);
-            ImGui::TableNextRow();
-            ImGui::TableSetColumnIndex(0);
-            ImGui::AlignTextToFramePadding();
-            ImGui::TextUnformatted(text(controlsActionText((GameAction)a)));
-
-            std::vector<InputBinding>& list = bindings[a];
-            int removeIndex = -1;
-            for (int column = 0; column < 2; column++)
+            state.tab = 0;
+            ImGui::TextWrapped("%s", text(AdvancedText::ControlsHelp));
+            if (state.capturing >= 0)
+                ImGui::TextColored(style.titleColor, text(AdvancedText::ControlsPressKey),
+                                   text(controlsActionText((GameAction)state.capturing)));
+            ImGui::Separator();
+            // Each action and its keys (a click removes one, "+ Add" waits for a
+            // key)
+            ImGui::BeginChild("##controlsList", ImVec2(0.0f, -footer));
+            ImGui::BeginDisabled(busy);
+            if (ImGui::BeginTable("##keysTable", 2, ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH))
             {
-                const bool padColumn = (column == 1);
-                ImGui::TableSetColumnIndex(1 + column);
-                ImGui::PushID(column);
-                bool first = true;
-                for (size_t i = 0; i < list.size(); i++)
+                ImGui::TableSetupColumn("##action", ImGuiTableColumnFlags_WidthStretch, 0.4f);
+                ImGui::TableSetupColumn("##keys", ImGuiTableColumnFlags_WidthStretch, 0.6f);
+                for (int a = 0; a < kGameActionCount; a++)
                 {
-                    if ((list[i].kind != InputBinding::Kind::Key) != padColumn)
-                        continue;
-                    const std::string name = bindingDisplayName(list[i]);
-                    placeButton(name.c_str(), first);
-                    first = false;
-                    ImGui::PushID((int)i);
-                    if (ImGui::SmallButton(name.c_str()))
-                        removeIndex = (int)i;
-                    if (ImGui::IsItemHovered())
-                        ImGui::SetTooltip("%s", text(AdvancedText::ControlsRemove));
+                    ImGui::PushID(a);
+                    ImGui::TableNextRow();
+                    ImGui::TableSetColumnIndex(0);
+                    ImGui::AlignTextToFramePadding();
+                    ImGui::TextUnformatted(text(controlsActionText((GameAction)a)));
+                    ImGui::TableSetColumnIndex(1);
+                    std::vector<InputBinding>& list = bindings[a];
+                    int removeIndex = -1;
+                    bool first = true;
+                    for (size_t i = 0; i < list.size(); i++)
+                    {
+                        if (list[i].kind != InputBinding::Kind::Key)
+                            continue;
+                        if (!first)
+                            ImGui::SameLine();
+                        first = false;
+                        ImGui::PushID((int)i);
+                        if (ImGui::SmallButton(bindingDisplayName(list[i]).c_str()))
+                            removeIndex = (int)i;
+                        if (ImGui::IsItemHovered())
+                            ImGui::SetTooltip("%s", text(AdvancedText::ControlsRemove));
+                        ImGui::PopID();
+                    }
+                    if (!first)
+                        ImGui::SameLine();
+                    if (ImGui::SmallButton(text(AdvancedText::ControlsAdd)))
+                    {
+                        state.capturing = a;
+                        state.capturePad = false;
+                        controlsReadInputs(gamepad, state.prevKeys, state.prevButtons, state.prevAxes);
+                    }
+                    if (removeIndex >= 0)
+                    {
+                        list.erase(list.begin() + removeIndex);
+                        changed = true;
+                    }
                     ImGui::PopID();
                 }
-                placeButton(text(AdvancedText::ControlsAdd), first);
-                if (ImGui::SmallButton(text(AdvancedText::ControlsAdd)))
-                {
-                    state.capturing = a;
-                    state.capturePad = padColumn;
-                    controlsReadInputs(gamepad, state.prevKeys, state.prevButtons, state.prevAxes);
-                }
-                ImGui::PopID();
+                ImGui::EndTable();
             }
-            if (removeIndex >= 0)
-            {
-                list.erase(list.begin() + removeIndex);
-                changed = true;
-            }
-            ImGui::PopID();
+            ImGui::EndDisabled();
+            ImGui::EndChild();
+            ImGui::EndTabItem();
         }
-        ImGui::EndTable();
+        if (ImGui::BeginTabItem(text(AdvancedText::ControllerTab), nullptr,
+            state.tabRequest == 1 ? ImGuiTabItemFlags_SetSelected : ImGuiTabItemFlags_None))
+        {
+            state.tab = 1;
+            ImGui::BeginDisabled(busy);
+            if (ImGui::Checkbox(text(AdvancedText::ModernStick), &modernStick))
+                changed = true;
+            menu::helpMarker(text(AdvancedText::ModernStickHelp));
+            ImGui::SameLine(0.0f, ImGui::GetFontSize() * 2.0f);
+            if (ImGui::Checkbox(text(AdvancedText::Vibration), &vibration))
+                changed = true;
+            menu::helpMarker(text(AdvancedText::VibrationHelp));
+            ImGui::TextDisabled("%s", text(AdvancedText::PadHelp));
+            ImGui::EndDisabled();
+            ImVec2 area = ImGui::GetContentRegionAvail();
+            area.y -= footer;
+            ImGui::BeginChild("##padArea", area, ImGuiChildFlags_None, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+            if (drawPadTab(state, bindings, style, language, gamepad, ImGui::GetContentRegionAvail()))
+                changed = true;
+            ImGui::EndChild();
+            ImGui::EndTabItem();
+        }
+        ImGui::EndTabBar();
     }
-    ImGui::EndDisabled();
-    ImGui::EndChild();
+    state.tabRequest = -1;
 
     ImGui::Separator();
     ImGui::BeginDisabled(busy);

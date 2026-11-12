@@ -277,6 +277,13 @@ int aitd2AnimSeen(int actorIdx)
         return -1;
     if (s_endAnimFrame[actorIdx] > s_scriptSeesAfter)
         return s_endedAnim[actorIdx];
+    // The end kept for the frame the next animation began (A30) is the end
+    // of the one before: the script sees that one, not the new one. Carnby
+    // killed during a hit seemed to have ended his fall (758) just begun:
+    // his death script carried him off before it and the zombie walked
+    // away while he fell on (BUGS.md A56)
+    if (s_endAnimShownFrame[actorIdx] == s_frameNumber)
+        return s_endedAnim[actorIdx];
     return ListObjets[actorIdx].ANIM;
 }
 

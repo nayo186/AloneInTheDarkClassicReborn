@@ -80,6 +80,30 @@ enum class UiText
     FilesDontWarn,
     OptionsNotSavedTitle,
     OptionsNotSavedText,
+    // The launcher screen's cards and bottom bar
+    PlayShort,
+    OptionsCard,
+    OptionsDetail,
+    ControlsCard,
+    ControlsDetail,
+    AudioCard,
+    AudioDetail,
+    GameData,
+    ExitShort,
+    DefaultsShort,
+    // Alone's launcher (launcherScreen.h)
+    Library,
+    StoryAitd1,
+    StoryAitd2,
+    StoryAitd3,
+    JackDetail,
+    NoFolderShort,
+    AudioDetailAlone,
+    FilesOk,
+    SourceGog,
+    SourceDisc,
+    SourceCopy,
+    RestoreDefaults,
     Count
 };
 
@@ -336,6 +360,63 @@ static const char* const kLauncherTexts[(int)UiText::Count][(int)UiLanguage::Cou
       "Le lanceur n'a pas pu écrire le fichier ci-dessous. Son dossier est peut-être en lecture seule ou protégé, par exemple par un antivirus ou par l'accès contrôlé aux dossiers de Windows. Le jeu démarrera avec les options qu'il avait, et vos sauvegardes pourraient ne pas être gardées non plus. Pour corriger cela, déplacez le dossier du jeu ailleurs (par exemple C:\\Jeux) ou autorisez-le dans l'antivirus.",
       "L'avvio non è riuscito a scrivere il file qui sotto. La sua cartella potrebbe essere di sola lettura o protetta, per esempio da un antivirus o dall'accesso controllato alle cartelle di Windows. Il gioco partirà con le opzioni che aveva, e anche i salvataggi potrebbero non essere conservati. Per risolvere, sposta la cartella del gioco in un altro posto (per esempio C:\\Giochi) o consentila nell'antivirus.",
       "Der Starter konnte die Datei unten nicht schreiben. Ihr Ordner ist vielleicht schreibgeschützt oder geschützt, zum Beispiel durch ein Antivirenprogramm oder den überwachten Ordnerzugriff von Windows. Das Spiel startet mit den bisherigen Optionen, und auch Ihre Spielstände werden vielleicht nicht gespeichert. Verschieben Sie den Ordner des Spiels an einen anderen Ort (zum Beispiel C:\\Spiele) oder erlauben Sie ihn im Antivirenprogramm." },
+    // PlayShort
+    { "PLAY", "JUGAR", "JOUER", "GIOCA", "SPIELEN" },
+    // OptionsCard
+    { "Options", "Opciones", "Options", "Opzioni", "Optionen" },
+    // OptionsDetail
+    { "Picture and effects", "Imagen y efectos", "Image et effets", "Immagine ed effetti", "Bild und Effekte" },
+    // ControlsCard
+    { "Controls", "Controles", "Commandes", "Comandi", "Steuerung" },
+    // ControlsDetail
+    { "Keyboard and controller", "Teclado y mando", "Clavier et manette", "Tastiera e controller", "Tastatur und Controller" },
+    // AudioCard
+    { "Audio", "Audio", "Audio", "Audio", "Audio" },
+    // AudioDetail
+    { "Music and voices", "Música y voces", "Musique et voix", "Musica e voci", "Musik und Stimmen" },
+    // GameData
+    { "Game data", "Datos del juego", "Données du jeu", "Dati del gioco", "Spieldaten" },
+    // ExitShort
+    { "Exit", "Salir", "Quitter", "Esci", "Beenden" },
+    // DefaultsShort
+    { "Default settings", "Valores por defecto", "Valeurs par défaut", "Valori predefiniti", "Standardwerte" },
+    // Library
+    { "LIBRARY", "BIBLIOTECA", "BIBLIOTHÈQUE", "LIBRERIA", "BIBLIOTHEK" },
+    // StoryAitd1
+    { "Louisiana, 1924. The owner of Derceto has hanged himself, and the mansion is not empty.",
+      "Luisiana, 1924. El dueño de Derceto se ha ahorcado, y la mansión no está vacía.",
+      "Louisiane, 1924. Le propriétaire de Derceto s'est pendu, et le manoir n'est pas vide.",
+      "Louisiana, 1924. Il proprietario di Derceto si è impiccato, e la villa non è vuota.",
+      "Louisiana, 1924. Der Besitzer von Derceto hat sich erhängt, und das Herrenhaus ist nicht leer." },
+    // StoryAitd2
+    { "Christmas, 1924. A girl kidnapped by gangsters, and a pirate who never died.",
+      "Navidad de 1924. Una niña secuestrada por gánsteres y un pirata que nunca murió.",
+      "Noël 1924. Une fillette enlevée par des gangsters, et un pirate qui n'est jamais mort.",
+      "Natale 1924. Una bambina rapita dai gangster e un pirata che non è mai morto.",
+      "Weihnachten 1924. Ein von Gangstern entführtes Mädchen und ein Pirat, der nie gestorben ist." },
+    // StoryAitd3
+    { "Slaughter Gulch, 1925. A ghost town in the Mojave desert, and a film crew gone missing.",
+      "Slaughter Gulch, 1925. Un pueblo fantasma en el desierto de Mojave y un equipo de rodaje desaparecido.",
+      "Slaughter Gulch, 1925. Une ville fantôme du désert Mojave, et une équipe de tournage disparue.",
+      "Slaughter Gulch, 1925. Una città fantasma nel deserto del Mojave e una troupe cinematografica scomparsa.",
+      "Slaughter Gulch, 1925. Eine Geisterstadt in der Mojave-Wüste und ein verschwundenes Filmteam." },
+    // JackDetail
+    { "Christmas bonus game", "Juego extra de Navidad", "Jeu bonus de Noël", "Gioco bonus di Natale", "Weihnachts-Bonusspiel" },
+    // NoFolderShort
+    { "No folder yet", "Sin carpeta", "Pas de dossier", "Nessuna cartella", "Kein Ordner" },
+    // AudioDetailAlone
+    { "Music, voices, narrator", "Música, voces, narrador", "Musique, voix, narrateur", "Musica, voci, narratore",
+      "Musik, Stimmen, Erzähler" },
+    // FilesOk
+    { "All files OK", "Archivos correctos", "Fichiers corrects", "File corretti", "Dateien in Ordnung" },
+    // SourceGog
+    { "GOG / Steam", "GOG / Steam", "GOG / Steam", "GOG / Steam", "GOG / Steam" },
+    // SourceDisc
+    { "CD image", "Imagen del CD", "Image du CD", "Immagine del CD", "CD-Abbild" },
+    // SourceCopy
+    { "Copy of the game", "Copia del juego", "Copie du jeu", "Copia del gioco", "Kopie des Spiels" },
+    // RestoreDefaults
+    { "Restore defaults", "Restablecer", "Rétablir", "Ripristina", "Zurücksetzen" },
 };
 
 inline UiLanguage& currentUiLanguage()

@@ -113,6 +113,27 @@ enum class AdvancedText
     CheatsEnabledHelp,
     InfiniteLife,
     InfiniteLifeHelp,
+    // The controls window: its tabs and the controller drawing
+    KeyboardTab,
+    ControllerTab,
+    PadHelp,
+    PadNone,
+    PadMove,
+    PadAction,
+    PadConfirm,
+    PadCancel,
+    PadOptions,
+    PadLeftStick,
+    PadLeftStickPress,
+    PadRightStick,
+    PadRightStickPress,
+    PadDpad,
+    PadView,
+    PadMenu,
+    PadCross,
+    PadCircle,
+    PadSquare,
+    PadTriangle,
     Count
 };
 
@@ -577,6 +598,46 @@ inline const char* advancedText(AdvancedText text, int language)
           "Les dégâts ne vous tuent jamais ; les pièges du jeu, si.",
           "I danni non ti uccidono mai; le trappole del gioco sì.",
           "Schaden tötet dich nie, die Fallen des Spiels schon." },
+        // KeyboardTab
+        { "Keyboard", "Teclado", "Clavier", "Tastiera", "Tastatur" },
+        // ControllerTab
+        { "Controller", "Mando", "Manette", "Controller", "Controller" },
+        // PadHelp
+        { "Click a button (or its text) to change what it does.", "Pulsa un botón (o su texto) para cambiar lo que hace.", "Cliquez sur un bouton (ou son texte) pour changer ce qu'il fait.", "Fai clic su un pulsante (o sul suo testo) per cambiare cosa fa.", "Klicke auf eine Taste (oder ihren Text), um zu ändern, was sie tut." },
+        // PadNone
+        { "Not used", "Sin uso", "Non utilisé", "Non usato", "Nicht belegt" },
+        // PadMove
+        { "Move", "Moverse", "Se déplacer", "Muoversi", "Bewegen" },
+        // PadAction
+        { "Action: use, fight, take", "Acción: usar, luchar, coger", "Action : utiliser, combattre, prendre", "Azione: usare, combattere, prendere", "Aktion: benutzen, kämpfen, nehmen" },
+        // PadConfirm
+        { "Inventory · accept", "Inventario · aceptar", "Inventaire · valider", "Inventario · conferma", "Inventar · bestätigen" },
+        // PadCancel
+        { "Back · pause menu", "Volver · menú de pausa", "Retour · menu pause", "Indietro · menu di pausa", "Zurück · Pausemenü" },
+        // PadOptions
+        { "Options (F1)", "Opciones (F1)", "Options (F1)", "Opzioni (F1)", "Optionen (F1)" },
+        // PadLeftStick
+        { "Left stick", "Stick izquierdo", "Stick gauche", "Stick sinistro", "Linker Stick" },
+        // PadLeftStickPress
+        { "Left stick (press)", "Pulsar stick izquierdo", "Stick gauche (appui)", "Stick sinistro (pressione)", "Linker Stick (drücken)" },
+        // PadRightStick
+        { "Right stick", "Stick derecho", "Stick droit", "Stick destro", "Rechter Stick" },
+        // PadRightStickPress
+        { "Right stick (press)", "Pulsar stick derecho", "Stick droit (appui)", "Stick destro (pressione)", "Rechter Stick (drücken)" },
+        // PadDpad
+        { "D-pad", "Cruceta", "Croix directionnelle", "Croce direzionale", "Steuerkreuz" },
+        // PadView
+        { "View", "Vista", "Affichage", "Visualizza", "Ansicht" },
+        // PadMenu
+        { "Menu", "Menú", "Menu", "Menu", "Menü" },
+        // PadCross
+        { "Cross", "Cruz", "Croix", "Croce", "Kreuz" },
+        // PadCircle
+        { "Circle", "Círculo", "Rond", "Cerchio", "Kreis" },
+        // PadSquare
+        { "Square", "Cuadrado", "Carré", "Quadrato", "Quadrat" },
+        // PadTriangle
+        { "Triangle", "Triángulo", "Triangle", "Triangolo", "Dreieck" },
     };
     if (language < 0 || language >= kAdvancedTextLanguages)
         language = 0;

@@ -43,6 +43,7 @@
 #ifdef _WIN32
 #define NOMINMAX
 #include <windows.h>
+#include <dwmapi.h>
 #endif
 
 namespace fs = std::filesystem;
@@ -50,8 +51,8 @@ using namespace menu;   // palette and widgets shared with the game (Shared/ui/m
 
 // The window at 100% (Windows scaling) and the smallest it can get: narrow
 // enough to show the portrait layout, as on a phone
-static const int kWindowWidth = 940;
-static const int kWindowHeight = 600;
+static const int kWindowWidth = 980;
+static const int kWindowHeight = 610;
 static const int kMinWindowWidth = 400;
 static const int kMinWindowHeight = 520;
 
@@ -70,42 +71,18 @@ static void SDLCALL onFolderChosen(void*, const char* const* filelist, int)
     SDL_UnlockMutex(s_dialogMutex);
 }
 
-// ── Fonts: Georgia from Windows if present, Gelasio otherwise, made
-// at the interface scale so the letters stay sharp at any size ─────────────
-static ImFont* addFont(const std::string& path, float size)
-{
-    std::error_code ec;
-    if (path.empty() || !fs::exists(fs::u8path(path), ec))
-        return nullptr;
-    return ImGui::GetIO().Fonts->AddFontFromFileTTF(path.c_str(), size);
-}
-
+// ── Fonts, made at the interface scale so the letters stay sharp at any size
+// Alone: Inter for everything (compiled in, the same on every system), small
+// and modern; the game's name in its semibold
 static Fonts loadFonts(float scale)
 {
     ImGui::GetIO().Fonts->Clear();
     Fonts fonts;
-    std::string dir;
-#ifdef _WIN32
-    char windir[MAX_PATH] = {};
-    if (GetWindowsDirectoryA(windir, MAX_PATH) > 0)
-        dir = std::string(windir) + "\\Fonts\\";
-#endif
-    fonts.text = addFont(dir.empty() ? "" : dir + "georgia.ttf", 17.0f * scale);
-    fonts.button = addFont(dir.empty() ? "" : dir + "georgiab.ttf", 21.0f * scale);
-    fonts.header = addFont(dir.empty() ? "" : dir + "georgia.ttf", 30.0f * scale);
-    fonts.title = addFont(dir.empty() ? "" : dir + "georgiab.ttf", 40.0f * scale);
-    if (!fonts.text)
-    {
-        // No Georgia (Linux): the project's own font, made to its measures
-        logLine("Georgia font not found, using Gelasio");
-        fonts.text = addEmbeddedFont(false, 17.0f * scale);
-        fonts.button = addEmbeddedFont(true, 21.0f * scale);
-        fonts.header = addEmbeddedFont(false, 30.0f * scale);
-        fonts.title = addEmbeddedFont(true, 40.0f * scale);
-    }
-    if (!fonts.button) fonts.button = fonts.text;
-    if (!fonts.header) fonts.header = fonts.text;
-    if (!fonts.title) fonts.title = fonts.button;
+    fonts.text = addModernFont(false, 15.0f * scale);
+    fonts.smallText = addModernFont(false, 13.0f * scale);
+    fonts.button = addModernFont(true, 16.0f * scale);
+    fonts.header = addModernFont(true, 20.0f * scale);
+    fonts.title = addModernFont(true, 34.0f * scale);
     return fonts;
 }
 
@@ -130,6 +107,7 @@ struct LauncherState
     int selectedGame = 0;       // 0 AITD1 (with Jack), 1 AITD2, 2 AITD3
     bool quit = false;
     bool launched = false;      // Tatou.exe started (it saved the options already)
+    bool gameReady[3] = {};     // each game's folder is chosen and valid (the library's dots)
 };
 
 // The data folder of the selected game
@@ -144,6 +122,11 @@ static std::string& dataFolder(LauncherState& state)
 
 static void refreshDataFolder(LauncherState& state)
 {
+    // Every game's folder, for the library (only when a folder or the game changes)
+    const std::string* folders[3] = { &state.settings.aitd1DataFolder, &state.settings.aitd2DataFolder,
+                                      &state.settings.aitd3DataFolder };
+    for (int game = 0; game < 3; game++)
+        state.gameReady[game] = !folders[game]->empty() && dataFolderGame(*folders[game]) == game;
     const std::string& folder = dataFolder(state);
     state.dataFolderValid = !folder.empty() && dataFolderGame(folder) == state.selectedGame;
     state.jackFound = state.dataFolderValid && hasJackData(folder);
@@ -276,6 +259,8 @@ static void handleGamepadEvent(const SDL_Event& event)
 
 // Controls and audio windows (Shared/), popups over the advanced options
 static ControlsWindowState s_controlsWindow;
+static SDL_Texture* s_controllerDrawing = nullptr;   // the controller tab's picture
+static float s_controllerDrawingAspect = 0.0f;
 static AudioWindowState s_audioWindow;
 static std::vector<std::string> s_narrators;   // looked for when the audio window opens
 
@@ -490,26 +475,9 @@ static void drawAdvancedOptions(LauncherState& state, const Fonts& fonts, const 
     ImGui::Spacing();
     ImGui::Spacing();
 
-    // Controls, Audio and Close side by side
-    const ImVec2 pos = ImGui::GetCursorScreenPos();
-    const float gap = metrics.px(10.0f);
-    const float third = (ImGui::GetContentRegionAvail().x - gap * 2.0f) / 3.0f;
-    const ImVec2 buttonSize(third, metrics.pressHeight(40.0f));
-    if (darkButton("##controls", advText(AdvancedText::Controls), pos, buttonSize, fonts.button, true))
-    {
-        if (state.settings.controls.size() != (size_t)kGameActionCount)
-            state.settings.restoreDefaultControls();
-        s_controlsWindow.open = true;
-        s_controlsWindow.justOpened = true;
-    }
-    if (darkButton("##audio", advText(AdvancedText::Audio), ImVec2(pos.x + third + gap, pos.y), buttonSize, fonts.button, true))
-    {
-        s_audioWindow.open = true;
-        s_audioWindow.justOpened = true;
-        s_narrators = findAitd1Narrators(dataFolder(state));
-    }
-    if (darkButton("##closeAdvanced", advText(AdvancedText::Close), ImVec2(pos.x + (third + gap) * 2.0f, pos.y), buttonSize,
-        fonts.button, true) || s_closeAdvanced)
+    // Controls and Audio have their own cards on the launcher screen: Close only
+    if (darkButton("##closeAdvanced", advText(AdvancedText::Close), ImGui::GetCursorScreenPos(),
+        ImVec2(ImGui::GetContentRegionAvail().x, metrics.pressHeight(40.0f)), fonts.button, true) || s_closeAdvanced)
     {
         s_closeAdvanced = false;
         // Saved now, not only when playing (they were lost by leaving with EXIT)
@@ -519,12 +487,21 @@ static void drawAdvancedOptions(LauncherState& state, const Fonts& fonts, const 
     ImGui::Dummy(ImVec2(0.0f, metrics.px(4.0f)));
     menu::dragScroll();
 
+    ImGui::EndPopup();
+    ImGui::PopStyleVar();
+}
+
+// The controls and audio windows (Shared/), opened by the launcher screen's cards
+static void drawControlsAndAudio(LauncherState& state, const Fonts& fonts, const Metrics& metrics)
+{
     // Their sizes follow the scale; the fonts are already made at it
     ControlsWindowStyle controlsStyle;
     controlsStyle.scale = metrics.scale;
     controlsStyle.fontScale = 1.0f;
     controlsStyle.titleColor = color(kGoldLight);
     controlsStyle.titleFont = fonts.header;
+    controlsStyle.padPicture = (ImTextureID)(intptr_t)s_controllerDrawing;
+    controlsStyle.padPictureAspect = s_controllerDrawingAspect;
     if (drawControlsWindow(s_controlsWindow, state.settings.controls, state.settings.modernStick, state.settings.vibration,
         (int)uiLanguage(), s_gamepad,
         true, controlsStyle))
@@ -542,9 +519,6 @@ static void drawAdvancedOptions(LauncherState& state, const Fonts& fonts, const 
         logLine("Audio: music %d (%s), voices and effects %d, narrator %s", state.settings.musicVolume,
             state.settings.adlibMusic ? "AdLib" : "CD", state.settings.soundVolume,
             state.settings.voices.empty() ? "of the game" : state.settings.voices.c_str());
-
-    ImGui::EndPopup();
-    ImGui::PopStyleVar();
 }
 
 // B closes the updates window (as its last button does)
@@ -691,7 +665,8 @@ static void drawAboutWindow(const Fonts& fonts, const Metrics& metrics)
 }
 
 // What the screen shows, from the launcher's state
-static LauncherView makeView(LauncherState& state, const LauncherCover& cover)
+// covers: the three games' (AITD1, AITD2, AITD3)
+static LauncherView makeView(LauncherState& state, const LauncherCover* covers)
 {
     LauncherView view;
     view.selectedGame = state.selectedGame;
@@ -703,7 +678,12 @@ static LauncherView makeView(LauncherState& state, const LauncherCover& cover)
     view.canUpdate = updatesEnabled();
     view.version = updatesEnabled() ? launcherVersion() : "";
     view.updateAvailable = (updaterState() == UpdateState::Available);
-    view.cover = &cover;
+    view.cover = &covers[state.selectedGame];
+    for (int game = 0; game < 3; game++)
+    {
+        view.covers[game] = &covers[game];
+        view.gameReady[game] = state.gameReady[game];
+    }
 #ifdef __ANDROID__
     view.importGame = true;
     view.canBrowse = (state.importing < 0);
@@ -749,11 +729,14 @@ static LauncherView makeView(LauncherState& state, const LauncherCover& cover)
         view.message = tr(UiText::FilesUnknown);
         view.messageColor = state.filesAccepted ? kTextDim : kError;
     }
+    // What the folder is goes in its own label; the line says the files are fine
     else if (state.dataFolderValid)
     {
-        view.message = tr(state.gogInstall ? UiText::InstallGog : state.disc ? UiText::InstallDisc : UiText::InstallCopy);
-        view.messageColor = kTextDim;
+        view.message = tr(UiText::FilesOk);
+        view.messageColor = IM_COL32(111, 207, 111, 255);
     }
+    if (state.dataFolderValid)
+        view.source = tr(state.gogInstall ? UiText::SourceGog : state.disc ? UiText::SourceDisc : UiText::SourceCopy);
     return view;
 }
 
@@ -1057,6 +1040,19 @@ static void handleIntent(LauncherState& state, const LauncherIntent& intent, SDL
     }
     if (intent.openAdvanced)
         ImGui::OpenPopup("##advancedPopup");
+    if (intent.openControls)
+    {
+        if (state.settings.controls.size() != (size_t)kGameActionCount)
+            state.settings.restoreDefaultControls();
+        s_controlsWindow.open = true;
+        s_controlsWindow.justOpened = true;
+    }
+    if (intent.openAudio)
+    {
+        s_audioWindow.open = true;
+        s_audioWindow.justOpened = true;
+        s_narrators = findAitd1Narrators(dataFolder(state));
+    }
     if (intent.update)
     {
         // Looks again unless a newer version is already known
@@ -1189,6 +1185,19 @@ int main(int, char**)
         return 1;
     }
     SDL_SetWindowMinimumSize(window, kMinWindowWidth, kMinWindowHeight);
+#ifdef _WIN32
+    // A dark title bar in the window's own colour and round corners (Windows
+    // 11; older systems ignore what they do not know)
+    if (HWND hwnd = (HWND)SDL_GetPointerProperty(SDL_GetWindowProperties(window), SDL_PROP_WINDOW_WIN32_HWND_POINTER, nullptr))
+    {
+        const BOOL dark = TRUE;
+        DwmSetWindowAttribute(hwnd, 20 /* DWMWA_USE_IMMERSIVE_DARK_MODE */, &dark, sizeof(dark));
+        const int round = 2;   // DWMWCP_ROUND
+        DwmSetWindowAttribute(hwnd, 33 /* DWMWA_WINDOW_CORNER_PREFERENCE */, &round, sizeof(round));
+        const COLORREF caption = RGB(14, 15, 20);   // the library's colour
+        DwmSetWindowAttribute(hwnd, 35 /* DWMWA_CAPTION_COLOR */, &caption, sizeof(caption));
+    }
+#endif
     SDL_SetRenderVSync(renderer, 1);
     s_dialogMutex = SDL_CreateMutex();
 
@@ -1211,13 +1220,17 @@ int main(int, char**)
         covers[i] = loadGameCover(renderer, i);
         screenCovers[i].colour = (ImTextureID)(intptr_t)covers[i].colour;
         screenCovers[i].grey = (ImTextureID)(intptr_t)covers[i].grey;
+        screenCovers[i].background = (ImTextureID)(intptr_t)covers[i].background;
         screenCovers[i].width = covers[i].width;
         screenCovers[i].height = covers[i].height;
     }
 
+    s_controllerDrawing = loadControllerDrawing(renderer, s_controllerDrawingAspect);
+
     Fonts fonts;
     float fontScale = 0.0f;
     bool lastTouch = false;
+    int paletteGame = -1;   // the game whose colours the palette has
     while (!state.quit)
     {
         SDL_Event event;
@@ -1251,6 +1264,14 @@ int main(int, char**)
         SDL_GetWindowSize(window, &pixelsW, &pixelsH);
         const Metrics metrics = computeMetrics(ImVec2((float)pixelsW, (float)pixelsH), SDL_GetWindowDisplayScale(window),
             launcherScreen::kDesignLandscape, launcherScreen::kDesignPortrait);
+        // The windows it opens in the chosen game's colour (menuBase.h)
+        if (paletteGame != state.selectedGame)
+        {
+            paletteGame = state.selectedGame;
+            setGamePalette(paletteGame);
+            if (fontScale > 0.0f)
+                applyStyle(metrics);
+        }
         if (fontsNeedRebuild(fontScale, metrics.scale))
         {
             fontScale = metrics.scale;
@@ -1289,7 +1310,7 @@ int main(int, char**)
             else
                 s_closeAdvanced = true;
         }
-        const LauncherIntent intent = drawLauncherScreen(makeView(state, screenCovers[state.selectedGame]), metrics, fonts);
+        const LauncherIntent intent = drawLauncherScreen(makeView(state, screenCovers), metrics, fonts);
         handleIntent(state, intent, window);
         followFileCheck(state);
         // The check at start found a newer version: asked once
@@ -1301,6 +1322,7 @@ int main(int, char**)
         }
         ImGui::PushFont(fonts.text);
         drawAdvancedOptions(state, fonts, metrics);
+        drawControlsAndAudio(state, fonts, metrics);
         drawUpdateWindow(state, fonts, metrics);
         drawAboutWindow(fonts, metrics);
         drawFilesWarning(state, fonts, metrics);
@@ -1330,6 +1352,8 @@ int main(int, char**)
     logLine("Launcher closed");
     for (GameCover& cover : covers)
         freeGameCover(cover);
+    if (s_controllerDrawing)
+        SDL_DestroyTexture(s_controllerDrawing);
     ImGui_ImplSDLRenderer3_Shutdown();
     ImGui_ImplSDL3_Shutdown();
     ImGui::DestroyContext();

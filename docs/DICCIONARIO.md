@@ -874,6 +874,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | Función | Para qué sirve |
 | --- | --- |
 | `controllerHintRegister` | Registers the start menu hook (remasterHooks.cpp) |
+| `controllerDrawingTexture` | The controls window's controller drawing (Shared/ui/controllerPicture.h) as an ImGui texture, made the first time; false if it could not be read |
 
 ### `remaster/ui/menuFonts.h`
 
@@ -914,7 +915,6 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | Función | Para qué sirve |
 | --- | --- |
 | `u` | Size in pixels of `units` of the screen design |
-| `textOffset` | Text on a line with buttons, centred on them |
 
 ### `Shared/ui/menuBase.h`
 
@@ -951,6 +951,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | --- | --- |
 | `loadGameCover` | game: 0 = AITD1, 1 = AITD2, 2 = AITD3 |
 | `freeGameCover` | Frees the textures of a cover |
+| `loadControllerDrawing` | The controls window's controller drawing (Shared/ui/controllerPicture.h) as a texture, and its height / width; nullptr if it could not be read |
 
 ### `Launcher/launcherSettings.h`
 

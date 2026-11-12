@@ -47,6 +47,7 @@ New-Item -ItemType Directory -Force $staging | Out-Null
 Copy-Item (Join-Path $output 'Launcher.exe'), (Join-Path $output 'Tatou.exe') $staging
 Copy-Item (Join-Path $repo 'README.md'), (Join-Path $repo 'LICENSE') $staging
 Copy-Item (Join-Path $source 'Shared\assets\fonts\OFL.txt') (Join-Path $staging 'Gelasio-OFL.txt')
+Copy-Item (Join-Path $source 'Shared\assets\fonts\Inter-OFL.txt') $staging
 
 $zip = Join-Path $releaseFolder "$name.zip"
 if (Test-Path $zip) { Remove-Item $zip -Force }

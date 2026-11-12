@@ -27,20 +27,30 @@ namespace menu
 {
 
 // ── Palette ─────────────────────────────────────────────────────────────────
-static const ImU32 kBackground   = IM_COL32(27, 26, 30, 255);
-static const ImU32 kPanel        = IM_COL32(34, 33, 38, 255);
-static const ImU32 kPanelBorder  = IM_COL32(74, 64, 46, 255);
-static const ImU32 kGold         = IM_COL32(201, 164, 92, 255);
-static const ImU32 kGoldLight    = IM_COL32(236, 213, 154, 255);
-static const ImU32 kGoldTop      = IM_COL32(243, 226, 174, 255);
-static const ImU32 kGoldBottom   = IM_COL32(184, 145, 77, 255);
-static const ImU32 kText         = IM_COL32(232, 223, 204, 255);
-static const ImU32 kTextDim      = IM_COL32(154, 146, 130, 255);
-static const ImU32 kTextDisabled = IM_COL32(107, 101, 90, 255);
-static const ImU32 kButtonDark   = IM_COL32(38, 36, 41, 255);
-static const ImU32 kButtonHover  = IM_COL32(48, 45, 51, 255);
-static const ImU32 kHeader       = IM_COL32(107, 87, 51, 255);
-static const ImU32 kError        = IM_COL32(222, 120, 96, 255);
+// Charcoal and gold; the menus change them to the colour of the game
+// (setGamePalette, below). The names stay the gold ones.
+inline ImU32 kBackground   = IM_COL32(27, 26, 30, 255);
+inline ImU32 kPanel        = IM_COL32(34, 33, 38, 255);
+inline ImU32 kPanelBorder  = IM_COL32(74, 64, 46, 255);
+inline ImU32 kGold         = IM_COL32(201, 164, 92, 255);
+inline ImU32 kGoldLight    = IM_COL32(236, 213, 154, 255);
+inline ImU32 kGoldTop      = IM_COL32(243, 226, 174, 255);
+inline ImU32 kGoldBottom   = IM_COL32(184, 145, 77, 255);
+inline ImU32 kGoldHoverTop    = IM_COL32(250, 236, 192, 255);
+inline ImU32 kGoldHoverBottom = IM_COL32(204, 165, 92, 255);
+inline ImU32 kGoldEdge     = IM_COL32(248, 234, 190, 255);
+inline ImU32 kGoldText     = IM_COL32(42, 33, 22, 255);   // on the primary buttons
+inline ImU32 kText         = IM_COL32(232, 223, 204, 255);
+inline ImU32 kTextDim      = IM_COL32(154, 146, 130, 255);
+inline ImU32 kTextDisabled = IM_COL32(107, 101, 90, 255);
+inline ImU32 kButtonDark   = IM_COL32(38, 36, 41, 255);
+inline ImU32 kButtonHover  = IM_COL32(48, 45, 51, 255);
+inline ImU32 kButtonSelected = IM_COL32(70, 58, 38, 255);
+inline ImU32 kHeader       = IM_COL32(107, 87, 51, 255);
+inline ImU32 kHeaderHovered = IM_COL32(133, 107, 61, 255);
+inline ImU32 kHeaderActive = IM_COL32(153, 122, 71, 255);
+inline ImU32 kButtonActive = IM_COL32(77, 64, 43, 255);
+inline ImU32 kError        = IM_COL32(222, 120, 96, 255);
 
 inline ImVec4 color(ImU32 value, float alpha = 1.0f)
 {
@@ -128,6 +138,14 @@ inline void applyStyle(const Metrics& metrics, float panelAlpha = 1.0f)
         style.GrabMinSize = 24.0f;
         style.TouchExtraPadding = ImVec2(4.0f, 4.0f);
     }
+    // Round corners, as the launcher screen
+    style.WindowRounding = 14.0f;
+    style.ChildRounding = 8.0f;
+    style.FrameRounding = 8.0f;
+    style.PopupRounding = 10.0f;
+    style.GrabRounding = 6.0f;
+    style.ScrollbarRounding = 8.0f;
+    style.TabRounding = 8.0f;
     style.ScaleAllSizes(metrics.scale);
     style.FrameBorderSize = 1.0f;
     style.WindowBorderSize = 1.0f;
@@ -159,16 +177,28 @@ inline void applyStyle(const Metrics& metrics, float panelAlpha = 1.0f)
     c[ImGuiCol_ScrollbarGrabHovered] = color(kGold);
     c[ImGuiCol_ScrollbarGrabActive] = color(kGoldLight);
     c[ImGuiCol_NavCursor] = color(kGoldLight);   // the controller / keyboard cursor
+    // Tabs (the controls window): dark, the chosen one in the accent
+    c[ImGuiCol_Tab] = color(kButtonDark);
+    c[ImGuiCol_TabHovered] = color(kButtonHover);
+    c[ImGuiCol_TabSelected] = color(kButtonSelected);
+    c[ImGuiCol_TabSelectedOverline] = color(kGold);
+    c[ImGuiCol_TabDimmed] = color(kButtonDark);
+    c[ImGuiCol_TabDimmedSelected] = color(kButtonSelected);
+    c[ImGuiCol_TabDimmedSelectedOverline] = color(kGold);
+    // Soft edges in the game's colour, not a strong line
+    c[ImGuiCol_Border] = color(kGold, 0.40f);
+    c[ImGuiCol_Separator] = color(kPanelBorder);
     ImGui::GetStyle() = style;
 }
 
 // Fonts of the menus, made at the current scale (fontsNeedRebuild)
 struct Fonts
 {
-    ImFont* text = nullptr;     // 17 units
-    ImFont* button = nullptr;   // 21 units, bold
-    ImFont* header = nullptr;   // 30 units
-    ImFont* title = nullptr;    // 40 units, bold
+    ImFont* text = nullptr;       // 15 units
+    ImFont* button = nullptr;     // 16 units, semibold
+    ImFont* header = nullptr;     // 20 units, semibold
+    ImFont* title = nullptr;      // the launcher's game name, 34 units, semibold
+    ImFont* smallText = nullptr;  // smaller labels, 13 units
 };
 
 // A fixed panel without title bar; its scroll bar appears only when the
@@ -214,7 +244,10 @@ inline void textCentered(ImDrawList* draw, ImFont* font, float centerX, float y,
     draw->AddText(font, font->FontSize, ImVec2(centerX - size.x * 0.5f, y), textColor, text);
 }
 
-// Primary action: gold gradient with dark text
+// Corners of the menus' buttons (round, as the launcher's)
+static const float kButtonRounding = 10.0f;
+
+// Primary action: the game's colour with a sheen on its top half and dark text
 inline bool goldButton(const char* id, const char* label, ImVec2 pos, ImVec2 size, ImFont* font, bool enabled)
 {
     ImGui::SetCursorScreenPos(pos);
@@ -227,19 +260,20 @@ inline bool goldButton(const char* id, const char* label, ImVec2 pos, ImVec2 siz
     const ImVec2 corner(pos.x + size.x, pos.y + size.y);
     if (enabled)
     {
-        const ImU32 top = hovered ? IM_COL32(250, 236, 192, 255) : kGoldTop;
-        const ImU32 bottom = hovered ? IM_COL32(204, 165, 92, 255) : kGoldBottom;
-        draw->AddRectFilledMultiColor(pos, corner, top, top, bottom, bottom);
-        draw->AddRect(pos, corner, IM_COL32(248, 234, 190, 255), 6.0f, 0, 1.5f);
+        draw->AddRectFilled(pos, corner, hovered ? kGoldHoverTop : kGoldTop, kButtonRounding);
+        draw->AddRectFilled(pos, ImVec2(corner.x, pos.y + size.y * 0.5f), IM_COL32(255, 255, 255, hovered ? 40 : 24), kButtonRounding,
+            ImDrawFlags_RoundCornersTop);
+        draw->AddRect(pos, corner, kGoldBottom, kButtonRounding, 0, 1.0f);
         if (hovered)
-            draw->AddRect(ImVec2(pos.x - 3, pos.y - 3), ImVec2(corner.x + 3, corner.y + 3), IM_COL32(236, 213, 154, 90), 8.0f, 0, 2.0f);
+            draw->AddRect(ImVec2(pos.x - 3, pos.y - 3), ImVec2(corner.x + 3, corner.y + 3), (kGoldLight & 0x00FFFFFF) | (90u << 24),
+                kButtonRounding + 2.0f, 0, 2.0f);
     }
     else
     {
-        draw->AddRectFilled(pos, corner, kButtonDark, 6.0f);
-        draw->AddRect(pos, corner, kPanelBorder, 6.0f);
+        draw->AddRectFilled(pos, corner, kButtonDark, kButtonRounding);
+        draw->AddRect(pos, corner, kPanelBorder, kButtonRounding);
     }
-    navCursor(pos, corner, 6.0f);
+    navCursor(pos, corner, kButtonRounding);
     textCentered(draw, font, pos.x + size.x * 0.5f, pos.y + (size.y - font->FontSize) * 0.5f,
         enabled ? IM_COL32(42, 33, 22, 255) : kTextDisabled, label);
     return clicked && enabled;
@@ -259,15 +293,78 @@ inline bool darkButton(const char* id, const char* label, ImVec2 pos, ImVec2 siz
     const ImU32 fill = selected ? IM_COL32(70, 58, 38, 255) : (hovered ? kButtonHover : kButtonDark);
     const ImU32 border = !enabled ? kPanelBorder : (selected || hovered ? kGoldLight : kGold);
     const ImU32 textColor = !enabled ? kTextDisabled : (selected ? kGoldLight : kText);
-    draw->AddRectFilled(pos, corner, fill, 6.0f);
-    draw->AddRect(pos, corner, border, 6.0f, 0, selected ? 2.0f : 1.2f);
-    navCursor(pos, corner, 6.0f);
+    draw->AddRectFilled(pos, corner, fill, kButtonRounding);
+    draw->AddRect(pos, corner, border, kButtonRounding, 0, selected ? 2.0f : 1.2f);
+    navCursor(pos, corner, kButtonRounding);
     textCentered(draw, font, pos.x + size.x * 0.5f, pos.y + (size.y - font->FontSize) * 0.5f, textColor, label);
     return clicked && enabled;
 }
 
 // Help boxes stand out from the window: lighter, warmer and with a light gold border
-static const ImU32 kHelpBackground = IM_COL32(58, 50, 38, 250);
+inline ImU32 kHelpBackground = IM_COL32(58, 50, 38, 250);
+
+// A colour between a (t = 0) and b (t = 1), opaque
+inline ImU32 mixColour(ImU32 a, ImU32 b, float t)
+{
+    const ImVec4 x = ImGui::ColorConvertU32ToFloat4(a), y = ImGui::ColorConvertU32ToFloat4(b);
+    return ImGui::ColorConvertFloat4ToU32(ImVec4(x.x + (y.x - x.x) * t, x.y + (y.y - x.y) * t, x.z + (y.z - x.z) * t, 1.0f));
+}
+
+// The menus (the launcher's windows, the game's F1) take the chosen game's
+// colour, from its light and dark ends, over dark glass
+// like the launcher screen; call applyStyle afterwards
+inline void setAccentPalette(ImU32 light, ImU32 dark)
+{
+    const ImU32 white = IM_COL32(255, 255, 255, 255);
+    kBackground = IM_COL32(11, 12, 16, 255);
+    kPanel = IM_COL32(20, 21, 27, 255);
+    kPanelBorder = IM_COL32(52, 54, 62, 255);
+    kGold = light;
+    kGoldLight = mixColour(light, white, 0.35f);
+    kGoldTop = light;
+    kGoldBottom = mixColour(dark, light, 0.25f);
+    kGoldHoverTop = mixColour(light, white, 0.18f);
+    kGoldHoverBottom = mixColour(dark, light, 0.45f);
+    kGoldEdge = mixColour(light, white, 0.3f);
+    kGoldText = IM_COL32(11, 12, 16, 255);
+    kText = IM_COL32(233, 230, 223, 255);
+    kTextDim = IM_COL32(152, 148, 140, 255);
+    kTextDisabled = IM_COL32(98, 96, 92, 255);
+    kButtonDark = IM_COL32(30, 31, 38, 255);
+    kButtonHover = IM_COL32(42, 43, 52, 255);
+    kButtonSelected = mixColour(kButtonDark, dark, 0.45f);
+    kHeader = mixColour(kButtonDark, dark, 0.55f);
+    kHeaderHovered = mixColour(kButtonDark, dark, 0.75f);
+    kHeaderActive = dark;
+    kButtonActive = mixColour(kButtonDark, dark, 0.4f);
+    kHelpBackground = IM_COL32(34, 36, 44, 250);
+}
+
+// Each game's colour, taken from its cover (light and dark ends): the
+// ghost's green (0, AITD1 and Jack), the sea's blue (1, AITD2), the fire's
+// orange (2, AITD3)
+struct GameAccent
+{
+    ImU32 light;
+    ImU32 dark;
+};
+
+inline GameAccent gameAccent(int game)
+{
+    static const GameAccent accents[3] = {
+        { IM_COL32(143, 209, 106, 255), IM_COL32(63, 138, 58, 255) },
+        { IM_COL32(74, 156, 240, 255), IM_COL32(26, 86, 184, 255) },
+        { IM_COL32(240, 122, 60, 255), IM_COL32(178, 58, 34, 255) },
+    };
+    return accents[(game >= 0 && game < 3) ? game : 0];
+}
+
+// The palette of a game (setAccentPalette with its colour)
+inline void setGamePalette(int game)
+{
+    const GameAccent accent = gameAccent(game);
+    setAccentPalette(accent.light, accent.dark);
+}
 
 // With the controller or the keyboard the help waits until the cursor has
 // stayed this long on the same item, so it never covers the options while

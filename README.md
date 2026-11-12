@@ -122,11 +122,11 @@ It is not a static recompilation: a static recompilation translates the machine 
 
 1. Build the project (see [Building](#building)) or get a release.
 2. Run **`Launcher.exe`** (next to `Tatou.exe`). On Linux: **`Launcher`** (next to `Tatou`), see [On Linux](#on-linux).
-3. Choose the game's tab (**Alone in the Dark**, **Alone in the Dark 2** or **Alone in the Dark 3**), press **Browse** and choose your game folder:
+3. Choose the game in the library on the left (**Alone in the Dark**, **Alone in the Dark 2** or **Alone in the Dark 3**), press **Browse** and choose your game folder:
    - a **GOG or Steam installation**: the folder with `GAME.GOG` (or its `INDARK` subfolder; `INDARK2` for *Alone in the Dark 2*, `INDARK3` for *Alone in the Dark 3*). Music and voices are read straight from the CD image (for *Alone in the Dark 3*, from its `MUSIC` folder); nothing is extracted or written there;
    - or a **copy of the game files** (a folder with the `.PAK` files; Jack in the Dark in its `JACK` subfolder);
    - or a folder with **your original CD as an image** (`.cue` and `.bin`, or `.iso`; see [Your original CD](#your-original-cd)).
-4. Choose the language of the game and press **Play** (see [Languages](#languages)). *Jack in the Dark* has its own button, in the *Alone in the Dark* tab, when its files are found.
+4. Choose the language of the game and press **Play** (see [Languages](#languages)). *Jack in the Dark* has its own button, next to **Play** on the *Alone in the Dark* page, when its files are found.
 
 **Everything in one folder (portable).** Each game can also live inside `UserData`, in its own **`GAME`** folder (the launcher creates them empty): `UserData\AITD1\GAME` (with *Jack in the Dark*), `UserData\AITD2\GAME` and `UserData\AITD3\GAME`. Copy your GOG or Steam installation there; only these files are needed (the rest, like DOSBox, GOG's saves or the installers, can be left out):
 
@@ -140,7 +140,7 @@ When the launcher opens, a game with no folder chosen takes its `GAME` folder, a
 
 **Updates.** When it opens, the launcher asks GitHub for the latest release of this project and, if there is a newer one, offers to install it; the **Update** button next to the version (bottom right) looks again. Installing downloads the package for your system and replaces only the programs and the documents next to them: `UserData` (options, saves, backgrounds) and `launcher.cfg` are never touched. Then close the launcher and open it again. The launcher connects to the internet only for this, and the game never does.
 
-**Starting a game without the launcher** (for example from a frontend that lists your games, each one as its own entry). The simple way is enough for almost everyone: open the launcher once, choose the game folder and the language there, and set the rest in **Advanced options** (or in the game, with F1). From then on, each game only needs its name:
+**Starting a game without the launcher** (for example from a frontend that lists your games, each one as its own entry). The simple way is enough for almost everyone: open the launcher once, choose the game folder and the language there, and set the rest with its **Options**, **Controls** and **Audio** cards (or in the game, with F1). From then on, each game only needs its name:
 
 ```
 Tatou.exe --game aitd1
@@ -193,7 +193,7 @@ The narrator reads with any text language. A French narrator only came on the ol
 
 - **Game language:** the **Game language** list on each game's page of the launcher. It is kept for next time.
 - **Menu language** (launcher and F1): **Interface**, at the top right of the launcher.
-- **Narrator**, if you added extra voices: the **Narrator** list of the **Audio** window, in the launcher's **Advanced options** or in the game with **F1**.
+- **Narrator**, if you added extra voices: the **Narrator** list of the **Audio** window, in the launcher (its **Audio** card) or in the game with **F1**.
 
 ### Other languages in Alone in the Dark 3
 
@@ -259,10 +259,10 @@ Everything else works as on Windows and Linux: the options, the controllers, the
 1. **Install the app.** On the phone, download `ClassicReborn-<version>-android.apk` from the [latest release](https://github.com/nayo186/AloneInTheDarkClassicReborn/releases/latest) and open it. The first time, Android asks to allow your browser (or file manager) to install apps: allow it. It is not on Google Play, so Play Protect may warn about an unknown app: choose to install anyway. The app is called **Alone in the Dark: Classic Reborn**.
 2. **Bring the game to the phone.** Copy a folder with the game to the phone, in any way: with a USB cable to **Download**, on a memory card, from a cloud drive... Any of these:
    - your **GOG or Steam installation** from a PC (the folder with `GAME.GOG`, or with `INDARK3` and `MUSIC` for *Alone in the Dark 3*);
-   - a folder with **your original CD as an image** (`.cue` and `.bin`, or `.iso`; see [Your original CD](#your-original-cd)). Import it on the game's tab before anything else: once the game is there, a CD image on the *Alone in the Dark* tab is taken as a narrator and on the *Alone in the Dark 3* tab as a language;
+   - a folder with **your original CD as an image** (`.cue` and `.bin`, or `.iso`; see [Your original CD](#your-original-cd)). Import it on the game's page before anything else: once the game is there, a CD image on the *Alone in the Dark* page is taken as a narrator and on the *Alone in the Dark 3* page as a language;
    - a game's folder of **`UserData`** from Classic Reborn on your PC, such as `UserData\AITD3`, with its `GAME` folder and everything you added (`Languages`, `Voices`, `Backgrounds`, `Masks`, `Saves`);
    - the whole **`UserData`** folder, with every game at once.
-3. **Import it.** In the launcher, choose the game's tab, press **Import...** and choose that folder ("Use this folder"). The app copies what it recognises, in one go: the game (only the files it uses), and the languages, narrators, custom backgrounds, masks and saves its folder has. A folder named `AITD1`, `AITD2` or `AITD3` goes to that game, whatever the tab. You can also import only a language of *Alone in the Dark 3*, a narrator of *Alone in the Dark* or a `Backgrounds` or `Masks` folder later. When the cover turns to colour the game is ready, and the folder you copied can be deleted.
+3. **Import it.** In the launcher, choose the game at the top, press **Import...** and choose that folder ("Use this folder"). The app copies what it recognises, in one go: the game (only the files it uses), and the languages, narrators, custom backgrounds, masks and saves its folder has. A folder named `AITD1`, `AITD2` or `AITD3` goes to that game, whatever the game chosen. You can also import only a language of *Alone in the Dark 3*, a narrator of *Alone in the Dark* or a `Backgrounds` or `Masks` folder later. When the cover turns to colour the game is ready, and the folder you copied can be deleted.
 4. Choose the language and press **Play**. The launcher turns with the phone; the game is always on its side.
 
 **Loading the games, step by step** (for example *Alone in the Dark* from GOG, with a USB cable):
@@ -270,11 +270,11 @@ Everything else works as on Windows and Linux: the options, the controllers, the
 1. On the PC, find the game's folder: `C:\GOG Games\Alone in the Dark` for GOG, or `steamapps\common\Alone in the Dark` in your Steam library (the folder with `GAME.GOG` inside). If you already play with Classic Reborn on the PC, you can take `UserData\AITD1` from its folder instead: it brings your saves, narrators and backgrounds too.
 2. Connect the phone to the PC with a USB cable and, on the phone, choose **File transfer** in the USB notification.
 3. On the PC, the phone shows up as a drive: copy the whole folder into its **Download** folder.
-4. On the phone, open **Alone in the Dark: Classic Reborn**, choose the **Alone in the Dark** tab and press **Import...** at the bottom.
+4. On the phone, open **Alone in the Dark: Classic Reborn**, choose **AITD** at the top and press **Import...** at the bottom.
 5. Android's folder picker opens: go to **Download**, tap the game's folder (go *into* it) and press **Use this folder**, then **Allow**.
 6. Wait for "Copying the game... 100%" and "Game imported.": the cover turns to colour and the game is ready. The copy in **Download** can now be deleted.
 
-The same for *Alone in the Dark 2* and *3*, each on its own tab, or all at once by importing the whole `UserData` folder from the PC. Instead of a cable, the folder can come on a memory card, a USB stick or from a cloud drive: whatever lets you put it on the phone.
+The same for *Alone in the Dark 2* and *3*, each chosen at the top, or all at once by importing the whole `UserData` folder from the PC. Instead of a cable, the folder can come on a memory card, a USB stick or from a cloud drive: whatever lets you put it on the phone.
 
 **Why import?** Android keeps each app's files to itself: the game lives in the app's own folder (`Android/data/com.classicreborn.game/files`, with `UserData` inside, as on the PC), and since Android 11 other apps and the phone's file manager cannot copy into it. Import is the way in. Uninstalling the app deletes that folder, games and saves included.
 
@@ -284,7 +284,7 @@ The same for *Alone in the Dark 2* and *3*, each on its own tab, or all at once 
 
 ## Controls
 
-Every action can be changed in **Controls** (F1 window or launcher). Defaults:
+Every action can be changed in **Controls** (the launcher's **Controls** card, or F1 in the game). It has two tabs, **Keyboard** and **Controller** (LB and RB switch them): the controller tab is a picture of the controller where each button says what it does, and a click on it (or A) changes that. With a PlayStation or Switch controller connected, the buttons get their own names. Defaults:
 
 | Action | Keyboard | Controller |
 | --- | --- | --- |
@@ -313,7 +313,7 @@ Every action can be changed in **Controls** (F1 window or launcher). Defaults:
 
 **Modern left stick.** With the left stick the character walks where you push it, seen from the camera: up walks away from the camera, down towards it. When the camera changes, the direction is kept until you release the stick or push it elsewhere, so you never walk back into the room you left. While **Action** is held (to fight), the stick gives the tank directions, as the attacks need them. The D-pad and the keys are always tank controls: up walks forward, left and right turn. To use the left stick as tank controls too, untick **Modern left stick** in **Controls**.
 
-**Vibration.** The controller vibrates a little when you are hit and at each of your shots (a weapon that fires several times in a row vibrates at each shot), and more when you die. To turn it off, untick **Controller vibration** in **Controls** (in the game with F1, or in the launcher's **Advanced options**).
+**Vibration.** The controller vibrates a little when you are hit and at each of your shots (a weapon that fires several times in a row vibrates at each shot), and more when you die. To turn it off, untick **Controller vibration** in **Controls** (in the game with F1, or in the launcher).
 
 The menus (launcher and F1) also work with the controller: left stick or D-pad to move, right stick to scroll, A to choose, B to go back. The mouse cursor hides while the controller is in use and comes back when the mouse moves.
 
@@ -321,7 +321,7 @@ The menus (launcher and F1) also work with the controller: left stick or D-pad t
 
 ## Options
 
-The launcher's **Advanced options** and the in-game **F1** window share the same settings, saved in `aitd_remaster.cfg`:
+The launcher (its **Options**, **Controls** and **Audio** cards) and the in-game **F1** window share the same settings, saved in `aitd_remaster.cfg`:
 
 | Option | What it does |
 | --- | --- |
@@ -408,7 +408,7 @@ The voices are not included with this project: you need your own CD.
 
 1. Open `UserData\AITD1\Voices` (next to `Launcher.exe`; the launcher creates it the first time it opens).
 2. Put the narrator's folder there: `French` with the French CD's voices (above), or the folder of a dubbing (below), e.g. `UserData\AITD1\Voices\Spanish (fan dub)\000000.wav`...
-3. In the launcher: **Advanced options** → **Audio** → **Narrator**, and choose it. In the game it is the same: **F1** → **Audio** → **Narrator**; the next page you read uses it.
+3. In the launcher: **Audio** → **Narrator**, and choose it. In the game it is the same: **F1** → **Audio** → **Narrator**; the next page you read uses it.
 4. To go back to the original narrator, choose **English** in the same list.
 
 The list only shows the folders where voices were found: if yours is missing, check that it has the file `000000` (see below) or a CD image with an `INDARK` folder.
@@ -626,7 +626,8 @@ This project exists thanks to the people who came before it. Re-Haunted brought 
 - **Alone in the Dark: Re-Haunted**: the remaster this fork comes from, by Spacefarer Retro Remasters (Jake Jackson): <https://github.com/spacefarergames/AloneInTheDarkReHaunted>
 - **Alone in the Dark** and **Jack in the Dark** were created by Infogrames. This project contains none of their data and is not affiliated with their rights holders.
 - Libraries: [bgfx](https://github.com/bkaradzic/bgfx), [SDL3](https://github.com/libsdl-org/SDL), [SoLoud](https://github.com/jarikomppa/soloud), [Dear ImGui](https://github.com/ocornut/imgui), [zlib](https://zlib.net), and the OPL2 (AdLib sound chip) emulator from MAME, which plays Jack in the Dark's music: it was written for that chip, which modern PCs no longer have.
-- **Gelasio**, the menus' font where the system has no Georgia (Linux), by Eben Sorkin and the Gelasio Project Authors, under the SIL Open Font License 1.1 (`Gelasio-OFL.txt` next to the programs): <https://github.com/SorkinType/Gelasio>
+- **Inter**, the menus' font (launcher and F1), by Rasmus Andersson and the Inter Project Authors, under the SIL Open Font License 1.1 (`Inter-OFL.txt` next to the programs): <https://github.com/rsms/inter>
+- **Gelasio**, also compiled into the programs, by Eben Sorkin and the Gelasio Project Authors, under the SIL Open Font License 1.1 (`Gelasio-OFL.txt` next to the programs): <https://github.com/SorkinType/Gelasio>
 
 ## License
 

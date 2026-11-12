@@ -165,19 +165,34 @@ add_custom_command(
 )
 target_sources(FitdLib PRIVATE "${OBJECT_FIXES_DATA}")
 
-# The menus' own font compiled in, used where Georgia is missing
-# (Shared/assets/fonts -> menuFontData.cpp, Shared/ui/menuFontData.h)
+# The menus' fonts compiled in: Inter, F1's (and the launcher's on Android,
+# shown by the game), and Gelasio (Shared/assets/fonts -> menuFontData.cpp,
+# Shared/ui/menuFontData.h)
 set(SHARED_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../Shared")
 set(MENU_FONT_DATA "${CMAKE_CURRENT_BINARY_DIR}/menuFontData.cpp")
+set(MENU_FONT_FILES "${SHARED_DIR}/assets/fonts/Gelasio-Regular.ttf" "${SHARED_DIR}/assets/fonts/Gelasio-Bold.ttf"
+    "${SHARED_DIR}/assets/fonts/Inter-Regular.ttf" "${SHARED_DIR}/assets/fonts/Inter-SemiBold.ttf")
+target_compile_definitions(FitdLib PRIVATE MENU_FONT_MODERN=1)
 add_custom_command(
     OUTPUT "${MENU_FONT_DATA}"
-    COMMAND ${CMAKE_COMMAND} -DSOURCE_DIR=${SHARED_DIR} -DOUTPUT=${MENU_FONT_DATA}
+    COMMAND ${CMAKE_COMMAND} -DSOURCE_DIR=${SHARED_DIR} -DOUTPUT=${MENU_FONT_DATA} -DMODERN=ON
             -P "${SHARED_DIR}/embedFonts.cmake"
-    DEPENDS "${SHARED_DIR}/assets/fonts/Gelasio-Regular.ttf" "${SHARED_DIR}/assets/fonts/Gelasio-Bold.ttf"
-            "${SHARED_DIR}/embedFonts.cmake"
-    COMMENT "Embedding the menu font"
+    DEPENDS ${MENU_FONT_FILES} "${SHARED_DIR}/embedFonts.cmake"
+    COMMENT "Embedding the menu fonts"
 )
 target_sources(FitdLib PRIVATE "${MENU_FONT_DATA}")
+
+# The controller drawing of the controls window
+# (Shared/assets/controller.png -> controllerPicture.cpp, Shared/ui/controllerPicture.h)
+set(PAD_PICTURE_DATA "${CMAKE_CURRENT_BINARY_DIR}/controllerPicture.cpp")
+add_custom_command(
+    OUTPUT "${PAD_PICTURE_DATA}"
+    COMMAND ${CMAKE_COMMAND} -DFILE=${SHARED_DIR}/assets/controller.png -DNAME=kControllerPicture
+            -DOUTPUT=${PAD_PICTURE_DATA} -P "${SHARED_DIR}/embedPicture.cmake"
+    DEPENDS "${SHARED_DIR}/assets/controller.png" "${SHARED_DIR}/embedPicture.cmake"
+    COMMENT "Embedding the controller drawing"
+)
+target_sources(FitdLib PRIVATE "${PAD_PICTURE_DATA}")
 
 if(MSVC)
     # UTF-8 texts (Shared/advancedOptionsText.h, the object editor)

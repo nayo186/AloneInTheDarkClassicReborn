@@ -12,6 +12,7 @@
 #include "settings.h"
 #include "consoleLog.h"
 #include "bgfxGlue.h"
+#include "controllerHint.h"
 #include "customBackgrounds.h"
 #include "debugCheats.h"
 #include "controls.h"
@@ -85,13 +86,22 @@ static void openControlsWindow()
     s_controls.justOpened = true;
 }
 
-// The launcher's colors (Shared/ui/menuBase.h); the panel lets the game show through a little
-static const ImVec4 kPanel = menu::color(menu::kPanel, 0.97f);
-static const ImVec4 kGold = menu::color(menu::kGold);
-static const ImVec4 kGoldLight = menu::color(menu::kGoldLight);
-static const ImVec4 kText = menu::color(menu::kText);
-static const ImVec4 kTextDisabled = menu::color(menu::kTextDisabled);
-static const ImVec4 kButtonDark = menu::color(menu::kButtonDark);
+// The launcher's colors (Shared/ui/menuBase.h), read again before every
+// drawing (menuColours); the panel lets the game show through a little
+static ImVec4 kPanel, kGold, kGoldLight, kText, kTextDisabled, kButtonDark;
+
+// The menu's palette: the colour of the game being played (green for AITD1
+// and Jack, blue for AITD2, orange for AITD3), as in the launcher
+static void menuColours()
+{
+    menu::setGamePalette(g_gameId == AITD2 ? 1 : g_gameId == AITD3 ? 2 : 0);
+    kPanel = menu::color(menu::kPanel, 0.97f);
+    kGold = menu::color(menu::kGold);
+    kGoldLight = menu::color(menu::kGoldLight);
+    kText = menu::color(menu::kText);
+    kTextDisabled = menu::color(menu::kTextDisabled);
+    kButtonDark = menu::color(menu::kButtonDark);
+}
 static const ImVec4 kButtonHover = menu::color(menu::kButtonHover);
 static const ImVec4 kHeader = menu::color(menu::kHeader);
 
@@ -329,7 +339,6 @@ static void drawCheatsWindow(float scale)
 
         if (ImGui::Checkbox(text(AdvancedText::CheatsEnabled), &g_settings.cheats.enabled))
             printf(CFG_TAG "Cheats (F1): %s\n", g_settings.cheats.enabled ? "enabled" : "disabled");
-        menu::helpWhenFocused(text(AdvancedText::CheatsEnabledHelp));
         helpMarker(text(AdvancedText::CheatsEnabledHelp));
         ImGui::Spacing();
 
@@ -337,7 +346,6 @@ static void drawCheatsWindow(float scale)
         ImGui::Indent();
         if (ImGui::Checkbox(text(AdvancedText::InfiniteLife), &g_settings.cheats.infiniteLife))
             printf(CFG_TAG "Cheats (F1): infiniteLife=%s\n", g_settings.cheats.infiniteLife ? "true" : "false");
-        menu::helpWhenFocused(text(AdvancedText::InfiniteLifeHelp));
         helpMarker(text(AdvancedText::InfiniteLifeHelp));
         ImGui::Unindent();
         ImGui::EndDisabled();
@@ -410,20 +418,27 @@ void advancedOptionsDraw()
     const float scale = metrics.scale;
     const float fontScale = scale / menuFontsScale();
     const float width = (std::min)(470.0f * scale, io.DisplaySize.x * 0.94f);
-    ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
-    ImGui::SetNextWindowSize(ImVec2(width, 0.0f));
-    ImGui::SetNextWindowSizeConstraints(ImVec2(width, 0.0f), ImVec2(width, io.DisplaySize.y * 0.94f));
 
     // The fonts are made large (menuFonts.cpp) and drawn at this scale; the
     // global font scale also reaches the lists and help popups (windows of
     // their own)
     const ImGuiStyle gameStyle = ImGui::GetStyle();
     const float gameFontScale = io.FontGlobalScale;
+    menuColours();
     menu::applyStyle(metrics, 0.97f);
     io.FontGlobalScale = fontScale;
     ImGui::PushFont(menuFonts().text);
 
     const bool controlsOpen = s_controls.open || s_audio.open || s_cheatsOpen;   // shown instead of the options
+    // The options window's size, only when it is drawn: set while another
+    // window was shown instead, it stuck to that one (Controls came out as
+    // narrow as the options, its drawing tiny and its texts cut)
+    if (!controlsOpen)
+    {
+        ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+        ImGui::SetNextWindowSize(ImVec2(width, 0.0f));
+        ImGui::SetNextWindowSizeConstraints(ImVec2(width, 0.0f), ImVec2(width, io.DisplaySize.y * 0.94f));
+    }
     if (!controlsOpen && ImGui::Begin("##advancedOptions", nullptr, menu::kPanelFlags))
     {
         ImGui::PushFont(menuFonts().header);
@@ -612,6 +627,7 @@ void advancedOptionsDraw()
     controlsStyle.fontScale = 1.0f;   // the global font scale already applies
     controlsStyle.titleColor = kGoldLight;
     controlsStyle.titleFont = menuFonts().header;
+    controllerDrawingTexture(&controlsStyle.padPicture, &controlsStyle.padPictureAspect);
     SDL_Gamepad* gamepad = g_controllerState.connected ? g_controllerState.gamepad : nullptr;
     if (drawControlsWindow(s_controls, s_controlBindings, controlsAnalog().modernStick, controlsAnalog().vibration,
         textLanguage(), gamepad, false, controlsStyle))

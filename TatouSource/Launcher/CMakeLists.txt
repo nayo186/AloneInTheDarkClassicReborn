@@ -22,17 +22,18 @@ add_custom_command(
     COMMENT "Embedding the game covers"
 )
 
-# The menus' own font compiled in, used where Georgia is missing
+# The menus' fonts compiled in: Inter, the launcher's, and Gelasio
 # (Shared/assets/fonts -> menuFontData.cpp, Shared/ui/menuFontData.h)
 set(SHARED_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../Shared")
 set(MENU_FONT_DATA "${CMAKE_CURRENT_BINARY_DIR}/menuFontData.cpp")
+set(MENU_FONT_FILES "${SHARED_DIR}/assets/fonts/Gelasio-Regular.ttf" "${SHARED_DIR}/assets/fonts/Gelasio-Bold.ttf"
+    "${SHARED_DIR}/assets/fonts/Inter-Regular.ttf" "${SHARED_DIR}/assets/fonts/Inter-SemiBold.ttf")
 add_custom_command(
     OUTPUT "${MENU_FONT_DATA}"
-    COMMAND ${CMAKE_COMMAND} -DSOURCE_DIR=${SHARED_DIR} -DOUTPUT=${MENU_FONT_DATA}
+    COMMAND ${CMAKE_COMMAND} -DSOURCE_DIR=${SHARED_DIR} -DOUTPUT=${MENU_FONT_DATA} -DMODERN=ON
             -P "${SHARED_DIR}/embedFonts.cmake"
-    DEPENDS "${SHARED_DIR}/assets/fonts/Gelasio-Regular.ttf" "${SHARED_DIR}/assets/fonts/Gelasio-Bold.ttf"
-            "${SHARED_DIR}/embedFonts.cmake"
-    COMMENT "Embedding the menu font"
+    DEPENDS ${MENU_FONT_FILES} "${SHARED_DIR}/embedFonts.cmake"
+    COMMENT "Embedding the menu fonts"
 )
 
 # Android: a library linked into the app (libmain.so), shown before the game
@@ -83,10 +84,29 @@ target_include_directories(Launcher PRIVATE
 
 target_link_libraries(Launcher PRIVATE SDL3-static)
 
+# The controller drawing of the controls window (on Android the game has it)
+# (Shared/assets/controller.png -> controllerPicture.cpp, Shared/ui/controllerPicture.h)
+if(NOT ANDROID)
+    set(PAD_PICTURE_DATA "${CMAKE_CURRENT_BINARY_DIR}/controllerPicture.cpp")
+    add_custom_command(
+        OUTPUT "${PAD_PICTURE_DATA}"
+        COMMAND ${CMAKE_COMMAND} -DFILE=${SHARED_DIR}/assets/controller.png -DNAME=kControllerPicture
+                -DOUTPUT=${PAD_PICTURE_DATA} -P "${SHARED_DIR}/embedPicture.cmake"
+        DEPENDS "${SHARED_DIR}/assets/controller.png" "${SHARED_DIR}/embedPicture.cmake"
+        COMMENT "Embedding the controller drawing"
+    )
+    target_sources(Launcher PRIVATE "${PAD_PICTURE_DATA}")
+endif()
+# The window: dark title bar and round corners (Windows 11)
+if(WIN32)
+    target_link_libraries(Launcher PRIVATE dwmapi)
+endif()
+
 # The version of this build, the release tag without its v (tools/makeRelease
 # sets it); "dev" builds never look for updates (updater.h)
 set(CLASSIC_REBORN_VERSION "dev" CACHE STRING "Version of this build (release tag without v); dev: no updates")
 target_compile_definitions(Launcher PRIVATE CLASSIC_REBORN_VERSION="${CLASSIC_REBORN_VERSION}")
+target_compile_definitions(Launcher PRIVATE MENU_FONT_MODERN=1)
 
 # A window application (no console), placed next to Tatou.exe so it can find it
 set_target_properties(Launcher PROPERTIES

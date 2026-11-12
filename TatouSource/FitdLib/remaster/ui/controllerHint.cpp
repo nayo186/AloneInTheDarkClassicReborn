@@ -18,6 +18,7 @@
 #include "../ThirdParty/bgfx.cmake/bimg/3rdparty/stb/stb_image.h"
 
 #include "imguiBGFX.h"  // ImGui::Image with bgfx textures
+#include "ui/controllerPicture.h"
 
 static bgfx::TextureHandle s_texture = BGFX_INVALID_HANDLE;
 static int s_width = 0;
@@ -86,4 +87,31 @@ static void onStartMenuDrawn()
 void controllerHintRegister()
 {
     g_onStartMenuDrawn = onStartMenuDrawn;
+}
+
+bool controllerDrawingTexture(ImTextureID* texture, float* aspect)
+{
+    static bgfx::TextureHandle drawing = BGFX_INVALID_HANDLE;
+    static float drawingAspect = 0.0f;
+    static bool tried = false;
+    if (!tried)
+    {
+        tried = true;
+        int width = 0, height = 0, channels = 0;
+        unsigned char* pixels = stbi_load_from_memory(kControllerPicture, (int)kControllerPicture_size, &width, &height, &channels, 4);
+        if (!pixels)
+            printf(MAIN_WARN "Controls: the controller drawing could not be read (%s)\n", stbi_failure_reason());
+        else
+        {
+            drawing = bgfx::createTexture2D((uint16_t)width, (uint16_t)height, false, 1, bgfx::TextureFormat::RGBA8,
+                BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP, bgfx::copy(pixels, (uint32_t)width * height * 4));
+            drawingAspect = (float)height / (float)width;
+            stbi_image_free(pixels);
+        }
+    }
+    if (!bgfx::isValid(drawing))
+        return false;
+    *texture = ImGui::toId(drawing, IMGUI_FLAGS_ALPHA_BLEND, 0);
+    *aspect = drawingAspect;
+    return true;
 }
