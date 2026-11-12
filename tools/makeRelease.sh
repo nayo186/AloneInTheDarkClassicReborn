@@ -11,7 +11,8 @@
 #   with the latest release to offer updates.
 # - Release configuration: optimised, no debug data. The C++ runtime goes
 #   inside the executables (as on Windows): nothing else to install.
-# - The archive holds only Launcher, Tatou, README.md, LICENSE and the menu
+# - The archive holds only Launcher, Tatou, README.md, LICENSE,
+#   recomplauncher.json (the file RecompLauncher reads) and the menu
 #   font's license (Gelasio-OFL.txt; the font is inside the programs). It is a
 #   .tar.gz, not a .zip, so both programs keep their "executable" mark.
 # The result goes to release/ClassicReborn-<version>-linux-x64.tar.gz.
@@ -53,10 +54,10 @@ temporary="$(mktemp -d)"
 staging="$temporary/$name"
 mkdir -p "$staging" "$releaseFolder"
 cp "$output/Launcher" "$output/Tatou" "$staging/"
-cp "$repo/README.md" "$repo/LICENSE" "$staging/"
+cp "$repo/README.md" "$repo/LICENSE" "$repo/recomplauncher.json" "$staging/"
 cp "$source/Shared/assets/fonts/OFL.txt" "$staging/Gelasio-OFL.txt"
 chmod 755 "$staging/Launcher" "$staging/Tatou"
-chmod 644 "$staging/README.md" "$staging/LICENSE" "$staging/Gelasio-OFL.txt"
+chmod 644 "$staging/README.md" "$staging/LICENSE" "$staging/recomplauncher.json" "$staging/Gelasio-OFL.txt"
 
 archive="$releaseFolder/$name.tar.gz"
 rm -f "$archive"

@@ -10,7 +10,8 @@
 # - CLASSIC_REBORN_DEV_TOOLS=OFF: no item window (F9) nor object editor (F10).
 # - CLASSIC_REBORN_VERSION=<version>: the launcher shows it and compares it
 #   with the latest release to offer updates.
-# - The archive holds only Launcher, Tatou, README.md, LICENSE and
+# - The archive holds only Launcher, Tatou, README.md, LICENSE,
+#   recomplauncher.json (the file RecompLauncher reads) and
 #   Gelasio-OFL.txt. It is a .tar.gz, so both programs keep their
 #   "executable" mark.
 # The result goes to release/ClassicReborn-<version>-macos.tar.gz.
@@ -50,10 +51,10 @@ temporary="$(mktemp -d)"
 staging="$temporary/$name"
 mkdir -p "$staging" "$releaseFolder"
 cp "$output/Launcher" "$output/Tatou" "$staging/"
-cp "$repo/README.md" "$repo/LICENSE" "$staging/"
+cp "$repo/README.md" "$repo/LICENSE" "$repo/recomplauncher.json" "$staging/"
 cp "$source/Shared/assets/fonts/OFL.txt" "$staging/Gelasio-OFL.txt"
 chmod 755 "$staging/Launcher" "$staging/Tatou"
-chmod 644 "$staging/README.md" "$staging/LICENSE" "$staging/Gelasio-OFL.txt"
+chmod 644 "$staging/README.md" "$staging/LICENSE" "$staging/recomplauncher.json" "$staging/Gelasio-OFL.txt"
 
 archive="$releaseFolder/$name.tar.gz"
 rm -f "$archive"
