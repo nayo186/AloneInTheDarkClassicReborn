@@ -7,7 +7,9 @@
 // "+ Add" then press a key, a controller button, a trigger or a stick
 // direction; restore the defaults. Two tabs: the keyboard (each action and
 // its keys) and the controller, a drawing of it where each part says what it
-// does and a press on it changes that (AITD3's map is one of its jobs). Header-only (both use
+// does and a press on it changes that (AITD3's map is one of its jobs); on
+// Android, a list like the keyboard's (the drawing is too small to touch on a
+// phone). Header-only (both use
 // ImGui and SDL).
 // While waiting for an input, ImGui's keyboard and controller navigation is
 // off, so Space, Enter or A do not also press the focused button.
@@ -499,6 +501,82 @@ inline bool drawPadTab(ControlsWindowState& state, std::vector<std::vector<Input
     return changed;
 }
 
+// The list of each action with its keys (pad false) or its controller
+// inputs (pad true): a press on one removes it, "+ Add" waits for a new one.
+// The controller tab on Android (the drawing is too small on a phone).
+inline bool drawBindingList(ControlsWindowState& state, std::vector<std::vector<InputBinding>>& bindings,
+                            const ControlsWindowStyle& style, int language, SDL_Gamepad* gamepad, bool pad,
+                            bool busy, float footer)
+{
+    auto text = [language](AdvancedText t) { return advancedText(t, language); };
+    bool changed = false;
+    ImGui::TextWrapped("%s", text(AdvancedText::ControlsHelp));
+    if (state.capturing >= 0)
+        ImGui::TextColored(style.titleColor, text(state.capturePad ? AdvancedText::ControlsPressPad : AdvancedText::ControlsPressKey),
+                           text(controlsActionText((GameAction)state.capturing)));
+    ImGui::Separator();
+    ImGui::BeginChild(pad ? "##padList" : "##controlsList", ImVec2(0.0f, -footer));
+    ImGui::BeginDisabled(busy);
+    if (ImGui::BeginTable("##keysTable", 2, ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH))
+    {
+        ImGui::TableSetupColumn("##action", ImGuiTableColumnFlags_WidthStretch, 0.4f);
+        ImGui::TableSetupColumn("##keys", ImGuiTableColumnFlags_WidthStretch, 0.6f);
+        // A button on the same line if it fits in the column, else below
+        auto placeButton = [](const char* label, bool first)
+        {
+            if (first)
+                return;
+            const float buttonWidth = ImGui::CalcTextSize(label).x + ImGui::GetStyle().FramePadding.x * 2.0f;
+            ImGui::SameLine();
+            if (ImGui::GetContentRegionAvail().x < buttonWidth)
+                ImGui::NewLine();
+        };
+        for (int a = 0; a < kGameActionCount; a++)
+        {
+            ImGui::PushID(a);
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::AlignTextToFramePadding();
+            ImGui::TextUnformatted(text(controlsActionText((GameAction)a)));
+            ImGui::TableSetColumnIndex(1);
+            std::vector<InputBinding>& list = bindings[a];
+            int removeIndex = -1;
+            bool first = true;
+            for (size_t i = 0; i < list.size(); i++)
+            {
+                if ((list[i].kind != InputBinding::Kind::Key) != pad)
+                    continue;
+                const std::string name = bindingDisplayName(list[i]);
+                placeButton(name.c_str(), first);
+                first = false;
+                ImGui::PushID((int)i);
+                if (ImGui::SmallButton(name.c_str()))
+                    removeIndex = (int)i;
+                if (ImGui::IsItemHovered())
+                    ImGui::SetTooltip("%s", text(AdvancedText::ControlsRemove));
+                ImGui::PopID();
+            }
+            placeButton(text(AdvancedText::ControlsAdd), first);
+            if (ImGui::SmallButton(text(AdvancedText::ControlsAdd)))
+            {
+                state.capturing = a;
+                state.capturePad = pad;
+                controlsReadInputs(gamepad, state.prevKeys, state.prevButtons, state.prevAxes);
+            }
+            if (removeIndex >= 0)
+            {
+                list.erase(list.begin() + removeIndex);
+                changed = true;
+            }
+            ImGui::PopID();
+        }
+        ImGui::EndTable();
+    }
+    ImGui::EndDisabled();
+    ImGui::EndChild();
+    return changed;
+}
+
 // Draws the window while state.open (call every frame). bindings: one list
 // per action, edited in place; modernStick: the left stick walks where it
 // points (controller.modernStick); vibration: the controller vibrates when
@@ -642,63 +720,8 @@ inline bool drawControlsWindow(ControlsWindowState& state, std::vector<std::vect
             state.tabRequest == 0 ? ImGuiTabItemFlags_SetSelected : ImGuiTabItemFlags_None))
         {
             state.tab = 0;
-            ImGui::TextWrapped("%s", text(AdvancedText::ControlsHelp));
-            if (state.capturing >= 0)
-                ImGui::TextColored(style.titleColor, text(AdvancedText::ControlsPressKey),
-                                   text(controlsActionText((GameAction)state.capturing)));
-            ImGui::Separator();
-            // Each action and its keys (a click removes one, "+ Add" waits for a
-            // key)
-            ImGui::BeginChild("##controlsList", ImVec2(0.0f, -footer));
-            ImGui::BeginDisabled(busy);
-            if (ImGui::BeginTable("##keysTable", 2, ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH))
-            {
-                ImGui::TableSetupColumn("##action", ImGuiTableColumnFlags_WidthStretch, 0.4f);
-                ImGui::TableSetupColumn("##keys", ImGuiTableColumnFlags_WidthStretch, 0.6f);
-                for (int a = 0; a < kGameActionCount; a++)
-                {
-                    ImGui::PushID(a);
-                    ImGui::TableNextRow();
-                    ImGui::TableSetColumnIndex(0);
-                    ImGui::AlignTextToFramePadding();
-                    ImGui::TextUnformatted(text(controlsActionText((GameAction)a)));
-                    ImGui::TableSetColumnIndex(1);
-                    std::vector<InputBinding>& list = bindings[a];
-                    int removeIndex = -1;
-                    bool first = true;
-                    for (size_t i = 0; i < list.size(); i++)
-                    {
-                        if (list[i].kind != InputBinding::Kind::Key)
-                            continue;
-                        if (!first)
-                            ImGui::SameLine();
-                        first = false;
-                        ImGui::PushID((int)i);
-                        if (ImGui::SmallButton(bindingDisplayName(list[i]).c_str()))
-                            removeIndex = (int)i;
-                        if (ImGui::IsItemHovered())
-                            ImGui::SetTooltip("%s", text(AdvancedText::ControlsRemove));
-                        ImGui::PopID();
-                    }
-                    if (!first)
-                        ImGui::SameLine();
-                    if (ImGui::SmallButton(text(AdvancedText::ControlsAdd)))
-                    {
-                        state.capturing = a;
-                        state.capturePad = false;
-                        controlsReadInputs(gamepad, state.prevKeys, state.prevButtons, state.prevAxes);
-                    }
-                    if (removeIndex >= 0)
-                    {
-                        list.erase(list.begin() + removeIndex);
-                        changed = true;
-                    }
-                    ImGui::PopID();
-                }
-                ImGui::EndTable();
-            }
-            ImGui::EndDisabled();
-            ImGui::EndChild();
+            if (drawBindingList(state, bindings, style, language, gamepad, false, busy, footer))
+                changed = true;
             ImGui::EndTabItem();
         }
         if (ImGui::BeginTabItem(text(AdvancedText::ControllerTab), nullptr,
@@ -709,10 +732,19 @@ inline bool drawControlsWindow(ControlsWindowState& state, std::vector<std::vect
             if (ImGui::Checkbox(text(AdvancedText::ModernStick), &modernStick))
                 changed = true;
             menu::helpMarker(text(AdvancedText::ModernStickHelp));
-            ImGui::SameLine(0.0f, ImGui::GetFontSize() * 2.0f);
+#ifndef __ANDROID__
+            ImGui::SameLine(0.0f, ImGui::GetFontSize() * 2.0f);   // on a phone, one under the other
+#endif
             if (ImGui::Checkbox(text(AdvancedText::Vibration), &vibration))
                 changed = true;
             menu::helpMarker(text(AdvancedText::VibrationHelp));
+#ifdef __ANDROID__
+            ImGui::EndDisabled();
+            // On a phone the drawing is too small to touch: the list of each
+            // action with its buttons, as before C73
+            if (drawBindingList(state, bindings, style, language, gamepad, true, busy, footer))
+                changed = true;
+#else
             ImGui::TextDisabled("%s", text(AdvancedText::PadHelp));
             ImGui::EndDisabled();
             ImVec2 area = ImGui::GetContentRegionAvail();
@@ -721,6 +753,7 @@ inline bool drawControlsWindow(ControlsWindowState& state, std::vector<std::vect
             if (drawPadTab(state, bindings, style, language, gamepad, ImGui::GetContentRegionAvail()))
                 changed = true;
             ImGui::EndChild();
+#endif
             ImGui::EndTabItem();
         }
         ImGui::EndTabBar();
