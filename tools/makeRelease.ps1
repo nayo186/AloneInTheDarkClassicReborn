@@ -8,7 +8,8 @@
 # - Release configuration: optimised, no debug data.
 # - CLASSIC_REBORN_VERSION=<version>: the launcher shows it and compares it
 #   with the latest release to offer updates.
-# - The zip holds only Launcher.exe, Tatou.exe, README.md, LICENSE and the
+# - The zip holds only Launcher.exe, Tatou.exe, README.md, LICENSE,
+#   recomplauncher.json (the file RecompLauncher reads) and the
 #   menu font's license (Gelasio-OFL.txt; the font is inside the programs): no
 #   launcher.cfg (debug mode stays off), no logs, no UserData, no .pdb.
 # The result goes to release\ClassicReborn-<version>-windows-x64.zip.
@@ -45,7 +46,7 @@ $staging = Join-Path $releaseFolder $name
 if (Test-Path $staging) { Remove-Item $staging -Recurse -Force }
 New-Item -ItemType Directory -Force $staging | Out-Null
 Copy-Item (Join-Path $output 'Launcher.exe'), (Join-Path $output 'Tatou.exe') $staging
-Copy-Item (Join-Path $repo 'README.md'), (Join-Path $repo 'LICENSE') $staging
+Copy-Item (Join-Path $repo 'README.md'), (Join-Path $repo 'LICENSE'), (Join-Path $repo 'recomplauncher.json') $staging
 Copy-Item (Join-Path $source 'Shared\assets\fonts\OFL.txt') (Join-Path $staging 'Gelasio-OFL.txt')
 
 $zip = Join-Path $releaseFolder "$name.zip"

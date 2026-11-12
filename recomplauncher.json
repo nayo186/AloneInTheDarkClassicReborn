@@ -1,0 +1,184 @@
+{
+  "$schema": "https://recomplauncher.com/schema/recomplauncher.json",
+  "format": 1,
+  "name": "Alone in the Dark: Classic Reborn",
+  "repo": "nayo186/AloneInTheDarkClassicReborn",
+  "inputs": [
+    {
+      "id": "aitd1",
+      "label": "Your Alone in the Dark folder (also used for Jack in the Dark): the GOG or Steam installation, or the folder with your original CD as an image. Skip it if you don't own the game.",
+      "role": "game",
+      "optional": true,
+      "formats": [{ "type": "folder" }]
+    },
+    {
+      "id": "aitd2",
+      "label": "Your Alone in the Dark 2 folder: the GOG or Steam installation, or the folder with your original CD as an image. Skip it if you don't own the game.",
+      "role": "game",
+      "optional": true,
+      "formats": [{ "type": "folder" }]
+    },
+    {
+      "id": "aitd3",
+      "label": "Your Alone in the Dark 3 folder: the GOG or Steam installation, or the folder with your original CD as an image. Skip it if you don't own the game.",
+      "role": "game",
+      "optional": true,
+      "formats": [{ "type": "folder" }]
+    }
+  ],
+  "games": [
+    {
+      "id": "aitd1",
+      "name": "Alone in the Dark",
+      "args": ["--game", "aitd1", "--data={input:aitd1}"],
+      "inputs": ["aitd1"],
+      "saves": ["{install}/UserData/AITD1/Saves"]
+    },
+    {
+      "id": "jack",
+      "name": "Jack in the Dark",
+      "args": ["--game", "jack", "--data={input:aitd1}"],
+      "inputs": ["aitd1"],
+      "saves": ["{install}/UserData/JACK/Saves"]
+    },
+    {
+      "id": "aitd2",
+      "name": "Alone in the Dark 2",
+      "args": ["--game", "aitd2", "--data={input:aitd2}"],
+      "inputs": ["aitd2"],
+      "saves": ["{install}/UserData/AITD2/Saves"]
+    },
+    {
+      "id": "aitd3",
+      "name": "Alone in the Dark 3",
+      "args": ["--game", "aitd3", "--data={input:aitd3}"],
+      "inputs": ["aitd3"],
+      "saves": ["{install}/UserData/AITD3/Saves"]
+    }
+  ],
+  "start": {
+    "program": ["Tatou.exe", "Tatou"]
+  },
+  "saves": [
+    "{install}/UserData/AITD1/Saves",
+    "{install}/UserData/JACK/Saves",
+    "{install}/UserData/AITD2/Saves",
+    "{install}/UserData/AITD3/Saves",
+    "{install}/UserData/aitd_remaster.cfg"
+  ],
+  "config": [
+    {
+      "id": "main",
+      "format": "ini",
+      "file": [{ "path": "{install}/UserData/aitd_remaster.cfg" }]
+    }
+  ],
+  "folders": {
+    "saves": [{ "path": "{install}/UserData" }],
+    "logs": [
+      { "path": "{install}/UserData/AITD1", "if": "{install}/UserData/AITD1/tatou.log" },
+      { "path": "{install}/UserData/JACK", "if": "{install}/UserData/JACK/tatou.log" },
+      { "path": "{install}/UserData/AITD2", "if": "{install}/UserData/AITD2/tatou.log" },
+      { "path": "{install}/UserData/AITD3", "if": "{install}/UserData/AITD3/tatou.log" },
+      { "path": "{install}/UserData" }
+    ]
+  },
+  "settings": [
+    {
+      "id": "window",
+      "label": "Window",
+      "help": "Fullscreen fills your screen. Windowed opens the game in a window.",
+      "choices": [
+        { "label": "Windowed", "set": { "graphics.fullscreen": "false" } },
+        { "label": "Fullscreen", "set": { "graphics.fullscreen": "true" } }
+      ],
+      "defaults": { "graphics.fullscreen": "false" }
+    },
+    {
+      "id": "aspect",
+      "label": "Aspect ratio",
+      "help": "4:3 is the original picture. 16:10 and Stretched fill a wider screen.",
+      "choices": [
+        { "label": "4:3 (original)", "set": { "graphics.aspect": "0" } },
+        { "label": "16:10", "set": { "graphics.aspect": "1" } },
+        { "label": "Stretched", "set": { "graphics.aspect": "2" } }
+      ],
+      "defaults": { "graphics.aspect": "0" }
+    },
+    {
+      "id": "integer_scale",
+      "label": "Integer scaling",
+      "help": "Every pixel of the game the same size, with black borders, like pixel-perfect scaling. Automatic picks the largest size that fits.",
+      "choices": [
+        { "label": "Off", "set": { "graphics.integerScale": "0" } },
+        { "label": "Automatic", "set": { "graphics.integerScale": "-1" } }
+      ],
+      "defaults": { "graphics.integerScale": "0" }
+    },
+    {
+      "id": "vsync",
+      "label": "V-Sync",
+      "help": "Waits for your screen's refresh so the picture doesn't tear.",
+      "choices": [
+        { "label": "On", "set": { "graphics.vsync": "true" } },
+        { "label": "Off", "set": { "graphics.vsync": "false" } }
+      ],
+      "defaults": { "graphics.vsync": "true" }
+    },
+    {
+      "id": "frame_rate",
+      "label": "Frame rate",
+      "help": "How often the picture is drawn. The game's speed never depends on it.",
+      "choices": [
+        { "label": "60 FPS", "set": { "graphics.frameLimit": "60" } },
+        { "label": "120 FPS", "set": { "graphics.frameLimit": "120" } },
+        { "label": "144 FPS", "set": { "graphics.frameLimit": "144" } },
+        { "label": "No limit", "set": { "graphics.frameLimit": "0" } }
+      ],
+      "defaults": { "graphics.frameLimit": "60" }
+    },
+    {
+      "id": "smoothing",
+      "label": "Edge smoothing",
+      "help": "Smooths the jagged edges of the 3D characters.",
+      "choices": [
+        { "label": "Off", "set": { "postprocessing.antialiasing": "0" } },
+        { "label": "FXAA", "set": { "postprocessing.antialiasing": "1" } }
+      ],
+      "defaults": { "postprocessing.antialiasing": "0" }
+    },
+    {
+      "id": "animations",
+      "label": "Smooth animations",
+      "help": "Blends the characters' poses between the original key frames.",
+      "choices": [
+        { "label": "Off", "set": { "animation.poseSmoothing": "false" } },
+        { "label": "On", "set": { "animation.poseSmoothing": "true" } }
+      ],
+      "defaults": { "animation.poseSmoothing": "false" }
+    },
+    {
+      "id": "scanlines",
+      "label": "Scanlines",
+      "help": "Thin dark lines over the picture, like an old CRT screen.",
+      "choices": [
+        { "label": "Off", "set": { "postprocessing.scanlines": "false" } },
+        { "label": "On", "set": { "postprocessing.scanlines": "true" } }
+      ],
+      "defaults": { "postprocessing.scanlines": "false" }
+    },
+    {
+      "id": "music",
+      "label": "Music",
+      "help": "The CD music, or the AdLib music of the first two games.",
+      "choices": [
+        { "label": "CD", "set": { "audio.music": "cd" } },
+        { "label": "AdLib", "set": { "audio.music": "adlib" } }
+      ],
+      "defaults": { "audio.music": "cd" }
+    }
+  ],
+  "actions": [
+    { "id": "saves", "label": "Saves and settings", "help": "The UserData folder: saves, options and logs of every game.", "open": "saves" }
+  ]
+}
