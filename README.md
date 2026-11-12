@@ -1,5 +1,7 @@
 # Alone in the Dark: Classic Reborn
 
+<a href="https://recomplauncher.com/game/aloneinthedarkclassicreborn"><picture><source media="(prefers-color-scheme: dark)" srcset="https://recomplauncher.com/assets/press/launcher/badge-light.svg"><img alt="Get it on RecompLauncher" src="https://recomplauncher.com/assets/press/launcher/badge-dark.svg" height="48"></picture></a>
+
 Play the original **Alone in the Dark** (1992), **Jack in the Dark**, **Alone in the Dark 2** and **Alone in the Dark 3** on modern PCs and Android phones, with their original graphics and a set of careful fixes and options.
 
 **[⬇ Download the latest version](https://github.com/nayo186/AloneInTheDarkClassicReborn/releases/latest)** for Windows, Linux, macOS (experimental) or Android (experimental): unpack it, run `Launcher.exe` (`Launcher` on Linux and macOS) and choose your GOG or Steam copy of the game. Nothing else to install. On Android, install the `.apk` and import your copy of the game (see [On Android](#on-android-experimental)).
@@ -153,7 +155,7 @@ Tatou.exe --game aitd3
 
 Only if you want something else for one entry, add it to the line:
 
-- `--data "<folder>"`: another game folder, the same kind you would choose with **Browse** (for example `--data "C:\GOG Games\Alone in the Dark"` or `--data "C:\GOG Games\Alone in the Dark 2"`);
+- `--data "<folder>"`: another game folder, the same kind you would choose with **Browse** (for example `--data "C:\GOG Games\Alone in the Dark"` or `--data "C:\GOG Games\Alone in the Dark 2"`); `--data=<folder>`, in one piece, means the same;
 - `--lang <language>`: another language of the game for that session (`ENGLISH`, `FRANCAIS`, `DEUTSCH`, `ESPAGNOL` or `ITALIANO`).
 
 ### Your original CD
