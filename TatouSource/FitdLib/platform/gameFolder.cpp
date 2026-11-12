@@ -114,22 +114,29 @@ static bool launcherDebugMode()
     return value == "true" || value == "1";
 }
 
-// The folder after --data, as typed (on Windows read again from the wide
-// command line, so any letter in the path works)
+// The folder after --data, or in --data=<folder> (one argument, so a launcher
+// can leave it out whole when it has no folder), as typed (on Windows read
+// again from the wide command line, so any letter in the path works)
 static fs::path dataArgument(int argc, char* argv[])
 {
-    for (int i = 1; i + 1 < argc; i++)
+    const char* const joined = "--data=";
+    const size_t joinedLength = strlen(joined);
+    for (int i = 1; i < argc; i++)
     {
-        if (strcmp(argv[i], "--data") != 0)
+        const bool separate = strcmp(argv[i], "--data") == 0 && i + 1 < argc;
+        const bool together = strncmp(argv[i], joined, joinedLength) == 0;
+        if (!separate && !together)
             continue;
+        const int valueIndex = separate ? i + 1 : i;
+        const size_t skip = separate ? 0 : joinedLength;
 #ifdef _WIN32
         int count = 0;
         wchar_t** wide = CommandLineToArgvW(GetCommandLineW(), &count);
-        const fs::path folder = (wide && count == argc) ? fs::path(wide[i + 1]) : fs::path(argv[i + 1]);
+        const fs::path folder = (wide && count == argc) ? fs::path(wide[valueIndex] + skip) : fs::path(argv[valueIndex] + skip);
         LocalFree(wide);
         return folder;
 #else
-        return fs::u8path(argv[i + 1]);
+        return fs::u8path(argv[valueIndex] + skip);
 #endif
     }
     return fs::path();

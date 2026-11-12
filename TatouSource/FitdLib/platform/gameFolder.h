@@ -26,7 +26,7 @@
 #include <string>
 
 // Called first, before the log file opens (reads --game aitd1|jack|aitd2, --data
-// <folder> and --debug / --final)
+// <folder> (or --data=<folder>) and --debug / --final)
 void selectGameFolder(int argc, char* argv[]);
 
 // Writes to the log what selectGameFolder found (once the log file is open)
