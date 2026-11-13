@@ -327,6 +327,7 @@ The launcher (its **Options**, **Controls** and **Audio** cards) and the in-game
 | --- | --- |
 | Frames per second, VSync | Smoothness; the game speed never depends on them |
 | Aspect ratio, resolution, fullscreen | How the 4:3 scene is shown |
+| Graphics engine | How the picture is drawn: Direct3D 11 or Vulkan on Windows, Vulkan or OpenGL ES on Android (Linux and macOS have one). Applies the next time the game starts; try the other one if the picture looks wrong |
 | Integer scaling | Every pixel of the game the same size, with black borders around (like pixel-perfect scaling in DOSBox): **Size**: Automatic, the largest that fits, or a size of your choice; **3D resolution**: how sharp the 3D models are, down to the original 320 × 200. Off by default; while it is on, Resolution is not used |
 | Edge smoothing | FXAA on the 3D models |
 | Bloom | A soft glow from the bright parts of the painted backgrounds |

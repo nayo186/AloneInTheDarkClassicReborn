@@ -58,6 +58,7 @@ struct LauncherSettings
     bool animationSmoothing = false;
     bool customBackgrounds = false;
     bool enhancedText = false;
+    std::string renderer = "auto";   // graphics.renderer: auto or one of Shared/rendererChoice.h
 
     // Volumes 0-100 (audio.musicVolume, audio.soundVolume); like the controls,
     // not part of the default settings button
@@ -83,7 +84,7 @@ struct LauncherSettings
     {
         return frameLimit == kDefaultFrameLimit && vsync && aspect == 0 && resolution == 0 && integerScale == 0 && integerResolution == 0 && !fullscreen &&
             !filmGrain && !scanlines && scanlineLevel == 2 && !bloom && !ssao && antialiasing == 0 && !animationSmoothing && !customBackgrounds &&
-            !enhancedText;
+            !enhancedText && renderer == "auto";
     }
     void restoreDefaults()
     {
@@ -98,6 +99,7 @@ struct LauncherSettings
         enhancedText = false;
         antialiasing = 0;
         scanlineLevel = 2;
+        renderer = "auto";
     }
 };
 

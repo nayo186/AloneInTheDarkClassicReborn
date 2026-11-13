@@ -4,6 +4,13 @@ Alone in the Dark: Classic Reborn started on 2026-10-23 from [Alone in the Dark:
 
 This repository was published with a single starting commit, to keep it light: the early history carried large files that are no longer part of the project. Below are the changes of each release and, after them, the changes made in this fork before it was published, newest first, one line per change. The reasons behind larger removals are explained in `docs/DESCARTADO.md` and the fixes in `docs/baseline/BUGS.md`.
 
+## v1.7.4 (2026-11-13)
+
+- *Alone in the Dark*: the game closed when reading the book in the cellar where the rats chase you. Its text did not fit in the small block of memory shared with blood and smoke, and loading a game lost part of that block for good (issue #12, BUGS.md C76)
+- All games: new **Graphics engine** option in the launcher and in F1: Direct3D 11 or Vulkan on Windows, Vulkan or OpenGL ES on Android. It applies the next time the game starts (BUGS.md C78)
+- Android: bigger text in the launcher and F1 menus, easier to read on a phone (BUGS.md C77)
+- Android: in *Alone in the Dark*, choosing Emily and pressing the on-screen **Start** began the game with Carnby. A touch on the on-screen buttons also moved the menus' pointer to the right side of the screen, where Carnby is (BUGS.md C79)
+
 ## v1.7.3 (2026-11-13)
 
 - All games, with Vulkan (the default on Android, also on a computer if chosen): in some places, often where a small animation is drawn on the background, parts of the scene could come out grey or striped. Drawing switched shapes of different size without telling the graphics card, which then read the wrong points. OpenGL was not affected (BUGS.md C75)

@@ -30,6 +30,10 @@ bool touchPadButton(int button);
 // An axis of the virtual controller (SDL_GamepadAxis): the left stick from
 // -1 to 1, the right trigger 0 or 1; 0 for the rest
 float touchPadAxis(int axis);
+// A shown button or the D-pad of the visible controls is at that point of the
+// window (SDL's mouse coordinates). The mouse SDL makes from such a touch
+// must not reach the menus: Start on the right picked Carnby (BUGS.md C79)
+bool touchControlsAt(float x, float y);
 // The keyboard or a controller was used: the controls hide until a touch
 void touchControlsHide();
 // Draws the controls over the game (game thread, inside the ImGui frame)

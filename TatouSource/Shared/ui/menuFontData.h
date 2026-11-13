@@ -28,6 +28,15 @@ extern const size_t kMenuFont_modernBold_size;
 
 namespace menu {
 
+// Points added to every text size of the menus (launcher and F1) on Android:
+// on a phone their letters were too small to read (BUGS.md C77). The other
+// systems keep their sizes
+#ifdef __ANDROID__
+inline constexpr float kFontBump = 1.0f;
+#else
+inline constexpr float kFontBump = 0.0f;
+#endif
+
 // Gelasio (regular or bold) at that size; the atlas reads it from the
 // program and never frees it
 inline ImFont* addEmbeddedFont(bool bold, float size)

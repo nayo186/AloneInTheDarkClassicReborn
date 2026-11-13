@@ -401,6 +401,21 @@ float touchPadAxis(int axis)
     return 0.0f;
 }
 
+bool touchControlsAt(float x, float y)
+{
+    std::lock_guard<std::mutex> lock(s_mutex);
+    const State& state = s_state;
+    if (!state.visible || state.menuOpen || state.width <= 0.0f || !gWindowBGFX)
+        return false;
+    // The mouse is in window points, the controls in pixels
+    int pointsWidth = 0, pointsHeight = 0;
+    SDL_GetWindowSize(gWindowBGFX, &pointsWidth, &pointsHeight);
+    if (pointsWidth <= 0 || pointsHeight <= 0)
+        return false;
+    const ImVec2 pos(x * state.width / (float)pointsWidth, y * state.height / (float)pointsHeight);
+    return buttonAt(state, pos) >= 0 || onPad(state, pos);
+}
+
 void touchControlsHide()
 {
     std::lock_guard<std::mutex> lock(s_mutex);

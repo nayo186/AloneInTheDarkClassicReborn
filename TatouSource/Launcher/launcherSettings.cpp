@@ -514,6 +514,8 @@ void readGameConfig(const std::string& folder, LauncherSettings& settings)
             settings.ssao = isTrue(value);
         else if (key == "postprocessing.antialiasing")
             settings.antialiasing = atoi(value.c_str());
+        else if (key == "graphics.renderer")
+            settings.renderer = value;
         else if (key == "animation.poseSmoothing")
             settings.animationSmoothing = isTrue(value);
         else if (key == "graphics.customBackgrounds")
@@ -586,6 +588,7 @@ bool writeGameConfig(const std::string& folder, const LauncherSettings& settings
         { "animation.poseSmoothing", std::string("animation.poseSmoothing = ") + boolText(settings.animationSmoothing), false },
         { "graphics.customBackgrounds", std::string("graphics.customBackgrounds = ") + boolText(settings.customBackgrounds), false },
         { "graphics.enhancedText", std::string("graphics.enhancedText = ") + boolText(settings.enhancedText), false },
+        { "graphics.renderer", "graphics.renderer = " + settings.renderer, false },
     };
     wanted.push_back({ "audio.musicVolume", "audio.musicVolume = " + std::to_string(settings.musicVolume), false });
     wanted.push_back({ "audio.soundVolume", "audio.soundVolume = " + std::to_string(settings.soundVolume), false });

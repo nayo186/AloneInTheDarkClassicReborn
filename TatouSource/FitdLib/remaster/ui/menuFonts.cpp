@@ -39,10 +39,10 @@ void menuFontsLoad()
     s_scale = (std::max)({ 1.0f, mode ? mode->h / 900.0f : 1.0f, contentScale > 0.0f ? contentScale : 1.0f });
 
     // Inter, the launcher's font (compiled in, the same on every system)
-    s_fonts.text = menu::addModernFont(false, 15.0f * s_scale);
-    s_fonts.smallText = menu::addModernFont(false, 13.0f * s_scale);
-    s_fonts.button = menu::addModernFont(true, 16.0f * s_scale);
-    s_fonts.header = menu::addModernFont(true, 20.0f * s_scale);
+    s_fonts.text = menu::addModernFont(false, (15.0f + menu::kFontBump) * s_scale);
+    s_fonts.smallText = menu::addModernFont(false, (13.0f + menu::kFontBump) * s_scale);
+    s_fonts.button = menu::addModernFont(true, (16.0f + menu::kFontBump) * s_scale);
+    s_fonts.header = menu::addModernFont(true, (20.0f + menu::kFontBump) * s_scale);
     s_fonts.title = s_fonts.header;
     printf(MAIN_OK "Menu fonts (Inter) made at scale %.2f\n", s_scale);
     imguiRebuildFontTexture();

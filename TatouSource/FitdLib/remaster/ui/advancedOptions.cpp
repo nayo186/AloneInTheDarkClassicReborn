@@ -9,6 +9,7 @@
 #include "common.h"
 #include "advancedOptions.h"
 #include "advancedOptionsText.h"
+#include "rendererChoice.h"
 #include "settings.h"
 #include "consoleLog.h"
 #include "bgfxGlue.h"
@@ -316,6 +317,43 @@ static void antialiasingCombo(float width, int& value)
     menu::helpWhenFocused(text(AdvancedText::AntialiasingHelp));
 }
 
+// The graphics engine (graphics.renderer; Shared/rendererChoice.h): chosen
+// here, the game uses it the next time it opens, as the note says while the
+// choice is not the one it started with (BUGS.md C78)
+static const char* rendererLabel(int index)
+{
+    return renderer::kChoices[index].name;
+}
+
+static void rendererCombo(float width)
+{
+    if (!renderer::canChoose())
+        return;
+    static const std::string s_startedWith = g_settings.graphics.rendererBackend;
+    char* value = g_settings.graphics.rendererBackend;
+    const int current = renderer::choiceIndex(value);
+    ImGui::AlignTextToFramePadding();
+    ImGui::TextUnformatted(text(AdvancedText::Renderer));
+    helpMarker(text(AdvancedText::RendererHelp));
+    comboColumn(width * 0.4f);
+    ImGui::SetNextItemWidth(-1.0f);
+    if (ImGui::BeginCombo("##renderer", rendererLabel(current)))
+    {
+        for (int i = 0; i < renderer::kChoiceCount; i++)
+        {
+            if (ImGui::Selectable(rendererLabel(i), current == i))
+            {
+                snprintf(value, sizeof(g_settings.graphics.rendererBackend), "%s", renderer::kChoices[i].id);
+                printf(CFG_TAG "Advanced option (F1): renderer=%s (from the next start)\n", value);
+            }
+        }
+        ImGui::EndCombo();
+    }
+    menu::helpWhenFocused(text(AdvancedText::RendererHelp));
+    if (renderer::choiceIndex(s_startedWith.c_str()) != renderer::choiceIndex(value))
+        ImGui::TextColored(kGoldLight, "%s", text(AdvancedText::RendererRestart));
+}
+
 // The cheats window: "Enable cheats" and, under it, each cheat (greyed out
 // while cheats are off)
 static void drawCheatsWindow(float scale)
@@ -517,6 +555,8 @@ void advancedOptionsDraw()
             printf(CFG_TAG "Advanced option (F1): fullscreen=%s\n", fullscreen ? "true" : "false");
         }
         helpMarker(text(AdvancedText::FullscreenHelp));
+
+        rendererCombo(width);
 
         // Integer scaling: its size and the 3D resolution that fits it
         ImGui::Spacing();

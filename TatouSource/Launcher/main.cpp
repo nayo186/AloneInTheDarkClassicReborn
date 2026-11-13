@@ -15,6 +15,7 @@
 #include "ui/menuFontData.h"
 #include "ui/menuGamepad.h"
 #include "advancedOptionsText.h"
+#include "rendererChoice.h"
 #include "controlsWindow.h"
 #include "audioWindow.h"
 #include "launcherSettings.h"
@@ -78,11 +79,11 @@ static Fonts loadFonts(float scale)
 {
     ImGui::GetIO().Fonts->Clear();
     Fonts fonts;
-    fonts.text = addModernFont(false, 15.0f * scale);
-    fonts.smallText = addModernFont(false, 13.0f * scale);
-    fonts.button = addModernFont(true, 16.0f * scale);
-    fonts.header = addModernFont(true, 20.0f * scale);
-    fonts.title = addModernFont(true, 34.0f * scale);
+    fonts.text = addModernFont(false, (15.0f + kFontBump) * scale);
+    fonts.smallText = addModernFont(false, (13.0f + kFontBump) * scale);
+    fonts.button = addModernFont(true, (16.0f + kFontBump) * scale);
+    fonts.header = addModernFont(true, (20.0f + kFontBump) * scale);
+    fonts.title = addModernFont(true, (34.0f + kFontBump) * scale);
     return fonts;
 }
 
@@ -218,6 +219,38 @@ static void antialiasingCombo(int& value, float column)
         ImGui::EndCombo();
     }
     menu::helpWhenFocused(advText(AdvancedText::AntialiasingHelp));
+}
+
+// The graphics engine (graphics.renderer): one of this system's, by its name
+// (Shared/rendererChoice.h); the game uses it the next time it opens (BUGS.md C78)
+static const char* rendererLabel(int index)
+{
+    return renderer::kChoices[index].name;
+}
+
+static void rendererCombo(std::string& value, float column)
+{
+    if (!renderer::canChoose())
+        return;
+    const int current = renderer::choiceIndex(value.c_str());
+    ImGui::AlignTextToFramePadding();
+    ImGui::TextColored(color(kText), "%s", advText(AdvancedText::Renderer));
+    helpMarker(advText(AdvancedText::RendererHelp));
+    comboColumn(column);
+    ImGui::SetNextItemWidth(-1.0f);
+    if (ImGui::BeginCombo("##renderer", rendererLabel(current)))
+    {
+        for (int i = 0; i < renderer::kChoiceCount; i++)
+        {
+            if (ImGui::Selectable(rendererLabel(i), current == i))
+            {
+                value = renderer::kChoices[i].id;
+                logLine("Advanced option: renderer=%s", value.c_str());
+            }
+        }
+        ImGui::EndCombo();
+    }
+    menu::helpWhenFocused(advText(AdvancedText::RendererHelp));
 }
 
 // Under Scanlines, indented: their darkness in 4 steps (grey while they are off)
@@ -378,6 +411,7 @@ static void drawAdvancedOptions(LauncherState& state, const Fonts& fonts, const 
     }
 
     optionCheckbox(AdvancedText::Fullscreen, AdvancedText::FullscreenHelp, &state.settings.fullscreen, "fullscreen");
+    rendererCombo(state.settings.renderer, column);
 
     // Integer scaling: its size and the 3D resolution that fits it, for the
     // main screen (where the game opens; in a smaller window the engine takes

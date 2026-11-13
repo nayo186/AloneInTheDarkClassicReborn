@@ -271,8 +271,13 @@ int Lire(int index, int startx, int top, int endx, int bottom, int demoMode, int
 
     maxStringWidth = endx - startx + 4;
 
-    int textIndexMalloc = HQ_Malloc(HQ_Memory, getPakSize(languageNameString.c_str(), index) + 300);
-    textPtr = (u8*)HQ_PtrMalloc(HQ_Memory, textIndexMalloc);
+    // The text in memory of its own: it was taken from HQ_Memory, the 1992
+    // pool of 10000 bytes shared with blood, smoke and sparks; with half of
+    // it in use (the effects of a fight, those left by loading a game), the
+    // cellar book of the rats (text 17, about 5 KB) found no room and was
+    // written at address 0: the game closed (issue #12, BUGS.md C76)
+    std::vector<u8> text((size_t)(std::max)(getPakSize(languageNameString.c_str(), index), 0) + 300, 0);
+    textPtr = text.data();
 
     if (!LoadPak(languageNameString.c_str(), index, (char*)textPtr))
     {
@@ -724,8 +729,6 @@ int Lire(int index, int startx, int top, int endx, int bottom, int demoMode, int
         osystem_stopVO();
         osystem_clearVocCache();
     }
-
-    HQ_Free_Malloc(HQ_Memory, textIndexMalloc);
 
     printf(MAIN_TAG "Book: text %d closed\n", index);
 

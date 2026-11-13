@@ -212,6 +212,11 @@ void LoadWorld(void)
 
     for (i = 0; i < NUM_MAX_OBJECT; i++)
     {
+        // An effect (blood, smoke, sparks: indexInWorld -2) gives back its
+        // room in HQ_Memory; dropped here, each game loaded with one going
+        // on lost it for good, until books found no room (BUGS.md C76)
+        if (ListObjets[i].indexInWorld == -2 && HQ_Memory)
+            HQ_Free_Malloc(HQ_Memory, ListObjets[i].frame);
         ListObjets[i].indexInWorld = -1;
     }
 

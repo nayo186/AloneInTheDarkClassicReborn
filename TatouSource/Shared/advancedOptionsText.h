@@ -66,6 +66,9 @@ enum class AdvancedText
     Antialiasing,
     AntialiasingHelp,
     AntialiasingOff,
+    Renderer,
+    RendererHelp,
+    RendererRestart,
     AnimationSmoothing,
     AnimationSmoothingHelp,
     Close,
@@ -452,6 +455,18 @@ inline const char* advancedText(AdvancedText text, int language)
           "Glättet die Kanten der 3D-Modelle." },
         // AntialiasingOff
         { "Off", "Desactivado", "Désactivé", "Disattivato", "Aus" },
+        // Renderer
+        { "Graphics engine", "Motor gráfico", "Moteur graphique", "Motore grafico", "Grafik-Engine" },
+        // RendererHelp
+        { "How the game draws: change it if the picture looks wrong.",
+          "Cómo dibuja el juego: cámbialo si la imagen se ve mal.",
+          "Comment le jeu dessine : changez-le si l'image s'affiche mal.",
+          "Come disegna il gioco: cambialo se l'immagine non si vede bene.",
+          "Wie das Spiel zeichnet: ändern, wenn das Bild falsch aussieht." },
+        // RendererRestart
+        { "Applied when the game starts again.", "Se aplica al volver a abrir el juego.",
+          "Appliqué au prochain lancement du jeu.", "Si applica al prossimo avvio del gioco.",
+          "Gilt ab dem nächsten Spielstart." },
         // AnimationSmoothing
         { "Animation Smoothing", "Suavizado de animaciones", "Lissage des animations",
           "Animazioni fluide", "Animationsglättung" },

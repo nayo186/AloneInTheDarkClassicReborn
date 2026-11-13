@@ -113,9 +113,25 @@ void readKeyboard(void)
     // The on-screen controls placed for the window; the F1 window takes the screen
     touchControlsFrame(g_isMenuCapturingInput && g_isMenuCapturingInput());
 
+    // A finger on the on-screen controls (touchControls.h) is not a mouse:
+    // the mouse SDL makes from it would move the menus' cursor to the button
+    // (BUGS.md C79). From the press on a control to its release
+    static bool s_touchMouseOnControl = false;
+
     while (SDL_PollEvent(&event)) {
 
-        ImGui_ImplSDL3_ProcessEvent(&event);
+        bool touchMouseOnControl = false;
+        if (event.type == SDL_EVENT_MOUSE_MOTION && event.motion.which == SDL_TOUCH_MOUSEID)
+            touchMouseOnControl = s_touchMouseOnControl || touchControlsAt(event.motion.x, event.motion.y);
+        else if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN && event.button.which == SDL_TOUCH_MOUSEID)
+            touchMouseOnControl = s_touchMouseOnControl = touchControlsAt(event.button.x, event.button.y);
+        else if (event.type == SDL_EVENT_MOUSE_BUTTON_UP && event.button.which == SDL_TOUCH_MOUSEID)
+        {
+            touchMouseOnControl = s_touchMouseOnControl;
+            s_touchMouseOnControl = false;
+        }
+        if (!touchMouseOnControl)
+            ImGui_ImplSDL3_ProcessEvent(&event);
 
         switch (event.type) {
         case SDL_EVENT_KEY_DOWN:
