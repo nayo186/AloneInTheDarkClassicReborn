@@ -486,8 +486,14 @@ namespace bgfx
 			streamMask >>= ntz;
 			idx         += ntz;
 
-			if (_current.m_stream[idx].m_handle.idx  != _new.m_stream[idx].m_handle.idx
-			||  _current.m_stream[idx].m_startVertex != _new.m_stream[idx].m_startVertex)
+			// Classic Reborn: also the layout. The bound offset is startVertex *
+			// stride, so two draws of the same transient buffer with the same
+			// startVertex but another stride (Time Gate's 28-byte textured
+			// faces after 20-byte ones) kept the first offset on Vulkan and read
+			// the other draw's vertices: grey walls and stripes (BUGS.md C75)
+			if (_current.m_stream[idx].m_handle.idx       != _new.m_stream[idx].m_handle.idx
+			||  _current.m_stream[idx].m_startVertex      != _new.m_stream[idx].m_startVertex
+			||  _current.m_stream[idx].m_layoutHandle.idx != _new.m_stream[idx].m_layoutHandle.idx)
 			{
 				return true;
 			}
