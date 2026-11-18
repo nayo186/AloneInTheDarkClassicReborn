@@ -165,6 +165,21 @@ add_custom_command(
 )
 target_sources(FitdLib PRIVATE "${OBJECT_FIXES_DATA}")
 
+# Corrections of the games' texts compiled in (assets/textFixes -> textFixesData.cpp)
+set(TEXT_FIXES_FILES
+    "${CMAKE_CURRENT_SOURCE_DIR}/assets/textFixes/aitd1.cfg"
+    "${CMAKE_CURRENT_SOURCE_DIR}/assets/textFixes/jack.cfg"
+)
+set(TEXT_FIXES_DATA "${CMAKE_CURRENT_BINARY_DIR}/textFixesData.cpp")
+add_custom_command(
+    OUTPUT "${TEXT_FIXES_DATA}"
+    COMMAND ${CMAKE_COMMAND} -DSOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR} -DOUTPUT=${TEXT_FIXES_DATA}
+            -P "${CMAKE_CURRENT_SOURCE_DIR}/embedTextFixes.cmake"
+    DEPENDS ${TEXT_FIXES_FILES} "${CMAKE_CURRENT_SOURCE_DIR}/embedTextFixes.cmake"
+    COMMENT "Embedding the corrections of the texts"
+)
+target_sources(FitdLib PRIVATE "${TEXT_FIXES_DATA}")
+
 # The menus' fonts compiled in: Inter, F1's (and the launcher's on Android,
 # shown by the game), and Gelasio (Shared/assets/fonts -> menuFontData.cpp,
 # Shared/ui/menuFontData.h)

@@ -259,7 +259,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `g_getBackgroundPicture` | The picture for the screen on show; false: the game's own background |
 | `g_getMaskPicture` | The player's picture of a mask of the game (invalid handle: none); originalShape: 16:10 like the scene, otherwise the shape of the picture |
 | `g_onScreenUploaded` | The 320x200 screen was sent to the graphics card |
-| `g_filterTextLayer` | The text layer (320x200 palette indexes) is about to be shown: the layer to show instead (the letters the new font draws taken out); null: as it is |
+| `g_filterTextLayer` | The text layer (320x200 palette indexes) is about to be shown: the layer to show instead (the letters the new font draws taken out); null: as it is, no new font in this game or "Enhanced text" off |
 | `g_drawTextOverlay` | Right after the text layer, in the same view: the new font's letters |
 | `g_onMaskCreated` | A mask of the game was made (its 320x200 shape and rectangle) |
 
@@ -733,6 +733,12 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `setCameraTarget` | Moves the camera towards a position and angles in `time` ticks |
 | `startChrono` | Starts a chronometer (keeps the current time) |
 | `evalChrono` | Ticks passed since startChrono |
+
+### `core/textFixes.h`
+
+| Función | Para qué sirve |
+| --- | --- |
+| `applyTextFixes` | Replaces the texts of the language in use that the game's table corrects |
 
 ### `core/track.h`
 

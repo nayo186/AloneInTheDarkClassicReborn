@@ -13,7 +13,8 @@
 // - Each word keeps the box the 1992 font gives it (its width, its line), so
 //   lines and pages never change: the capitals are the game's own, rebuilt
 //   smooth (Scale2x three times and a soft cut); the other letters come from
-//   a modern font (Grenze Gotisch for Alone 1), squeezed if they do not fit.
+//   a modern font (Grenze Gotisch for Alone 1, IM Fell DW Pica Italic for
+//   Jack), squeezed if they do not fit.
 // - A soft outline (dark, or light under dark letters) keeps them readable on
 //   bright pictures.
 ///////////////////////////////////////////////////////////////////////////////
@@ -24,6 +25,7 @@
 #include "platformHooks.h"
 #include "settings.h"
 #include "font.h"
+#include "cp437.h"
 
 #include <bgfx/bgfx.h>
 
@@ -44,6 +46,8 @@ bgfx::ProgramHandle loadBgfxProgram(const std::string& VSFile, const std::string
 // The fonts compiled in (FitdLib/assets/fonts, CMakeLists.txt)
 extern const unsigned char kGameFontGothic[];
 extern const size_t kGameFontGothic_size;
+extern const unsigned char kGameFontItalic[];
+extern const size_t kGameFontItalic_size;
 
 // The palette of the game (platform/rendererBGFX.cpp) and the size of the
 // scene picture (platform/bgfxGlue.cpp)
@@ -142,21 +146,12 @@ void footprint(const GameFont& f, int x, int y, const u8* s, std::vector<int>& o
     }
 }
 
-// The game's letter codes are those of DOS (code page 437)
-const unsigned short kCp437[128] = {
-    0x00C7, 0x00FC, 0x00E9, 0x00E2, 0x00E4, 0x00E0, 0x00E5, 0x00E7, 0x00EA, 0x00EB, 0x00E8, 0x00EF, 0x00EE, 0x00EC, 0x00C4, 0x00C5,
-    0x00C9, 0x00E6, 0x00C6, 0x00F4, 0x00F6, 0x00F2, 0x00FB, 0x00F9, 0x00FF, 0x00D6, 0x00DC, 0x00A2, 0x00A3, 0x00A5, 0x20A7, 0x0192,
-    0x00E1, 0x00ED, 0x00F3, 0x00FA, 0x00F1, 0x00D1, 0x00AA, 0x00BA, 0x00BF, 0x2310, 0x00AC, 0x00BD, 0x00BC, 0x00A1, 0x00AB, 0x00BB,
-    0x2591, 0x2592, 0x2593, 0x2502, 0x2524, 0x2561, 0x2562, 0x2556, 0x2555, 0x2563, 0x2551, 0x2557, 0x255D, 0x255C, 0x255B, 0x2510,
-    0x2514, 0x2534, 0x252C, 0x251C, 0x2500, 0x253C, 0x255E, 0x255F, 0x255A, 0x2554, 0x2569, 0x2566, 0x2560, 0x2550, 0x256C, 0x2567,
-    0x2568, 0x2564, 0x2565, 0x2559, 0x2558, 0x2552, 0x2553, 0x256B, 0x256A, 0x2518, 0x250C, 0x2588, 0x2584, 0x258C, 0x2590, 0x2580,
-    0x03B1, 0x00DF, 0x0393, 0x03C0, 0x03A3, 0x03C3, 0x00B5, 0x03C4, 0x03A6, 0x0398, 0x03A9, 0x03B4, 0x221E, 0x03C6, 0x03B5, 0x2229,
-    0x2261, 0x00B1, 0x2265, 0x2264, 0x2320, 0x2321, 0x00F7, 0x2248, 0x00B0, 0x2219, 0x00B7, 0x221A, 0x207F, 0x00B2, 0x25A0, 0x00A0,
-};
-
 int unicodeOf(u8 c)
 {
-    return c < 128 ? c : kCp437[c - 128];
+    // Alone 1 writes its copyright with the code of DOS's "⌐" (© Infogrames 1992)
+    if (c == 0xA9)
+        return 0x00A9;
+    return cp437ToUnicode(c);
 }
 
 // Capitals keep the game's own drawing: A-Z and the accented ones of DOS
@@ -183,6 +178,10 @@ bool usesGameShape(const GameFont& f, u8 c)
     if (glyphWidth(f, c, nullptr) == 0)
         return false;
     if (isCapital(c) || (c >= '0' && c <= '9'))   // the modern font's numbers are old style, of uneven height
+        return true;
+    // The ornament under a book's title in Alone 1 ("Demonia Particularis",
+    // code of DOS's "µ"): the game's own drawing, not a Greek letter
+    if (c == 0xE6)
         return true;
     return !s_fontReady || stbtt_FindGlyphIndex(&s_font, unicodeOf(c)) == 0;
 }
@@ -280,7 +279,10 @@ void loadFont()
 {
     if (s_fontReady)
         return;
-    s_fontReady = stbtt_InitFont(&s_font, kGameFontGothic, stbtt_GetFontOffsetForIndex(kGameFontGothic, 0)) != 0;
+    // Each game its own: Grenze Gotisch with Alone 1's gothic capitals,
+    // IM Fell DW Pica Italic with Jack's script capitals
+    const unsigned char* data = g_gameId == JACK ? kGameFontItalic : kGameFontGothic;
+    s_fontReady = stbtt_InitFont(&s_font, data, stbtt_GetFontOffsetForIndex(data, 0)) != 0;
 
     // The small letters stand where the game's "a" ends
     GameFont f = gameFont();
@@ -662,10 +664,10 @@ std::vector<int> s_visible;    // indexes in s_texts drawn by us this frame
 std::array<unsigned char, 320 * 200> s_filtered;
 std::array<unsigned char, 320 * 200> s_hidden{};   // pixels of the letters we draw
 
-// The games with a new font (Jack next)
+// The games with a new font
 bool textFontForGame()
 {
-    return g_gameId == AITD1;
+    return g_gameId == AITD1 || g_gameId == JACK;
 }
 
 bool active()
@@ -707,17 +709,33 @@ void onTextPrinted(int x, int y, const unsigned char* text, int color)
     }
     // A text written over others replaces them (a new page over the last
     // one): their pixels may still be in the same color, but they are gone.
-    // The game's own shadow (same text, one row lower) stays with it.
+    // Only when it really covers them (a third of their pixels): the lines
+    // of a menu touch each other a little (Jack's tall capitals). The
+    // game's own shadow (same text, one row lower) stays with it.
     for (size_t i = 0; i < s_texts.size();)
     {
         const Shown& old = s_texts[i];
         bool overlaps = old.x1 <= shown.x2 && shown.x1 <= old.x2 && old.y1 <= shown.y2 && shown.y1 <= old.y2;
         bool itsShadow = old.text == s && std::abs(old.y - y) <= 1 && std::abs(old.x - x) <= 1;
+        bool covered = false;
         if (overlaps && !itsShadow)
+        {
+            // how much of it lies in the new text's rectangle
+            int under = 0;
+            for (int p : old.pixels)
+            {
+                int px = p % 320, py = p / 320;
+                if (px >= shown.x1 && px <= shown.x2 && py >= shown.y1 && py <= shown.y2)
+                    under++;
+            }
+            covered = under * 3 >= (int)old.pixels.size();
+        }
+        if (covered)
             s_texts.erase(s_texts.begin() + i);
         else
             i++;
     }
+
     s_texts.push_back(std::move(shown));
     if (s_texts.size() > 800)
         s_texts.erase(s_texts.begin(), s_texts.begin() + 200);

@@ -20,6 +20,7 @@ extern void playMenuSound(const char* soundName);
 
 #include "nativeLife.h"
 #include "track.h"
+#include "textFixes.h"
 #include <math.h>
 #include <SDL.h>
 
@@ -422,32 +423,11 @@ static void readTextes(void)
     }
 }
 
-// Corrections to the game's own texts. Jack in the Dark in Spanish names the
-// lamp's action "Vacio" with an accent ("empty", the adjective; "Empty" in
-// English, "Vider" in French): it did not look like an action and players chose
-// "Usar", which does nothing to the puppet (BUGS.md J5)
-static void fixTextes(void)
-{
-    static u8 emptyLampSpanish[] = "Vaciar";
-    if (g_gameId != JACK || languageNameString != "ESPAGNOL")
-        return;
-    for (int i = 0; i < NUM_MAX_TEXT_ENTRY; i++)
-    {
-        // "Vac\xA1o": the i with an accent is 0xA1 in the game's DOS letters
-        if (tabTextes[i].index == 27 && tabTextes[i].textPtr &&
-            strcmp((const char*)tabTextes[i].textPtr, "Vac\xA1o") == 0)
-        {
-            tabTextes[i].textPtr = emptyLampSpanish;
-            tabTextes[i].width = ExtGetSizeFont(emptyLampSpanish);
-            printf(MAIN_TAG "Jack in Spanish: the lamp's action is shown as \"Vaciar\"\n");
-        }
-    }
-}
-
 void allocTextes(void)
 {
     readTextes();
-    fixTextes();
+    // Translation mistakes corrected (assets/textFixes, BUGS.md J5)
+    applyTextFixes(tabTextes, NUM_MAX_TEXT_ENTRY);
 }
 
 void OpenProgram(void)

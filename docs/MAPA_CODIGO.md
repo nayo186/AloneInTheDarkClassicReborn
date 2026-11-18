@@ -50,6 +50,7 @@ Cuando un archivo tiene `.cpp` y `.h`, va en una sola fila.
 | Archivo | Para qué sirve |
 | --- | --- |
 | `types.h` | Tipos de números por tamaño (`u8`, `u16`, `u32`, `s8`, `s16`, `s32`), los de los archivos del juego. |
+| `cp437.h` | Las letras de DOS de los textos: a Unicode (fuente nueva) y desde UTF-8 (correcciones de textos). |
 | `consoleLog.h` | Etiquetas del registro: cada mensaje empieza con la de su sistema (`[CFG]`, `[LIFE]`, `[BGFX]`...). |
 | `logFile.cpp/.h` | Todo lo que el motor escribe (`printf`) va a `tatou.log`, al instante; la sesión anterior queda en `tatou.prev.log` (Windows y Linux). |
 | `exceptionHandler.h` | Registro de cierres en `crash_log.txt`: en Windows también corrupciones de memoria que el motor deja pasar; en Linux, las señales de cierre, con las funciones que llevaron a él (también en `tatou.log`). |
@@ -98,6 +99,7 @@ Cuando un archivo tiene `.cpp` y `.h`, va en una sola fila.
 | `main.cpp/.h` | `FitdMain`: arranque del motor (opciones, parámetros, gráficos, juego) y funciones sueltas del original (mensajes, golpes, recorte, salida). |
 | `launchOptions.cpp/.h` | Parámetros del launcher: `--game aitd1\|jack` y `--lang`. |
 | `startup.cpp` | Inicio: variables del juego (`DEFINES.ITD`), textos del idioma, paletas, cronómetro del objeto en la mano. |
+| `textFixes.cpp/.h` | Correcciones de los textos (errores de traducción), tabla por juego en `assets/textFixes/`, aplicada al cargar los textos. |
 | `game.cpp` | Detección del juego, inicio de partida, pantalla de guardar y cargar (con fecha en números pequeños). |
 | `world.cpp` | Carga del mundo (objetos del mundo, variables) al empezar una partida. |
 | `cheats.cpp/.h` | Trucos de F1 (`g_settings.cheats`, ninguno actúa con los trucos apagados): vida infinita repone lo que quita un golpe (variable de `playerLife.h`); si un script pone la vida en 0 (trampa) la muerte sigue. AITD3: solo repone la vida que quita un golpe del motor en el segundo siguiente; sus muertes de guion (script 8) siguen. |
@@ -164,7 +166,7 @@ Cuando un archivo tiene `.cpp` y `.h`, va en una sola fila.
 | `config/remasterHooks.cpp/.h` | Conecta el remaster con el motor: fuentes, menús, teclas F9/F10 y los ganchos de cada sistema. |
 | `config/debugCheats.cpp/.h` | F9 (modo depuración, herramientas de desarrollo): ventana para darse objetos. |
 | `graphics/customBackgrounds.cpp/.h` | Fondos y máscaras del jugador en lugar de los originales (los fondos, descomprimidos en segundo plano y por adelantado los de la sala); exportar todos los fondos y máscaras. |
-| `graphics/textFont.cpp/.h` | Fuente nueva de los textos (AITD1, `graphics.newFont`): cada texto del juego dibujado otra vez a la resolución de la escena, en su mismo hueco, con las mayúsculas originales lisas y minúsculas de `assets/fonts/`. |
+| `graphics/textFont.cpp/.h` | Fuente nueva de los textos (AITD1 y Jack, con "Texto mejorado"): cada texto del juego dibujado otra vez a la resolución de la escena, en su mismo hueco, con las mayúsculas originales lisas y minúsculas de `assets/fonts/`. |
 | `graphics/objectFixes.cpp/.h` | Correcciones visuales de objetos 3D (posición, giro, tamaño), cargadas de `assets/objectFixes/`. |
 | `ui/advancedOptions.cpp/.h` | Ventana F1: las opciones del launcher dentro del juego, con Controles y Audio. |
 | `ui/menuFonts.cpp/.h` | Fuente Georgia de los menús, nítida a cualquier tamaño de ventana. |
