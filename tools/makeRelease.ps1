@@ -48,6 +48,8 @@ Copy-Item (Join-Path $output 'Launcher.exe'), (Join-Path $output 'Tatou.exe') $s
 Copy-Item (Join-Path $repo 'README.md'), (Join-Path $repo 'LICENSE') $staging
 Copy-Item (Join-Path $source 'Shared\assets\fonts\OFL.txt') (Join-Path $staging 'Gelasio-OFL.txt')
 Copy-Item (Join-Path $source 'Shared\assets\fonts\Inter-OFL.txt') $staging
+# the fonts of the game's texts (FitdLib\assets\fonts)
+Copy-Item (Join-Path $source 'FitdLib\assets\fonts\GrenzeGotisch-OFL.txt'), (Join-Path $source 'FitdLib\assets\fonts\IMFell-OFL.txt') $staging
 
 $zip = Join-Path $releaseFolder "$name.zip"
 if (Test-Path $zip) { Remove-Item $zip -Force }

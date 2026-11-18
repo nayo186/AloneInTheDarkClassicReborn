@@ -55,5 +55,15 @@ extern bgfx::TextureHandle (*g_getMaskPicture)(int roomId, int maskId, bool* ori
 // The 320x200 screen was sent to the graphics card
 extern void (*g_onScreenUploaded)(const unsigned char* screen);
 
+// ---- New font of the texts (remaster/graphics/textFont.cpp) ----------------
+
+// The text layer (320x200 palette indexes) is about to be shown: the layer to
+// show instead (the letters the new font draws taken out); null: as it is,
+// no new font in this game or "Enhanced text" off
+extern const unsigned char* (*g_filterTextLayer)(const unsigned char* layer);
+
+// Right after the text layer, in the same view: the new font's letters
+extern void (*g_drawTextOverlay)(bgfx::ViewId view);
+
 // A mask of the game was made (its 320x200 shape and rectangle)
 extern void (*g_onMaskCreated)(int roomId, int maskId, const unsigned char* shape, int x1, int y1, int x2, int y2);

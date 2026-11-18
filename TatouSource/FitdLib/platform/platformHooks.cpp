@@ -18,3 +18,6 @@ bool (*g_getBackgroundPicture)(BackgroundPicture* out) = nullptr;
 bgfx::TextureHandle (*g_getMaskPicture)(int roomId, int maskId, bool* originalShape) = nullptr;
 void (*g_onScreenUploaded)(const unsigned char* screen) = nullptr;
 void (*g_onMaskCreated)(int roomId, int maskId, const unsigned char* shape, int x1, int y1, int x2, int y2) = nullptr;
+
+const unsigned char* (*g_filterTextLayer)(const unsigned char* layer) = nullptr;
+void (*g_drawTextOverlay)(bgfx::ViewId view) = nullptr;

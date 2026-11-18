@@ -104,6 +104,11 @@ void PrintFont(int x, int y, char* surface, u8* string)
 {
     unsigned char character;
 
+    // The new font (textFont.cpp) learns the text; the letters are still
+    // written below, so the game measures and places everything as always
+    if (g_onTextPrinted)
+        g_onTextPrinted(x, y, string, fontDrawColor);
+
     fontCursorX = x;
     fontCursorY = y;
 

@@ -15,3 +15,4 @@ void (*g_onScreenPictureShown)(const char* pakName, int index) = nullptr;
 void (*g_onSequenceFrameShown)(const char* pakName, int frame, const unsigned char* pixels) = nullptr;
 void (*g_onStartMenuDrawn)() = nullptr;
 void (*g_onGameLoopTick)() = nullptr;
+void (*g_onTextPrinted)(int x, int y, const unsigned char* text, int color) = nullptr;

@@ -9,6 +9,9 @@
 
 
 extern int fontHeight;
+// Space between words and between letters (SetFontSpace)
+extern s16 g_fontInterWordSpace;
+extern s16 g_fontInterLetterSpace;
 // Chooses the font and the colour to write with
 void SetFont(char* fontData, int color);
 // Sets the space between words and between letters

@@ -259,6 +259,8 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `g_getBackgroundPicture` | The picture for the screen on show; false: the game's own background |
 | `g_getMaskPicture` | The player's picture of a mask of the game (invalid handle: none); originalShape: 16:10 like the scene, otherwise the shape of the picture |
 | `g_onScreenUploaded` | The 320x200 screen was sent to the graphics card |
+| `g_filterTextLayer` | The text layer (320x200 palette indexes) is about to be shown: the layer to show instead (the letters the new font draws taken out); null: as it is |
+| `g_drawTextOverlay` | Right after the text layer, in the same view: the new font's letters |
 | `g_onMaskCreated` | A mask of the game was made (its 320x200 shape and rectangle) |
 
 ### `platform/rendererBGFXInternal.h`
@@ -306,6 +308,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `touchControlsFrame` | Once per frame before the inputs are read (window thread): places the controls for the window; menuOpen: the F1 window owns the screen (all let go) |
 | `touchPadButton` | A button of the virtual controller (SDL_GamepadButton) is held |
 | `touchPadAxis` | An axis of the virtual controller (SDL_GamepadAxis): the left stick from -1 to 1, the right trigger 0 or 1; 0 for the rest |
+| `touchControlsAt` | A shown button or the D-pad of the visible controls is at that point of the window (SDL's mouse coordinates). The mouse SDL makes from such a touch must not reach the menus: Start on the right picked Carnby (BUGS.md C79) |
 | `touchControlsHide` | The keyboard or a controller was used: the controls hide until a touch |
 | `touchControlsDraw` | Draws the controls over the game (game thread, inside the ImGui frame) |
 
@@ -423,6 +426,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `g_onObjectDraw` | An object of the camera is about to be drawn at this position (world units), rotation (1024 = a full turn) and size (renderer.h); listIndex is its place in ListObjets. A listener may change how it is drawn (a visual fix: the game keeps the real position) and returns false to skip drawing it this frame. |
 | `g_isGameFrozenLive` | True while a tool freezes the game but needs the scene drawn every frame (object editor): PlayWorld then only redraws, with the clock stopped. |
 | `g_isOptionsWindowOpen` | True while an options window over the game is open (F1): the game waits. |
+| `g_onTextPrinted` | The game is about to write a text with its font (PrintFont): where (320x200, top-left of the first letter), the letters (the game's own codes, ending in 0) and the palette color. The new font draws it over (textFont.cpp). |
 
 ### `core/debugger.h`
 
@@ -859,6 +863,12 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `objectFixesSave` | Writes the fixes into the project's file for this game (the next build compiles them in); returns false if it cannot |
 | `objectFixesFileName` | Name of the fixes file of the current game (aitd1.cfg, jack.cfg or aitd2.cfg) |
 
+### `remaster/graphics/textFont.h`
+
+| Función | Para qué sirve |
+| --- | --- |
+| `textFontRegister` | Fills the hooks (core: each text written; platform: the text layer shown) |
+
 ### `remaster/ui/advancedOptions.h`
 
 | Función | Para qué sirve |
@@ -909,6 +919,12 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | --- | --- |
 | `name` | — |
 | `imagePath` | The image the voices come from, or empty (loose files) |
+
+### `Shared/rendererChoice.h`
+
+| Función | Para qué sirve |
+| --- | --- |
+| `canChoose` | Whether the system lets the player choose (more than one) |
 
 ### `Shared/ui/launcherScreen.h`
 

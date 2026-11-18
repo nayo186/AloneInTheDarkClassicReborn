@@ -48,6 +48,11 @@ extern bool (*g_isGameFrozenLive)();
 // True while an options window over the game is open (F1): the game waits.
 extern bool (*g_isOptionsWindowOpen)();
 
+// The game is about to write a text with its font (PrintFont): where (320x200,
+// top-left of the first letter), the letters (the game's own codes, ending in
+// 0) and the palette color. The new font draws it over (textFont.cpp).
+extern void (*g_onTextPrinted)(int x, int y, const unsigned char* text, int color);
+
 // A full-screen picture from a PAK is about to be shown
 inline void coreScreenPictureShown(const char* pakName, int index)
 {

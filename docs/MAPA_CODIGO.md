@@ -164,6 +164,7 @@ Cuando un archivo tiene `.cpp` y `.h`, va en una sola fila.
 | `config/remasterHooks.cpp/.h` | Conecta el remaster con el motor: fuentes, menús, teclas F9/F10 y los ganchos de cada sistema. |
 | `config/debugCheats.cpp/.h` | F9 (modo depuración, herramientas de desarrollo): ventana para darse objetos. |
 | `graphics/customBackgrounds.cpp/.h` | Fondos y máscaras del jugador en lugar de los originales (los fondos, descomprimidos en segundo plano y por adelantado los de la sala); exportar todos los fondos y máscaras. |
+| `graphics/textFont.cpp/.h` | Fuente nueva de los textos (AITD1, `graphics.newFont`): cada texto del juego dibujado otra vez a la resolución de la escena, en su mismo hueco, con las mayúsculas originales lisas y minúsculas de `assets/fonts/`. |
 | `graphics/objectFixes.cpp/.h` | Correcciones visuales de objetos 3D (posición, giro, tamaño), cargadas de `assets/objectFixes/`. |
 | `ui/advancedOptions.cpp/.h` | Ventana F1: las opciones del launcher dentro del juego, con Controles y Audio. |
 | `ui/menuFonts.cpp/.h` | Fuente Georgia de los menús, nítida a cualquier tamaño de ventana. |

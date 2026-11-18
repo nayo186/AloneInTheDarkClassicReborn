@@ -213,8 +213,7 @@ void saveSettings()
     fprintf(file, "graphics.resolution = %d\n", c.graphics.resolution);
     fprintf(file, "graphics.integerScale = %d\n", c.graphics.integerScale);
     fprintf(file, "graphics.integerResolution = %d\n", c.graphics.integerResolution);
-    fprintf(file, "graphics.enhancedText = %s\n", flag(c.graphics.enhancedText));
-    fprintf(file, "graphics.customBackgrounds = %s\n\n", flag(c.graphics.customBackgrounds));
+    fprintf(file, "graphics.enhancedText = %s\n", flag(c.graphics.enhancedText));    fprintf(file, "graphics.customBackgrounds = %s\n\n", flag(c.graphics.customBackgrounds));
 
     fprintf(file, "# Screen effects and animation\n");
     fprintf(file, "postprocessing.bloom = %s\n", flag(c.postProcessing.enableBloom));

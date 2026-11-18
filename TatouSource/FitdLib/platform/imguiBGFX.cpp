@@ -170,6 +170,13 @@ struct OcornutImguiContext
 				}
 				else if (0 != cmd->ElemCount)
 				{
+					// The color mixes as usual; the alpha of the window only
+					// grows (a + dst (1 - a)): with Vulkan, Windows shows what is
+					// behind the game where it is under 1, so a half-transparent
+					// window (F1) let the desktop show through (BUGS.md C81)
+					const uint64_t kMenuBlend = BGFX_STATE_BLEND_FUNC_SEPARATE(
+						BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA,
+						BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_INV_SRC_ALPHA);
 					uint64_t state = 0
 						| BGFX_STATE_WRITE_RGB
 						| BGFX_STATE_WRITE_A
@@ -183,7 +190,7 @@ struct OcornutImguiContext
 					{
 						union { ImTextureID ptr; struct { bgfx::TextureHandle handle; uint8_t flags; uint8_t mip; } s; } texture = { cmd->TextureId };
 						state |= 0 != (IMGUI_FLAGS_ALPHA_BLEND & texture.s.flags)
-							? BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA)
+							? kMenuBlend
 							: BGFX_STATE_NONE
 							;
 						th = texture.s.handle;
@@ -196,7 +203,7 @@ struct OcornutImguiContext
 					}
 					else
 					{
-						state |= BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA);
+						state |= kMenuBlend;
 					}
 
 					const uint16_t xx = uint16_t(bx::max(cmd->ClipRect.x, 0.0f));

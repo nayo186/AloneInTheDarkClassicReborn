@@ -421,7 +421,19 @@ bgfx::ProgramHandle getSphereShader()
 
 void osystem_drawUILayer()
 {
-    bgfx::updateTexture2D(g_uiLayerTexture, 0, 0, 0, 0, 320, 200, bgfx::copy(uiLayer.data(), 320 * 200));
+    // With the new font, the letters it draws are taken out of the layer
+    const unsigned char* layer = uiLayer.data();
+    bool newFont = false;
+    if (g_filterTextLayer)
+    {
+        const unsigned char* filtered = g_filterTextLayer(layer);
+        if (filtered)
+        {
+            layer = filtered;
+            newFont = true;
+        }
+    }
+    bgfx::updateTexture2D(g_uiLayerTexture, 0, 0, 0, 0, 320, 200, bgfx::copy(layer, 320 * 200));
 
     if (backgroundMode == backgroundModeEnum_2D)
     {
@@ -504,9 +516,11 @@ void osystem_drawUILayer()
         }
 
 
-        // Enhanced text (advanced options): the letters are rebuilt smooth at
-        // the screen's resolution with a thin soft outline (textSmooth_ps)
-        const bool styled = g_settings.graphics.enhancedText;
+        // Enhanced text (advanced options): in a game with the new font
+        // (textFont.cpp) the letters are drawn by it; in the others they are
+        // rebuilt smooth at the screen's resolution with a thin soft outline
+        // (textSmooth_ps)
+        const bool styled = g_settings.graphics.enhancedText && !newFont;
 
         bgfx::setState(0 | BGFX_STATE_WRITE_RGB
             | BGFX_STATE_MSAA
@@ -537,6 +551,10 @@ void osystem_drawUILayer()
         {
             bgfx::submit(gameViewId, getUIShader());
         }
+
+        // The new font's letters, over the layer
+        if (g_drawTextOverlay)
+            g_drawTextOverlay(gameViewId);
     }
 }
 void osystem_drawBackground()
