@@ -147,6 +147,7 @@ enum class AdvancedText
     ImprovedDownloading,
     ImprovedRemove,
     ImprovedFailed,
+    ImprovedBackgroundsAitd2,
     Count
 };
 
@@ -711,6 +712,10 @@ inline const char* advancedText(AdvancedText text, int language)
         { "Could not download. Try again later.", "No se pudo descargar. Inténtalo más tarde.",
           "Téléchargement impossible. Réessayez plus tard.", "Download non riuscito. Riprova più tardi.",
           "Download fehlgeschlagen. Später erneut versuchen." },
+        // ImprovedBackgroundsAitd2
+        { "Improved backgrounds (Alone 2)", "Fondos mejorados (Alone 2)",
+          "Décors améliorés (Alone 2)", "Sfondi migliorati (Alone 2)",
+          "Verbesserte Hintergründe (Alone 2)" },
     };
     if (language < 0 || language >= kAdvancedTextLanguages)
         language = 0;

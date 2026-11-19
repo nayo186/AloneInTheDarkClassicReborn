@@ -301,39 +301,40 @@ static std::vector<std::string> s_narrators;   // looked for when the audio wind
 // B closes the advanced options (saving them, as Close does)
 static bool s_closeAdvanced = false;
 
-// Improved backgrounds of Alone 1 and Jack: the texture pack, downloaded
-// into UserData when the player asks (texturePackDownload.h); on arriving,
-// the custom backgrounds are turned on
-static void improvedBackgrounds(LauncherState& state, const Fonts& fonts, const Metrics& metrics)
+// Improved backgrounds of the selected game (Alone 1 with Jack, Alone 2): its
+// texture pack, downloaded into UserData when the player asks
+// (texturePackDownload.h); on arriving, the custom backgrounds are turned on
+static void improvedBackgrounds(LauncherState& state, const Fonts& fonts, const Metrics& metrics, TexturePack pack)
 {
-    static PackState s_lastState = PackState::Missing;
-    const PackState packState = texturePackState();
-    if (packState == PackState::Installed && s_lastState == PackState::Downloading && !state.settings.customBackgrounds)
+    static PackState s_lastState[2] = { PackState::Missing, PackState::Missing };
+    const PackState packState = texturePackState(pack);
+    if (packState == PackState::Installed && s_lastState[(int)pack] == PackState::Downloading && !state.settings.customBackgrounds)
     {
         state.settings.customBackgrounds = true;
         logLine("Advanced option: customBackgrounds=true (texture pack installed)");
     }
-    s_lastState = packState;
+    s_lastState[(int)pack] = packState;
 
     ImGui::AlignTextToFramePadding();
-    ImGui::TextColored(color(kText), "%s", advText(AdvancedText::ImprovedBackgrounds));
+    ImGui::TextColored(color(kText), "%s", advText(pack == TexturePack::Aitd2 ? AdvancedText::ImprovedBackgroundsAitd2
+                                                                            : AdvancedText::ImprovedBackgrounds));
     helpMarker(advText(AdvancedText::ImprovedBackgroundsHelp));
     char label[128];
     const ImVec2 size(ImGui::GetContentRegionAvail().x, metrics.pressHeight(36.0f));
     switch (packState)
     {
     case PackState::Downloading:
-        snprintf(label, sizeof(label), advText(AdvancedText::ImprovedDownloading), texturePackProgress());
+        snprintf(label, sizeof(label), advText(AdvancedText::ImprovedDownloading), texturePackProgress(pack));
         darkButton("##texturePack", label, ImGui::GetCursorScreenPos(), size, fonts.button, false);
         break;
     case PackState::Installed:
         if (darkButton("##texturePack", advText(AdvancedText::ImprovedRemove), ImGui::GetCursorScreenPos(), size, fonts.button, true))
-            texturePackRemove();
+            texturePackRemove(pack);
         break;
     default:
-        snprintf(label, sizeof(label), advText(AdvancedText::ImprovedDownload), texturePackMegabytes());
+        snprintf(label, sizeof(label), advText(AdvancedText::ImprovedDownload), texturePackMegabytes(pack));
         if (goldButton("##texturePack", label, ImGui::GetCursorScreenPos(), size, fonts.button, true))
-            texturePackStartDownload();
+            texturePackStartDownload(pack);
         if (packState == PackState::Failed)
             ImGui::TextColored(color(kError), "%s", advText(AdvancedText::ImprovedFailed));
         break;
@@ -553,8 +554,9 @@ static void drawAdvancedOptions(LauncherState& state, const Fonts& fonts, const 
     optionCheckbox(AdvancedText::EnhancedText, AdvancedText::EnhancedTextHelp, &state.settings.enhancedText, "enhancedText");
     optionCheckbox(AdvancedText::CustomBackgrounds, AdvancedText::CustomBackgroundsHelp,
         &state.settings.customBackgrounds, "customBackgrounds");
-    if (state.selectedGame == 0)
-        improvedBackgrounds(state, fonts, metrics);
+    TexturePack pack;
+    if (texturePackForGame(state.selectedGame, &pack))
+        improvedBackgrounds(state, fonts, metrics, pack);
     ImGui::Spacing();
     ImGui::Spacing();
 

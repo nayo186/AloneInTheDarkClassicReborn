@@ -1039,6 +1039,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 
 | Función | Para qué sirve |
 | --- | --- |
+| `texturePackForGame` | The pack of the game selected in the launcher (0 Alone 1, 1 Alone 2...); false if that game has none |
 | `texturePackState` | What the pack is doing now (looks at UserData when idle) |
 | `texturePackProgress` | 0-100 while downloading |
 | `texturePackMegabytes` | Size of the pack in MB, for the button |
