@@ -23,6 +23,7 @@ namespace
 // What the game told: where the character is (osystem_setPlayView, the
 // last frame of play) and how many screens over the game are shown
 int s_playerTop = -1, s_playerBottom = -1, s_camera = -1;
+int s_movingTop = -1, s_movingBottom = -1;   // everyone moving on screen, the character too
 int s_screensOver = 0;
 
 // The view
@@ -53,10 +54,12 @@ void osystem_screenOverPlay(bool shown)
     s_screensOver += shown ? 1 : (s_screensOver > 0 ? -1 : 0);
 }
 
-void osystem_setPlayView(int playerTop, int playerBottom, int camera)
+void osystem_setPlayView(int playerTop, int playerBottom, int movingTop, int movingBottom, int camera)
 {
     s_playerTop = playerTop;
     s_playerBottom = playerBottom;
+    s_movingTop = movingTop;
+    s_movingBottom = movingBottom;
     s_camera = camera;
 }
 
@@ -91,10 +94,10 @@ void widescreenSceneQuad(const int sceneRect[4], int quad[4])
     s_lastTime = now;
     const float step = (std::min)(seconds, 0.1f);
 
-    // Playing: inside the game's loop (Alone 1, Jack) with no screen over it.
+    // Playing: inside the game's loop (Alone 1, Jack, Alone 2) with no screen over it.
     // Its fades count too (closing a menu, the scene fades in before it is
     // drawn again): deciding by the frames drawn showed them 4:3 a moment
-    s_playing = widescreenZoomed() && g_playWorldActive && s_screensOver == 0 && (g_gameId == AITD1 || g_gameId == JACK);
+    s_playing = widescreenZoomed() && g_playWorldActive && s_screensOver == 0 && (g_gameId == AITD1 || g_gameId == JACK || g_gameId == AITD2);
 
     // The scene at the screen's width: taller than the screen
     const float sceneHeight = sceneRect[2] * 3.0f / 4.0f;
@@ -110,17 +113,35 @@ void widescreenSceneQuad(const int sceneRect[4], int quad[4])
 
     const bool seen = s_playerTop >= 0 && s_playerBottom >= s_playerTop;
     const float playerCentre = seen ? (s_playerTop + s_playerBottom) * 0.5f * sceneHeight / 200.0f : sceneHeight / 2.0f;
-    if (!s_placed || s_camera != s_lastCamera)
+    // A new camera (or back from a menu): straight to the character
+    const bool jump = !s_placed || s_camera != s_lastCamera;
+    const bool moving = s_movingTop >= 0 && s_movingBottom >= s_movingTop;
+    if (jump || seen || moving)
     {
-        // A new camera (or back from a menu): straight to the character
-        s_top = std::clamp(playerCentre - sceneRect[3] / 2.0f, 0.0f, range);
+        float wanted = jump ? playerCentre - sceneRect[3] / 2.0f : seen ? followTop(s_top, playerCentre, (float)sceneRect[3]) : s_top;
+        // The others moving with the character (who comes in, in a scene of
+        // the intro: the clown by the window): kept on screen too when
+        // everyone fits in it
+        if (moving)
+        {
+            const float margin = sceneRect[3] / 20.0f;
+            const float movingTop = s_movingTop * sceneHeight / 200.0f - margin;
+            const float movingBottom = s_movingBottom * sceneHeight / 200.0f + margin;
+            if (movingBottom - movingTop <= sceneRect[3])
+            {
+                if (movingBottom > wanted + sceneRect[3])
+                    wanted = movingBottom - sceneRect[3];
+                if (movingTop < wanted)
+                    wanted = movingTop;
+            }
+        }
+        wanted = std::clamp(wanted, 0.0f, range);
+        if (jump)
+            s_top = wanted;
+        else
+            s_top += (wanted - s_top) * (1.0f - std::exp(-step * 4.0f));
         s_placed = true;
         s_lastCamera = s_camera;
-    }
-    else if (seen)
-    {
-        const float wanted = std::clamp(followTop(s_top, playerCentre, (float)sceneRect[3]), 0.0f, range);
-        s_top += (wanted - s_top) * (1.0f - std::exp(-step * 4.0f));
     }
 
     // Look up / down: the view goes toward the top or the bottom of the scene

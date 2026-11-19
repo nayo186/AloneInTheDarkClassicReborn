@@ -347,9 +347,9 @@ The launcher (its **Options**, **Controls** and **Audio** cards) and the in-game
 
 ### Widescreen view
 
-In *Alone in the Dark* and *Jack in the Dark*, **Aspect ratio** has two widescreen choices, for a 16:9 screen:
+In *Alone in the Dark*, *Jack in the Dark* and *Alone in the Dark 2*, **Aspect ratio** has two widescreen choices, for a 16:9 screen:
 
-- **16:9 (zoomed)**: the 4:3 scene is enlarged to the whole width of the screen. Part of it is out of the screen above and below, and the view follows the character gently up and down (it jumps at once when the camera changes).
+- **16:9 (zoomed)**: the 4:3 scene is enlarged to the whole width of the screen. Part of it is out of the screen above and below, and the view follows the character gently up and down (it jumps at once when the camera changes); in a scene, it also keeps on screen whoever moves with the character, when they fit.
 - **16:10 (zoomed)**: enlarges a little less, so more of the scene is seen, with narrow strips at the sides.
 
 **Look up / Look down** (right stick, or Page Up / Page Down) move the view to the top or the bottom of the scene without moving the character, and it comes back when released. Menus, the inventory, books and pictures are shown whole in 4:3, with a still, blurred picture of the game at the sides, and messages are always fully on screen. The resolution list offers 16:9 sizes (1280×720 to 3840×2160).

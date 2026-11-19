@@ -230,7 +230,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `osystem_drawFrozenSceneBackground` | Draws the frozen scene behind a menu |
 | `osystem_windowToGame` | Window position (pixels) to the 320x200 game screen, through the scene rectangle (graphics.aspect leaves black bars); false before the first frame |
 | `osystem_getSceneRect` | Rectangle of the window (pixels) where the play area is drawn: x, y, width, height |
-| `osystem_setPlayView` | A frame of play was drawn (AllRedraw, Alone 1 and Jack): the rows of the character on screen (-1: not seen) and the camera; the zoomed aspect ratios follow it (widescreen.cpp) |
+| `osystem_setPlayView` | A frame of play was drawn (AllRedraw, Alone 1, Jack, Alone 2): the rows of the character on screen (-1: not seen), the rows of everyone moving on screen with it (the scenes of the intro: who comes in) and the camera; the zoomed aspect ratios follow them (widescreen.cpp) |
 | `osystem_screenOverPlay` | A screen over the game is shown (inventory, pause menu, a book, the "You find" window, a sequence, a picture): the zoomed aspect ratios show it 4:3 whole; calls nest. ScreenOverPlay does it for a block |
 | `osystem_textFade` | Brightness for the texts: 1, or the screen's fade when they are drawn outside the scene (zoomed aspect ratios) |
 | `osystem_suspendScreenEffects` | Plain screens (title armadillo, intro screens, books) suspend the screen effects without changing the player's options; calls nest (BUGS.md C15) |

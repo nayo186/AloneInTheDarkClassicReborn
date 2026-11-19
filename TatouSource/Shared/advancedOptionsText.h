@@ -316,11 +316,11 @@ inline const char* advancedText(AdvancedText text, int language)
         // AspectRatio
         { "Aspect ratio", "Relación de aspecto", "Format d'image", "Rapporto d'aspetto", "Seitenverhältnis" },
         // AspectRatioHelp
-        { "4:3 is the shape it was drawn for. 16:10: square pixels, as in GOG/DOSBox. Stretched: fullscreen only. Zoomed: fills a wide screen, the view follows the character (Alone 1, Jack).",
-          "4:3 es la forma para la que se dibujó. 16:10: píxeles cuadrados, como en GOG/DOSBox. Estirada: solo en pantalla completa. Ampliada: llena la pantalla panorámica y la vista sigue al personaje (Alone 1, Jack).",
-          "4:3 est le format pour lequel il a été dessiné. 16:10 : pixels carrés, comme dans GOG/DOSBox. Étirée : plein écran seulement. Agrandie : remplit un écran large, la vue suit le personnage (Alone 1, Jack).",
-          "4:3 è la forma per cui è stato disegnato. 16:10: pixel quadrati, come in GOG/DOSBox. Allungata: solo a schermo intero. Ingrandita: riempie uno schermo largo, la vista segue il personaggio (Alone 1, Jack).",
-          "4:3 ist das Format, für das es gezeichnet wurde. 16:10: quadratische Pixel, wie in GOG/DOSBox. Gestreckt: nur im Vollbild. Vergrößert: füllt einen Breitbildschirm, die Ansicht folgt der Figur (Alone 1, Jack)." },
+        { "4:3 is the shape it was drawn for. 16:10: square pixels, as in GOG/DOSBox. Stretched: fullscreen only. Zoomed: fills a wide screen, the view follows the character (Alone 1, Jack, Alone 2).",
+          "4:3 es la forma para la que se dibujó. 16:10: píxeles cuadrados, como en GOG/DOSBox. Estirada: solo en pantalla completa. Ampliada: llena la pantalla panorámica y la vista sigue al personaje (Alone 1, Jack, Alone 2).",
+          "4:3 est le format pour lequel il a été dessiné. 16:10 : pixels carrés, comme dans GOG/DOSBox. Étirée : plein écran seulement. Agrandie : remplit un écran large, la vue suit le personnage (Alone 1, Jack, Alone 2).",
+          "4:3 è la forma per cui è stato disegnato. 16:10: pixel quadrati, come in GOG/DOSBox. Allungata: solo a schermo intero. Ingrandita: riempie uno schermo largo, la vista segue il personaggio (Alone 1, Jack, Alone 2).",
+          "4:3 ist das Format, für das es gezeichnet wurde. 16:10: quadratische Pixel, wie in GOG/DOSBox. Gestreckt: nur im Vollbild. Vergrößert: füllt einen Breitbildschirm, die Ansicht folgt der Figur (Alone 1, Jack, Alone 2)." },
         // Aspect4x3
         { "4:3 (original)", "4:3 (original)", "4:3 (original)", "4:3 (originale)", "4:3 (Original)" },
         // Aspect16x10

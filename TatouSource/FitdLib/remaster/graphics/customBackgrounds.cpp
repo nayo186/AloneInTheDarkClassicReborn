@@ -705,7 +705,8 @@ static void buildSides()
     s_sidesTexture = BGFX_INVALID_HANDLE;
     s_sidesGame = g_gameId;
     s_sidesCustom = g_settings.graphics.customBackgrounds;
-    const int index = g_gameId == AITD1 ? 16 : g_gameId == JACK ? 3 : -1;
+    // The mansion (Alone 1, Alone 2's Hell's Kitchen) or the toy shop (Jack)
+    const int index = g_gameId == AITD1 ? 16 : g_gameId == JACK ? 3 : g_gameId == AITD2 ? 12 : -1;
     if (index < 0)
         return;
 
