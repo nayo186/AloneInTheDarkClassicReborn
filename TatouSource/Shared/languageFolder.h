@@ -12,12 +12,17 @@
 //   names them), .wav or .mp3;
 // - or the CD image: one .bin (or .img) with its .cue of the same name, for
 //   the tracks; an .iso or a .bin without .cue has the files but no tracks.
+// A language can also be a single file, a language pack: Languages\
+// Spanish.language, the same loose files gathered one after the other
+// without compression (zipArchive.h; tools/makeLanguagePack.py); a folder
+// of the same name comes first.
 // Used by the game and the launcher. Header-only.
 ///////////////////////////////////////////////////////////////////////////////
 
 #pragma once
 
 #include "cdImage.h"
+#include "zipArchive.h"
 
 #include <cctype>
 #include <cstdio>
@@ -130,7 +135,8 @@ inline std::string installedLanguageAITD3(const std::filesystem::path& gameData)
 // scripts (LISTLIFE.PAK). The French version numbers its scripts otherwise
 // than the others (its objects call them by number): between French and
 // another language, the objects (OBJETS.ITD) go with the scripts (BUGS.md T48)
-inline std::string missingLanguageFiles(const std::filesystem::path& folder, const std::string& languagePak,
+template <typename HasFile>
+inline std::string missingLanguageFilesBy(HasFile hasFile, const std::string& languagePak,
     const std::filesystem::path& gameData)
 {
     std::string installed = installedLanguageAITD3(gameData);
@@ -142,7 +148,7 @@ inline std::string missingLanguageFiles(const std::filesystem::path& folder, con
     std::string missing;
     for (const std::string& name : needed)
     {
-        if (languageFileExists(folder, name.c_str()))
+        if (hasFile(name))
             continue;
         if (!missing.empty())
             missing += ", ";
@@ -150,3 +156,47 @@ inline std::string missingLanguageFiles(const std::filesystem::path& folder, con
     }
     return missing;
 }
+
+// The language pack of a language folder (Languages\Spanish ->
+// Languages\Spanish.language, any case of the extension)
+inline std::filesystem::path languagePackFile(const std::filesystem::path& folder)
+{
+    namespace fs = std::filesystem;
+    std::error_code ec;
+    const std::string wanted = folder.filename().string();
+    for (const fs::directory_entry& entry : fs::directory_iterator(folder.parent_path(), ec))
+    {
+        std::string ext = entry.path().extension().string();
+        for (char& c : ext)
+            c = (char)tolower((unsigned char)c);
+        if (ext == ".language" && entry.path().stem().string() == wanted && entry.is_regular_file(ec))
+            return entry.path();
+    }
+    return fs::path();
+}
+
+// The language pack of a folder, opened, if it holds the language's PAK
+// (e.g. "ESPAGNOL.PAK"); false if there is none
+inline bool openLanguagePack(const std::filesystem::path& folder, const std::string& languagePak, ZipArchive& pack)
+{
+    const std::filesystem::path file = languagePackFile(folder);
+    return !file.empty() && pack.open(file) && pack.find(languagePak) != nullptr;
+}
+
+// The same for a language pack
+inline std::string missingLanguagePackFiles(const ZipArchive& pack, const std::string& languagePak,
+    const std::filesystem::path& gameData)
+{
+    return missingLanguageFilesBy([&](const std::string& name) {
+        const ZipArchive::Entry* entry = pack.find(name);
+        return entry && entry->method == 0;
+    }, languagePak, gameData);
+}
+
+inline std::string missingLanguageFiles(const std::filesystem::path& folder, const std::string& languagePak,
+    const std::filesystem::path& gameData)
+{
+    return missingLanguageFilesBy([&](const std::string& name) { return languageFileExists(folder, name.c_str()); },
+        languagePak, gameData);
+}
+

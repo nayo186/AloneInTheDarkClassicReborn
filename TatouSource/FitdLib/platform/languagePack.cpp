@@ -20,6 +20,8 @@
 #include <map>
 #include <mutex>
 
+#include "soloud_wavstream.h"
+
 namespace fs = std::filesystem;
 
 extern "C" { extern char homePath[512]; }
@@ -27,6 +29,8 @@ extern "C" { extern char homePath[512]; }
 static std::string s_folder;
 static CdImage s_image;
 static bool s_hasImage = false;
+static ZipArchive s_pack;        // a language pack (Languages\<name>.language)
+static bool s_hasPack = false;
 static std::mutex s_cacheMutex;
 static std::map<std::string, std::vector<unsigned char>> s_cache;   // files read from the language's image
 static std::map<std::string, std::vector<unsigned char>> s_discCache;   // files read from the game's CD image
@@ -43,6 +47,7 @@ bool selectLanguagePack(const std::string& language)
 {
     s_folder.clear();
     s_hasImage = false;
+    s_hasPack = false;
     const char* name = languagePackName(language.c_str());
     if (!*name)
         return false;
@@ -62,7 +67,21 @@ bool selectLanguagePack(const std::string& language)
         return true;
     }
     if (!openLanguageImage(fs::u8path(folder), pak, s_image))
-        return false;
+    {
+        // A language pack: the same files in one file, if none it needs is missing
+        if (!openLanguagePack(fs::u8path(folder.substr(0, folder.size() - 1)), pak, s_pack))
+            return false;
+        const std::string missing = missingLanguagePackFiles(s_pack, language, fs::u8path(homePath[0] ? homePath : "."));
+        if (!missing.empty())
+        {
+            printf(MAIN_WARN "Language pack %s not used: it lacks %s\n", s_pack.path().string().c_str(), missing.c_str());
+            return false;
+        }
+        s_folder = folder;
+        s_hasPack = true;
+        printf(MAIN_OK "Language pack: %s (%d files)\n", s_pack.path().string().c_str(), (int)s_pack.entries().size());
+        return true;
+    }
     s_folder = folder;
     s_hasImage = true;
     int audioTracks = 0;
@@ -73,17 +92,18 @@ bool selectLanguagePack(const std::string& language)
     return true;
 }
 
-// A file of the language's CD image, read once and kept; null if not there
+// A file of the language's CD image or language pack, read once and kept;
+// null if not there
 static const std::vector<unsigned char>* imageFile(const char* name)
 {
-    if (!s_hasImage || !s_image.hasFile(kLanguageImageFolder, name))
+    if (s_hasPack ? s_pack.find(name) == nullptr : (!s_hasImage || !s_image.hasFile(kLanguageImageFolder, name)))
         return nullptr;
     std::lock_guard<std::mutex> lock(s_cacheMutex);
     auto found = s_cache.find(name);
     if (found == s_cache.end())
     {
         std::vector<unsigned char> data;
-        if (!s_image.readFile(kLanguageImageFolder, name, data))
+        if (s_hasPack ? !s_pack.read(name, data) : !s_image.readFile(kLanguageImageFolder, name, data))
             return nullptr;
         found = s_cache.emplace(name, std::move(data)).first;
     }
@@ -120,6 +140,24 @@ bool dataFileExists(const char* name)
 
 SoLoud::AudioSource* languagePackCreateTrack(int track)
 {
+    if (s_hasPack)
+    {
+        // As the loose files: NN (the track - 1) or TrackNN, .ogg, .wav or .mp3
+        for (const char* ext : { "ogg", "wav", "mp3" })
+            for (int name = 0; name < 2; name++)
+            {
+                char file[32];
+                snprintf(file, sizeof(file), name == 0 ? "%02d.%s" : "Track%02d.%s", name == 0 ? track - 1 : track, ext);
+                std::vector<unsigned char> data;
+                if (!s_pack.read(file, data) || data.empty())
+                    continue;
+                SoLoud::WavStream* stream = new SoLoud::WavStream();
+                if (stream->loadMem(data.data(), (unsigned int)data.size(), true, true) == SoLoud::SO_NO_ERROR)
+                    return stream;
+                delete stream;
+            }
+        return nullptr;
+    }
     return s_hasImage ? createCdTrack(s_image, track) : nullptr;
 }
 

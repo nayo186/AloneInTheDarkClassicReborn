@@ -24,6 +24,7 @@ A loose file in a folder always comes before the same file in a pack, so you can
 | Languages of *Alone in the Dark 3* | *AITD3* | `UserData\AITD3\Languages` | [Languages](#languages) |
 | Backgrounds and masks in one file (texture pack) | all | `UserData\<name>.texture` | [Texture packs](#texture-packs-texture) |
 | A narrator in one file (narrator pack) | *AITD1*, *AITD2* | `UserData\AITD1\Voices\<narrator>.voice`, `UserData\AITD2\Voices\<narrator>.voice` | [Narrator packs](#narrator-packs-voice) |
+| A language of *Alone in the Dark 3* in one file (language pack) | *AITD3* | `UserData\AITD3\Languages\<language>.language` | [Language packs](#language-packs-language) |
 
 **Not yet:** the 3D models and their textures, the sound effects and the texts. Changing the 3D models (exporting them to a common format and bringing them back) is an idea for the future.
 
@@ -45,7 +46,8 @@ UserData/
 │   │                            music and page recordings in the folder itself
 │   └── Voices/<narrator>/       whole narrators of another CD (or <narrator>.voice)
 └── AITD3/                       Alone in the Dark 3: as AITD2, and
-    └── Languages/<language>/    other languages
+    ├── Languages/<language>/    other languages, one folder each...
+    └── Languages/<language>.language   ...or one file each (language packs)
 ```
 
 The launcher creates these folders the first time it opens (they stay there even if you only use packs). A mod is shared as these same folders, or as a pack: whoever uses it copies them into their own `UserData` (see [Sharing a mod](#sharing-a-mod)).
@@ -145,7 +147,19 @@ means that this music is CD track 12, so your file is `11.ogg` (or `.wav`, `.mp3
 
 ## Languages
 
-*Alone in the Dark 3* can be played in a language from a folder of `UserData\AITD3\Languages`, with the texts, voices and narrator of that language: see [Other languages in Alone in the Dark 3](README.md#other-languages-in-alone-in-the-dark-3) in the README.
+*Alone in the Dark 3* is sold one language at a time (English, French, German or Italian; Spanish only came on the original Spanish CD). Any other language you own can be added, and the game reads it over your installation without changing it: its texts, the voices of the scenes, its scripts and its narrator.
+
+A language is **not only sound**: it has its text PAK (`ESPAGNOL.PAK`, `FRANCAIS.PAK`...), its voices and sounds (`LISTSAMP.PAK`), its scripts (`LISTLIFE.PAK`) and other data files, and the audio tracks of its CD (the voiced intro and the narrator).
+
+- **Where:** `UserData\AITD3\Languages\<language>`, a folder named `English`, `French`, `German`, `Italian` or `Spanish`, with one of these:
+  - **its loose files**, from the `INDARK3` folder of an installation in that language, and its tracks (the files of its `MUSIC` folder as they are, `Track02.ogg`..., or named after the track minus 1, `01.ogg`...; `.ogg`, `.wav` or `.mp3`). The list of files of each language is in [Other languages in Alone in the Dark 3](README.md#other-languages-in-alone-in-the-dark-3) in the README;
+  - **or its CD image** (the Spanish CD): its `.bin` (or `.img`) with its `.cue` of the same name;
+  - **or, instead of the folder, one file**: `<language>.language`, the same loose files in a single file ([Language packs](#language-packs-language)).
+- **What is needed:** the text PAK, `LISTSAMP.PAK` and `LISTLIFE.PAK`; with a French installation, the other languages also need their `OBJETS.ITD`, and French over any other one needs its own (the French version numbers its scripts differently). A language that lacks one is not offered, and `launcher.log` says which file it lacks. Without its tracks, the texts and voices are in that language but the intro and the books are read by the narrator of your installation.
+- **Choosing it:** in the launcher, **Game language** on the *Alone in the Dark 3* page (it appears once the folder or file is found).
+- **Saves:** a save made in French can only be loaded in French, and one made in another language only in one of the others (the load screen shows them as **Other language**).
+- `tatou.log` says where the language comes from: `Language folder: Languages/Spanish/`, `Language CD image: ...` or `Language pack: Languages\Spanish.language (44 files)`.
+- These are the game's own files: never share them publicly; each player needs their own copy of that version of the game.
 
 ## Packs: one file instead of folders
 
@@ -155,7 +169,7 @@ Inside, it is an ordinary ZIP file with another extension, so it can be opened w
 
 **The order** when the same file is in several places:
 
-1. A loose file in its folder (`Backgrounds`, `Masks`, or a narrator folder) comes first.
+1. A loose file in its folder (`Backgrounds`, `Masks`, a narrator folder, or a language folder) comes first.
 2. Then the packs, in name order: the first one that has the file is used.
 
 So a pack you downloaded can be corrected with one loose file, and two packs can be combined (the one whose name comes first wins where both have a picture).
@@ -191,6 +205,17 @@ A narrator pack is one narrator of *Alone in the Dark* or *Alone in the Dark 2* 
 - **Making one:** `python tools/makeVoicePack.py "<narrator folder>" Spanish.voice`. With 7-Zip: select the voice files (not their folder), add them to a ZIP with the compression level **Store**, and rename the `.zip` to `.voice`. Unlike texture packs, a narrator pack must not be compressed.
 - A narrator folder with the same name comes before the file.
 - `tatou.log` says where the narrator comes from: `Narrator: Spanish (narrator pack Spanish.voice)`.
+
+### Language packs (.language)
+
+A language pack is one language of *Alone in the Dark 3* (its texts, voices, scripts and audio tracks) in a single file.
+
+- **Where:** in `UserData\AITD3\Languages`, as `<language>.language`, named as the folder would be: `English`, `French`, `German`, `Italian` or `Spanish` (`Spanish.language`).
+- **Inside:** the files of a language folder, with the same names and without folders: the language PAK (`ESPAGNOL.PAK`...), `LISTSAMP.PAK`, `LISTLIFE.PAK` and the others listed in [Other languages in Alone in the Dark 3](README.md#other-languages-in-alone-in-the-dark-3), and its tracks (`21.ogg`... or `Track22.ogg`...). As with a folder, a pack that lacks a file it needs is not offered.
+- **Making one:** `python tools/makeLanguagePack.py "<language folder>" Spanish.language`. With 7-Zip: select the files (not their folder), add them to a ZIP with the compression level **Store**, and rename the `.zip` to `.language`. It must not be compressed, and must be under 4 GB.
+- A language folder with the same name comes before the file.
+- `tatou.log` says it is used: `Language pack: Languages\Spanish.language (44 files)`, and for each track `Music: CD track 22 from the language (its CD image or pack)`.
+- These are the game's own files: share a language pack only with whoever owns that version of the game, never publicly.
 
 ## Sharing a mod
 

@@ -99,7 +99,7 @@ It is not a static recompilation: a static recompilation translates the machine 
 
 ## What it adds
 
-- **Widescreen view** (*Alone in the Dark*, *Jack in the Dark* and *Alone in the Dark 2*): the game fills a 16:9 screen with no stretching and no black bars. The scene is enlarged to the width of the screen and the view follows the character up and down; the right stick (or Page Up / Page Down) looks up and down. Menus, the inventory and books stay whole in 4:3, with a blurred picture of the game at the sides. Choose **16:9 (zoomed)** or **16:10 (zoomed)** in **Aspect ratio** (see [Widescreen view](#widescreen-view)).
+- **Widescreen view** (all the games): the game fills a 16:9 screen with no stretching and no black bars. The scene is enlarged to the width of the screen and the view follows the character up and down; the right stick (or Page Up / Page Down) looks up and down. Menus, the inventory and books stay whole in 4:3, with a blurred picture of the game at the sides. Choose **16:9 (zoomed)** or **16:10 (zoomed)** in **Aspect ratio** (see [Widescreen view](#widescreen-view)).
 - **Fixes** to the original: objects drawn in the wrong order, monsters stuck at windows, gaps in 3D models, lines at the edges of masks, game speed tied to the frame rate, and many more (see `docs/baseline/BUGS.md`).
 - **Launcher** to choose the game, its language (the five of the GOG and Steam editions: English, French, German, Italian, Spanish) and the data folder, with the same options as the in-game **F1** window. The menus are translated into the same five languages.
 - **Screen options**: resolution, aspect ratio (4:3, 16:10, stretched, and the zoomed widescreen view), integer scaling, fullscreen, frame limit, VSync.
@@ -214,6 +214,8 @@ GOG and Steam sell *Alone in the Dark 3* one language at a time (English, French
    With a French installation, the other languages also need its `OBJETS.ITD`, and French over any other one needs its own: the French version numbers its scripts differently. A folder that lacks a file it needs is not offered (the launcher writes which one in `launcher.log`).
 3. For the voiced intro and the narrator, add that language's audio tracks: the files of its `MUSIC` folder (`Track02.ogg`...) as they are, or named after the track minus 1 (`01.ogg`...), as `.ogg`, `.wav` or `.mp3`. Without them, the texts and the voices of the scenes are in that language and the intro and the books are read by the narrator of your installation. The narrator's timing of each language is built into the game.
 4. The Spanish CD also works as **an image**: its `.bin` (or `.img`) with its `.cue` of the same name in the `Spanish` folder. Everything is read straight from the image; nothing is extracted.
+
+   **Or one file:** the files of a language folder (and its tracks) can go in a single `Spanish.language` file (or `French.language`...) in `Languages`, instead of the folder (a language pack, see the [modding guide](MODDING.md#language-packs-language)). A folder with the same name comes first.
 5. In the launcher, choose the language in the **Game language** list of the *Alone in the Dark 3* page (it appears once the folder is found) and press **Play**.
 
 Your installation is not changed, and choosing its language goes back to it. No game files are included with this project: you need your own copies.
@@ -337,7 +339,7 @@ The launcher (its **Options**, **Controls** and **Audio** cards) and the in-game
 | Scanlines | Thin dark lines over the picture, like an old CRT screen; under it, their intensity from 1 (soft) to 4 (strong) |
 | SSAO | Soft shadows where surfaces meet |
 | Smooth animations | Poses blended between the original key frames |
-| Enhanced text | In *Alone in the Dark*, *Jack in the Dark* and *Alone in the Dark 2*, a new smooth font with the game's own capitals; in *Alone in the Dark 3*, the game's letters redrawn sharp at screen resolution |
+| Enhanced text | A new smooth font in every text, with each game's own capitals |
 | Custom backgrounds | Uses your pictures instead of the originals |
 | Improved backgrounds (Alone 1 and Jack) | Downloads the improved backgrounds and masks of *Alone in the Dark* and *Jack in the Dark* (one file, about 130 MB) and switches on Custom backgrounds; **Remove** deletes them |
 | Improved backgrounds (Alone 2) | The same for *Alone in the Dark 2* (one file, about 234 MB), on its page of the launcher |
@@ -347,7 +349,7 @@ The launcher (its **Options**, **Controls** and **Audio** cards) and the in-game
 
 ### Widescreen view
 
-In *Alone in the Dark*, *Jack in the Dark* and *Alone in the Dark 2*, **Aspect ratio** has two widescreen choices, for a 16:9 screen:
+In every game, **Aspect ratio** has two widescreen choices, for a 16:9 screen:
 
 - **16:9 (zoomed)**: the 4:3 scene is enlarged to the whole width of the screen. Part of it is out of the screen above and below, and the view follows the character gently up and down (it jumps at once when the camera changes); in a scene, it also keeps on screen whoever moves with the character, when they fit.
 - **16:10 (zoomed)**: enlarges a little less, so more of the scene is seen, with narrow strips at the sides.

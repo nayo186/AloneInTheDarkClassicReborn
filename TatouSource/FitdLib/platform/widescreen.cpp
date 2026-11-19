@@ -94,10 +94,10 @@ void widescreenSceneQuad(const int sceneRect[4], int quad[4])
     s_lastTime = now;
     const float step = (std::min)(seconds, 0.1f);
 
-    // Playing: inside the game's loop (Alone 1, Jack, Alone 2) with no screen over it.
+    // Playing: inside the game's loop (Alone 1, 2, 3, Jack) with no screen over it.
     // Its fades count too (closing a menu, the scene fades in before it is
     // drawn again): deciding by the frames drawn showed them 4:3 a moment
-    s_playing = widescreenZoomed() && g_playWorldActive && s_screensOver == 0 && (g_gameId == AITD1 || g_gameId == JACK || g_gameId == AITD2);
+    s_playing = widescreenZoomed() && g_playWorldActive && s_screensOver == 0 && (g_gameId == AITD1 || g_gameId == JACK || g_gameId == AITD2 || g_gameId == AITD3);
 
     // The scene at the screen's width: taller than the screen
     const float sceneHeight = sceneRect[2] * 3.0f / 4.0f;

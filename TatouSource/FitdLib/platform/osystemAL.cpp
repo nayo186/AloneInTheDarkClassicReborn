@@ -720,7 +720,7 @@ static FoundTrack findTrack(int trackId)
             return found;
         if ((found.source = languagePackCreateTrack(trackId)))
         {
-            found.from = "the language CD image";
+            found.from = "the language (its CD image or pack)";
             return found;
         }
     }

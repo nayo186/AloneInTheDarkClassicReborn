@@ -438,6 +438,18 @@ std::vector<GameLanguage> findGameLanguages(const std::string& folder)
                 if (!has)
                     logLine("Language folder %s not used: it lacks %s", folder.u8string().c_str(), missing.c_str());
             }
+            else
+            {
+                // A language pack: Languages\Spanish.language
+                ZipArchive pack;
+                if (openLanguagePack(folder, pak, pack))
+                {
+                    const std::string missing = missingLanguagePackFiles(pack, language.pakName, install.gameData);
+                    has = missing.empty();
+                    if (!has)
+                        logLine("Language pack %s not used: it lacks %s", pack.path().u8string().c_str(), missing.c_str());
+                }
+            }
         }
         if (has)
             found.push_back(language);

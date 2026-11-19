@@ -1023,7 +1023,7 @@ void AllRedraw(int flagFlip)
 
     // A frame of play: the zoomed aspect ratios follow the character
     // (platform/widescreen.cpp)
-    if (g_gameId == AITD1 || g_gameId == JACK || g_gameId == AITD2)
+    if (g_gameId == AITD1 || g_gameId == JACK || g_gameId == AITD2 || g_gameId == AITD3)
     {
         int top = -1, bottom = -1;
         if (currentCameraTargetActor >= 0 && currentCameraTargetActor < NUM_MAX_OBJECT)

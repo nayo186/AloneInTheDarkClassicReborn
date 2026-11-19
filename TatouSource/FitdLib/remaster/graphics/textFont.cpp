@@ -14,7 +14,8 @@
 //   lines and pages never change: the capitals are the game's own, rebuilt
 //   smooth (Scale2x three times and a soft cut); the other letters come from
 //   a modern font (Grenze Gotisch for Alone 1, IM Fell DW Pica Italic for
-//   Jack, Crimson Pro for Alone 2), squeezed if they do not fit.
+//   Jack, Crimson Pro for Alone 2, Arvo for Alone 3), squeezed if they do not
+//   fit.
 // - A soft outline (dark, or light under dark letters) keeps them readable on
 //   bright pictures.
 ///////////////////////////////////////////////////////////////////////////////
@@ -50,6 +51,8 @@ extern const unsigned char kGameFontItalic[];
 extern const size_t kGameFontItalic_size;
 extern const unsigned char kGameFontBook[];
 extern const size_t kGameFontBook_size;
+extern const unsigned char kGameFontSlab[];
+extern const size_t kGameFontSlab_size;
 
 // The palette of the game (platform/rendererBGFX.cpp) and the size of the
 // scene picture (platform/bgfxGlue.cpp)
@@ -283,8 +286,9 @@ void loadFont()
         return;
     // Each game its own: Grenze Gotisch with Alone 1's gothic capitals,
     // IM Fell DW Pica Italic with Jack's script capitals, Crimson Pro with
-    // Alone 2's book capitals
-    const unsigned char* data = g_gameId == JACK ? kGameFontItalic : g_gameId == AITD2 ? kGameFontBook : kGameFontGothic;
+    // Alone 2's book capitals, Arvo with Alone 3's slab (western) capitals
+    const unsigned char* data = g_gameId == JACK ? kGameFontItalic : g_gameId == AITD2 ? kGameFontBook
+                              : g_gameId == AITD3 ? kGameFontSlab : kGameFontGothic;
     s_fontReady = stbtt_InitFont(&s_font, data, stbtt_GetFontOffsetForIndex(data, 0)) != 0;
 
     // The small letters stand where the game's "a" ends
@@ -670,7 +674,7 @@ std::array<unsigned char, 320 * 200> s_hidden{};   // pixels of the letters we d
 // The games with a new font
 bool textFontForGame()
 {
-    return g_gameId == AITD1 || g_gameId == JACK || g_gameId == AITD2;
+    return g_gameId == AITD1 || g_gameId == JACK || g_gameId == AITD2 || g_gameId == AITD3;
 }
 
 bool active()

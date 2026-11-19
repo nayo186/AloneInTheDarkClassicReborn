@@ -812,6 +812,7 @@ void AITD3_showMap()
 	printf(MLOOP_TAG "Map opened: floor %d, room %d, %s\n", g_currentFloor, currentRoom, arrow ? "with its arrow" : "no arrow there");
 
 	SaveTimerAnim();
+	ScreenOverPlay screenOverPlay;   // a 4:3 screen in the zoomed aspect ratios (widescreen.cpp)
 	while (key || Click)   // Tab, which opened it
 		process_events();
 
