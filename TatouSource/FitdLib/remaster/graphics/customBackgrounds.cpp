@@ -177,11 +177,32 @@ struct Picture
     bool known() const { return index >= 0; }
 };
 
-// The camera background of the current camera, and the full-screen picture
-// shown last (it is used only while the screen still shows it)
+// The camera background of the current camera, and the last two full-screen
+// pictures: the game loads the next one while the last is still on screen
+// (the title, then the book of the credits), so the one used is the one the
+// screen shows (screenUploaded; BUGS.md C85)
 static Picture s_camera;
-static Picture s_screen;
-static bool s_screenOnScreen = false;
+static Picture s_screens[2];
+static int s_screenNewest = 0;   // the one loaded last
+static int s_screenShown = -1;   // the one on screen, -1 none
+
+// The place of a full-screen picture: its own if it is one of the two, else
+// the older one
+static int screenSlot(const char* pakName, int index, bool sequence)
+{
+    for (int i = 0; i < 2; i++)
+        if (s_screens[i].index == index && s_screens[i].sequence == sequence && strcmp(s_screens[i].pakName, pakName) == 0)
+            return i;
+    return 1 - s_screenNewest;
+}
+
+// A full-screen picture was loaded into its place
+static void screenLoaded(int slot)
+{
+    s_screenNewest = slot;
+    if (s_screenShown == slot)
+        s_screenShown = -1;   // its pixels changed: the next upload decides
+}
 
 // ---- Pictures decoded in the background ------------------------------------------
 // Decoding an HD picture takes ~130 ms (2880x2160): done by the job threads,
@@ -448,7 +469,7 @@ static void loadMask(CameraMask& mask)
 static void onCameraBackgroundReady(const char* pakName, int index, const unsigned char* pixels)
 {
     // Back to a camera: the full-screen picture is over
-    s_screenOnScreen = false;
+    s_screenShown = -1;
 
     // Closing a menu loads the same camera picture again without creating its
     // masks: keep them (they were dropped and "Export masks" found none)
@@ -468,8 +489,9 @@ static const int kSequenceFramesAhead = 4;
 
 static void onSequenceFrameShown(const char* pakName, int frame, const unsigned char* pixels)
 {
-    setPicture(s_screen, pakName, frame, pixels, true);
-    s_screenOnScreen = false;
+    const int slot = screenSlot(pakName, frame, true);
+    setPicture(s_screens[slot], pakName, frame, pixels, true);
+    screenLoaded(slot);
     if (!g_settings.graphics.customBackgrounds)
         return;
     for (int next = frame + 1; next <= frame + kSequenceFramesAhead; next++)
@@ -488,10 +510,11 @@ static void onScreenPictureShown(const char* pakName, int index)
     char* data = loadPak(pakName, index);
     if (!data)
         return;
-    setPicture(s_screen, pakName, index, (const unsigned char*)data + pictureOffset(size));
+    const int slot = screenSlot(pakName, index, false);
+    setPicture(s_screens[slot], pakName, index, (const unsigned char*)data + pictureOffset(size));
     free(data);
-    // Used once the screen shows it (customBackgroundsScreenUploaded)
-    s_screenOnScreen = false;
+    // Used once the screen shows it (screenUploaded)
+    screenLoaded(slot);
 }
 
 // The player's folders exist from the start (the launcher also creates the
@@ -509,15 +532,28 @@ static void prepareCustomFolder()
 
 static void screenUploaded(const unsigned char* screen)
 {
-    if (!s_screen.known())
-        return;
-    // The full-screen picture is on screen while most of the screen is still
-    // it (texts and frames drawn over it change only a part); another screen
-    // (a camera, a menu, black) changes most of it
-    int different = 0;
-    for (int i = 0; i < 320 * 200; i++)
-        different += (screen[i] != s_screen.originalPixels[i]);
-    s_screenOnScreen = (different < 320 * 200 / 2);
+    // The full-screen picture on screen: of the last two, the one the screen
+    // matches best, if at least a quarter of it is still that picture. Texts,
+    // frames and boxes drawn over it change a part, even half (the box of
+    // the text beside Emily's picture, BUGS.md C85; it was half before, and
+    // the whole picture went back to the original); another screen (a
+    // camera, a menu, black) changes nearly all of it
+    int best = -1;
+    int bestDifferent = 320 * 200 + 1;
+    for (int slot = 0; slot < 2; slot++)
+    {
+        if (!s_screens[slot].known())
+            continue;
+        int different = 0;
+        for (int i = 0; i < 320 * 200; i++)
+            different += (screen[i] != s_screens[slot].originalPixels[i]);
+        if (different < bestDifferent)
+        {
+            best = slot;
+            bestDifferent = different;
+        }
+    }
+    s_screenShown = (best >= 0 && bestDifferent < 320 * 200 * 3 / 4) ? best : -1;
 }
 
 static void update()
@@ -525,9 +561,13 @@ static void update()
     if (!g_settings.graphics.customBackgrounds)
     {
         dropCustom(s_camera);
-        dropCustom(s_screen);
+        s_camera.customChecked = false;
+        for (Picture& screen : s_screens)
+        {
+            dropCustom(screen);
+            screen.customChecked = false;
+        }
         dropDecoded();
-        s_camera.customChecked = s_screen.customChecked = false;
         for (CameraMask& mask : s_masks)
             dropMask(mask);
         return;
@@ -538,8 +578,9 @@ static void update()
         for (CameraMask& mask : s_masks)
             loadMask(mask);
     }
-    if (s_screen.known() && !s_screen.customChecked)
-        loadCustom(s_screen);
+    for (Picture& screen : s_screens)
+        if (screen.known() && !screen.customChecked)
+            loadCustom(screen);
 
     // Twice a second: pictures and masks saved, added or removed while playing
     static double s_lastCheck = 0.0;
@@ -549,7 +590,8 @@ static void update()
     s_lastCheck = now;
 
     pollCustom(s_camera);
-    pollCustom(s_screen);
+    for (Picture& screen : s_screens)
+        pollCustom(screen);
 
     for (CameraMask& mask : s_masks)
     {
@@ -572,8 +614,12 @@ static const Picture* activePicture()
 {
     if (!g_settings.graphics.customBackgrounds)
         return nullptr;
-    if (s_screenOnScreen && bgfx::isValid(s_screen.custom) && bgfx::isValid(s_screen.original))
-        return &s_screen;
+    if (s_screenShown >= 0)
+    {
+        const Picture& screen = s_screens[s_screenShown];
+        if (bgfx::isValid(screen.custom) && bgfx::isValid(screen.original))
+            return &screen;
+    }
     if (bgfx::isValid(s_camera.custom) && bgfx::isValid(s_camera.original) && g_playWorldActive && !g_menuActive)
         return &s_camera;
     return nullptr;
