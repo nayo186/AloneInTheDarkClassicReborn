@@ -214,6 +214,11 @@ static bool download(const std::string& url, const fs::path& file, int seconds)
 }
 #endif
 
+bool launcherDownload(const std::string& url, const fs::path& file, int seconds)
+{
+    return download(url, file, seconds);
+}
+
 static std::string readFile(const fs::path& file)
 {
     std::ifstream stream(file, std::ios::binary);

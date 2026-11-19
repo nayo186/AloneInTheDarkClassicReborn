@@ -86,6 +86,11 @@ static fs::path exeFolder()
     return base ? fs::u8path(base) : fs::path();
 }
 
+fs::path userDataFolder()
+{
+    return exeFolder() / kUserDataFolder;
+}
+
 // A value of launcher.cfg, next to the exe (empty if it is not there)
 static std::string launcherSetting(const char* wanted)
 {

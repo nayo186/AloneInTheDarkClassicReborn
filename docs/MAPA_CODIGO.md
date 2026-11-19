@@ -167,6 +167,7 @@ Cuando un archivo tiene `.cpp` y `.h`, va en una sola fila.
 | `config/remasterHooks.cpp/.h` | Conecta el remaster con el motor: fuentes, menús, teclas F9/F10 y los ganchos de cada sistema. |
 | `config/debugCheats.cpp/.h` | F9 (modo depuración, herramientas de desarrollo): ventana para darse objetos. |
 | `graphics/customBackgrounds.cpp/.h` | Fondos y máscaras del jugador en lugar de los originales (los fondos, descomprimidos en segundo plano y por adelantado los de la sala); exportar todos los fondos y máscaras. |
+| `graphics/texturePack.cpp/.h` | Paquetes de texturas: un `.texture` de `UserData` (ZIP con los fondos y máscaras de cada juego) leído sin extraer; los archivos sueltos mandan. |
 | `graphics/textFont.cpp/.h` | Fuente nueva de los textos (AITD1 y Jack, con "Texto mejorado"): cada texto del juego dibujado otra vez a la resolución de la escena, en su mismo hueco, con las mayúsculas originales lisas y minúsculas de `assets/fonts/`. |
 | `graphics/objectFixes.cpp/.h` | Correcciones visuales de objetos 3D (posición, giro, tamaño), cargadas de `assets/objectFixes/`. |
 | `ui/advancedOptions.cpp/.h` | Ventana F1: las opciones del launcher dentro del juego, con Controles y Audio. |
@@ -208,7 +209,8 @@ Cuando un archivo tiene `.cpp` y `.h`, va en una sola fila.
 | `Launcher/gameCover.cpp/.h` | Portadas de los juegos (compiladas dentro del exe; en grises sin datos enlazados). |
 | `Launcher/folderDialog.cpp/.h` | Selector de carpeta del Explorador de Windows. |
 | `Launcher/fileCheck.cpp/.h` | La comprobación de los archivos del juego (`Shared/gameFiles.h`) en un hilo propio, con su progreso para la ventana de carga. |
-| `Launcher/updater.cpp/.h` | Actualizaciones: busca la última versión en GitHub y la instala (lo único que se conecta a internet). |
+| `Launcher/updater.cpp/.h` | Actualizaciones: busca la última versión en GitHub y la instala (se conecta a internet solo para esto y para el paquete de fondos). |
+| `Launcher/texturePackDownload.cpp/.h` | "Fondos mejorados" de las Opciones avanzadas: descarga el paquete de texturas de Alone 1 y Jack a `UserData` (entero o nada) o lo borra. |
 | `Launcher/embedCovers.cmake`, `assets/covers/` | Mete las portadas en `Launcher.exe` al compilar. |
 | `Fitd/fitd.cpp` | Punto de entrada de `Tatou.exe`: conecta el remaster y arranca el motor. |
 | `Fitd/Tatou.rc` | Icono de `Tatou.exe`. |

@@ -23,6 +23,7 @@
 
 #pragma once
 
+#include <filesystem>
 #include <string>
 
 // Called first, before the log file opens (reads --game aitd1|jack|aitd2, --data
@@ -53,6 +54,9 @@ const char* customMasksFolder();
 const char* exportsFolder();
 // True when the working folder is UserData (outside the debug mode or with GOG/Steam)
 bool usesPortableFolders();
+// The portable UserData folder next to the exe (Android: the app's folder), in
+// any mode; where texture packs go (remaster/graphics/texturePack.h)
+std::filesystem::path userDataFolder();
 
 // The CD image of a GOG installation (GAME.GOG) or the player's CD; empty for a copy
 const std::string& gameImagePath();

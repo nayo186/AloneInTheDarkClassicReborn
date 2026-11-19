@@ -126,6 +126,16 @@ means that this music is CD track 12, so your file is `11.ogg` (or `.wav`, `.mp3
 
 *Alone in the Dark 3* can be played in a language from a folder of `UserData\AITD3\Languages`, with the texts, voices and narrator of that language: see [Other languages in Alone in the Dark 3](README.md#other-languages-in-alone-in-the-dark-3) in the README.
 
+## Texture packs
+
+A **texture pack** holds the backgrounds and masks of one or more games in a single file, so a player only has to put that file in `UserData` (next to `Launcher.exe`), e.g. `UserData\nayo.texture`. The game reads the pictures straight from it; nothing is extracted.
+
+- It is a **ZIP file** with the extension `.texture`, holding the same folders as `UserData`: `AITD1/Backgrounds/...`, `AITD1/Masks/...`, `JACK/Backgrounds/...`, `JACK/Masks/...`
+- Store the files **without compression** (the PNG and JPG pictures are already compressed); a compressed ZIP works too, a bit slower. It must be under 4 GB.
+- `tools/makeTexturePack.py` makes one from a `UserData` folder: `python tools/makeTexturePack.py "<UserData folder>" mypack.texture` (Alone in the Dark and Jack by default; add `AITD2` or `AITD3` for those games).
+- A **loose file** in `Backgrounds` or `Masks` comes before the pack, so one picture can still be changed without making the pack again.
+- With several packs, they are read in name order and the first one that has a picture is used.
+
 ## Sharing a mod
 
 - **Share only your own work:** pictures you painted or made, recordings you made. **Never** the files of the game, its pictures exported as they are, its music or its voices: everyone needs their own copy of the game.

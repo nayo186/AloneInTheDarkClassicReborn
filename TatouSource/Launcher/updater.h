@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include <filesystem>
 #include <string>
 
 enum class UpdateState
@@ -50,5 +51,8 @@ void updaterStartInstall();
 UpdateState updaterState();
 // The newest version found ("1.0.0-beta.8"); valid from Available on
 std::string updaterLatestVersion();
+// Downloads url into file (curl on PC, the app on Android); any thread; false
+// if it failed. Also used for the texture pack (texturePackDownload.h)
+bool launcherDownload(const std::string& url, const std::filesystem::path& file, int seconds);
 // Waits while files are being replaced (never leaves the programs half done)
 void updaterShutdown();

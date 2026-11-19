@@ -52,6 +52,8 @@ target_sources(Launcher PRIVATE
     folderDialog.h
     updater.cpp
     updater.h
+    texturePackDownload.cpp
+    texturePackDownload.h
     fileCheck.cpp
     fileCheck.h
     Launcher.rc

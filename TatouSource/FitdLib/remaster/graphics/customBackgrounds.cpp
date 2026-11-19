@@ -26,6 +26,7 @@
 #include "../ThirdParty/bgfx.cmake/bimg/3rdparty/stb/stb_image.h"
 
 #include "jobSystem.h"
+#include "texturePack.h"
 
 #include <atomic>
 #include <condition_variable>
@@ -71,21 +72,78 @@ static std::string pictureBase(const char* pakName, int index, bool sequence)
     return name;
 }
 
+// The player's file of a picture or a mask: loose in its folder, or else in a
+// texture pack (texturePack.h), so a loose file can replace one of a pack
+struct CustomFile
+{
+    bool found = false;
+    fs::path path;                // the loose file
+    std::string packName;         // or the file in a pack ("AITD1/Backgrounds/CAMERA00_000.jpg")
+    fs::file_time_type time;      // of the loose file, or of the pack
+
+    // Tells the decoded pictures apart
+    std::string key() const { return path.empty() ? "pack:" + packName : path.string(); }
+    std::string extension() const { return path.empty() ? fs::u8path(packName).extension().string() : path.extension().string(); }
+    // For the log
+    std::string label() const { return path.empty() ? packName + " (texture pack)" : path.string(); }
+};
+
+static CustomFile findCustom(const std::string& folderName, const char* packFolder, const std::string& base,
+                             const char* const* extensions, int extensionCount)
+{
+    CustomFile file;
+    std::error_code error;
+    for (int i = 0; i < extensionCount; i++)
+    {
+        const fs::path path = fs::u8path(folderName + base + extensions[i]);
+        if (fs::exists(path, error))
+        {
+            file.found = true;
+            file.path = path;
+            file.time = fs::last_write_time(path, error);
+            return file;
+        }
+    }
+    for (int i = 0; i < extensionCount; i++)
+    {
+        const std::string name = std::string(texturePackGameFolder()) + "/" + packFolder + "/" + base + extensions[i];
+        if (texturePackHas(name, &file.time))
+        {
+            file.found = true;
+            file.packName = name;
+            return file;
+        }
+    }
+    return file;
+}
+
 // The player's file of that picture: PNG, or JPG (much lighter for large
 // pictures; the masks stay PNG, their edges must be exact). Upper-case
 // extensions count too (Linux tells them apart)
-static fs::path customFile(const std::string& base)
+static CustomFile customFile(const std::string& base)
 {
     static const char* const kExtensions[] = { ".png", ".jpg", ".jpeg", ".PNG", ".JPG", ".JPEG" };
-    const std::string start = folder(customPicturesFolder()) + base;
-    std::error_code error;
-    for (const char* extension : kExtensions)
-    {
-        const fs::path path = fs::u8path(start + extension);
-        if (fs::exists(path, error))
-            return path;
-    }
-    return fs::u8path(start + ".png");
+    return findCustom(folder(customPicturesFolder()), kPicturesFolder, base, kExtensions, 6);
+}
+
+// The player's file of that mask ("CAMERA00_000_mask_0_1.png")
+static CustomFile customMaskFile(const std::string& name)
+{
+    static const char* const kNoExtension[] = { "" };
+    return findCustom(folder(customMasksFolder()), kMasksFolder, name, kNoExtension, 1);
+}
+
+// The pixels of the player's file (stbi's, freed with stbi_image_free), or
+// nullptr (stbi_failure_reason)
+static unsigned char* loadCustomPixels(const CustomFile& file, int* width, int* height, int components)
+{
+    int channels;
+    if (!file.path.empty())
+        return stbi_load(file.path.string().c_str(), width, height, &channels, components);
+    std::vector<unsigned char> data;
+    if (!texturePackRead(file.packName, data))
+        return nullptr;
+    return stbi_load_from_memory(data.data(), (int)data.size(), width, height, &channels, components);
 }
 
 // AITD1 full-screen pictures of ITD_RESS (AITD1.h): armadillo, letter, book,
@@ -149,10 +207,10 @@ static const size_t kMaxDecoded = 8;
 static std::map<std::string, std::shared_ptr<DecodedPicture>> s_decoded;
 static std::deque<std::string> s_decodedOrder;
 
-static void decodePicture(const std::string& path, DecodedPicture& decoded)
+static void decodePicture(const CustomFile& file, DecodedPicture& decoded)
 {
-    int width, height, channels;
-    unsigned char* pixels = stbi_load(path.c_str(), &width, &height, &channels, 4);
+    int width = 0, height = 0;
+    unsigned char* pixels = loadCustomPixels(file, &width, &height, 4);
     std::lock_guard<std::mutex> lock(decoded.mutex);
     decoded.pixels = pixels;
     decoded.width = width;
@@ -164,9 +222,10 @@ static void decodePicture(const std::string& path, DecodedPicture& decoded)
 
 // The picture of that file, decoded or on its way (a changed file is decoded
 // again, so a picture saved while playing appears)
-static std::shared_ptr<DecodedPicture> requestDecode(const fs::path& path, fs::file_time_type time)
+static std::shared_ptr<DecodedPicture> requestDecode(const CustomFile& file)
 {
-    const std::string key = path.string();
+    const std::string key = file.key();
+    const fs::file_time_type time = file.time;
     auto found = s_decoded.find(key);
     if (found != s_decoded.end() && found->second->time == time)
         return found->second;
@@ -184,12 +243,12 @@ static std::shared_ptr<DecodedPicture> requestDecode(const fs::path& path, fs::f
 
     if (!JobSystem::instance().isInitialized())
     {
-        decodePicture(key, *decoded);
+        decodePicture(file, *decoded);
         return decoded;
     }
     JobSystem::instance().scheduleJob(JobSystem::JobType::LOAD_HD_BACKGROUND, JobSystem::Priority::HIGH,
-        [key, decoded]() {
-            decodePicture(key, *decoded);
+        [file, decoded]() {
+            decodePicture(file, *decoded);
             decoded->done.notify_all();
         });
     return decoded;
@@ -210,11 +269,9 @@ static void prefetchRoomCameras()
     snprintf(pakName, sizeof(pakName), "CAMERA%02d", g_currentFloor);
     for (const u16 camera : roomDataTable[currentRoom].cameraIdxTable)
     {
-        const fs::path path = customFile(pictureBase(pakName, camera, false));
-        std::error_code error;
-        const fs::file_time_type time = fs::last_write_time(path, error);
-        if (!error)
-            requestDecode(path, time);
+        const CustomFile file = customFile(pictureBase(pakName, camera, false));
+        if (file.found)
+            requestDecode(file);
     }
 }
 
@@ -233,15 +290,14 @@ static void loadCustom(Picture& picture)
     if (!picture.known())
         return;
 
-    const fs::path path = customFile(pictureBase(picture.pakName, picture.index, picture.sequence));
-    std::error_code error;
-    if (!fs::exists(path, error))
+    const CustomFile file = customFile(pictureBase(picture.pakName, picture.index, picture.sequence));
+    if (!file.found)
         return;
-    picture.customTime = fs::last_write_time(path, error);
+    picture.customTime = file.time;
 
     // Usually decoded already (prefetchRoomCameras); otherwise the game waits
     // here with the last image on screen (the window keeps answering)
-    const std::shared_ptr<DecodedPicture> decoded = requestDecode(path, picture.customTime);
+    const std::shared_ptr<DecodedPicture> decoded = requestDecode(file);
     const double waitStart = (double)bx::getHPCounter() / (double)bx::getHPFrequency();
     bool wasReady;
     {
@@ -252,7 +308,7 @@ static void loadCustom(Picture& picture)
     const int waitedMs = (int)(((double)bx::getHPCounter() / (double)bx::getHPFrequency() - waitStart) * 1000.0);
     if (!decoded->pixels)
     {
-        printf(MAIN_WARN "Custom background %s could not be read (%s)\n", path.string().c_str(), decoded->error.c_str());
+        printf(MAIN_WARN "Custom background %s could not be read (%s)\n", file.label().c_str(), decoded->error.c_str());
         return;
     }
     const int width = decoded->width;
@@ -260,7 +316,7 @@ static void loadCustom(Picture& picture)
     const float ratio = (float)width / (float)height;
     if (ratio < 4.0f / 3.0f - 0.01f)
     {
-        printf(MAIN_WARN "Custom background %s is narrower than 4:3 (%dx%d): not used\n", path.string().c_str(), width, height);
+        printf(MAIN_WARN "Custom background %s is narrower than 4:3 (%dx%d): not used\n", file.label().c_str(), width, height);
         return;
     }
     // Uploaded straight from the decoded pixels (no 24 MB copy): bgfx lets go
@@ -277,10 +333,10 @@ static void loadCustom(Picture& picture)
     picture.customOriginalShape = (ratio > 1.6f - 0.01f && ratio < 1.6f + 0.01f);
     if (wasReady)
         printf(MAIN_TAG "Custom background %s%s (%dx%d, decoded ahead)\n", pictureBase(picture.pakName, picture.index, picture.sequence).c_str(),
-            path.extension().string().c_str(), width, height);
+            file.extension().c_str(), width, height);
     else
         printf(MAIN_TAG "Custom background %s%s (%dx%d, waited %d ms)\n", pictureBase(picture.pakName, picture.index, picture.sequence).c_str(),
-            path.extension().string().c_str(), width, height, waitedMs);
+            file.extension().c_str(), width, height, waitedMs);
 }
 
 // Sets the picture shown; returns false when it was already this one
@@ -312,14 +368,13 @@ static void pollCustom(Picture& picture)
 {
     if (!picture.known())
         return;
-    const fs::path path = customFile(pictureBase(picture.pakName, picture.index, picture.sequence));
-    std::error_code error;
-    if (!fs::exists(path, error))
+    const CustomFile file = customFile(pictureBase(picture.pakName, picture.index, picture.sequence));
+    if (!file.found)
     {
         if (bgfx::isValid(picture.custom))
             dropCustom(picture);
     }
-    else if (!bgfx::isValid(picture.custom) || fs::last_write_time(path, error) != picture.customTime)
+    else if (!bgfx::isValid(picture.custom) || file.time != picture.customTime)
     {
         loadCustom(picture);
     }
@@ -366,18 +421,17 @@ static void dropMasks()
 static void loadMask(CameraMask& mask)
 {
     dropMask(mask);
-    const fs::path path = fs::u8path(folder(customMasksFolder()) + maskName(s_camera.pakName, s_camera.index, mask.roomId, mask.maskId));
-    std::error_code error;
-    if (!fs::exists(path, error))
+    const CustomFile file = customMaskFile(maskName(s_camera.pakName, s_camera.index, mask.roomId, mask.maskId));
+    if (!file.found)
         return;
     mask.customPresent = true;
-    mask.customTime = fs::last_write_time(path, error);
+    mask.customTime = file.time;
 
-    int width, height, channels;
-    unsigned char* pixels = stbi_load(path.string().c_str(), &width, &height, &channels, 1);
+    int width = 0, height = 0;
+    unsigned char* pixels = loadCustomPixels(file, &width, &height, 1);
     if (!pixels)
     {
-        printf(MAIN_WARN "Custom mask %s could not be read (%s)\n", path.string().c_str(), stbi_failure_reason());
+        printf(MAIN_WARN "Custom mask %s could not be read (%s)\n", file.label().c_str(), stbi_failure_reason() ? stbi_failure_reason() : "unknown");
         return;
     }
     mask.custom = bgfx::createTexture2D((uint16_t)width, (uint16_t)height, false, 1, bgfx::TextureFormat::R8,
@@ -420,11 +474,9 @@ static void onSequenceFrameShown(const char* pakName, int frame, const unsigned 
         return;
     for (int next = frame + 1; next <= frame + kSequenceFramesAhead; next++)
     {
-        std::error_code error;
-        const fs::path path = customFile(pictureBase(pakName, next, true));
-        const fs::file_time_type time = fs::last_write_time(path, error);
-        if (!error)
-            requestDecode(path, time);
+        const CustomFile file = customFile(pictureBase(pakName, next, true));
+        if (file.found)
+            requestDecode(file);
     }
 }
 
@@ -499,16 +551,15 @@ static void update()
     pollCustom(s_camera);
     pollCustom(s_screen);
 
-    std::error_code error;
     for (CameraMask& mask : s_masks)
     {
-        const fs::path maskPath = fs::u8path(folder(customMasksFolder()) + maskName(s_camera.pakName, s_camera.index, mask.roomId, mask.maskId));
-        if (!fs::exists(maskPath, error))
+        const CustomFile file = customMaskFile(maskName(s_camera.pakName, s_camera.index, mask.roomId, mask.maskId));
+        if (!file.found)
         {
             if (mask.customPresent)
                 dropMask(mask);
         }
-        else if (!mask.customPresent || fs::last_write_time(maskPath, error) != mask.customTime)
+        else if (!mask.customPresent || file.time != mask.customTime)
         {
             loadMask(mask);
         }
@@ -615,12 +666,10 @@ static void buildSides()
     // The picture in RGBA
     std::vector<unsigned char> rgba;
     int width = 0, height = 0;
-    const fs::path path = customFile(pictureBase("ITD_RESS", index, false));
-    std::error_code error;
-    if (s_sidesCustom && fs::exists(path, error))
+    const CustomFile file = customFile(pictureBase("ITD_RESS", index, false));
+    if (s_sidesCustom && file.found)
     {
-        int channels;
-        unsigned char* pixels = stbi_load(path.string().c_str(), &width, &height, &channels, 4);
+        unsigned char* pixels = loadCustomPixels(file, &width, &height, 4);
         if (pixels)
         {
             rgba.assign(pixels, pixels + (size_t)width * height * 4);

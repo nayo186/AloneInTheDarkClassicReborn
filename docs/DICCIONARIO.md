@@ -119,6 +119,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `customMasksFolder` | Folder of the player's masks (Masks, or backgrounds_custom in debug mode) |
 | `exportsFolder` | Folder of the exported backgrounds and masks |
 | `usesPortableFolders` | True when the working folder is UserData (outside the debug mode or with GOG/Steam) |
+| `userDataFolder` | The portable UserData folder next to the exe (Android: the app's folder), in any mode; where texture packs go (remaster/graphics/texturePack.h) |
 | `gameImagePath` | The CD image of a GOG installation (GAME.GOG) or the player's CD; empty for a copy |
 | `gameCuePath` | Its track list (GAME.INS on GOG, GAME.INST on Steam, the player's .cue); empty if none |
 | `gameImageFolder` | The player's CD: the folder of the CD with the game's files ("INDARK", "INDARK2", "INDARK3", "JACK"), read from the image; empty otherwise |
@@ -889,6 +890,14 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | --- | --- |
 | `textFontRegister` | Fills the hooks (core: each text written; platform: the text layer shown) |
 
+### `remaster/graphics/texturePack.h`
+
+| Función | Para qué sirve |
+| --- | --- |
+| `texturePackHas` | The packs' file with that name ("AITD1/Backgrounds/CAMERA00_000.jpg", any case) is there; time is the pack's (a pack replaced is read again) |
+| `texturePackRead` | The bytes of that file of the packs; false if none has it or it cannot be read |
+| `texturePackGameFolder` | The folder of the current game in the packs: "AITD1", "JACK", "AITD2", "AITD3" |
+
 ### `remaster/ui/advancedOptions.h`
 
 | Función | Para qué sirve |
@@ -1016,6 +1025,17 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `launchGame` | Starts Tatou.exe with the default settings and the chosen language, in the game's data folder: game "aitd1", "jack" (Tatou enters the JACK subfolder and shares the AITD1 configuration), "aitd2" or "aitd3" |
 | `launchedGameArguments` | Android: the game's arguments (argv) chosen by launchGame, empty if none |
 
+### `Launcher/texturePackDownload.h`
+
+| Función | Para qué sirve |
+| --- | --- |
+| `texturePackState` | What the pack is doing now (looks at UserData when idle) |
+| `texturePackProgress` | 0-100 while downloading |
+| `texturePackMegabytes` | Size of the pack in MB, for the button |
+| `texturePackStartDownload` | Starts the download (nothing if it is already downloading) |
+| `texturePackRemove` | Removes the pack from UserData |
+| `texturePackShutdown` | Waits for a download in progress to stop (when the launcher closes) |
+
 ### `Launcher/updater.h`
 
 | Función | Para qué sirve |
@@ -1027,4 +1047,5 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `updaterStartInstall` | Downloads and installs the release found by the check |
 | `updaterState` | What the updater is doing now |
 | `updaterLatestVersion` | The newest version found ("1.0.0-beta.8"); valid from Available on |
+| `launcherDownload` | Downloads url into file (curl on PC, the app on Android); any thread; false if it failed. Also used for the texture pack (texturePackDownload.h) |
 | `updaterShutdown` | Waits while files are being replaced (never leaves the programs half done) |
