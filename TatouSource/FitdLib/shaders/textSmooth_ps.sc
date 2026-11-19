@@ -13,6 +13,7 @@ $input v_texcoord0
 
 USAMPLER2D(s_backgroundTexture, 0);
 
+uniform vec4 u_fadeLevel;   // x: brightness (the texts outside the scene, zoomed aspect ratios, follow the screen's fades)
 uniform vec4 u_textStyle;  // x: 1 = smooth, y: 1 = outline, z: stroke cut (0.5 = original width, lower = bolder), w: outline opacity
 
 uint letterIndex(ivec2 p)
@@ -85,5 +86,5 @@ void main()
     if (alpha < 0.01)
         discard;
     vec3 letter = (index != uint(0)) ? getColorFromRawOffset(index).rgb : vec3(0.0, 0.0, 0.0);
-    gl_FragColor = vec4(letter * textAlpha / alpha, alpha);
+    gl_FragColor = vec4(letter * textAlpha / alpha * u_fadeLevel.x, alpha);
 }

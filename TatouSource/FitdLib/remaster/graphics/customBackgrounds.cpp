@@ -588,6 +588,106 @@ static bgfx::TextureHandle maskPicture(int roomId, int maskId, bool* originalSha
     return BGFX_INVALID_HANDLE;
 }
 
+static bool gamePalette(palette_t& palette);
+
+// ---- The still picture of the zoomed aspect ratios ---------------------------
+
+// Behind the 4:3 screens and beyond the scene (platform/widescreen.cpp): the
+// mansion in Alone 1, the toy shop in Jack; the player's picture if there is
+// one, else the game's. Made tiny (it is blurred when enlarged) and darker,
+// so it does not catch the eye.
+static bgfx::TextureHandle s_sidesTexture = BGFX_INVALID_HANDLE;
+static float s_sidesAspect = 4.0f / 3.0f;
+static int s_sidesGame = -1;
+static bool s_sidesCustom = false;
+
+static void buildSides()
+{
+    if (bgfx::isValid(s_sidesTexture))
+        bgfx::destroy(s_sidesTexture);
+    s_sidesTexture = BGFX_INVALID_HANDLE;
+    s_sidesGame = g_gameId;
+    s_sidesCustom = g_settings.graphics.customBackgrounds;
+    const int index = g_gameId == AITD1 ? 16 : g_gameId == JACK ? 3 : -1;
+    if (index < 0)
+        return;
+
+    // The picture in RGBA
+    std::vector<unsigned char> rgba;
+    int width = 0, height = 0;
+    const fs::path path = customFile(pictureBase("ITD_RESS", index, false));
+    std::error_code error;
+    if (s_sidesCustom && fs::exists(path, error))
+    {
+        int channels;
+        unsigned char* pixels = stbi_load(path.string().c_str(), &width, &height, &channels, 4);
+        if (pixels)
+        {
+            rgba.assign(pixels, pixels + (size_t)width * height * 4);
+            stbi_image_free(pixels);
+            s_sidesAspect = (float)width / height;
+        }
+    }
+    if (rgba.empty())
+    {
+        const int size = getPakSize("ITD_RESS", index);
+        palette_t palette;
+        char* data = size >= 64000 ? loadPak("ITD_RESS", index) : nullptr;
+        if (!data || !gamePalette(palette))
+        {
+            free(data);
+            return;
+        }
+        if (g_gameId >= JACK && size >= 64000 + 256 * 3)
+        {
+            copyPalette(data + 64000, palette);
+            convertPaletteIfRequired(palette);
+        }
+        const unsigned char* pixels = (const unsigned char*)data + pictureOffset(size);
+        width = 320;
+        height = 200;
+        rgba.resize(320 * 200 * 4);
+        for (int i = 0; i < 320 * 200; i++)
+        {
+            rgba[i * 4 + 0] = palette[pixels[i]][0];
+            rgba[i * 4 + 1] = palette[pixels[i]][1];
+            rgba[i * 4 + 2] = palette[pixels[i]][2];
+            rgba[i * 4 + 3] = 255;
+        }
+        free(data);
+        s_sidesAspect = 4.0f / 3.0f;   // the game shows its 320x200 in 4:3
+    }
+
+    // Tiny (the average of each square) and at 45 % of its light
+    const int tinyW = 40, tinyH = 30;
+    std::vector<unsigned char> tiny((size_t)tinyW * tinyH * 4);
+    for (int ty = 0; ty < tinyH; ty++)
+        for (int tx = 0; tx < tinyW; tx++)
+        {
+            const int x0 = tx * width / tinyW, x1 = (std::max)(x0 + 1, (tx + 1) * width / tinyW);
+            const int y0 = ty * height / tinyH, y1 = (std::max)(y0 + 1, (ty + 1) * height / tinyH);
+            unsigned long long sum[3] = { 0, 0, 0 };
+            for (int y = y0; y < y1; y++)
+                for (int x = x0; x < x1; x++)
+                    for (int c = 0; c < 3; c++)
+                        sum[c] += rgba[((size_t)y * width + x) * 4 + c];
+            const unsigned long long count = (unsigned long long)(x1 - x0) * (y1 - y0);
+            for (int c = 0; c < 3; c++)
+                tiny[((size_t)ty * tinyW + tx) * 4 + c] = (unsigned char)(sum[c] / count * 45 / 100);
+            tiny[((size_t)ty * tinyW + tx) * 4 + 3] = 255;
+        }
+    s_sidesTexture = bgfx::createTexture2D(tinyW, tinyH, false, 1, bgfx::TextureFormat::RGBA8,
+        BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP, bgfx::copy(tiny.data(), (uint32_t)tiny.size()));
+}
+
+static bgfx::TextureHandle widescreenSides(float* aspect)
+{
+    if (s_sidesGame != g_gameId || s_sidesCustom != g_settings.graphics.customBackgrounds)
+        buildSides();
+    *aspect = s_sidesAspect;
+    return s_sidesTexture;
+}
+
 void customBackgroundsRegister()
 {
     g_onCameraBackgroundReady = onCameraBackgroundReady;
@@ -598,6 +698,7 @@ void customBackgroundsRegister()
     g_getMaskPicture = maskPicture;
     g_onScreenUploaded = screenUploaded;
     g_onMaskCreated = maskCreated;
+    g_getWidescreenSides = widescreenSides;
     prepareCustomFolder();
 }
 

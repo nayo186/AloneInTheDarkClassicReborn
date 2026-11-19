@@ -7,6 +7,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include "screenEffects.h"
+#include "widescreen.h"
+#include "platformHooks.h"
 #include "settings.h"
 #include <bx/timer.h>
 #include "common.h"  // after bx: windows.h min/max macros
@@ -430,7 +432,36 @@ void ScreenEffects::renderComposite(bool bloom, bool grain, bool scanlines, bool
 
     // The two quads below must keep their order: sides first, scene over them
     bgfx::setViewMode(kViewComposite, bgfx::ViewMode::Sequential);
-    if (bgfx::isValid(m_sidePicture) && m_sideU1 > m_sideU0)
+    int sceneQuad[4] = { m_outputX, m_outputY, outputWidth, outputHeight };
+    if (widescreenZoomed())
+    {
+        // Zoomed aspect ratios (widescreen.cpp): a still, blurred picture of
+        // the game fills the window behind, as large as needed to cover it
+        float sidesAspect = 1.0f;
+        const bgfx::TextureHandle sides = g_getWidescreenSides ? g_getWidescreenSides(&sidesAspect) : bgfx::TextureHandle(BGFX_INVALID_HANDLE);
+        if (bgfx::isValid(sides) && sidesAspect > 0.0f)
+        {
+            int w = windowWidth, h = (int)(windowWidth / sidesAspect + 0.5f);
+            if (h < windowHeight)
+            {
+                h = windowHeight;
+                w = (int)(windowHeight * sidesAspect + 0.5f);
+            }
+            bgfx::setUniform(u_fxComposite, composite);
+            bgfx::setTexture(0, s_fxScene, sides);
+            drawFullScreenAt(kViewComposite, BGFX_INVALID_HANDLE, (windowWidth - w) / 2, (windowHeight - h) / 2, w, h,
+                windowWidth, windowHeight, m_sidesProgram, "Composite", true);
+        }
+        // Playing: the scene at the screen's width, the view where it follows
+        // the character; otherwise the whole 4:3 scene in the middle
+        const int sceneRect[4] = { m_outputX, m_outputY, outputWidth, outputHeight };
+        widescreenSceneQuad(sceneRect, sceneQuad);
+        bgfx::setUniform(u_fxComposite, composite);
+        bgfx::setTexture(0, s_fxScene, m_sceneSource, sceneSampler);
+        bgfx::setTexture(1, s_fxBloom, bloom ? m_bloomUp[0] : m_black);
+        bgfx::setTexture(2, s_fxAO, ambientOcclusion ? m_aoBlurred : m_white);
+    }
+    else if (bgfx::isValid(m_sidePicture) && m_sideU1 > m_sideU0)
     {
         // The 4:3 centre of the picture lies on the scene; its sides go out
         // into the bars at the same scale
@@ -444,7 +475,7 @@ void ScreenEffects::renderComposite(bool bloom, bool grain, bool scanlines, bool
     bgfx::setUniform(u_fxSmoke, m_smoke);
     const float smokeTime[4] = { (float)fmod(seconds, 10000.0), 0.0f, 0.0f, 0.0f };
     bgfx::setUniform(u_fxSmokeTime, smokeTime);
-    drawFullScreenAt(kViewComposite, BGFX_INVALID_HANDLE, m_outputX, m_outputY, outputWidth, outputHeight,
+    drawFullScreenAt(kViewComposite, BGFX_INVALID_HANDLE, sceneQuad[0], sceneQuad[1], sceneQuad[2], sceneQuad[3],
         windowWidth, windowHeight, m_compositeProgram, "Composite", true);
     // The smoke is set again by the frame that still shows it (AffSmoke)
     m_smoke[2] = m_smoke[3] = 0.0f;

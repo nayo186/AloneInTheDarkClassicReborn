@@ -2522,6 +2522,7 @@ void processLife(int lifeNum, bool callFoundLife)
             }
             case LM_PICTURE: // displayScreen
             {
+                ScreenOverPlay screenOverPlay;   // a 4:3 picture in the zoomed aspect ratios (widescreen.cpp)
                 appendFormated("LM_PICTURE ");
 
                 int pictureIndex = readNextArgument("pictureIndex");

@@ -24,6 +24,8 @@ enum class AdvancedText
     Aspect4x3,
     Aspect16x10,
     AspectStretched,
+    Aspect16x9Wide,
+    Aspect16x10Wide,
     Fullscreen,
     FullscreenHelp,
     Resolution,
@@ -94,6 +96,8 @@ enum class AdvancedText
     ActionCancel,
     ActionRun,
     ActionMap,
+    ActionLookUp,
+    ActionLookDown,
     ActionOptions,
     Audio,
     MusicVolume,
@@ -151,6 +155,25 @@ static const int kAdvancedTextLanguages = 5;
 static const int kAdvancedOriginalResolution = 320;
 static const int kAdvancedResolutions[] = { 0, 320, 640, 1024, 1280, 1440, 1600, 1920 };
 static const int kAdvancedResolutionCount = (int)(sizeof(kAdvancedResolutions) / sizeof(kAdvancedResolutions[0]));
+// The zoomed aspect ratios list 16:9 sizes (1920 = 1920 x 1080): both are
+// for a 16:9 screen, 16:10 zoomed less (narrow sides with the picture)
+static const int kZoomedResolutions[] = { 0, 1280, 1600, 1920, 2560, 3840 };
+static const int kZoomedResolutionCount = (int)(sizeof(kZoomedResolutions) / sizeof(kZoomedResolutions[0]));
+
+// The zoomed aspect ratios (16:9 and 16:10): on a 16:9 screen the 4:3 scene
+// is enlarged to 16:9 (all the screen) or 16:10 (less: narrow sides with the
+// picture) and the view follows the character (platform/widescreen.cpp)
+inline bool aspectIsZoomed(int aspect)
+{
+    return aspect == 3 || aspect == 4;
+}
+
+// How wide the scene is shown in a zoomed aspect ratio: 16:9 or 16:10
+inline float zoomedSceneRatio(int aspect)
+{
+    return aspect == 4 ? 16.0f / 10.0f : 16.0f / 9.0f;
+}
+
 
 inline int advancedResolutionHeight(int width)
 {
@@ -206,7 +229,8 @@ inline bool integerScaleOffered(int aspect, int tall, int screenWidth, int scree
 // or not even 320 x 200 fits.
 inline bool integerScaleResolve(int value, int aspect, int areaWidth, int areaHeight, int size[2])
 {
-    if (value == 0)
+    // Zoomed: part of the scene is out of the screen, whole pixels mean nothing
+    if (value == 0 || aspectIsZoomed(aspect))
         return false;
     int tallest = areaHeight / 200;
     if (value > 0 && value < tallest)
@@ -285,17 +309,21 @@ inline const char* advancedText(AdvancedText text, int language)
         // AspectRatio
         { "Aspect ratio", "Relación de aspecto", "Format d'image", "Rapporto d'aspetto", "Seitenverhältnis" },
         // AspectRatioHelp
-        { "4:3 is the shape it was drawn for. 16:10: square pixels, as in GOG/DOSBox. Stretched: fullscreen only.",
-          "4:3 es la forma para la que se dibujó. 16:10: píxeles cuadrados, como en GOG/DOSBox. Estirada: solo en pantalla completa.",
-          "4:3 est le format pour lequel il a été dessiné. 16:10 : pixels carrés, comme dans GOG/DOSBox. Étirée : plein écran seulement.",
-          "4:3 è la forma per cui è stato disegnato. 16:10: pixel quadrati, come in GOG/DOSBox. Allungata: solo a schermo intero.",
-          "4:3 ist das Format, für das es gezeichnet wurde. 16:10: quadratische Pixel, wie in GOG/DOSBox. Gestreckt: nur im Vollbild." },
+        { "4:3 is the shape it was drawn for. 16:10: square pixels, as in GOG/DOSBox. Stretched: fullscreen only. Zoomed: fills a wide screen, the view follows the character (Alone 1, Jack).",
+          "4:3 es la forma para la que se dibujó. 16:10: píxeles cuadrados, como en GOG/DOSBox. Estirada: solo en pantalla completa. Ampliada: llena la pantalla panorámica y la vista sigue al personaje (Alone 1, Jack).",
+          "4:3 est le format pour lequel il a été dessiné. 16:10 : pixels carrés, comme dans GOG/DOSBox. Étirée : plein écran seulement. Agrandie : remplit un écran large, la vue suit le personnage (Alone 1, Jack).",
+          "4:3 è la forma per cui è stato disegnato. 16:10: pixel quadrati, come in GOG/DOSBox. Allungata: solo a schermo intero. Ingrandita: riempie uno schermo largo, la vista segue il personaggio (Alone 1, Jack).",
+          "4:3 ist das Format, für das es gezeichnet wurde. 16:10: quadratische Pixel, wie in GOG/DOSBox. Gestreckt: nur im Vollbild. Vergrößert: füllt einen Breitbildschirm, die Ansicht folgt der Figur (Alone 1, Jack)." },
         // Aspect4x3
         { "4:3 (original)", "4:3 (original)", "4:3 (original)", "4:3 (originale)", "4:3 (Original)" },
         // Aspect16x10
         { "16:10", "16:10", "16:10", "16:10", "16:10" },
         // AspectStretched
         { "Stretched", "Estirada", "Étirée", "Allungata", "Gestreckt" },
+        // Aspect16x9Wide
+        { "16:9 (zoomed)", "16:9 (ampliada)", "16:9 (agrandie)", "16:9 (ingrandita)", "16:9 (vergrößert)" },
+        // Aspect16x10Wide
+        { "16:10 (zoomed)", "16:10 (ampliada)", "16:10 (agrandie)", "16:10 (ingrandita)", "16:10 (vergrößert)" },
         // Fullscreen
         { "Fullscreen", "Pantalla completa", "Plein écran", "Schermo intero", "Vollbild" },
         // FullscreenHelp
@@ -545,6 +573,10 @@ inline const char* advancedText(AdvancedText text, int language)
         { "Run", "Correr", "Courir", "Correre", "Rennen" },
         // ActionMap
         { "Map (Alone 3)", "Mapa (Alone 3)", "Plan (Alone 3)", "Mappa (Alone 3)", "Karte (Alone 3)" },
+        // ActionLookUp
+        { "Look up (zoomed)", "Mirar arriba (ampliada)", "Regarder en haut (agrandie)", "Guarda in alto (ingrandita)", "Nach oben sehen (vergrößert)" },
+        // ActionLookDown
+        { "Look down (zoomed)", "Mirar abajo (ampliada)", "Regarder en bas (agrandie)", "Guarda in basso (ingrandita)", "Nach unten sehen (vergrößert)" },
         // ActionOptions
         { "Options window", "Ventana de opciones", "Fenêtre des options", "Finestra delle opzioni", "Optionsfenster" },
         // Audio
@@ -659,11 +691,26 @@ inline const char* advancedText(AdvancedText text, int language)
     return texts[(int)text][language];
 }
 
-// The name of a resolution in the list: "Automatic", "320 × 200 (original)",
-// "1280 × 960"... (language: 0 English, 1 Spanish, 2 French, 3 Italian, 4 German)
-inline void advancedResolutionLabel(int width, int language, char* label, size_t size)
+// The resolutions offered for an aspect ratio
+inline const int* advancedResolutionList(int aspect, int* count)
 {
-    if (width <= 0)
+    if (aspectIsZoomed(aspect))
+    {
+        *count = kZoomedResolutionCount;
+        return kZoomedResolutions;
+    }
+    *count = kAdvancedResolutionCount;
+    return kAdvancedResolutions;
+}
+
+// The name of a resolution in the list: "Automatic", "320 × 200 (original)",
+// "1280 × 960"...; zoomed, the wide size shown: "1920 × 1080"
+// (language: 0 English, 1 Spanish, 2 French, 3 Italian, 4 German)
+inline void advancedResolutionLabel(int width, int language, char* label, size_t size, int aspect = 0)
+{
+    if (width > 0 && aspectIsZoomed(aspect))
+        snprintf(label, size, "%d × %d", width, width * 9 / 16);
+    else if (width <= 0)
         snprintf(label, size, "%s", advancedText(AdvancedText::ResolutionAuto, language));
     else if (width == kAdvancedOriginalResolution)
         snprintf(label, size, "%d × %d (%s)", width, advancedResolutionHeight(width), advancedText(AdvancedText::ResolutionOriginal, language));

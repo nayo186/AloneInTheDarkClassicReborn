@@ -182,6 +182,22 @@
 	bool osystem_windowToGame(float windowX, float windowY, float* gameX, float* gameY);
 	// Rectangle of the window (pixels) where the play area is drawn: x, y, width, height
 	void osystem_getSceneRect(int rect[4]);
+	// A frame of play was drawn (AllRedraw, Alone 1 and Jack): the rows of the
+	// character on screen (-1: not seen) and the camera; the zoomed aspect
+	// ratios follow it (widescreen.cpp)
+	void osystem_setPlayView(int playerTop, int playerBottom, int camera);
+	// A screen over the game is shown (inventory, pause menu, a book, the
+	// "You find" window, a sequence, a picture): the zoomed aspect ratios
+	// show it 4:3 whole; calls nest. ScreenOverPlay does it for a block
+	void osystem_screenOverPlay(bool shown);
+	struct ScreenOverPlay
+	{
+		ScreenOverPlay() { osystem_screenOverPlay(true); }
+		~ScreenOverPlay() { osystem_screenOverPlay(false); }
+	};
+	// Brightness for the texts: 1, or the screen's fade when they are drawn
+	// outside the scene (zoomed aspect ratios)
+	float osystem_textFade();
 
 	// Plain screens (title armadillo, intro screens, books) suspend the screen
 	// effects without changing the player's options; calls nest (BUGS.md C15)

@@ -26,6 +26,8 @@ enum class GameAction
     Cancel,          // Esc: pause menu
     Run,
     Map,             // AITD3's map (Tab)
+    LookUp,          // zoomed aspect ratios: the view up and down without moving (Alone 1, Jack)
+    LookDown,
     Options,         // opens and closes the F1 window (not a game input)
     Count
 };
@@ -49,7 +51,7 @@ struct InputBinding
 inline const char* gameActionId(GameAction action)
 {
     static const char* const ids[kGameActionCount] = {
-        "up", "down", "left", "right", "action", "confirm", "cancel", "run", "map", "options" };
+        "up", "down", "left", "right", "action", "confirm", "cancel", "run", "map", "lookUp", "lookDown", "options" };
     return ids[(int)action];
 }
 
@@ -94,6 +96,10 @@ inline std::vector<InputBinding> defaultBindings(GameAction action)
                  padAxisBinding(SDL_GAMEPAD_AXIS_RIGHT_TRIGGER, true) };
     case GameAction::Map:
         return { keyBinding(SDL_SCANCODE_TAB), padButtonBinding(SDL_GAMEPAD_BUTTON_NORTH) };
+    case GameAction::LookUp:
+        return { keyBinding(SDL_SCANCODE_PAGEUP), padAxisBinding(SDL_GAMEPAD_AXIS_RIGHTY, false) };
+    case GameAction::LookDown:
+        return { keyBinding(SDL_SCANCODE_PAGEDOWN), padAxisBinding(SDL_GAMEPAD_AXIS_RIGHTY, true) };
     case GameAction::Options:
         return { keyBinding(SDL_SCANCODE_F1), keyBinding(SDL_SCANCODE_HOME), padButtonBinding(SDL_GAMEPAD_BUTTON_BACK) };
     default:

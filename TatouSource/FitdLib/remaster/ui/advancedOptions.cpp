@@ -164,7 +164,7 @@ static void scanlineLevelSlider(float width, bool enabled, int& level)
 
 static void resolutionLabel(int resolution, char* label, size_t size)
 {
-    advancedResolutionLabel(resolution, textLanguage(), label, size);
+    advancedResolutionLabel(resolution, textLanguage(), label, size, g_settings.graphics.aspect);
 }
 
 // Disabled with integer scaling, which does not use it (integerResolutionCombo)
@@ -180,13 +180,16 @@ static void resolutionCombo(float width, int& resolution, bool disabled)
     ImGui::SetNextItemWidth(-1.0f);
     if (ImGui::BeginCombo("##resolution", current))
     {
-        for (int i = 0; i < kAdvancedResolutionCount; i++)
+        // Zoomed aspect ratios: wide sizes (advancedResolutionList)
+        int count = 0;
+        const int* list = advancedResolutionList(g_settings.graphics.aspect, &count);
+        for (int i = 0; i < count; i++)
         {
             char label[64];
-            resolutionLabel(kAdvancedResolutions[i], label, sizeof(label));
-            if (ImGui::Selectable(label, resolution == kAdvancedResolutions[i]))
+            resolutionLabel(list[i], label, sizeof(label));
+            if (ImGui::Selectable(label, resolution == list[i]))
             {
-                resolution = kAdvancedResolutions[i];
+                resolution = list[i];
                 printf(CFG_TAG "Advanced option (F1): resolution=%d\n", resolution);
             }
         }
@@ -519,9 +522,10 @@ void advancedOptionsDraw()
         optionCheckbox(AdvancedText::VSync, AdvancedText::VSyncHelp, &g_settings.graphics.vsync, "vsync");
 
         // Aspect ratio (live: the scene rectangle follows it, bgfxGlue.cpp)
-        static const AdvancedText kAspects[] = { AdvancedText::Aspect4x3, AdvancedText::Aspect16x10, AdvancedText::AspectStretched };
+        static const AdvancedText kAspects[] = { AdvancedText::Aspect4x3, AdvancedText::Aspect16x10, AdvancedText::AspectStretched,
+                                                 AdvancedText::Aspect16x9Wide, AdvancedText::Aspect16x10Wide };
         int& aspect = g_settings.graphics.aspect;
-        if (aspect < 0 || aspect > 2)
+        if (aspect < 0 || aspect > 4)
             aspect = 0;
         ImGui::AlignTextToFramePadding();
         ImGui::TextUnformatted(text(AdvancedText::AspectRatio));
@@ -530,7 +534,7 @@ void advancedOptionsDraw()
         ImGui::SetNextItemWidth(-1.0f);
         if (ImGui::BeginCombo("##aspect", text(kAspects[aspect])))
         {
-            for (int i = 0; i < 3; i++)
+            for (int i = 0; i < 5; i++)
             {
                 // Stretched only in fullscreen
                 const ImGuiSelectableFlags flags = (i == 2 && !gIsFullscreen) ? ImGuiSelectableFlags_Disabled : 0;
@@ -562,8 +566,11 @@ void advancedOptionsDraw()
         ImGui::Spacing();
         ImGui::TextColored(kGold, "%s", text(AdvancedText::IntegerScale));
         ImGui::Separator();
+        // Not with the zoomed aspect ratios: part of the scene is out of the screen
+        ImGui::BeginDisabled(aspectIsZoomed(g_settings.graphics.aspect));
         integerScaleCombo(width, g_settings.graphics.integerScale, g_settings.graphics.aspect);
         integerResolutionCombo(width, g_settings.graphics.integerResolution, g_settings.graphics.integerScale, g_settings.graphics.aspect);
+        ImGui::EndDisabled();
 
         // Screen effects and animation smoothing
         ImGui::Spacing();

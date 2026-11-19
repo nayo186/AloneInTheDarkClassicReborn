@@ -240,6 +240,7 @@ void readBook(int index, int type, int vocIndex)
 
 int Lire(int index, int startx, int top, int endx, int bottom, int demoMode, int color, int shadow, int vocIndex)
 {
+    ScreenOverPlay screenOverPlay;   // a 4:3 screen in the zoomed aspect ratios (widescreen.cpp)
     bool lastPageReached = false;
     u8 tabString[] = "    ";
     int firstpage = 1;

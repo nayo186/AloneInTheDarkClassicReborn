@@ -355,8 +355,9 @@ static void drawAdvancedOptions(LauncherState& state, const Fonts& fonts, const 
     optionCheckbox(AdvancedText::VSync, AdvancedText::VSyncHelp, &state.settings.vsync, "vsync");
 
     // Aspect ratio
-    static const AdvancedText kAspects[] = { AdvancedText::Aspect4x3, AdvancedText::Aspect16x10, AdvancedText::AspectStretched };
-    if (state.settings.aspect < 0 || state.settings.aspect > 2)
+    static const AdvancedText kAspects[] = { AdvancedText::Aspect4x3, AdvancedText::Aspect16x10, AdvancedText::AspectStretched,
+                                             AdvancedText::Aspect16x9Wide, AdvancedText::Aspect16x10Wide };
+    if (state.settings.aspect < 0 || state.settings.aspect > 4)
         state.settings.aspect = 0;
     // Stretched only in fullscreen: a window takes 4:3
     if (!state.settings.fullscreen && state.settings.aspect == 2)
@@ -368,7 +369,7 @@ static void drawAdvancedOptions(LauncherState& state, const Fonts& fonts, const 
     ImGui::SetNextItemWidth(-1.0f);
     if (ImGui::BeginCombo("##aspect", advText(kAspects[state.settings.aspect])))
     {
-        for (int i = 0; i < 3; i++)
+        for (int i = 0; i < 5; i++)
         {
             const ImGuiSelectableFlags flags = (i == 2 && !state.settings.fullscreen) ? ImGuiSelectableFlags_Disabled : 0;
             if (ImGui::Selectable(advText(kAspects[i]), state.settings.aspect == i, flags))
@@ -385,7 +386,7 @@ static void drawAdvancedOptions(LauncherState& state, const Fonts& fonts, const 
     {
         ImGui::BeginDisabled(state.settings.integerScale != 0);
         char current[64];
-        advancedResolutionLabel(state.settings.resolution, (int)uiLanguage(), current, sizeof(current));
+        advancedResolutionLabel(state.settings.resolution, (int)uiLanguage(), current, sizeof(current), state.settings.aspect);
         ImGui::AlignTextToFramePadding();
         ImGui::TextColored(color(kText), "%s", advText(AdvancedText::Resolution));
         helpMarker(advText(AdvancedText::ResolutionHelp));
@@ -393,11 +394,14 @@ static void drawAdvancedOptions(LauncherState& state, const Fonts& fonts, const 
         ImGui::SetNextItemWidth(-1.0f);
         if (ImGui::BeginCombo("##resolution", current))
         {
-            for (int i = 0; i < kAdvancedResolutionCount; i++)
+            // Zoomed aspect ratios: wide sizes (advancedResolutionList)
+            int count = 0;
+            const int* list = advancedResolutionList(state.settings.aspect, &count);
+            for (int i = 0; i < count; i++)
             {
-                const int resolution = kAdvancedResolutions[i];
+                const int resolution = list[i];
                 char label[64];
-                advancedResolutionLabel(resolution, (int)uiLanguage(), label, sizeof(label));
+                advancedResolutionLabel(resolution, (int)uiLanguage(), label, sizeof(label), state.settings.aspect);
                 if (ImGui::Selectable(label, state.settings.resolution == resolution))
                 {
                     state.settings.resolution = resolution;
@@ -425,6 +429,8 @@ static void drawAdvancedOptions(LauncherState& state, const Fonts& fonts, const 
         screenWidth = (int)(mode->w * mode->pixel_density);
         screenHeight = (int)(mode->h * mode->pixel_density);
     }
+    // Not with the zoomed aspect ratios: part of the scene is out of the screen
+    ImGui::BeginDisabled(aspectIsZoomed(state.settings.aspect));
     {
         char current[64];
         integerScaleLabel(state.settings.integerScale, state.settings.aspect, (int)uiLanguage(), current, sizeof(current));
@@ -490,6 +496,7 @@ static void drawAdvancedOptions(LauncherState& state, const Fonts& fonts, const 
         menu::helpWhenFocused(advText(AdvancedText::IntegerResolutionHelp));
         ImGui::EndDisabled();
     }
+    ImGui::EndDisabled();
 
     // Screen effects and animation smoothing (all off by default)
     ImGui::Spacing();

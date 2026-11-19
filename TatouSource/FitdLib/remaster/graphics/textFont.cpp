@@ -915,7 +915,7 @@ void drawTextOverlay(bgfx::ViewId view)
         textureUniform = bgfx::createUniform("s_backgroundTexture", bgfx::UniformType::Sampler);
         fadeUniform = bgfx::createUniform("u_fadeLevel", bgfx::UniformType::Vec4);
     }
-    float fade[4] = { 1.0f, 0.0f, 0.0f, 0.0f };
+    float fade[4] = { osystem_textFade(), 0.0f, 0.0f, 0.0f };
     bgfx::setUniform(fadeUniform, fade);
     bgfx::setTexture(0, textureUniform, s_texture);
     bgfx::setVertexBuffer(0, &buffer);

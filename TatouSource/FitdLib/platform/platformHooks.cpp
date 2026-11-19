@@ -21,3 +21,4 @@ void (*g_onMaskCreated)(int roomId, int maskId, const unsigned char* shape, int 
 
 const unsigned char* (*g_filterTextLayer)(const unsigned char* layer) = nullptr;
 void (*g_drawTextOverlay)(bgfx::ViewId view) = nullptr;
+bgfx::TextureHandle (*g_getWidescreenSides)(float* aspect) = nullptr;

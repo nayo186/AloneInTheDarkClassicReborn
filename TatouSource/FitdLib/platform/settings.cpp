@@ -176,7 +176,7 @@ void loadSettings()
     // Values out of range go back to something safe
     if (c.graphics.frameLimit != 0)
         c.graphics.frameLimit = clampInt(c.graphics.frameLimit, 15, 1000);
-    if (c.graphics.aspect < 0 || c.graphics.aspect > 2)
+    if (c.graphics.aspect < 0 || c.graphics.aspect > 4)
         c.graphics.aspect = 0;
     if (c.graphics.resolution != 0 && (c.graphics.resolution < 320 || c.graphics.resolution > 3840))
         c.graphics.resolution = 0;

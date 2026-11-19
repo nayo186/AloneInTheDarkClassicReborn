@@ -95,6 +95,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `controlsAnalog` | The sticks' settings (dead zone, sensitivity, inverted Y, modern left stick) |
 | `controlsLeftStick` | The left stick as read at the last controlsUpdate |
 | `controlsUpdate` | Each frame (input.cpp): sets JoyD, key and Click from the keyboard state and the controller (null when none is connected) |
+| `controlsLook` | Look up (-1) or down (+1) of the zoomed aspect ratios, this frame, by how much |
 | `controlsActionHeld` | Whether any input of the action is held now (GameAction::Options: input.cpp) |
 
 ### `platform/fileAccess.h`
@@ -226,6 +227,9 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `osystem_drawFrozenSceneBackground` | Draws the frozen scene behind a menu |
 | `osystem_windowToGame` | Window position (pixels) to the 320x200 game screen, through the scene rectangle (graphics.aspect leaves black bars); false before the first frame |
 | `osystem_getSceneRect` | Rectangle of the window (pixels) where the play area is drawn: x, y, width, height |
+| `osystem_setPlayView` | A frame of play was drawn (AllRedraw, Alone 1 and Jack): the rows of the character on screen (-1: not seen) and the camera; the zoomed aspect ratios follow it (widescreen.cpp) |
+| `osystem_screenOverPlay` | A screen over the game is shown (inventory, pause menu, a book, the "You find" window, a sequence, a picture): the zoomed aspect ratios show it 4:3 whole; calls nest. ScreenOverPlay does it for a block |
+| `osystem_textFade` | Brightness for the texts: 1, or the screen's fade when they are drawn outside the scene (zoomed aspect ratios) |
 | `osystem_suspendScreenEffects` | Plain screens (title armadillo, intro screens, books) suspend the screen effects without changing the player's options; calls nest (BUGS.md C15) |
 | `osystem_setDepthSlice` | Limits the depth drawn (-1: all), used to draw objects in front of or behind a mask |
 | `osystem_depthSlicedThisFrame` | True if a depth slice was used this frame |
@@ -261,6 +265,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `g_onScreenUploaded` | The 320x200 screen was sent to the graphics card |
 | `g_filterTextLayer` | The text layer (320x200 palette indexes) is about to be shown: the layer to show instead (the letters the new font draws taken out); null: as it is, no new font in this game or "Enhanced text" off |
 | `g_drawTextOverlay` | Right after the text layer, in the same view: the new font's letters |
+| `g_getWidescreenSides` | The still picture behind the 4:3 screens and beyond the scene (blurred; its width / height in aspect); invalid: black |
 | `g_onMaskCreated` | A mask of the game was made (its 320x200 shape and rectangle) |
 
 ### `platform/rendererBGFXInternal.h`
@@ -311,6 +316,15 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `touchControlsAt` | A shown button or the D-pad of the visible controls is at that point of the window (SDL's mouse coordinates). The mouse SDL makes from such a touch must not reach the menus: Start on the right picked Carnby (BUGS.md C79) |
 | `touchControlsHide` | The keyboard or a controller was used: the controls hide until a touch |
 | `touchControlsDraw` | Draws the controls over the game (game thread, inside the ImGui frame) |
+
+### `platform/widescreen.h`
+
+| Función | Para qué sirve |
+| --- | --- |
+| `widescreenZoomed` | A zoomed aspect ratio is chosen |
+| `widescreenSceneQuad` | Where the scene goes in the window this frame (x, y, width, height; it may go out of the window above and below while playing), from the scene rectangle the aspect ratio gives (x, y, width, height). Called once per frame, when the image is composed: it moves the view. |
+| `widescreenTextBox` | The 4:3 box of the window where texts and menus go (x, y, width, height) |
+| `widescreenPlaying` | This frame is a frame of play: inside the game's loop, no screen over it (osystem_screenOverPlay) |
 
 ## core: El juego de 1992
 

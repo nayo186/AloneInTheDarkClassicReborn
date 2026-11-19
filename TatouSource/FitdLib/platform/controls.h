@@ -46,6 +46,8 @@ const ControlsLeftStick& controlsLeftStick();
 // Each frame (input.cpp): sets JoyD, key and Click from the keyboard state and
 // the controller (null when none is connected)
 void controlsUpdate(const bool* keyboard, int keyCount, SDL_Gamepad* gamepad);
+// Look up (-1) or down (+1) of the zoomed aspect ratios, this frame, by how much
+float controlsLook();
 
 // Whether any input of the action is held now (GameAction::Options: input.cpp)
 bool controlsActionHeld(GameAction action, const bool* keyboard, int keyCount, SDL_Gamepad* gamepad);

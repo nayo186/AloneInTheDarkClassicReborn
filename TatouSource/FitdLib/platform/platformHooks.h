@@ -65,5 +65,11 @@ extern const unsigned char* (*g_filterTextLayer)(const unsigned char* layer);
 // Right after the text layer, in the same view: the new font's letters
 extern void (*g_drawTextOverlay)(bgfx::ViewId view);
 
+// ---- Zoomed aspect ratios (platform/widescreen.cpp) --------------------------
+
+// The still picture behind the 4:3 screens and beyond the scene (blurred;
+// its width / height in aspect); invalid: black
+extern bgfx::TextureHandle (*g_getWidescreenSides)(float* aspect);
+
 // A mask of the game was made (its 320x200 shape and rectangle)
 extern void (*g_onMaskCreated)(int roomId, int maskId, const unsigned char* shape, int x1, int y1, int x2, int y2);

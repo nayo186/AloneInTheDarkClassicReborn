@@ -165,8 +165,41 @@ static void readLeftStick(const bool* keyboard, int keyCount, SDL_Gamepad* gamep
     s_leftStick.otherDirections = directionsWithoutLeftStick(keyboard, keyCount, gamepad);
 }
 
+// How much an action is pressed, 0 to 1: a stick or trigger by how far, a
+// key or button all or nothing
+static float actionAmount(GameAction action, const bool* keyboard, int keyCount, SDL_Gamepad* gamepad)
+{
+    float amount = 0.0f;
+    for (const InputBinding& binding : controlsBindings(action))
+    {
+        float value = 0.0f;
+        if (binding.kind == InputBinding::Kind::PadAxis && isStickAxis(binding.code))
+        {
+            const float stick = stickValue(gamepad, (SDL_GamepadAxis)binding.code);
+            value = binding.positive ? stick : -stick;
+        }
+        else if (bindingHeld(binding, action, keyboard, keyCount, gamepad))
+        {
+            value = 1.0f;
+        }
+        amount = (std::max)(amount, value);
+    }
+    return amount;
+}
+
+static float s_look = 0.0f;
+
+float controlsLook()
+{
+    return s_look;
+}
+
 void controlsUpdate(const bool* keyboard, int keyCount, SDL_Gamepad* gamepad)
 {
+    // The view of the zoomed aspect ratios (widescreen.cpp): not a game input
+    s_look = actionAmount(GameAction::LookDown, keyboard, keyCount, gamepad) -
+             actionAmount(GameAction::LookUp, keyboard, keyCount, gamepad);
+
     auto held = [&](GameAction action) { return actionHeld(action, keyboard, keyCount, gamepad); };
     readLeftStick(keyboard, keyCount, gamepad);
 

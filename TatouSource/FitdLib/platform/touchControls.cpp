@@ -110,6 +110,9 @@ bool assigned(int b)
 {
     for (int a = 0; a < kGameActionCount; a++)
     {
+        // the view of the zoomed aspect ratios: not on the touch pad
+        if ((GameAction)a == GameAction::LookUp || (GameAction)a == GameAction::LookDown)
+            continue;
         if ((GameAction)a == GameAction::Map && g_gameId != AITD3)
             continue;
         for (const InputBinding& binding : controlsBindings((GameAction)a))

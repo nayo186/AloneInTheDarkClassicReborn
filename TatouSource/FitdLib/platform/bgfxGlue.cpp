@@ -14,6 +14,7 @@
 #include <bx/platform.h>
 #include <backends/imgui_impl_sdl3.h>
 #include <vector>
+#include <algorithm>
 #include <chrono>
 #include "imguiBGFX.h"
 #include "platformHooks.h"
@@ -26,6 +27,7 @@
 #include "consoleLog.h"
 #include "screenEffects.h"
 #include "osystem.h"
+#include "widescreen.h"
 
 #ifndef LANTERN_VERBOSE_LOGS
 #define LANTERN_VERBOSE_LOGS 0
@@ -157,6 +159,8 @@ static float aspectRatioValue()
     {
     case 0: return 4.0f / 3.0f;
     case 1: return 16.0f / 10.0f;
+    case 3:                         // zoomed: both for a 16:9 window (computeSceneRect)
+    case 4: return 16.0f / 9.0f;
     default: return 0.0f;
     }
 }
@@ -176,7 +180,11 @@ static void computeSceneRect(int windowWidth, int windowHeight, int rect[4])
         rect[3] = integerSize[1];
         return;
     }
-    const float ratio = gIsFullscreen ? aspectRatioValue() : 0.0f;
+    float ratio = gIsFullscreen ? aspectRatioValue() : 0.0f;
+    // Zoomed, in a window or fullscreen: the scene as wide as the screen up to
+    // 16:9 (or 16:10, zoomed less); beyond, the sides picture
+    if (aspectIsZoomed(g_settings.graphics.aspect) && windowHeight > 0)
+        ratio = std::clamp((float)windowWidth / (float)windowHeight, 4.0f / 3.0f, zoomedSceneRatio(g_settings.graphics.aspect));
     rect[0] = 0;
     rect[1] = 0;
     rect[2] = windowWidth;
@@ -207,10 +215,25 @@ static void computeSceneImageSize(const int rect[4], int size[2])
     {
         integerResolutionImage(g_settings.graphics.integerResolution, rect[2], rect[3], size);
     }
+    else if (width > 0 && aspectIsZoomed(g_settings.graphics.aspect))
+    {
+        // Zoomed: the chosen size is the 16:9 screen (1920 = 1920 x 1080); the
+        // scene is as wide as it is shown there (16:9: 1920, 16:10: 1728) and
+        // 4:3 tall (1920 x 1440), the rest above and below out of the screen
+        const float shownRatio = (rect[3] > 0) ? (float)rect[2] / rect[3] : zoomedSceneRatio(g_settings.graphics.aspect);
+        size[0] = (int)(width * 9.0f / 16.0f * shownRatio + 0.5f);
+        size[1] = size[0] * 3 / 4;
+    }
     else if (width > 0)
     {
         size[0] = width;
         size[1] = advancedResolutionHeight(width);   // 4:3, or the original 320 x 200
+    }
+    else if (aspectIsZoomed(g_settings.graphics.aspect))
+    {
+        // Zoomed: the scene is as wide as the screen (and taller)
+        size[0] = rect[2];
+        size[1] = rect[2] * 3 / 4;
     }
     else
     {
@@ -257,8 +280,12 @@ bool osystem_windowToGame(float windowX, float windowY, float* gameX, float* gam
 {
     if (s_sceneRect[2] <= 0 || s_sceneRect[3] <= 0)
         return false;
-    *gameX = (windowX - s_sceneRect[0]) * 320.0f / s_sceneRect[2];
-    *gameY = (windowY - s_sceneRect[1]) * 200.0f / s_sceneRect[3];
+    // Zoomed: menus and texts are in the 4:3 box of the screen
+    int box[4] = { s_sceneRect[0], s_sceneRect[1], s_sceneRect[2], s_sceneRect[3] };
+    if (widescreenZoomed())
+        widescreenTextBox(s_sceneRect, box);
+    *gameX = (windowX - box[0]) * 320.0f / box[2];
+    *gameY = (windowY - box[1]) * 200.0f / box[3];
     return true;
 }
 

@@ -1021,6 +1021,23 @@ void AllRedraw(int flagFlip)
         //addToRedrawBox();
     }
 
+    // A frame of play: the zoomed aspect ratios follow the character
+    // (platform/widescreen.cpp)
+    if (g_gameId == AITD1 || g_gameId == JACK)
+    {
+        int top = -1, bottom = -1;
+        if (currentCameraTargetActor >= 0 && currentCameraTargetActor < NUM_MAX_OBJECT)
+        {
+            const tObject& player = ListObjets[currentCameraTargetActor];
+            if (player.indexInWorld != -1 && player.screenYMax >= 0)
+            {
+                top = player.screenYMin;
+                bottom = player.screenYMax;
+            }
+        }
+        osystem_setPlayView(top, bottom, g_currentFloor * 1000 + NumCamera);
+    }
+
     // Fade in after a redraw or a change of light, also in a dark room (the
     // black scene with its message): a fade out before it, e.g. closing a
     // book, left the screen black, menus included (BUGS.md V23)

@@ -4,6 +4,7 @@ $input v_texcoord0
 #include "palette.sh"
 
 USAMPLER2D(s_backgroundTexture, 0);
+uniform vec4 u_fadeLevel;   // x: brightness (the texts outside the scene, zoomed aspect ratios, follow the screen's fades)
 
 void main()
 {
@@ -11,5 +12,6 @@ void main()
     uvec4 rawTexel = texelFetch(s_backgroundTexture, ivec2(position), 0);
     if(rawTexel.r == uint(0))
         discard;
-    gl_FragColor = getColorFromRawOffset(rawTexel.r);
+    vec4 color = getColorFromRawOffset(rawTexel.r);
+    gl_FragColor = vec4(color.rgb * u_fadeLevel.x, color.a);
 }

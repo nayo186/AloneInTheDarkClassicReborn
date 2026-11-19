@@ -72,6 +72,7 @@ Cuando un archivo tiene `.cpp` y `.h`, va en una sola fila.
 | `rendererBGFX.cpp`, `rendererBGFXInternal.h` | El dibujador: fondo de 320×200, máscaras, polígonos, esferas, líneas, cristal, capa de textos, fundidos. |
 | `sceneCapture.cpp` | Foto de la escena 3D para el menú de pausa y fondo congelado detrás de los menús. |
 | `screenEffects.cpp/.h` | La escena se dibuja fuera de pantalla y se copia con los efectos opcionales (FXAA, bloom, grano, SSAO) y el fundido. |
+| `widescreen.cpp/.h` | Relaciones de aspecto ampliadas (16:9 y 16:10): la escena al ancho de la pantalla con la vista siguiendo al personaje, las pantallas sobre la partida y los textos en el recuadro 4:3. |
 | `imguiBGFX.cpp/.h` | Dear ImGui dibujado con bgfx (los menús). |
 | `menuMouse.h` | Ayudas de ratón para los menús del juego de 1992 (lista, botones, clic). |
 | `input.cpp/.h` | Teclado, ratón y mando con SDL: F11, Alt+Intro, cursor oculto con mando, bloqueo de entradas con un menú abierto. |

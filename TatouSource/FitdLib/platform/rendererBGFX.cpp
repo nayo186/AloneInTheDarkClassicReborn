@@ -38,6 +38,7 @@ email                : yaz0r@yaz0r.net
 #include "input.h"
 #include "screenEffects.h"
 #include "platformHooks.h"
+#include "widescreen.h"
 #include <array>
 #include <SDL.h>
 #include <string>
@@ -435,6 +436,30 @@ void osystem_drawUILayer()
     }
     bgfx::updateTexture2D(g_uiLayerTexture, 0, 0, 0, 0, 320, 200, bgfx::copy(layer, 320 * 200));
 
+    // Zoomed aspect ratios (widescreen.cpp): the texts are not part of the
+    // scene, which moves and is cut above and below, but of the screen, in
+    // its 4:3 box: messages are always seen whole, where the game put them
+    bgfx::ViewId textView = (bgfx::ViewId)gameViewId;
+    if (widescreenZoomed())
+    {
+        static const bgfx::ViewId kViewTexts = 212;   // after the composed image (210), before the menus (255)
+        int sceneRect[4], box[4];
+        osystem_getSceneRect(sceneRect);
+        widescreenTextBox(sceneRect, box);
+        bgfx::setViewName(kViewTexts, "Texts");
+        bgfx::setViewMode(kViewTexts, bgfx::ViewMode::Sequential);
+        bgfx::setViewFrameBuffer(kViewTexts, BGFX_INVALID_HANDLE);
+        bgfx::setViewRect(kViewTexts, (uint16_t)box[0], (uint16_t)box[1], (uint16_t)box[2], (uint16_t)box[3]);
+        bgfx::setViewClear(kViewTexts, BGFX_CLEAR_NONE);
+        bgfx::touch(kViewTexts);
+        textView = kViewTexts;
+    }
+    // Inside the scene the composed image fades them; outside, they fade here
+    static bgfx::UniformHandle textFadeUniform = BGFX_INVALID_HANDLE;
+    if (!bgfx::isValid(textFadeUniform))
+        textFadeUniform = bgfx::createUniform("u_fadeLevel", bgfx::UniformType::Vec4);
+    const float textFade[4] = { osystem_textFade(), 0.0f, 0.0f, 0.0f };
+
     if (backgroundMode == backgroundModeEnum_2D)
     {
         bgfx::VertexLayout layout;
@@ -545,16 +570,18 @@ void osystem_drawUILayer()
             // the original strokes), outline at 60 %
             float style[4] = { 1.0f, 1.0f, 0.38f, 0.6f };
             bgfx::setUniform(textStyleUniform, style);
-            bgfx::submit(gameViewId, textProgram);
+            bgfx::setUniform(textFadeUniform, textFade);
+            bgfx::submit(textView, textProgram);
         }
         else
         {
-            bgfx::submit(gameViewId, getUIShader());
+            bgfx::setUniform(textFadeUniform, textFade);
+            bgfx::submit(textView, getUIShader());
         }
 
         // The new font's letters, over the layer
         if (g_drawTextOverlay)
-            g_drawTextOverlay(gameViewId);
+            g_drawTextOverlay(textView);
     }
 }
 void osystem_drawBackground()

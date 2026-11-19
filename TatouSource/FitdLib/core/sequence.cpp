@@ -182,6 +182,7 @@ static int sequenceFrameTicks() { return (g_gameId == AITD3) ? 5 : 4; }
 
 void playSequence(int sequenceIdx, int fadeStart, int fadeOutVar)
 {
+    ScreenOverPlay screenOverPlay;   // a 4:3 screen in the zoomed aspect ratios (widescreen.cpp)
 
     int frames=0;                   /* Number of frames displayed */
 

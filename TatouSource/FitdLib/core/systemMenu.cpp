@@ -290,6 +290,7 @@ static int getSystemMenuItemAtMouse()
 
 void processSystemMenu(void)
 {
+    ScreenOverPlay screenOverPlay;   // a 4:3 screen in the zoomed aspect ratios (widescreen.cpp)
 
     //int entry = -1;
     int exitMenu = 0;

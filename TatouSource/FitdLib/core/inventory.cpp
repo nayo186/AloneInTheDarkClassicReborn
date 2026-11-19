@@ -294,6 +294,7 @@ void drawInventoryActions(int arg)
 
 void processInventory(void)
 {
+    ScreenOverPlay screenOverPlay;   // a 4:3 screen in the zoomed aspect ratios (widescreen.cpp)
     int exitMenu = 0;
     int choice = 0;
     int firstTime = 1;
@@ -734,6 +735,7 @@ static const unsigned int kDeclinedAwayTicks = 60;   // 1 s away from it
 
 void FoundObjet(int objIdx, int param)
 {
+    ScreenOverPlay screenOverPlay;   // a 4:3 screen in the zoomed aspect ratios (widescreen.cpp)
     tWorldObject* objPtr;
 
     if (objIdx < 0)
