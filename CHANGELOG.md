@@ -4,6 +4,16 @@ Alone in the Dark: Classic Reborn started on 2026-10-23 from [Alone in the Dark:
 
 This repository was published with a single starting commit, to keep it light: the early history carried large files that are no longer part of the project. Below are the changes of each release and, after them, the changes made in this fork before it was published, newest first, one line per change. The reasons behind larger removals are explained in `docs/DESCARTADO.md` and the fixes in `docs/baseline/BUGS.md`.
 
+## v1.8.1 (2026-11-19)
+
+The ideas of v1.8.0 come to *Alone in the Dark 2*: the widescreen view, the new font, improved backgrounds in one click, and narrators in one file.
+
+- *Alone in the Dark 2*: **widescreen view**, as in *Alone in the Dark* and *Jack*: **16:9 (zoomed)** and **16:10 (zoomed)** fill a 16:9 screen and the view follows the character; menus, the inventory and books stay whole in 4:3, with the mansion of Hell's Kitchen blurred at the sides. The pictures with text of the intro are shown whole (BUGS.md A59)
+- All games with the widescreen view: in a scene, the view also keeps on screen whoever moves with the character when they fit, such as the clown coming in by the window in the intro of *Alone in the Dark 2* (BUGS.md A59)
+- *Alone in the Dark 2*: with **Enhanced text**, the new smooth font in every text (books, messages, menus, inventory), with the game's own capitals redrawn. The letters of its five languages were checked (BUGS.md A57)
+- *Alone in the Dark 2*: **improved backgrounds in one click**: **Options** → **Improved backgrounds (Alone 2)** → **Download** (about 234 MB), on the PC and on Android. **Remove** deletes them (BUGS.md C83)
+- *Alone in the Dark 2*: **other narrators**. A narrator of another CD of the game (for example your own French CD) goes in `UserData\AITD2\Voices`, as a folder or as one `.voice` file, and is chosen in **Audio** → **Narrator**: it reads the books and letters and gives the characters of the intro and the game its own voices. *Alone in the Dark 2* keeps its own choice, apart from *Alone in the Dark*'s. Explained in the modding guide (BUGS.md A58)
+
 ## v1.8.0 (2026-11-19)
 
 The widescreen view, a new font, improved backgrounds in one click, and packs that keep a mod in a single file.

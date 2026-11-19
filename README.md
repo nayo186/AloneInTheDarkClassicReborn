@@ -99,7 +99,7 @@ It is not a static recompilation: a static recompilation translates the machine 
 
 ## What it adds
 
-- **Widescreen view** (*Alone in the Dark* and *Jack in the Dark*): the game fills a 16:9 screen with no stretching and no black bars. The scene is enlarged to the width of the screen and the view follows the character up and down; the right stick (or Page Up / Page Down) looks up and down. Menus, the inventory and books stay whole in 4:3, with a blurred picture of the game at the sides. Choose **16:9 (zoomed)** or **16:10 (zoomed)** in **Aspect ratio** (see [Widescreen view](#widescreen-view)).
+- **Widescreen view** (*Alone in the Dark*, *Jack in the Dark* and *Alone in the Dark 2*): the game fills a 16:9 screen with no stretching and no black bars. The scene is enlarged to the width of the screen and the view follows the character up and down; the right stick (or Page Up / Page Down) looks up and down. Menus, the inventory and books stay whole in 4:3, with a blurred picture of the game at the sides. Choose **16:9 (zoomed)** or **16:10 (zoomed)** in **Aspect ratio** (see [Widescreen view](#widescreen-view)).
 - **Fixes** to the original: objects drawn in the wrong order, monsters stuck at windows, gaps in 3D models, lines at the edges of masks, game speed tied to the frame rate, and many more (see `docs/baseline/BUGS.md`).
 - **Launcher** to choose the game, its language (the five of the GOG and Steam editions: English, French, German, Italian, Spanish) and the data folder, with the same options as the in-game **F1** window. The menus are translated into the same five languages.
 - **Screen options**: resolution, aspect ratio (4:3, 16:10, stretched, and the zoomed widescreen view), integer scaling, fullscreen, frame limit, VSync.
