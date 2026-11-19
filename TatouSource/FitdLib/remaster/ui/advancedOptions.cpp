@@ -687,14 +687,17 @@ void advancedOptionsDraw()
             printf(CFG_TAG "Controls: %s = %s\n", gameActionId((GameAction)a), bindingsToText(s_controlBindings[a]).c_str());
         }
     }
-    std::string voices = g_settings.audio.voices;
+    // Each game its own narrator: Alone 2 has its own voices (Shared/narrators.h)
+    char* narrator = g_gameId == AITD2 ? g_settings.audio.voicesAitd2 : g_settings.audio.voices;
+    const size_t narratorSize = g_gameId == AITD2 ? sizeof(g_settings.audio.voicesAitd2) : sizeof(g_settings.audio.voices);
+    std::string voices = narrator;
     // CD or AdLib music: only the games that have both (core/music.cpp)
     const bool bothMusics = g_gameId == AITD1 || g_gameId == AITD2;
     const bool adlibBefore = g_settings.audio.adlibMusic;
     if (drawAudioWindow(s_audio, g_settings.audio.musicVolume, g_settings.audio.soundVolume,
         bothMusics ? &g_settings.audio.adlibMusic : nullptr, voices, s_narrators, textLanguage(), false, controlsStyle))
     {
-        snprintf(g_settings.audio.voices, sizeof(g_settings.audio.voices), "%s", voices.c_str());
+        snprintf(narrator, narratorSize, "%s", voices.c_str());
         if (g_settings.audio.adlibMusic != adlibBefore)
             printf(CFG_TAG "Audio: %s music\n", g_settings.audio.adlibMusic ? "AdLib" : "CD");
     }

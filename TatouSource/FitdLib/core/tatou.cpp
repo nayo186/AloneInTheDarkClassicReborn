@@ -287,10 +287,13 @@ void playSound(int num)
 	}
 
 	cutLoopByPriority(num);
-	osystem_playSample(ptr, size);
+	// AITD2: a voice of the chosen narrator (another CD) replaces the game's
+	const bool narrator = osystem_playNarratorSample(num);
+	if (!narrator)
+		osystem_playSample(ptr, size);
 	LastSample = num;
 	s_lastSkipped = -1;
-	logSample("Sample", num);
+	logSample(narrator ? "Sample (narrator)" : "Sample", num);
 }
 
 // AITD2's SAMPLE_THEN: the original had one channel, and a new sample started

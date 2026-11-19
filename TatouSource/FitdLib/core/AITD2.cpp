@@ -322,6 +322,16 @@ static const BookVoices s_bookVoices[] = {
 
 void AITD2_playBookVoice(int index, int page)
 {
+	// A chosen narrator (another CD, Shared/narrators.h) has its own seconds
+	// for each page: its table replaces the game's
+	int track, seconds;
+	const int narrator = osystem_narratorBookPage(index, page, &track, &seconds);
+	if (narrator >= 0)
+	{
+		if (narrator > 0)
+			playBookPageVoice(track, seconds);
+		return;
+	}
 	playBookVoice(s_bookVoices, (int)(sizeof(s_bookVoices) / sizeof(s_bookVoices[0])), index, page);
 }
 

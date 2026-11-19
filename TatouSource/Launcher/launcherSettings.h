@@ -65,6 +65,7 @@ struct LauncherSettings
     int musicVolume = kDefaultAudioVolume;
     int soundVolume = kDefaultAudioVolume;
     std::string voices;   // narrator (audio.voices): a folder of Voices, empty = the game's (English)
+    std::string voicesAitd2;   // the same for Alone in the Dark 2 (audio.voicesAitd2)
     bool adlibMusic = false;   // audio.music: AdLib instead of the CD tracks (AITD1 and AITD2)
 
     // Game controls ("controls.<action>" lines; not part of the default
@@ -146,9 +147,10 @@ std::string gameFilesCacheFile(int game);
 
 // True if Jack in the Dark is there too (PERE.PAK)
 bool hasJackData(const std::string& folder);
-// The narrators with voices in AITD1's working folder (Voices: in
-// UserData\AITD1, or in the copy itself in debug mode; Shared/narrators.h)
-std::vector<std::string> findAitd1Narrators(const std::string& folder);
+// The narrators with voices in the working folder of the game of that data
+// folder, AITD1 or AITD2 (Voices: in UserData\AITD1 or AITD2, or in the copy
+// itself in debug mode; Shared/narrators.h); none for the others
+std::vector<std::string> findGameNarrators(const std::string& folder);
 
 // Debug mode (launcher.cfg "debugMode = 1", only by hand): with a copy of the data, the game
 // writes inside the copy; otherwise everything goes to UserData next to the

@@ -50,6 +50,7 @@ struct Settings
         int musicVolume;   // background music (CD tracks, AdLib)
         int soundVolume;   // voices and sound effects
         char voices[64];   // narrator: a folder of Voices (Shared/narrators.h), empty = the game's (English)
+        char voicesAitd2[64];   // the same for Alone in the Dark 2 (its own Voices and narrators)
         bool adlibMusic;   // AITD1 and AITD2: their AdLib music (LISTMUS.PAK) instead of the CD tracks
     } audio;
 

@@ -17,6 +17,14 @@
 // page (BBSS00) is enough. Single readings use their whole number (e.g.
 // 001006). A folder counts as a narrator when it has 000000 (the first page
 // of the first book). Used by the game and the launcher. Header-only.
+//
+// Alone in the Dark 2 has its own (AITD2\Voices, a folder or a .voice): its
+// books are read by CD tracks and its characters speak with samples, so a
+// narrator holds TrackNN (the CD track NN of a page's voice), SampleNNN (a
+// voice sample of LISTSAMP.PAK, replacing the game's own) and books.cfg, the
+// seconds each page plays ("text page track seconds", one per line; a
+// narrator's own CD has its own). It counts as a narrator when it has
+// books.cfg.
 ///////////////////////////////////////////////////////////////////////////////
 
 #pragma once
@@ -44,10 +52,12 @@ class NarratorVoices
 {
 public:
     // The voices of a folder, or of a narrator pack (the path with or without
-    // .voice); false if it has none (no 000000 file or image with it)
-    bool open(const std::filesystem::path& folder)
+    // .voice); false if it has none (no 000000 file or image with it; for
+    // Alone in the Dark 2, no books.cfg)
+    bool open(const std::filesystem::path& folder, bool aitd2 = false)
     {
         namespace fs = std::filesystem;
+        m_aitd2 = aitd2;
         m_folder = folder;
         m_name = narratorPathText(folder.filename());
         m_image.reset();
@@ -67,7 +77,12 @@ public:
             m_name = narratorPathText(packPath.stem());
             std::vector<unsigned char> probe;
             std::string ext;
-            return readPiece(0, probe, ext);
+            return m_aitd2 ? readFile("books.cfg", probe) : readPiece(0, probe, ext);
+        }
+        if (m_aitd2)
+        {
+            std::vector<unsigned char> probe;
+            return readFile("books.cfg", probe);
         }
         for (const fs::directory_entry& entry : fs::directory_iterator(folder, ec))
         {
@@ -125,6 +140,30 @@ public:
         return false;
     }
 
+    // A file of the narrator by its whole name (books.cfg), from its folder
+    // or its pack
+    bool readFile(const std::string& name, std::vector<unsigned char>& data) const
+    {
+        if (m_pack)
+            return m_pack->read(name, data) && !data.empty();
+        return readWhole(m_folder / name, data);
+    }
+
+    // A sound by its name without extension (Track23, Sample066), with its
+    // extension (".ogg", ".wav" or ".voc"); false if there is none
+    bool readSound(const std::string& base, std::vector<unsigned char>& data, std::string& ext) const
+    {
+        for (const char* candidate : { ".ogg", ".wav", ".voc" })
+        {
+            if (readFile(base + candidate, data))
+            {
+                ext = candidate;
+                return true;
+            }
+        }
+        return false;
+    }
+
     bool hasPiece(int number) const
     {
         char name[16];
@@ -160,13 +199,14 @@ private:
 
     std::filesystem::path m_folder;
     std::string m_name;
+    bool m_aitd2 = false;
     std::unique_ptr<CdImage> m_image;
     std::unique_ptr<ZipArchive> m_pack;
 };
 
 // The narrators with voices inside a Voices folder (folders and narrator
-// packs), by name; a name only once
-inline std::vector<std::string> findNarrators(const std::filesystem::path& voicesFolder)
+// packs), by name; a name only once. aitd2: Alone in the Dark 2's narrators
+inline std::vector<std::string> findNarrators(const std::filesystem::path& voicesFolder, bool aitd2 = false)
 {
     namespace fs = std::filesystem;
     std::vector<std::string> names;
@@ -175,7 +215,7 @@ inline std::vector<std::string> findNarrators(const std::filesystem::path& voice
     {
         NarratorVoices voices;
         const bool candidate = entry.is_directory(ec) || (entry.is_regular_file(ec) && NarratorVoices::isVoicePack(entry.path()));
-        if (candidate && voices.open(entry.path()) &&
+        if (candidate && voices.open(entry.path(), aitd2) &&
             std::find(names.begin(), names.end(), voices.name()) == names.end())
             names.push_back(voices.name());
     }

@@ -129,6 +129,9 @@ struct BookVoices { int text; BookVoice pages[10]; };
 // The narrator reads page `page` of text `index` if the table gives it a
 // voice; the voice takes the CD from the music
 void playBookVoice(const BookVoices* table, int count, int index, int page);
+// The narrator reads a page: `track` for `seconds` (track 0: the page is
+// silent); the voice takes the CD from the music
+void playBookPageVoice(int track, int seconds);
 // Silences the narrator and gives the CD back to the music
 void endBookVoice();
 // The reader of books and documents: shows the pages of text `index` in the rectangle and turns them

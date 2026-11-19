@@ -598,12 +598,14 @@ static void drawControlsAndAudio(LauncherState& state, const Fonts& fonts, const
     }
     // CD or AdLib music: only on the pages of the games that have both
     // (AITD1 with Jack, which only has AdLib and ignores it; AITD2)
+    // Each game its own narrator (Alone 2 has its own voices)
+    std::string& voices = state.selectedGame == 1 ? state.settings.voicesAitd2 : state.settings.voices;
     if (drawAudioWindow(s_audioWindow, state.settings.musicVolume, state.settings.soundVolume,
-        state.selectedGame != 2 ? &state.settings.adlibMusic : nullptr, state.settings.voices,
+        state.selectedGame != 2 ? &state.settings.adlibMusic : nullptr, voices,
         s_narrators, (int)uiLanguage(), true, controlsStyle))
         logLine("Audio: music %d (%s), voices and effects %d, narrator %s", state.settings.musicVolume,
             state.settings.adlibMusic ? "AdLib" : "CD", state.settings.soundVolume,
-            state.settings.voices.empty() ? "of the game" : state.settings.voices.c_str());
+            voices.empty() ? "of the game" : voices.c_str());
 }
 
 // B closes the updates window (as its last button does)
@@ -1136,7 +1138,7 @@ static void handleIntent(LauncherState& state, const LauncherIntent& intent, SDL
     {
         s_audioWindow.open = true;
         s_audioWindow.justOpened = true;
-        s_narrators = findAitd1Narrators(dataFolder(state));
+        s_narrators = findGameNarrators(dataFolder(state));
     }
     if (intent.update)
     {

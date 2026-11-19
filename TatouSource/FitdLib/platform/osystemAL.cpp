@@ -419,6 +419,8 @@ static void reapFinishedSfx()
     }
 }
 
+static void addActiveSfx(SoLoud::handle h, SoLoud::AudioSource* pAudioSource);
+
 void osystem_playSample(char* samplePtr,int size)
 {
     if (!gSoloud || !samplePtr || size <= 0)
@@ -482,6 +484,13 @@ void osystem_playSample(char* samplePtr,int size)
     }
 
     if (pAudioSource)
+        addActiveSfx(h, pAudioSource);
+}
+
+// A one-shot sound now playing: kept until it ends, with the pitch variation
+// the game asks for
+static void addActiveSfx(SoLoud::handle h, SoLoud::AudioSource* pAudioSource)
+{
     {
         ActiveSfx sfx = { h, pAudioSource, false };
         g_activeSfx.push_back(sfx);
@@ -851,14 +860,41 @@ static bool playVoStream(FILE* fh, const char* label)
     return false;
 }
 
+static std::shared_ptr<const NarratorVoices> currentNarrator();
+
 void osystem_playVoiceTrack(int trackId, int seconds)
 {
     if (!gSoloud) return;
 
     osystem_stopVO();
 
-    char label[32];
+    char label[64];
     sprintf_s(label, sizeof(label), "CD track %d", trackId);
+    // Alone in the Dark 2's chosen narrator: its own recording of the track
+    if (g_gameId == AITD2)
+    {
+        const std::shared_ptr<const NarratorVoices> narrator = currentNarrator();
+        char name[16];
+        snprintf(name, sizeof(name), "Track%02d", trackId);
+        std::vector<unsigned char> data;
+        std::string ext;
+        if (narrator && narrator->readSound(name, data, ext))
+        {
+            s_voBuf = new unsigned char[data.size()];
+            memcpy(s_voBuf, data.data(), data.size());
+            s_voStream = new SoLoud::WavStream();
+            if (s_voStream->loadMem(s_voBuf, (unsigned int)data.size(), false, false) != SoLoud::SO_NO_ERROR)
+            {
+                osystem_stopVO();
+                printf(VO_WARN "No voice: %s of %s cannot be read" CON_RESET "\n", name, narrator->name().c_str());
+                return;
+            }
+            s_voHandle = playAudioSource(*s_voStream);
+            printf(VO_OK "Playing VO: %s (narrator %s)" CON_RESET "\n", label, narrator->name().c_str());
+            gSoloud->scheduleStop(s_voHandle, seconds);
+            return;
+        }
+    }
     const FoundTrack track = findTrack(trackId);
     if (track.file)
     {
@@ -1007,7 +1043,8 @@ static std::shared_ptr<const NarratorVoices> currentNarrator()
     static std::shared_ptr<const NarratorVoices> s_narrator;
     static std::string s_openedName;
     static bool s_opened = false;
-    const std::string wanted = g_settings.audio.voices;
+    const bool aitd2 = g_gameId == AITD2;
+    const std::string wanted = aitd2 ? g_settings.audio.voicesAitd2 : g_settings.audio.voices;
     if (s_opened && wanted == s_openedName)
         return s_narrator;
     s_opened = true;
@@ -1016,7 +1053,7 @@ static std::shared_ptr<const NarratorVoices> currentNarrator()
     if (wanted.empty())
         return s_narrator;
     auto voices = std::make_shared<NarratorVoices>();
-    if (voices->open(std::filesystem::u8path(std::string(kVoicesFolder) + "/" + wanted)))
+    if (voices->open(std::filesystem::u8path(std::string(kVoicesFolder) + "/" + wanted), aitd2))
     {
         const std::string image = narratorPathText(voices->imagePath().filename());
         const std::string pack = narratorPathText(voices->packPath().filename());
@@ -1034,7 +1071,98 @@ static std::shared_ptr<const NarratorVoices> currentNarrator()
 
 std::vector<std::string> osystem_findNarrators()
 {
-    return findNarrators(std::filesystem::u8path(kVoicesFolder));
+    return findNarrators(std::filesystem::u8path(kVoicesFolder), g_gameId == AITD2);
+}
+
+// The table of the chosen narrator of Alone in the Dark 2 (books.cfg: text,
+// page, track, seconds), read when the narrator changes
+struct NarratorBookPage { int text, page, track, seconds; };
+static const std::vector<NarratorBookPage>* narratorBookTable(const NarratorVoices* narrator)
+{
+    static const NarratorVoices* s_for = nullptr;
+    static std::vector<NarratorBookPage> s_table;
+    if (narrator == s_for)
+        return &s_table;
+    s_for = narrator;
+    s_table.clear();
+    std::vector<unsigned char> data;
+    if (!narrator || !narrator->readFile("books.cfg", data))
+        return &s_table;
+    std::string text(data.begin(), data.end());
+    size_t start = 0;
+    while (start < text.size())
+    {
+        size_t end = text.find('\n', start);
+        if (end == std::string::npos)
+            end = text.size();
+        const std::string line = text.substr(start, end - start);
+        start = end + 1;
+        NarratorBookPage page;
+        if (!line.empty() && line[0] != '#' &&
+            sscanf(line.c_str(), "%d %d %d %d", &page.text, &page.page, &page.track, &page.seconds) == 4)
+            s_table.push_back(page);
+    }
+    printf(VO_OK "Narrator %s: %d pages with a voice" CON_RESET "\n", narrator->name().c_str(), (int)s_table.size());
+    return &s_table;
+}
+
+int osystem_narratorBookPage(int text, int page, int* track, int* seconds)
+{
+    const std::shared_ptr<const NarratorVoices> narrator = currentNarrator();
+    if (!narrator)
+        return -1;
+    bool textKnown = false;
+    *track = 0;
+    *seconds = 0;
+    for (const NarratorBookPage& entry : *narratorBookTable(narrator.get()))
+    {
+        if (entry.text != text)
+            continue;
+        textKnown = true;
+        if (entry.page == page)
+        {
+            *track = entry.track;
+            *seconds = entry.seconds;
+        }
+    }
+    return textKnown ? 1 : 0;
+}
+
+bool osystem_playNarratorSample(int num)
+{
+    if (!gSoloud || g_gameId != AITD2)
+        return false;
+    const std::shared_ptr<const NarratorVoices> narrator = currentNarrator();
+    if (!narrator)
+        return false;
+    char name[16];
+    snprintf(name, sizeof(name), "Sample%03d", num);
+    std::vector<unsigned char> data;
+    std::string ext;
+    if (!narrator->readSound(name, data, ext))
+        return false;
+    reapFinishedSfx();
+    SoLoud::Wav* pWav = new SoLoud::Wav();
+    unsigned char* wavBuf = nullptr;
+    size_t wavSize = 0;
+    SoLoud::result res;
+    if (ext == ".voc" && vocDecodeToWav(data.data(), data.size(), &wavBuf, &wavSize))
+    {
+        res = pWav->loadMem(wavBuf, (unsigned int)wavSize, true);
+        delete[] wavBuf;
+    }
+    else
+    {
+        res = pWav->loadMem(data.data(), (unsigned int)data.size(), true);
+    }
+    if (res != SoLoud::SO_NO_ERROR)
+    {
+        delete pWav;
+        return false;
+    }
+    pWav->setLooping(false);
+    addActiveSfx(playAudioSource(*pWav), pWav);
+    return true;
 }
 
 // A voice file (VOC, WAV or OGG) as mono samples; false if it cannot be decoded

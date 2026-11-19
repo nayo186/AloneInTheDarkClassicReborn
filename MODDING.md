@@ -20,10 +20,10 @@ A loose file in a folder always comes before the same file in a pack, so you can
 | Masks (the parts of a background that pass in front of the characters) | all | `UserData\<game>\Masks` | [Masks](#masks) |
 | Animated sequences (intros, cut scenes), picture by picture | *Jack*, *AITD2*, *AITD3* | `UserData\<game>\Backgrounds\sequences` | [Animated sequences](#animated-sequences) |
 | Music (the CD tracks) | all but *Jack* | `UserData\<game>` | [Music](#music) |
-| The narrator's voice (books, letters, notes) | *AITD1*, *AITD2*, *AITD3* | `UserData\AITD1\Voices`, `UserData\AITD2`, `UserData\AITD3` | [Narrator](#narrator) |
+| The narrator's voice (books, letters, notes) | *AITD1*, *AITD2*, *AITD3* | `UserData\AITD1\Voices`, `UserData\AITD2\Voices` (or `UserData\AITD2`), `UserData\AITD3` | [Narrator](#narrator) |
 | Languages of *Alone in the Dark 3* | *AITD3* | `UserData\AITD3\Languages` | [Languages](#languages) |
 | Backgrounds and masks in one file (texture pack) | all | `UserData\<name>.texture` | [Texture packs](#texture-packs-texture) |
-| A narrator in one file (narrator pack) | *AITD1* | `UserData\AITD1\Voices\<narrator>.voice` | [Narrator packs](#narrator-packs-voice) |
+| A narrator in one file (narrator pack) | *AITD1*, *AITD2* | `UserData\AITD1\Voices\<narrator>.voice`, `UserData\AITD2\Voices\<narrator>.voice` | [Narrator packs](#narrator-packs-voice) |
 
 **Not yet:** the 3D models and their textures, the sound effects and the texts. Changing the 3D models (exporting them to a common format and bringing them back) is an idea for the future.
 
@@ -42,7 +42,8 @@ UserData/
 ├── JACK/                        Jack in the Dark: Backgrounds/, Masks/, Exports/,
 │   └── Backgrounds/sequences/   and its animated sequences
 ├── AITD2/                       Alone in the Dark 2: as AITD1, with sequences,
-│                                music and narrator files in the folder itself
+│   │                            music and page recordings in the folder itself
+│   └── Voices/<narrator>/       whole narrators of another CD (or <narrator>.voice)
 └── AITD3/                       Alone in the Dark 3: as AITD2, and
     └── Languages/<language>/    other languages
 ```
@@ -132,6 +133,15 @@ means that this music is CD track 12, so your file is `11.ogg` (or `.wav`, `.mp3
 
 - **Alone in the Dark:** each narrator is a folder of `UserData\AITD1\Voices`, with one file per page of the books, letters and notes, or the same files in one `.voice` file ([Narrator packs](#narrator-packs-voice)). The names, formats and the steps to make and choose one are in [Narrators](README.md#narrators) in the README.
 - **Alone in the Dark 2 and 3:** the narrator is read from CD tracks; a file of yours in `UserData\AITD2` or `UserData\AITD3` replaces a page. The tables of pages and files are in the README: [Alone in the Dark 2](README.md#alone-in-the-dark-2-1) and [Alone in the Dark 3](README.md#alone-in-the-dark-3-1).
+- **Alone in the Dark 2, a whole narrator:** a narrator of another CD (another language, or a complete dubbing) is a folder of `UserData\AITD2\Voices`, or one `.voice` file there ([Narrator packs](#narrator-packs-voice)), chosen in **Audio** → **Narrator** while *Alone in the Dark 2* is the game chosen (each game keeps its own choice). It replaces the voices of the books and letters, and the characters' voices of the intro and the game; the effects and the music stay the game's. Its files:
+
+  | File | What it is |
+  | --- | --- |
+  | `books.cfg` | The voice of each page: one line `text page track seconds` per page (e.g. `22 0 23 6`: page 0 of text 22 plays `Track23` for 6 seconds). A page that is not listed is silent. This file is what makes the folder a narrator. |
+  | `Track23.ogg` ... `Track64.ogg` | The recordings of the pages, named after the CD track they come from. |
+  | `Sample066.ogg` ... | The characters' voices, named after their number in the game's `LISTSAMP.PAK`; each one replaces the game's own. Only the voices are needed, not the effects. |
+
+  `.ogg`, `.wav` or `.voc` files. The seconds of `books.cfg` are those of that CD's recordings: each CD has its own table, in its `AITD2.EXE`. `tatou.log` says it is used: `Narrator: French (narrator pack French.voice)`, `Narrator French: 45 pages with a voice`, and each voice of it `Playing VO: CD track 44 (narrator French)` or `Sample (narrator) 210`.
 
 ## Languages
 
@@ -170,14 +180,14 @@ A texture pack holds backgrounds, full-screen pictures, masks and sequences of o
 - **Making one:** put your files in the folders of a `UserData` as usual, then `python tools/makeTexturePack.py "<UserData folder>" mypack.texture` (it takes *Alone in the Dark* and *Jack*; add `AITD2` or `AITD3` at the end for those games). With 7-Zip: select the game folders (`AITD1`, `JACK`...), add them to a ZIP with the compression level **Store**, and rename the `.zip` to `.texture`. A compressed ZIP works too, a little slower. It must be under 4 GB.
 - **Custom backgrounds** must be on (F1 or the launcher's **Advanced options**), as for loose files.
 - `tatou.log` says which packs were found when the game opens: `Texture pack mypack.texture: 876 pictures and masks`.
-- **The improved backgrounds** of *Alone in the Dark* and *Jack* are a texture pack the launcher can download: **Advanced options** → **Improved backgrounds (Alone 1 and Jack)** → **Download**. It goes to `UserData` like any other pack, and **Remove** deletes it.
+- **The improved backgrounds** of *Alone in the Dark* and *Jack*, and those of *Alone in the Dark 2*, are texture packs the launcher can download: **Advanced options** → **Improved backgrounds (Alone 1 and Jack)** or **(Alone 2)**, on the page of each game → **Download**. It goes to `UserData` like any other pack, and **Remove** deletes it.
 
 ### Narrator packs (.voice)
 
-A narrator pack is one narrator of *Alone in the Dark* in a single file.
+A narrator pack is one narrator of *Alone in the Dark* or *Alone in the Dark 2* in a single file.
 
-- **Where:** in `UserData\AITD1\Voices`, as `<narrator>.voice`. The file's name is the narrator's name in the **Narrator** list, as a folder's would be: `Spanish.voice` is shown as *Spanish*, `Spanish (fan dub).voice` as *Spanish (fan dub)*.
-- **Inside:** the voice files of a narrator folder, with the same names (`000000.ogg`, `000100.ogg`...; see [Narrators](README.md#narrators) in the README), without folders. `000000` is needed, as in a folder.
+- **Where:** in `UserData\AITD1\Voices` (or `UserData\AITD2\Voices`), as `<narrator>.voice`. The file's name is the narrator's name in the **Narrator** list, as a folder's would be: `Spanish.voice` is shown as *Spanish*, `Spanish (fan dub).voice` as *Spanish (fan dub)*.
+- **Inside:** the voice files of a narrator folder, with the same names (`000000.ogg`, `000100.ogg`...; see [Narrators](README.md#narrators) in the README), without folders. `000000` is needed, as in a folder. For *Alone in the Dark 2*, the files of its narrator folder (`books.cfg`, `TrackNN`, `SampleNNN`; see [Narrator](#narrator)), and `books.cfg` is needed.
 - **Making one:** `python tools/makeVoicePack.py "<narrator folder>" Spanish.voice`. With 7-Zip: select the voice files (not their folder), add them to a ZIP with the compression level **Store**, and rename the `.zip` to `.voice`. Unlike texture packs, a narrator pack must not be compressed.
 - A narrator folder with the same name comes before the file.
 - `tatou.log` says where the narrator comes from: `Narrator: Spanish (narrator pack Spanish.voice)`.

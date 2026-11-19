@@ -337,9 +337,10 @@ The launcher (its **Options**, **Controls** and **Audio** cards) and the in-game
 | Scanlines | Thin dark lines over the picture, like an old CRT screen; under it, their intensity from 1 (soft) to 4 (strong) |
 | SSAO | Soft shadows where surfaces meet |
 | Smooth animations | Poses blended between the original key frames |
-| Enhanced text | In *Alone in the Dark* and *Jack in the Dark*, a new smooth font with the game's own capitals; in the other games, the game's letters redrawn sharp at screen resolution |
+| Enhanced text | In *Alone in the Dark*, *Jack in the Dark* and *Alone in the Dark 2*, a new smooth font with the game's own capitals; in *Alone in the Dark 3*, the game's letters redrawn sharp at screen resolution |
 | Custom backgrounds | Uses your pictures instead of the originals |
 | Improved backgrounds (Alone 1 and Jack) | Downloads the improved backgrounds and masks of *Alone in the Dark* and *Jack in the Dark* (one file, about 130 MB) and switches on Custom backgrounds; **Remove** deletes them |
+| Improved backgrounds (Alone 2) | The same for *Alone in the Dark 2* (one file, about 234 MB), on its page of the launcher |
 | Audio | Music volume, voices and effects volume, music type (CD or AdLib, in *Alone in the Dark* 1 and 2), narrator |
 | Controls | The inputs of every action, modern left stick, controller vibration |
 | Cheats (F1 only) | **Enable cheats** turns them on or off; **Infinite life**: damage never kills you, the game's traps (deadly falls, scripted deaths) still do |
@@ -370,10 +371,10 @@ UserData/
 │   ├── Voices/            other narrators, one folder each (see Narrators)
 │   └── GAME/              the game itself, if you keep it here (see Getting started)
 ├── JACK/                  Jack in the Dark (same layout, without GAME: it is in AITD1's)
-├── AITD2/                 Alone in the Dark 2 (same layout, without Voices: its
-│                          narrator's recordings go in the folder itself, see Narrators;
-│                          with its own GAME)
-└── AITD3/                 Alone in the Dark 3 (as AITD2, with its own GAME), and
+├── AITD2/                 Alone in the Dark 2 (same layout, with its own GAME; Voices
+│                          holds whole narrators of another CD, and page recordings
+│                          go in the folder itself, see Narrators)
+└── AITD3/                 Alone in the Dark 3 (as AITD2 without Voices, with its own GAME), and
     └── Languages/         other languages, one folder each (see
                            Other languages in Alone in the Dark 3)
 ```
@@ -384,7 +385,7 @@ What you can put in these folders to change the games (backgrounds, masks, seque
 
 ## Custom backgrounds
 
-**Improved backgrounds in one click** (*Alone in the Dark* and *Jack in the Dark*): in the launcher, **Options** → **Improved backgrounds (Alone 1 and Jack)** → **Download**. The backgrounds and masks come in one file (`nayo_AITD1V2.texture`, about 130 MB) that goes to `UserData`, and **Custom backgrounds** is switched on. It works on Android too. **Remove** deletes it. Packs like this one are explained in the [modding guide](MODDING.md#packs-one-file-instead-of-folders).
+**Improved backgrounds in one click** (*Alone in the Dark* and *Jack in the Dark*): in the launcher, **Options** → **Improved backgrounds (Alone 1 and Jack)** → **Download**. The backgrounds and masks come in one file (`nayo_AITD1V2.texture`, about 130 MB) that goes to `UserData`, and **Custom backgrounds** is switched on. It works on Android too. **Remove** deletes it. *Alone in the Dark 2* has its own on its page of the launcher: **Improved backgrounds (Alone 2)** (`nayo_AITD2V2.texture`, about 234 MB). Packs like this one are explained in the [modding guide](MODDING.md#packs-one-file-instead-of-folders).
 
 **HD packs.** HD backgrounds ready to use, for each game:
 
@@ -445,7 +446,9 @@ Please share only recordings you made yourself, never the voices of the game or 
 
 ### Alone in the Dark 2
 
-In *Alone in the Dark 2* the narrator (in English, with any text language) reads the books and letters from the CD's audio tracks, as the CD version did: each page plays one track for a set number of seconds, and the music stops while the narrator reads. With the GOG or Steam edition this works by itself: the tracks are read from `GAME.GOG`. The **Narrator** list of the Audio window is for *Alone in the Dark* only.
+In *Alone in the Dark 2* the narrator (in English, with any text language) reads the books and letters from the CD's audio tracks, as the CD version did: each page plays one track for a set number of seconds, and the music stops while the narrator reads. With the GOG or Steam edition this works by itself: the tracks are read from `GAME.GOG`.
+
+**Another narrator.** A whole narrator of another CD of *Alone in the Dark 2* (for example the French CD, if you own it) goes in its own folder of **`UserData\AITD2\Voices`**, or in one `<narrator>.voice` file there. It appears in the **Narrator** list of the **Audio** window when *Alone in the Dark 2* is chosen (it has its own choice, apart from *Alone in the Dark*'s), and the books, letters and the characters' voices then speak in it, with any text language. What goes in it is explained in the [modding guide](MODDING.md#narrator).
 
 **Your own dubbing.** Put your recordings in **`UserData\AITD2`** (next to `Launcher.exe`), one file per page, named after the CD track they replace: `22.ogg`, `43.wav`... (`.ogg`, `.wav` or `.mp3`). A file there is played instead of the CD's track; a page without a file keeps the original voice. Nothing in the game folder is changed.
 

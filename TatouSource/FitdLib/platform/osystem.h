@@ -100,6 +100,14 @@
 	void osystem_clearVocCache();
 	// The narrators with voices: the folders of Voices in the working folder
 	std::vector<std::string> osystem_findNarrators();
+	// Alone in the Dark 2's narrator (Shared/narrators.h): the voice of a
+	// page of a text in its own table. -1: no narrator chosen; 0: the
+	// narrator has no voice for that text; 1: *track for *seconds (track 0:
+	// a silent page)
+	int osystem_narratorBookPage(int text, int page, int* track, int* seconds);
+	// Plays a voice sample of Alone in the Dark 2's narrator instead of the
+	// game's (LISTSAMP.PAK number); false if it has none for it
+	bool osystem_playNarratorSample(int num);
 
 	extern float g_voPitchMultiplier;
 	extern bool g_playWorldActive;

@@ -171,19 +171,24 @@ void playBookVoice(const BookVoices* table, int count, int index, int page)
         const BookVoices& voices = table[i];
         if (voices.text != index)
             continue;
-        if (!s_bookVoicePlayed)
-        {
-            osystem_stopTrack();
-            s_bookVoicePlayed = true;
-        }
         const int pages = (int)(sizeof(voices.pages) / sizeof(voices.pages[0]));
         const BookVoice voice = page < pages ? voices.pages[page] : BookVoice{};
-        if (voice.track)
-            osystem_playVoiceTrack(voice.track, voice.seconds);
-        else
-            osystem_stopVO();
+        playBookPageVoice(voice.track, voice.seconds);
         return;
     }
+}
+
+void playBookPageVoice(int track, int seconds)
+{
+    if (!s_bookVoicePlayed)
+    {
+        osystem_stopTrack();
+        s_bookVoicePlayed = true;
+    }
+    if (track)
+        osystem_playVoiceTrack(track, seconds);
+    else
+        osystem_stopVO();
 }
 
 void endBookVoice()

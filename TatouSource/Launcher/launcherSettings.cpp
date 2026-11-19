@@ -364,13 +364,14 @@ bool hasJackData(const std::string& folder)
     return pathExists(install.jackData / "PERE.PAK");
 }
 
-std::vector<std::string> findAitd1Narrators(const std::string& folder)
+std::vector<std::string> findGameNarrators(const std::string& folder)
 {
     const GameInstall install = findGameInstall(folder);
-    if (install.game != 0)
+    if (install.game != 0 && install.game != 1)
         return {};
-    const fs::path workFolder = (!install.gog && !install.disc && s_debugMode) ? install.gameData : userDataFolder() / "AITD1";
-    return findNarrators(workFolder / kVoicesFolder);
+    const fs::path workFolder = (!install.gog && !install.disc && s_debugMode) ? install.gameData
+                              : userDataFolder() / (install.game == 1 ? "AITD2" : "AITD1");
+    return findNarrators(workFolder / kVoicesFolder, install.game == 1);
 }
 
 void prepareUserData()
@@ -384,6 +385,7 @@ void prepareUserData()
     }
     std::error_code ec;
     fs::create_directories(userDataFolder() / "AITD1" / kVoicesFolder, ec);
+    fs::create_directories(userDataFolder() / "AITD2" / kVoicesFolder, ec);
     fs::create_directories(userDataFolder() / "AITD3" / kLanguagesFolder, ec);
     for (const char* game : { "AITD1", "AITD2", "AITD3" })
         fs::create_directories(userDataFolder() / game / kPortableGameFolder, ec);
@@ -473,6 +475,7 @@ void readGameConfig(const std::string& folder, LauncherSettings& settings)
     settings.restoreDefaultControls();
     settings.musicVolume = settings.soundVolume = kDefaultAudioVolume;
     settings.voices.clear();
+    settings.voicesAitd2.clear();
     settings.adlibMusic = false;
 
     std::ifstream file(gameConfigPath(folder));
@@ -528,6 +531,8 @@ void readGameConfig(const std::string& folder, LauncherSettings& settings)
             settings.soundVolume = std::clamp(atoi(value.c_str()), 0, 100);
         else if (key == "audio.voices")
             settings.voices = value;
+        else if (key == "audio.voicesAitd2")
+            settings.voicesAitd2 = value;
         else if (key == "audio.music")
             settings.adlibMusic = value == "adlib";
         else if (key == "controller.modernStick")
@@ -594,6 +599,7 @@ bool writeGameConfig(const std::string& folder, const LauncherSettings& settings
     wanted.push_back({ "audio.soundVolume", "audio.soundVolume = " + std::to_string(settings.soundVolume), false });
     wanted.push_back({ "audio.music", std::string("audio.music = ") + (settings.adlibMusic ? "adlib" : "cd"), false });
     wanted.push_back({ "audio.voices", "audio.voices = \"" + settings.voices + "\"", false });
+    wanted.push_back({ "audio.voicesAitd2", "audio.voicesAitd2 = \"" + settings.voicesAitd2 + "\"", false });
     wanted.push_back({ "controller.modernStick", std::string("controller.modernStick = ") + boolText(settings.modernStick), false });
     wanted.push_back({ "controller.vibration", std::string("controller.vibration = ") + boolText(settings.vibration), false });
     if (settings.controls.size() == (size_t)kGameActionCount)

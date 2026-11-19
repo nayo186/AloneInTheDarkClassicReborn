@@ -199,6 +199,8 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `osystem_preDecodeVocPage` | VOC pre-decode cache for seamless page turns during book reading |
 | `osystem_clearVocCache` | Forgets the voices decoded in the background |
 | `osystem_findNarrators` | The narrators with voices: the folders of Voices in the working folder |
+| `osystem_narratorBookPage` | Alone in the Dark 2's narrator (Shared/narrators.h): the voice of a page of a text in its own table. -1: no narrator chosen; 0: the narrator has no voice for that text; 1: *track for *seconds (track 0: a silent page) |
+| `osystem_playNarratorSample` | Plays a voice sample of Alone in the Dark 2's narrator instead of the game's (LISTSAMP.PAK number); false if it has none for it |
 | `osystem_createMask` | Makes the texture of a foreground mask from its 320x200 shape |
 | `osystem_drawMask` | Draws a foreground mask of the camera over the objects behind it |
 | `osystem_drawSpriteLayer` | Draws a 2D drawing (AITD2's sprites) at the current depth slice: `layer` is 320x200 pairs of colour and covered (1) |
@@ -571,6 +573,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `drawHardCol` | Debug: draws the fixed collision boxes of a room |
 | `readBook` | Opens a book or letter: picture, pages and narrator voice |
 | `playBookVoice` | The narrator reads page `page` of text `index` if the table gives it a voice; the voice takes the CD from the music |
+| `playBookPageVoice` | The narrator reads a page: `track` for `seconds` (track 0: the page is silent); the voice takes the CD from the music |
 | `endBookVoice` | Silences the narrator and gives the CD back to the music |
 | `Lire` | The reader of books and documents: shows the pages of text `index` in the rectangle and turns them |
 | `SetProjection` | Sets the camera projection: screen centre, perspective and field of view |
@@ -1025,7 +1028,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `gameFilesSources` | The game files of a data folder to check against the editions we know (Shared/gameFiles.h): the game's, and Jack's with AITD1 if it is there (its lines start with JACK/); loose files or the player's CD image; empty if the folder has no game |
 | `gameFilesCacheFile` | Where the check of a game's files (0 AITD1 with Jack, 1 AITD2, 2 AITD3) keeps what it read: UserData\<game>\fileCheck.cfg, UTF-8 |
 | `hasJackData` | True if Jack in the Dark is there too (PERE.PAK) |
-| `findAitd1Narrators` | The narrators with voices in AITD1's working folder (Voices: in UserData\AITD1, or in the copy itself in debug mode; Shared/narrators.h) |
+| `findGameNarrators` | The narrators with voices in the working folder of the game of that data folder, AITD1 or AITD2 (Voices: in UserData\AITD1 or AITD2, or in the copy itself in debug mode; Shared/narrators.h); none for the others |
 | `setLauncherDebugMode` | Debug mode (launcher.cfg "debugMode = 1", only by hand): with a copy of the data, the game writes inside the copy; otherwise everything goes to UserData next to the launcher (Shared/userFolder.h) |
 | `prepareUserData` | Creates UserData with each game's Saves, Backgrounds, Masks and Exports folders (and AITD1's Voices); called when the launcher opens |
 | `findGameLanguages` | Language PAKs present in the data folder, in a fixed order |
