@@ -4,6 +4,18 @@ Alone in the Dark: Classic Reborn started on 2026-10-23 from [Alone in the Dark:
 
 This repository was published with a single starting commit, to keep it light: the early history carried large files that are no longer part of the project. Below are the changes of each release and, after them, the changes made in this fork before it was published, newest first, one line per change. The reasons behind larger removals are explained in `docs/DESCARTADO.md` and the fixes in `docs/baseline/BUGS.md`.
 
+## v1.8.0 (2026-11-19)
+
+The widescreen view, a new font, improved backgrounds in one click, and packs that keep a mod in a single file.
+
+- *Alone in the Dark* and *Jack in the Dark*: **widescreen view**. Two new choices in **Aspect ratio**, **16:9 (zoomed)** and **16:10 (zoomed)**: the game fills a 16:9 screen with no stretching and no black bars. The scene is enlarged to the width of the screen and the view follows the character up and down; new actions **Look up** and **Look down** (right stick, Page Up / Page Down) move it without moving the character. Menus, the inventory and books stay whole in 4:3, with a blurred picture of the game at the sides, and messages are always fully on screen. The resolution list gives 16:9 sizes (BUGS.md C82)
+- *Alone in the Dark* and *Jack in the Dark*: with **Enhanced text**, a new smooth font in every text (messages, books, menus, inventory, saves), with the game's own capitals redrawn. Lines and pages stay as in the original in every language, so the narrator still matches each page. Signs the 1992 font did not have ("¡", "°", "©") now show right (BUGS.md C80)
+- *Jack in the Dark* in Spanish: the lamp's action said "Vacío" (empty) instead of "Vaciar" (to empty), and did not look like an action: it is the one that defeats the puppet chasing Grace. A few other Spanish texts of Jack are corrected too (BUGS.md J5, C80)
+- *Alone in the Dark* and *Jack in the Dark*: the launcher can download the **improved backgrounds** and masks in one click: **Options** → **Improved backgrounds (Alone 1 and Jack)** → **Download**, on the PC and on Android. **Remove** deletes them (BUGS.md C83)
+- All games: **packs**. Backgrounds and masks can come in a single `.texture` file in `UserData`, and a narrator of *Alone in the Dark* in a single `.voice` file in `UserData\AITD1\Voices`. The game reads them as they are, nothing is extracted; the usual folders keep working, and a loose file comes before the pack. Explained in the modding guide, with tools to make them (BUGS.md C83, C84)
+- All games with custom backgrounds: some screens went back to the original picture or mixed both: the armadillo of the Infogrames logo stayed as a drawn outline while the 3D one rolls, the title of *Alone in the Dark* kept its original letters, and the pictures of Emily and Edward went back to the original as soon as the box with their text appeared (BUGS.md C85)
+- All games, with Vulkan: the desktop showed through the F1 window (BUGS.md C81)
+
 ## v1.7.4 (2026-11-13)
 
 - *Alone in the Dark*: the game closed when reading the book in the cellar where the rats chase you. Its text did not fit in the small block of memory shared with blood and smoke, and loading a game lost part of that block for good (issue #12, BUGS.md C76)

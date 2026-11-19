@@ -99,11 +99,12 @@ It is not a static recompilation: a static recompilation translates the machine 
 
 ## What it adds
 
+- **Widescreen view** (*Alone in the Dark* and *Jack in the Dark*): the game fills a 16:9 screen with no stretching and no black bars. The scene is enlarged to the width of the screen and the view follows the character up and down; the right stick (or Page Up / Page Down) looks up and down. Menus, the inventory and books stay whole in 4:3, with a blurred picture of the game at the sides. Choose **16:9 (zoomed)** or **16:10 (zoomed)** in **Aspect ratio** (see [Widescreen view](#widescreen-view)).
 - **Fixes** to the original: objects drawn in the wrong order, monsters stuck at windows, gaps in 3D models, lines at the edges of masks, game speed tied to the frame rate, and many more (see `docs/baseline/BUGS.md`).
 - **Launcher** to choose the game, its language (the five of the GOG and Steam editions: English, French, German, Italian, Spanish) and the data folder, with the same options as the in-game **F1** window. The menus are translated into the same five languages.
-- **Screen options**: resolution, aspect ratio (4:3, 16:10, stretched), integer scaling, fullscreen, frame limit, VSync.
-- **Optional effects**: edge smoothing (FXAA) on the 3D models, bloom from the painted backgrounds, film grain, CRT scanlines, ambient occlusion (SSAO), smoother animations, sharper text.
-- **Custom backgrounds**: export every background and mask of the game, enlarge or repaint them, and the game uses yours. Ready-made **HD packs** are available for *Alone in the Dark*, *Jack in the Dark*, *Alone in the Dark 2* and *Alone in the Dark 3* (see [Custom backgrounds](#custom-backgrounds)). Backgrounds, masks, animated sequences, music and narrators can all be changed: see the **[modding guide](MODDING.md)**.
+- **Screen options**: resolution, aspect ratio (4:3, 16:10, stretched, and the zoomed widescreen view), integer scaling, fullscreen, frame limit, VSync.
+- **Optional effects**: edge smoothing (FXAA) on the 3D models, bloom from the painted backgrounds, film grain, CRT scanlines, ambient occlusion (SSAO), smoother animations, enhanced text (in *Alone in the Dark* and *Jack in the Dark*, a new smooth font with the game's own capitals; pages and lines stay as in the original).
+- **Custom backgrounds**: export every background and mask of the game, enlarge or repaint them, and the game uses yours. Ready-made **HD packs** are available for *Alone in the Dark*, *Jack in the Dark*, *Alone in the Dark 2* and *Alone in the Dark 3*; the improved backgrounds and masks of *Alone in the Dark* and *Jack* download from the launcher in one click (see [Custom backgrounds](#custom-backgrounds)). Backgrounds, masks, animated sequences, music and narrators can all be changed: see the **[modding guide](MODDING.md)**.
 - **Controls**: keyboard and game controller (Xbox, PlayStation, Nintendo Switch Pro and most other USB or Bluetooth controllers), every action can be changed, several inputs per action.
 - **Modern left stick**: the character walks where you push the stick, seen from the camera, like the Resident Evil HD remasters; the D-pad and the keys stay tank controls (see [Controls](#controls)).
 - **Controller vibration**: a little when you are hit or shoot, more when you die; it can be turned off in **Controls**.
@@ -295,6 +296,7 @@ Every action can be changed in **Controls** (the launcher's **Controls** card, o
 | Confirm / inventory | Enter | Start |
 | Cancel / pause menu | Esc | B |
 | Map (Alone in the Dark 3) | Tab | Y |
+| Look up / down (widescreen view) | Page Up / Page Down | Right stick |
 | Options window (F1) | F1 or Home | Back |
 | Fullscreen | F11 or Alt+Enter | — |
 
@@ -326,7 +328,7 @@ The launcher (its **Options**, **Controls** and **Audio** cards) and the in-game
 | Option | What it does |
 | --- | --- |
 | Frames per second, VSync | Smoothness; the game speed never depends on them |
-| Aspect ratio, resolution, fullscreen | How the 4:3 scene is shown |
+| Aspect ratio, resolution, fullscreen | How the 4:3 scene is shown; **16:9 (zoomed)** and **16:10 (zoomed)** are the [widescreen view](#widescreen-view) |
 | Graphics engine | How the picture is drawn: Direct3D 11 or Vulkan on Windows, Vulkan or OpenGL ES on Android (Linux and macOS have one). Applies the next time the game starts; try the other one if the picture looks wrong |
 | Integer scaling | Every pixel of the game the same size, with black borders around (like pixel-perfect scaling in DOSBox): **Size**: Automatic, the largest that fits, or a size of your choice; **3D resolution**: how sharp the 3D models are, down to the original 320 × 200. Off by default; while it is on, Resolution is not used |
 | Edge smoothing | FXAA on the 3D models |
@@ -335,11 +337,21 @@ The launcher (its **Options**, **Controls** and **Audio** cards) and the in-game
 | Scanlines | Thin dark lines over the picture, like an old CRT screen; under it, their intensity from 1 (soft) to 4 (strong) |
 | SSAO | Soft shadows where surfaces meet |
 | Smooth animations | Poses blended between the original key frames |
-| Enhanced text | The game's letters redrawn sharp at screen resolution |
+| Enhanced text | In *Alone in the Dark* and *Jack in the Dark*, a new smooth font with the game's own capitals; in the other games, the game's letters redrawn sharp at screen resolution |
 | Custom backgrounds | Uses your pictures instead of the originals |
+| Improved backgrounds (Alone 1 and Jack) | Downloads the improved backgrounds and masks of *Alone in the Dark* and *Jack in the Dark* (one file, about 130 MB) and switches on Custom backgrounds; **Remove** deletes them |
 | Audio | Music volume, voices and effects volume, music type (CD or AdLib, in *Alone in the Dark* 1 and 2), narrator |
 | Controls | The inputs of every action, modern left stick, controller vibration |
 | Cheats (F1 only) | **Enable cheats** turns them on or off; **Infinite life**: damage never kills you, the game's traps (deadly falls, scripted deaths) still do |
+
+### Widescreen view
+
+In *Alone in the Dark* and *Jack in the Dark*, **Aspect ratio** has two widescreen choices, for a 16:9 screen:
+
+- **16:9 (zoomed)**: the 4:3 scene is enlarged to the whole width of the screen. Part of it is out of the screen above and below, and the view follows the character gently up and down (it jumps at once when the camera changes).
+- **16:10 (zoomed)**: enlarges a little less, so more of the scene is seen, with narrow strips at the sides.
+
+**Look up / Look down** (right stick, or Page Up / Page Down) move the view to the top or the bottom of the scene without moving the character, and it comes back when released. Menus, the inventory, books and pictures are shown whole in 4:3, with a still, blurred picture of the game at the sides, and messages are always fully on screen. The resolution list offers 16:9 sizes (1280×720 to 3840×2160).
 
 ## Folders
 
@@ -371,6 +383,8 @@ UserData/
 What you can put in these folders to change the games (backgrounds, masks, sequences, music, narrators) is explained in the **[modding guide](MODDING.md)**.
 
 ## Custom backgrounds
+
+**Improved backgrounds in one click** (*Alone in the Dark* and *Jack in the Dark*): in the launcher, **Options** → **Improved backgrounds (Alone 1 and Jack)** → **Download**. The backgrounds and masks come in one file (`nayo_AITD1V2.texture`, about 130 MB) that goes to `UserData`, and **Custom backgrounds** is switched on. It works on Android too. **Remove** deletes it. Packs like this one are explained in the [modding guide](MODDING.md#packs-one-file-instead-of-folders).
 
 **HD packs.** HD backgrounds ready to use, for each game:
 
