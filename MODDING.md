@@ -4,6 +4,13 @@ This guide is for anyone who wants to change how the games look or sound: new ba
 
 The games: *Alone in the Dark* (folder `AITD1`), *Jack in the Dark* (`JACK`), *Alone in the Dark 2* (`AITD2`) and *Alone in the Dark 3* (`AITD3`).
 
+There are **two ways** to add your files, and both always work:
+
+- **Folders** (the usual way, best while you are making a mod): your files go loose in the folders of `UserData`, as this guide explains section by section. You can change one picture and see it at once.
+- **One file** (best to share a finished mod): the same files gathered in a single **pack**, a `.texture` file for backgrounds and masks or a `.voice` file for a narrator. A player only has to put that one file in its place. See [Packs: one file instead of folders](#packs-one-file-instead-of-folders).
+
+A loose file in a folder always comes before the same file in a pack, so you can still change one picture of a pack you downloaded.
+
 ## What you can change
 
 | What | Games | Where it goes | Section |
@@ -15,6 +22,8 @@ The games: *Alone in the Dark* (folder `AITD1`), *Jack in the Dark* (`JACK`), *A
 | Music (the CD tracks) | all but *Jack* | `UserData\<game>` | [Music](#music) |
 | The narrator's voice (books, letters, notes) | *AITD1*, *AITD2*, *AITD3* | `UserData\AITD1\Voices`, `UserData\AITD2`, `UserData\AITD3` | [Narrator](#narrator) |
 | Languages of *Alone in the Dark 3* | *AITD3* | `UserData\AITD3\Languages` | [Languages](#languages) |
+| Backgrounds and masks in one file (texture pack) | all | `UserData\<name>.texture` | [Texture packs](#texture-packs-texture) |
+| A narrator in one file (narrator pack) | *AITD1* | `UserData\AITD1\Voices\<narrator>.voice` | [Narrator packs](#narrator-packs-voice) |
 
 **Not yet:** the 3D models and their textures, the sound effects and the texts. Changing the 3D models (exporting them to a common format and bringing them back) is an idea for the future.
 
@@ -22,11 +31,13 @@ The games: *Alone in the Dark* (folder `AITD1`), *Jack in the Dark* (`JACK`), *A
 
 ```
 UserData/
+├── nayo_AITD1V2.texture         texture packs (one file with backgrounds and masks), any name
 ├── AITD1/                       Alone in the Dark
 │   ├── Backgrounds/             backgrounds and full-screen pictures (PNG or JPG)
 │   ├── Masks/                   masks (PNG)
 │   ├── Exports/                 what F1 exports: the originals, to use as a base
-│   ├── Voices/<narrator>/       narrators, one folder each
+│   ├── Voices/<narrator>/       narrators, one folder each...
+│   ├── Voices/<narrator>.voice  ...or one file each (narrator packs)
 │   └── 01.ogg ... 16.ogg        music (only the tracks you replace)
 ├── JACK/                        Jack in the Dark: Backgrounds/, Masks/, Exports/,
 │   └── Backgrounds/sequences/   and its animated sequences
@@ -36,7 +47,7 @@ UserData/
     └── Languages/<language>/    other languages
 ```
 
-The launcher creates these folders the first time it opens. A mod is shared as these same folders: whoever uses it copies them into their own `UserData` (see [Sharing a mod](#sharing-a-mod)).
+The launcher creates these folders the first time it opens (they stay there even if you only use packs). A mod is shared as these same folders, or as a pack: whoever uses it copies them into their own `UserData` (see [Sharing a mod](#sharing-a-mod)).
 
 ## Before you start
 
@@ -119,22 +130,57 @@ means that this music is CD track 12, so your file is `11.ogg` (or `.wav`, `.mp3
 
 ## Narrator
 
-- **Alone in the Dark:** each narrator is a folder of `UserData\AITD1\Voices`, with one file per page of the books, letters and notes. The names, formats and the steps to make and choose one are in [Narrators](README.md#narrators) in the README.
+- **Alone in the Dark:** each narrator is a folder of `UserData\AITD1\Voices`, with one file per page of the books, letters and notes, or the same files in one `.voice` file ([Narrator packs](#narrator-packs-voice)). The names, formats and the steps to make and choose one are in [Narrators](README.md#narrators) in the README.
 - **Alone in the Dark 2 and 3:** the narrator is read from CD tracks; a file of yours in `UserData\AITD2` or `UserData\AITD3` replaces a page. The tables of pages and files are in the README: [Alone in the Dark 2](README.md#alone-in-the-dark-2-1) and [Alone in the Dark 3](README.md#alone-in-the-dark-3-1).
 
 ## Languages
 
 *Alone in the Dark 3* can be played in a language from a folder of `UserData\AITD3\Languages`, with the texts, voices and narrator of that language: see [Other languages in Alone in the Dark 3](README.md#other-languages-in-alone-in-the-dark-3) in the README.
 
-## Texture packs
+## Packs: one file instead of folders
 
-A **texture pack** holds the backgrounds and masks of one or more games in a single file, so a player only has to put that file in `UserData` (next to `Launcher.exe`), e.g. `UserData\nayo.texture`. The game reads the pictures straight from it; nothing is extracted.
+A **pack** is a single file that holds many others, so a player does not have to copy folders or put each file in its place. It is like a box: the files are kept one after the other, **without compression** (the pictures and voices are already compressed), with a list at the end that says where each one starts. The game reads each file straight from the pack; nothing is extracted, and nothing is written into it.
 
-- It is a **ZIP file** with the extension `.texture`, holding the same folders as `UserData`: `AITD1/Backgrounds/...`, `AITD1/Masks/...`, `JACK/Backgrounds/...`, `JACK/Masks/...`
-- Store the files **without compression** (the PNG and JPG pictures are already compressed); a compressed ZIP works too, a bit slower. It must be under 4 GB.
-- `tools/makeTexturePack.py` makes one from a `UserData` folder: `python tools/makeTexturePack.py "<UserData folder>" mypack.texture` (Alone in the Dark and Jack by default; add `AITD2` or `AITD3` for those games).
-- A **loose file** in `Backgrounds` or `Masks` comes before the pack, so one picture can still be changed without making the pack again.
-- With several packs, they are read in name order and the first one that has a picture is used.
+Inside, it is an ordinary ZIP file with another extension, so it can be opened with 7-Zip or any ZIP program to see what it holds.
+
+**The order** when the same file is in several places:
+
+1. A loose file in its folder (`Backgrounds`, `Masks`, or a narrator folder) comes first.
+2. Then the packs, in name order: the first one that has the file is used.
+
+So a pack you downloaded can be corrected with one loose file, and two packs can be combined (the one whose name comes first wins where both have a picture).
+
+**To remove a pack**, delete its file. To stop using it for a while, rename its extension (e.g. `.texture.off`).
+
+### Texture packs (.texture)
+
+A texture pack holds backgrounds, full-screen pictures, masks and sequences of one or more games.
+
+- **Where:** in `UserData` itself (next to the game folders), e.g. `UserData\nayo_AITD1V2.texture`. Any name; putting the game and a version in it helps (`nayo_AITD1V2`).
+- **Inside:** the same folders as `UserData`, with the same file names:
+
+  ```
+  mypack.texture
+  ├── AITD1/Backgrounds/   CAMERA00_000.jpg, ITD_RESS_002.jpg...
+  ├── AITD1/Masks/         CAMERA00_000_mask_0_1.png...
+  ├── JACK/Backgrounds/    ... and JACK/Backgrounds/sequences/PERE/000.jpg...
+  └── JACK/Masks/          ...
+  ```
+
+- **Making one:** put your files in the folders of a `UserData` as usual, then `python tools/makeTexturePack.py "<UserData folder>" mypack.texture` (it takes *Alone in the Dark* and *Jack*; add `AITD2` or `AITD3` at the end for those games). With 7-Zip: select the game folders (`AITD1`, `JACK`...), add them to a ZIP with the compression level **Store**, and rename the `.zip` to `.texture`. A compressed ZIP works too, a little slower. It must be under 4 GB.
+- **Custom backgrounds** must be on (F1 or the launcher's **Advanced options**), as for loose files.
+- `tatou.log` says which packs were found when the game opens: `Texture pack mypack.texture: 876 pictures and masks`.
+- **The improved backgrounds** of *Alone in the Dark* and *Jack* are a texture pack the launcher can download: **Advanced options** → **Improved backgrounds (Alone 1 and Jack)** → **Download**. It goes to `UserData` like any other pack, and **Remove** deletes it.
+
+### Narrator packs (.voice)
+
+A narrator pack is one narrator of *Alone in the Dark* in a single file.
+
+- **Where:** in `UserData\AITD1\Voices`, as `<narrator>.voice`. The file's name is the narrator's name in the **Narrator** list, as a folder's would be: `Spanish.voice` is shown as *Spanish*, `Spanish (fan dub).voice` as *Spanish (fan dub)*.
+- **Inside:** the voice files of a narrator folder, with the same names (`000000.ogg`, `000100.ogg`...; see [Narrators](README.md#narrators) in the README), without folders. `000000` is needed, as in a folder.
+- **Making one:** `python tools/makeVoicePack.py "<narrator folder>" Spanish.voice`. With 7-Zip: select the voice files (not their folder), add them to a ZIP with the compression level **Store**, and rename the `.zip` to `.voice`. Unlike texture packs, a narrator pack must not be compressed.
+- A narrator folder with the same name comes before the file.
+- `tatou.log` says where the narrator comes from: `Narrator: Spanish (narrator pack Spanish.voice)`.
 
 ## Sharing a mod
 
@@ -148,5 +194,6 @@ A **texture pack** holds the backgrounds and masks of one or more games in a sin
       └── Masks/         CAMERA00_000_mask_0_1.png...
   ```
 
+- **Or share one pack:** a `.texture` with your backgrounds and masks, or a `.voice` with your narrator ([Packs](#packs-one-file-instead-of-folders)). It is the simplest for players: one file, in one place.
 - **Say which game and which edition** it is made for (GOG, Steam, a CD of a given language): the pictures and tracks are the same in all of them, but a player will want to know.
 - A short text with what it changes and how to remove it (delete the files) helps players.

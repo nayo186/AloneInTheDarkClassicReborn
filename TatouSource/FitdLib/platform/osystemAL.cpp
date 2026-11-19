@@ -1019,8 +1019,9 @@ static std::shared_ptr<const NarratorVoices> currentNarrator()
     if (voices->open(std::filesystem::u8path(std::string(kVoicesFolder) + "/" + wanted)))
     {
         const std::string image = narratorPathText(voices->imagePath().filename());
+        const std::string pack = narratorPathText(voices->packPath().filename());
         printf(VO_OK "Narrator: %s (%s)" CON_RESET "\n", wanted.c_str(),
-               image.empty() ? "voice files" : ("CD image " + image).c_str());
+               !pack.empty() ? ("narrator pack " + pack).c_str() : image.empty() ? "voice files" : ("CD image " + image).c_str());
         s_narrator = voices;
     }
     else

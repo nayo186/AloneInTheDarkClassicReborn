@@ -948,12 +948,22 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | --- | --- |
 | `name` | — |
 | `imagePath` | The image the voices come from, or empty (loose files) |
+| `packPath` | The narrator pack the voices come from, or empty |
 
 ### `Shared/rendererChoice.h`
 
 | Función | Para qué sirve |
 | --- | --- |
 | `canChoose` | Whether the system lets the player choose (more than one) |
+
+### `Shared/zipArchive.h`
+
+| Función | Para qué sirve |
+| --- | --- |
+| `path` | — |
+| `entries` | Every file, by lower-case name with '/' separators |
+| `get16` | — |
+| `get32` | — |
 
 ### `Shared/ui/launcherScreen.h`
 

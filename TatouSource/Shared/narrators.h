@@ -6,7 +6,10 @@
 // Voices folder (Shared/userFolder.h) is a narrator, e.g. Voices\French with
 // the voices of the player's French CD, or a fans' dubbing. A folder holds
 // either loose voice files or one CD image (.iso, or .bin with or without
-// its .cue) with them in its INDARK folder.
+// its .cue) with them in its INDARK folder. A narrator can also be a single
+// file, a narrator pack: Voices\Spanish.voice, the voice files gathered one
+// after the other without compression (zipArchive.h; tools/makeVoicePack.py),
+// named as the folder would be; a folder of the same name comes first.
 //
 // Voice files: BBSSNN with the extension .VOC, .WAV or .OGG: BB the book
 // (00-19), SS its page, NN a piece of that page's narration; a page plays
@@ -19,6 +22,7 @@
 #pragma once
 
 #include "cdImage.h"
+#include "zipArchive.h"
 
 #include <algorithm>
 #include <cstdio>
@@ -39,14 +43,32 @@ inline std::string narratorPathText(const std::filesystem::path& path)
 class NarratorVoices
 {
 public:
-    // The folder's voices; false if it has none (no 000000 file or image with it)
+    // The voices of a folder, or of a narrator pack (the path with or without
+    // .voice); false if it has none (no 000000 file or image with it)
     bool open(const std::filesystem::path& folder)
     {
         namespace fs = std::filesystem;
         m_folder = folder;
         m_name = narratorPathText(folder.filename());
         m_image.reset();
+        m_pack.reset();
         std::error_code ec;
+        if (!fs::is_directory(folder, ec))
+        {
+            fs::path packPath = folder;
+            if (!isVoicePack(packPath))
+                packPath += ".voice";
+            if (!fs::is_regular_file(packPath, ec))
+                return false;
+            auto pack = std::make_unique<ZipArchive>();
+            if (!pack->open(packPath))
+                return false;
+            m_pack = std::move(pack);
+            m_name = narratorPathText(packPath.stem());
+            std::vector<unsigned char> probe;
+            std::string ext;
+            return readPiece(0, probe, ext);
+        }
         for (const fs::directory_entry& entry : fs::directory_iterator(folder, ec))
         {
             std::string ext = narratorPathText(entry.path().extension());
@@ -69,6 +91,17 @@ public:
     const std::string& name() const { return m_name; }
     // The image the voices come from, or empty (loose files)
     std::filesystem::path imagePath() const { return m_image ? m_image->path() : std::filesystem::path(); }
+    // The narrator pack the voices come from, or empty
+    std::filesystem::path packPath() const { return m_pack ? m_pack->path() : std::filesystem::path(); }
+
+    // A narrator pack's file name (Spanish.voice, any case)
+    static bool isVoicePack(const std::filesystem::path& path)
+    {
+        std::string ext = narratorPathText(path.extension());
+        for (char& c : ext)
+            c = (char)tolower((unsigned char)c);
+        return ext == ".voice";
+    }
 
     // Voice number (e.g. 10203 = book 1, page 2, piece 3) as stored, with its
     // extension (".voc", ".wav" or ".ogg"); false if there is none
@@ -83,7 +116,7 @@ public:
         }
         for (const char* candidate : { ".voc", ".wav", ".ogg" })
         {
-            if (readWhole(m_folder / (std::string(name) + candidate), data))
+            if (m_pack ? m_pack->read(std::string(name) + candidate, data) && !data.empty() : readWhole(m_folder / (std::string(name) + candidate), data))
             {
                 ext = candidate;
                 return true;
@@ -98,6 +131,16 @@ public:
         snprintf(name, sizeof(name), "%06d", number);
         if (m_image)
             return m_image->hasFile("INDARK", std::string(name) + ".VOC");
+        if (m_pack)
+        {
+            for (const char* candidate : { ".voc", ".wav", ".ogg" })
+            {
+                const ZipArchive::Entry* entry = m_pack->find(std::string(name) + candidate);
+                if (entry && entry->method == 0)
+                    return true;
+            }
+            return false;
+        }
         std::error_code ec;
         for (const char* candidate : { ".voc", ".wav", ".ogg" })
             if (std::filesystem::exists(m_folder / (std::string(name) + candidate), ec))
@@ -118,9 +161,11 @@ private:
     std::filesystem::path m_folder;
     std::string m_name;
     std::unique_ptr<CdImage> m_image;
+    std::unique_ptr<ZipArchive> m_pack;
 };
 
-// The narrator folders with voices inside a Voices folder, by name
+// The narrators with voices inside a Voices folder (folders and narrator
+// packs), by name; a name only once
 inline std::vector<std::string> findNarrators(const std::filesystem::path& voicesFolder)
 {
     namespace fs = std::filesystem;
@@ -129,7 +174,9 @@ inline std::vector<std::string> findNarrators(const std::filesystem::path& voice
     for (const fs::directory_entry& entry : fs::directory_iterator(voicesFolder, ec))
     {
         NarratorVoices voices;
-        if (entry.is_directory(ec) && voices.open(entry.path()))
+        const bool candidate = entry.is_directory(ec) || (entry.is_regular_file(ec) && NarratorVoices::isVoicePack(entry.path()));
+        if (candidate && voices.open(entry.path()) &&
+            std::find(names.begin(), names.end(), voices.name()) == names.end())
             names.push_back(voices.name());
     }
     std::sort(names.begin(), names.end());

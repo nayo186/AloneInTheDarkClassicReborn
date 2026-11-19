@@ -189,7 +189,8 @@ Cuando un archivo tiene `.cpp` y `.h`, va en una sola fila.
 | `controlsBindings.h` | Acciones del juego, sus entradas, valores por defecto y su forma de texto en `aitd_remaster.cfg`. |
 | `controlsWindow.h` | Ventana "Controles" para cambiar las asignaciones. |
 | `languageFolder.h` | Idiomas del CD del jugador (AITD3): qué lleva cada carpeta de `Languages` (archivos sueltos y pistas `NN`/`TrackNN`, o la imagen del CD con su `.cue`) y cómo encontrar la imagen. |
-| `narrators.h` | Narradores: cada carpeta de `Voices` con voces sueltas (`.voc`, `.wav`, `.ogg`) o una imagen del CD. |
+| `narrators.h` | Narradores: cada carpeta de `Voices` con voces sueltas (`.voc`, `.wav`, `.ogg`) o una imagen del CD, y cada paquete `.voice`. |
+| `zipArchive.h` | Lee los archivos que juntan otros sin compresión (ZIP): paquetes de texturas `.texture` y de narrador `.voice`. |
 | `userFolder.h` | Carpeta portable `UserData` junto a los ejecutables. |
 | `ui/menuBase.h` | Base de todos los menús: paleta, escala por pantalla, disposición horizontal o vertical, controles para ratón, toque, teclado y mando. |
 | `ui/menuGamepad.h` | El mando en los menús (sticks, botones, ayuda tras 4 segundos). |
