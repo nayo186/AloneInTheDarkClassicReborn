@@ -389,6 +389,8 @@ What you can put in these folders to change the games (backgrounds, masks, seque
 
 **Improved backgrounds in one click** (*Alone in the Dark* and *Jack in the Dark*): in the launcher, **Options** → **Improved backgrounds (Alone 1 and Jack)** → **Download**. The backgrounds and masks come in one file (`nayo_AITD1V2.texture`, about 130 MB) that goes to `UserData`, and **Custom backgrounds** is switched on. It works on Android too. **Remove** deletes it. *Alone in the Dark 2* and *3* have their own on their page of the launcher: **Improved backgrounds (Alone 2)** (`nayo_AITD2V2.texture`, about 234 MB) and **Improved backgrounds (Alone 3)** (`nayo_AITD3V2.texture`, about 293 MB). Packs like this one are explained in the [modding guide](MODDING.md#packs-one-file-instead-of-folders).
 
+**A word about them.** I made these backgrounds with a lot of care, but I am not an expert at making textures. I never wanted my version to be the definitive one: the idea has always been to show what can be achieved, and to give anyone the tools to do it through modding. The same goes for the voices: the game accepts other narrators and other languages, so anyone can dub these games however they like. Doing it better is now up to those who really know that work. Everything you need is in the [modding guide](MODDING.md), and if you make something, I would love to see it.
+
 **HD packs.** HD backgrounds ready to use, for each game:
 
 - *Alone in the Dark* and *Jack in the Dark*: **[download from Google Drive](https://drive.google.com/file/d/1ps4ZVv-tBio4YYLrr8lVeiR8kiYFy5Z1/view?usp=sharing)** (a `.rar` file: Windows 11 opens it, or use [7-Zip](https://www.7-zip.org/)). Copy each game's pictures into `UserData\AITD1\Backgrounds` and `UserData\JACK\Backgrounds`.

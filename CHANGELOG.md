@@ -4,6 +4,17 @@ Alone in the Dark: Classic Reborn started on 2026-10-23 from [Alone in the Dark:
 
 This repository was published with a single starting commit, to keep it light: the early history carried large files that are no longer part of the project. Below are the changes of each release and, after them, the changes made in this fork before it was published, newest first, one line per change. The reasons behind larger removals are explained in `docs/DESCARTADO.md` and the fixes in `docs/baseline/BUGS.md`.
 
+## v1.8.2 (2026-11-20)
+
+The ideas of v1.8.0 and v1.8.1 come to *Alone in the Dark 3*: the whole trilogy now has the widescreen view.
+
+- *Alone in the Dark 3*: **widescreen view**, as in the other games: **16:9 (zoomed)** and **16:10 (zoomed)** fill a 16:9 screen and the view follows the character; menus, the inventory, books and the map stay whole in 4:3, with the street of Slaughter Gulch blurred at the sides (BUGS.md T50)
+- *Alone in the Dark 3*: with **Enhanced text**, the new smooth font in every text (books, messages, menus, inventory), with the game's own capitals redrawn, in its five languages (BUGS.md T49)
+- *Alone in the Dark 3*: **improved backgrounds in one click**: **Options** → **Improved backgrounds (Alone 3)** → **Download** (about 293 MB), on the PC and on Android. **Remove** deletes them (BUGS.md T52)
+- *Alone in the Dark 3*: **languages in one file**. Another language of the game can be a single `.language` file in `UserData\AITD3\Languages`, with its texts, voices and music; the modding guide explains how to make one (BUGS.md T51)
+- *Alone in the Dark 3*: the start menu showed wrong colours with custom backgrounds; exporting its picture now gives its real colours (BUGS.md T53)
+- *Alone in the Dark 3*: with **Enhanced text**, a page of a book kept the old font after it turned (BUGS.md T53)
+
 ## v1.8.1 (2026-11-19)
 
 The ideas of v1.8.0 come to *Alone in the Dark 2*: the widescreen view, the new font, improved backgrounds in one click, and narrators in one file.
