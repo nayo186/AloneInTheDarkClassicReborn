@@ -301,12 +301,12 @@ static std::vector<std::string> s_narrators;   // looked for when the audio wind
 // B closes the advanced options (saving them, as Close does)
 static bool s_closeAdvanced = false;
 
-// Improved backgrounds of the selected game (Alone 1 with Jack, Alone 2): its
+// Improved backgrounds of the selected game (Alone 1 with Jack, Alone 2, Alone 3): its
 // texture pack, downloaded into UserData when the player asks
 // (texturePackDownload.h); on arriving, the custom backgrounds are turned on
 static void improvedBackgrounds(LauncherState& state, const Fonts& fonts, const Metrics& metrics, TexturePack pack)
 {
-    static PackState s_lastState[2] = { PackState::Missing, PackState::Missing };
+    static PackState s_lastState[3] = { PackState::Missing, PackState::Missing, PackState::Missing };
     const PackState packState = texturePackState(pack);
     if (packState == PackState::Installed && s_lastState[(int)pack] == PackState::Downloading && !state.settings.customBackgrounds)
     {
@@ -316,8 +316,9 @@ static void improvedBackgrounds(LauncherState& state, const Fonts& fonts, const 
     s_lastState[(int)pack] = packState;
 
     ImGui::AlignTextToFramePadding();
-    ImGui::TextColored(color(kText), "%s", advText(pack == TexturePack::Aitd2 ? AdvancedText::ImprovedBackgroundsAitd2
-                                                                            : AdvancedText::ImprovedBackgrounds));
+    ImGui::TextColored(color(kText), "%s", advText(pack == TexturePack::Aitd3   ? AdvancedText::ImprovedBackgroundsAitd3
+                                                   : pack == TexturePack::Aitd2 ? AdvancedText::ImprovedBackgroundsAitd2
+                                                                                : AdvancedText::ImprovedBackgrounds));
     helpMarker(advText(AdvancedText::ImprovedBackgroundsHelp));
     char label[128];
     const ImVec2 size(ImGui::GetContentRegionAvail().x, metrics.pressHeight(36.0f));

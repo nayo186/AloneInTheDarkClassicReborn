@@ -387,7 +387,7 @@ What you can put in these folders to change the games (backgrounds, masks, seque
 
 ## Custom backgrounds
 
-**Improved backgrounds in one click** (*Alone in the Dark* and *Jack in the Dark*): in the launcher, **Options** → **Improved backgrounds (Alone 1 and Jack)** → **Download**. The backgrounds and masks come in one file (`nayo_AITD1V2.texture`, about 130 MB) that goes to `UserData`, and **Custom backgrounds** is switched on. It works on Android too. **Remove** deletes it. *Alone in the Dark 2* has its own on its page of the launcher: **Improved backgrounds (Alone 2)** (`nayo_AITD2V2.texture`, about 234 MB). Packs like this one are explained in the [modding guide](MODDING.md#packs-one-file-instead-of-folders).
+**Improved backgrounds in one click** (*Alone in the Dark* and *Jack in the Dark*): in the launcher, **Options** → **Improved backgrounds (Alone 1 and Jack)** → **Download**. The backgrounds and masks come in one file (`nayo_AITD1V2.texture`, about 130 MB) that goes to `UserData`, and **Custom backgrounds** is switched on. It works on Android too. **Remove** deletes it. *Alone in the Dark 2* and *3* have their own on their page of the launcher: **Improved backgrounds (Alone 2)** (`nayo_AITD2V2.texture`, about 234 MB) and **Improved backgrounds (Alone 3)** (`nayo_AITD3V2.texture`, about 293 MB). Packs like this one are explained in the [modding guide](MODDING.md#packs-one-file-instead-of-folders).
 
 **HD packs.** HD backgrounds ready to use, for each game:
 

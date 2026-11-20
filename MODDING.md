@@ -194,7 +194,7 @@ A texture pack holds backgrounds, full-screen pictures, masks and sequences of o
 - **Making one:** put your files in the folders of a `UserData` as usual, then `python tools/makeTexturePack.py "<UserData folder>" mypack.texture` (it takes *Alone in the Dark* and *Jack*; add `AITD2` or `AITD3` at the end for those games). With 7-Zip: select the game folders (`AITD1`, `JACK`...), add them to a ZIP with the compression level **Store**, and rename the `.zip` to `.texture`. A compressed ZIP works too, a little slower. It must be under 4 GB.
 - **Custom backgrounds** must be on (F1 or the launcher's **Advanced options**), as for loose files.
 - `tatou.log` says which packs were found when the game opens: `Texture pack mypack.texture: 876 pictures and masks`.
-- **The improved backgrounds** of *Alone in the Dark* and *Jack*, and those of *Alone in the Dark 2*, are texture packs the launcher can download: **Advanced options** → **Improved backgrounds (Alone 1 and Jack)** or **(Alone 2)**, on the page of each game → **Download**. It goes to `UserData` like any other pack, and **Remove** deletes it.
+- **The improved backgrounds** of *Alone in the Dark* and *Jack*, and those of *Alone in the Dark 2* and *3*, are texture packs the launcher can download: **Advanced options** → **Improved backgrounds (Alone 1 and Jack)**, **(Alone 2)** or **(Alone 3)**, on the page of each game → **Download**. It goes to `UserData` like any other pack, and **Remove** deletes it.
 
 ### Narrator packs (.voice)
 

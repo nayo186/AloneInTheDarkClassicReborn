@@ -39,11 +39,14 @@ static const PackInfo kPacks[] = {
     { "nayo_AITD2V2.texture", "nayo_AITD2",
       "https://drive.usercontent.google.com/download?id=1_8RuWXrnhpJeeXw6XhWE4HvghVTtQjcN&export=download&confirm=t",
       234324370 },
+    { "nayo_AITD3V2.texture", "nayo_AITD3",
+      "https://drive.usercontent.google.com/download?id=1th2KSUSjE7lORyFNO0yBWITj6D1eJYws&export=download&confirm=t",
+      293242090 },
 };
 static const int kPackCount = (int)(sizeof(kPacks) / sizeof(kPacks[0]));
 
-static std::atomic<int> s_state[kPackCount] = { { -1 }, { -1 } };   // -1: look at UserData
-static std::atomic<bool> s_running[kPackCount] = { { false }, { false } };
+static std::atomic<int> s_state[kPackCount] = { { -1 }, { -1 }, { -1 } };   // -1: look at UserData
+static std::atomic<bool> s_running[kPackCount] = { { false }, { false }, { false } };
 
 static const PackInfo& info(TexturePack pack)
 {

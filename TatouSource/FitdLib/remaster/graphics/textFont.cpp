@@ -664,7 +664,17 @@ struct Shown
     std::vector<int> pixels;   // what PrintFont writes (320x200 indexes)
     bool shadow = false;       // the darker copy one row lower (SelectedMessage)
     int x1 = 0, y1 = 0, x2 = -1, y2 = -1;   // the rectangle of those pixels
+    // Written over by another text (the last page of a book): kept for a
+    // while, drawn only where the screen still shows it whole (AITD3's
+    // turning page shows both pages, BUGS.md T53)
+    bool replaced = false;
+    int missingFrames = 0;     // frames in a row not on screen
 };
+
+// A text off the screen is forgotten after this many frames (about two
+// seconds): AITD3's turning page hides the new page for a moment, and the
+// game does not write it again (BUGS.md T53)
+const int kForgetFrames = 120;
 
 std::vector<Shown> s_texts;
 std::vector<int> s_visible;    // indexes in s_texts drawn by us this frame
@@ -738,9 +748,8 @@ void onTextPrinted(int x, int y, const unsigned char* text, int color)
             covered = under * 3 >= (int)old.pixels.size();
         }
         if (covered)
-            s_texts.erase(s_texts.begin() + i);
-        else
-            i++;
+            s_texts[i].replaced = true;
+        i++;
     }
 
     s_texts.push_back(std::move(shown));
@@ -758,18 +767,49 @@ const unsigned char* filterTextLayer(const unsigned char* layer)
     }
     memcpy(s_filtered.data(), layer, s_filtered.size());
 
-    std::vector<Shown> kept;
-    kept.reserve(s_texts.size());
-    for (Shown& t : s_texts)
+    // How much of each text the layer still shows
+    std::vector<float> parts(s_texts.size());
+    for (size_t i = 0; i < s_texts.size(); i++)
     {
+        const Shown& t = s_texts[i];
         int same = 0;
         for (int p : t.pixels)
             if (layer[p] == t.color)
                 same++;
-        float part = (float)same / t.pixels.size();
+        parts[i] = (float)same / t.pixels.size();
+    }
+
+    std::vector<Shown> kept;
+    kept.reserve(s_texts.size());
+    for (size_t i = 0; i < s_texts.size(); i++)
+    {
+        Shown& t = s_texts[i];
+        const float part = parts[i];
         if (part < 0.02f)
-            continue;          // covered or erased: forgotten
-        bool drawn = !t.shadow && part >= 0.6f;
+        {
+            // covered or erased: forgotten if it does not come back
+            if (++t.missingFrames <= kForgetFrames)
+                kept.push_back(std::move(t));
+            continue;
+        }
+        t.missingFrames = 0;
+        // A replaced text only where it is whole and no newer text there is
+        // on screen (the page that was turned)
+        bool shows = part >= (t.replaced ? 0.9f : 0.6f);
+        if (shows && t.replaced)
+            for (size_t j = 0; j < s_texts.size() && shows; j++)
+            {
+                const Shown& other = s_texts[j];
+                if (j != i && !other.replaced && parts[j] >= 0.6f
+                    && other.x1 <= t.x2 && t.x1 <= other.x2 && other.y1 <= t.y2 && t.y1 <= other.y2)
+                    shows = false;
+            }
+        if (t.replaced && !shows)
+        {
+            kept.push_back(std::move(t));
+            continue;
+        }
+        bool drawn = !t.shadow && shows;
         // the shadow goes with its text: the outline replaces it
         if (drawn || t.shadow)
             for (int p : t.pixels)

@@ -26,6 +26,7 @@ enum class TexturePack
 {
     Aitd1,   // Alone in the Dark and Jack in the Dark
     Aitd2,
+    Aitd3,
 };
 
 // The pack of the game selected in the launcher (0 Alone 1, 1 Alone 2...);

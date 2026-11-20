@@ -848,6 +848,18 @@ static bool exportPicture(const std::string& outFolder, const char* pakName, int
         copyPalette(data + 64000, pictureColours);
         convertPaletteIfRequired(pictureColours);
     }
+    else if (gameId == AITD3 && strcmp(pakName, "ITD_RESS") == 0 && index == 13)
+    {
+        // AITD3's menu frame is the one picture without its own palette: the
+        // menu shows it with ITD_RESS 47's (core/startupMenu.cpp), not the
+        // game's (BUGS.md T53)
+        if (char* menuPalette = loadPak("ITD_RESS", 47))
+        {
+            copyPalette(menuPalette, pictureColours);
+            convertPaletteIfRequired(pictureColours);
+            free(menuPalette);
+        }
+    }
 
     // The original pixels as stored, 320x200 (the game shows them in 4:3)
     const bool written = writePicturePng(outFolder + pictureName(pakName, index), pixels, pictureColours);

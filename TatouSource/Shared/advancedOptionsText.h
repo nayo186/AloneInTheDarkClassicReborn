@@ -148,6 +148,7 @@ enum class AdvancedText
     ImprovedRemove,
     ImprovedFailed,
     ImprovedBackgroundsAitd2,
+    ImprovedBackgroundsAitd3,
     Count
 };
 
@@ -716,6 +717,10 @@ inline const char* advancedText(AdvancedText text, int language)
         { "Improved backgrounds (Alone 2)", "Fondos mejorados (Alone 2)",
           "Décors améliorés (Alone 2)", "Sfondi migliorati (Alone 2)",
           "Verbesserte Hintergründe (Alone 2)" },
+        // ImprovedBackgroundsAitd3
+        { "Improved backgrounds (Alone 3)", "Fondos mejorados (Alone 3)",
+          "Décors améliorés (Alone 3)", "Sfondi migliorati (Alone 3)",
+          "Verbesserte Hintergründe (Alone 3)" },
     };
     if (language < 0 || language >= kAdvancedTextLanguages)
         language = 0;
