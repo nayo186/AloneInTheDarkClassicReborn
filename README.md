@@ -19,7 +19,7 @@ Classic Reborn is a C++17 source port of the Infogrames engine, built on a decom
 <table>
   <tr>
     <td align="center"><img src="docs/images/aitd1-compare-gog.jpg" alt="The GOG edition" width="100%"><br><sub>The GOG edition</sub></td>
-    <td align="center"><img src="docs/images/aitd1-compare-hd.jpg" alt="Classic Reborn with the HD pack" width="100%"><br><sub>Classic Reborn with the HD pack</sub></td>
+    <td align="center"><img src="docs/images/aitd1-compare-widescreen.jpg" alt="Classic Reborn: widescreen and improved backgrounds" width="100%"><br><sub>Classic Reborn: widescreen and improved backgrounds</sub></td>
   </tr>
 </table>
 
