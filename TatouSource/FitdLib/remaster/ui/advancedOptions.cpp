@@ -24,6 +24,7 @@
 #include "menuFonts.h"
 #include "ui/menuGamepad.h"
 #include "bgfxGlue.h"
+#include "returnToLauncher.h"
 
 #include <imgui.h>
 #include <atomic>
@@ -77,6 +78,11 @@ static std::vector<std::string> s_narrators;   // looked for when the audio wind
 // saved when F1 closes
 static bool s_cheatsOpen = false;
 static bool s_cheatsJustOpened = false;
+
+// "Return to the launcher" asks first (BUGS.md C94): shown instead of the
+// options, like Cheats
+static bool s_leaveOpen = false;
+static bool s_leaveJustOpened = false;
 
 static void openControlsWindow()
 {
@@ -388,6 +394,13 @@ static void drawCheatsWindow(float scale)
         if (ImGui::Checkbox(text(AdvancedText::InfiniteLife), &g_settings.cheats.infiniteLife))
             printf(CFG_TAG "Cheats (F1): infiniteLife=%s\n", g_settings.cheats.infiniteLife ? "true" : "false");
         helpMarker(text(AdvancedText::InfiniteLifeHelp));
+        // Jack has no weapon
+        if (g_gameId != JACK)
+        {
+            if (ImGui::Checkbox(text(AdvancedText::InfiniteAmmo), &g_settings.cheats.infiniteAmmo))
+                printf(CFG_TAG "Cheats (F1): infiniteAmmo=%s\n", g_settings.cheats.infiniteAmmo ? "true" : "false");
+            helpMarker(text(AdvancedText::InfiniteAmmoHelp));
+        }
         ImGui::Unindent();
         ImGui::EndDisabled();
 
@@ -396,6 +409,43 @@ static void drawCheatsWindow(float scale)
         if (ImGui::Button(text(AdvancedText::Close), ImVec2(-1.0f, 0.0f))
             || (!ImGui::IsAnyItemActive() && ImGui::IsKeyPressed(ImGuiKey_Escape, false)))
             s_cheatsOpen = false;
+    }
+    ImGui::End();
+}
+
+// "Return to the launcher": what happens, then the choice
+static void drawLeaveWindow(float scale)
+{
+    if (!s_leaveOpen)
+        return;
+    ImGuiIO& io = ImGui::GetIO();
+    const float width = (std::min)(460.0f * scale, io.DisplaySize.x * 0.94f);
+    ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+    ImGui::SetNextWindowSize(ImVec2(width, 0.0f), ImGuiCond_Always);
+    if (s_leaveJustOpened)
+        ImGui::SetNextWindowFocus();
+    s_leaveJustOpened = false;
+    if (ImGui::Begin("##leaveWindow", nullptr, menu::kPanelFlags))
+    {
+        ImGui::PushFont(menuFonts().header);
+        ImGui::TextColored(kGoldLight, "%s", text(AdvancedText::ReturnToLauncher));
+        ImGui::PopFont();
+        ImGui::Separator();
+        ImGui::Spacing();
+        ImGui::TextWrapped("%s", text(AdvancedText::ReturnToLauncherWarning));
+        ImGui::Spacing();
+        ImGui::Separator();
+        const float half = (ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x) / 2.0f;
+        if (ImGui::Button(text(AdvancedText::ReturnToLauncher), ImVec2(half, 0.0f)))
+        {
+            printf(CFG_TAG "F1: return to the launcher\n");
+            saveSettings();
+            requestReturnToLauncher();
+        }
+        ImGui::SameLine();
+        if (ImGui::Button(text(AdvancedText::ReturnToLauncherCancel), ImVec2(half, 0.0f))
+            || (!ImGui::IsAnyItemActive() && ImGui::IsKeyPressed(ImGuiKey_Escape, false)))
+            s_leaveOpen = false;
     }
     ImGui::End();
 }
@@ -422,6 +472,8 @@ void advancedOptionsDraw()
             s_audio.open = false;
         else if (s_cheatsOpen)
             s_cheatsOpen = false;
+        else if (s_leaveOpen)
+            s_leaveOpen = false;
         else
             advancedOptionsClose();
     }
@@ -440,6 +492,7 @@ void advancedOptionsDraw()
                 textLanguage(), nullptr, false);
             s_audio.open = false;
             s_cheatsOpen = false;
+            s_leaveOpen = false;
             saveSettings();
         }
         return;
@@ -470,7 +523,7 @@ void advancedOptionsDraw()
     io.FontGlobalScale = fontScale;
     ImGui::PushFont(menuFonts().text);
 
-    const bool controlsOpen = s_controls.open || s_audio.open || s_cheatsOpen;   // shown instead of the options
+    const bool controlsOpen = s_controls.open || s_audio.open || s_cheatsOpen || s_leaveOpen;   // shown instead of the options
     // The options window's size, only when it is drawn: set while another
     // window was shown instead, it stuck to that one (Controls came out as
     // narrow as the options, its drawing tiny and its texts cut)
@@ -665,6 +718,12 @@ void advancedOptionsDraw()
         {
             advancedOptionsClose();
         }
+        // Started by the launcher: back to it (BUGS.md C94), after a question
+        if (startedByLauncher() && ImGui::Button(text(AdvancedText::ReturnToLauncher), ImVec2(-1.0f, buttonH)))
+        {
+            s_leaveOpen = true;
+            s_leaveJustOpened = true;
+        }
         menu::dragScroll();
     }
     if (!controlsOpen)
@@ -704,6 +763,7 @@ void advancedOptionsDraw()
     }
 
     drawCheatsWindow(scale);
+    drawLeaveWindow(scale);
 
     io.FontGlobalScale = gameFontScale;
     ImGui::PopFont();

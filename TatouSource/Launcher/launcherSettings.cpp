@@ -136,6 +136,8 @@ void loadLauncherSettings(LauncherSettings& settings)
             settings.windowHeight = atoi(value.c_str());
         else if (key == "window.maximized")
             settings.windowMaximized = (value == "true" || value == "1");
+        else if (key == "lastGame")
+            settings.lastGame = atoi(value.c_str());
     }
     logLine("Loaded launcher.cfg: ui.language=%s aitd1.dataFolder=%s aitd2.dataFolder=%s aitd3.dataFolder=%s",
         settings.uiLanguage.c_str(), settings.aitd1DataFolder.c_str(), settings.aitd2DataFolder.c_str(),
@@ -161,6 +163,8 @@ void saveLauncherSettings(const LauncherSettings& settings)
     file << "window.width = " << settings.windowWidth << "\n";
     file << "window.height = " << settings.windowHeight << "\n";
     file << "window.maximized = " << (settings.windowMaximized ? 1 : 0) << "\n";
+    // The game played last: coming back from it, the launcher shows it
+    file << "lastGame = " << settings.lastGame << "\n";
 }
 
 // Where each part of the chosen folder is (see launcherSettings.h)
@@ -679,7 +683,8 @@ LaunchResult launchGame(const LauncherSettings& settings, const char* game)
     }
 #endif
 
-    std::string args = std::string("--game ") + game + (settings.debugMode ? " --debug" : " --final");
+    // --from-launcher: the game's "Return to the launcher" opens this one again
+    std::string args = std::string("--game ") + game + (settings.debugMode ? " --debug" : " --final") + " --from-launcher";
     if (!settings.gameLanguage.empty())
         args += " --lang " + settings.gameLanguage;
     // Tatou starts in the copy's folder or the GOG installation and finds the
@@ -694,7 +699,7 @@ LaunchResult launchGame(const LauncherSettings& settings, const char* game)
 #if defined(__ANDROID__)
     // The game runs in this same program once the launcher closes (Fitd/fitd.cpp)
     fs::current_path(startFolder, ec);
-    s_gameArguments = { "Tatou", "--game", game, settings.debugMode ? "--debug" : "--final" };
+    s_gameArguments = { "Tatou", "--game", game, settings.debugMode ? "--debug" : "--final", "--from-launcher" };
     if (!settings.gameLanguage.empty())
     {
         s_gameArguments.push_back("--lang");
@@ -718,7 +723,7 @@ LaunchResult launchGame(const LauncherSettings& settings, const char* game)
 #else
     fs::current_path(startFolder, ec);
     std::string tatouPath = tatou.string();
-    std::vector<std::string> parts = { tatouPath, "--game", game, settings.debugMode ? "--debug" : "--final" };
+    std::vector<std::string> parts = { tatouPath, "--game", game, settings.debugMode ? "--debug" : "--final", "--from-launcher" };
     if (!settings.gameLanguage.empty())
     {
         parts.push_back("--lang");

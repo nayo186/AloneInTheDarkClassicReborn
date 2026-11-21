@@ -46,6 +46,7 @@ struct LauncherSettings
     int windowWidth = 0;           // the launcher window as it was left (0: not saved yet)
     int windowHeight = 0;
     bool windowMaximized = false;
+    int lastGame = 0;              // the game played last (0 AITD1 with Jack, 1 AITD2, 2 AITD3): the launcher opens on it
 
     // Read from / written to the data folder's aitd_remaster.cfg
     std::string gameLanguage;      // language PAK name, empty = first available

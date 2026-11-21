@@ -18,6 +18,7 @@
 #include "nativeLife.h"
 #include "lifeSafety.h"
 #include "vibration.h"
+#include "cheats.h"
 
 // 100 as a new game sets it: a loaded game does not run that script
 int groundLevel = 100;
@@ -1496,6 +1497,7 @@ void processLife(int lifeNum, bool callFoundLife)
                     nextAnim = readNextArgument("NextAnim");
 
                     fire(fireAnim, shootFrame, emitPoint, zvSize, hitForce, nextAnim);
+                    cheatObjectFired(lifeNum);
                 }
                 else // use an emitter model
                 {
@@ -1516,6 +1518,7 @@ void processLife(int lifeNum, bool callFoundLife)
                     nextAnim = evalVar();
 
                     fire(fireAnim, shootFrame, emitPoint, zvSize, hitForce, nextAnim);
+                    cheatObjectFired(lifeNum);
                     currentProcessedActorPtr->fireAlpha = 0;
                     // The kind of flash shown at the emit point when the shot leaves (DO_TIR, BUGS.md A9, A44)
                     currentProcessedActorPtr->emitModel = emitModel;
@@ -2802,7 +2805,9 @@ void processLife(int lifeNum, bool callFoundLife)
                 lifeTempVar1 = *(s16*)(currentLifePtr);
                 currentLifePtr += 2;
 
-                vars[lifeTempVar1]--;
+                // Infinite ammunition: a weapon's shots stay (core/cheats.cpp)
+                if (!cheatKeepsVariable(lifeNum, lifeTempVar1, 1))
+                    vars[lifeTempVar1]--;
                 break;
             }
             case LM_ADD: // ADD_VAR
@@ -2820,7 +2825,10 @@ void processLife(int lifeNum, bool callFoundLife)
                 lifeTempVar1 = *(s16*)(currentLifePtr);
                 currentLifePtr += 2;
 
-                vars[lifeTempVar1] -= evalVar();
+                const int amount = evalVar();
+                // Infinite ammunition: a weapon's shots stay (core/cheats.cpp)
+                if (!cheatKeepsVariable(lifeNum, lifeTempVar1, amount))
+                    vars[lifeTempVar1] -= amount;
                 break;
             }
             case LM_MODIF_C_VAR:

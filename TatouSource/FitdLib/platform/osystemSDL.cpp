@@ -8,6 +8,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include "exitProgram.h"
+#include "returnToLauncher.h"
 #include "common.h"
 #include "exceptionHandler.h"
 #include "logFile.h"
@@ -343,6 +344,12 @@ int FitdInit(int argc, char* argv[])
             toggleFullscreen();
         }
         applyWindowAspectRatio();
+        // F1's "Return to the launcher" (BUGS.md C94): as closing the window
+        if (returnToLauncherRequested())
+        {
+            openLauncher();
+            cleanupAndExit();
+        }
 #ifdef __ANDROID__
         osystem_androidHoldInBackground();
 #endif

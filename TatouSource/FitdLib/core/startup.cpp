@@ -16,6 +16,7 @@ extern void playMenuSound(const char* soundName);
 
 #include "anim2d.h"
 #include "coreHooks.h"
+#include "returnToLauncher.h"
 #include "menuMouse.h"
 
 #include "nativeLife.h"
@@ -597,12 +598,19 @@ void freeAll(void)
 
 textEntryStruct* getTextFromIdx(int index)
 {
-#ifndef _WIN32
-    // String 13 is "Return to Windows" in the game's language: elsewhere the
-    // system's name, in the same language (texts of the game: DOS code page
-    // 437, 0x81 = u with umlaut). On a phone there is nothing to go back to:
-    // "Exit" (BUGS.md C91)
-    if (index == 13)
+    // The last entry of the start menu, "Return to Windows" in the game's
+    // language: string 13, in AITD3 string 14 (its 13 is "Difficulty level",
+    // BUGS.md T3). Started by the launcher, "Return to the launcher" (it opens
+    // again, BUGS.md C94); otherwise, outside Windows, the system's name in
+    // the same language, and on a phone, with nothing to go back to, "Exit"
+    // (BUGS.md C91). Texts of the game: DOS code page 437, 0x81 = u with umlaut.
+#ifdef _WIN32
+    const bool replaceExit = startedByLauncher();
+#else
+    const bool replaceExit = true;
+#endif
+    const int exitIndex = (g_gameId == AITD3) ? 14 : 13;
+    if (index == exitIndex && replaceExit)
     {
         static textEntryStruct platformReturnEntry = { 13, nullptr, 0 };
         static std::string platformReturnText;
@@ -612,22 +620,28 @@ textEntryStruct* getTextFromIdx(int index)
             platformReturnLanguage = languageNameString;
             const bool french = languageNameString == "FRANCAIS", spanish = languageNameString == "ESPAGNOL";
             const bool italian = languageNameString == "ITALIANO", german = languageNameString == "DEUTSCH";
+            if (startedByLauncher())
+                platformReturnText = french ? "Retour au launcher" : spanish ? "Volver al launcher" : italian ? "Torna al launcher"
+                    : german ? "Zur\x81" "ck zum Launcher" : "Return to the launcher";
+            else
+            {
 #if defined(__ANDROID__)
-            platformReturnText = french ? "Quitter" : spanish ? "Salir" : italian ? "Esci" : german ? "Beenden" : "Exit";
+                platformReturnText = french ? "Quitter" : spanish ? "Salir" : italian ? "Esci" : german ? "Beenden" : "Exit";
 #else
 #if defined(__APPLE__)
-            const char* system = "macOS";
+                const char* system = "macOS";
 #else
-            const char* system = "Linux";
+                const char* system = "Linux";
 #endif
-            platformReturnText = std::string(french ? "Retour sous " : spanish ? "Volver a " : italian ? "Torna a " : german ? "Zur\x81" "ck zu " : "Return to ") + system;
+                platformReturnText = std::string(french ? "Retour sous " : spanish ? "Volver a " : italian ? "Torna a " : german ? "Zur\x81" "ck zu " : "Return to ") + system;
 #endif
+            }
+            platformReturnEntry.index = exitIndex;
             platformReturnEntry.textPtr = (u8*)platformReturnText.c_str();
             platformReturnEntry.width = ExtGetSizeFont(platformReturnEntry.textPtr);
         }
         return &platformReturnEntry;
     }
-#endif
 
     int currentIndex;
 

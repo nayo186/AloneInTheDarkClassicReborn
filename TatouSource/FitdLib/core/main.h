@@ -66,6 +66,9 @@ int parseAllSaves(int arg);
 textEntryStruct* getTextFromIdx(int index);
 // Closes everything (controller, sound, music, graphics) and ends the program
 void cleanupAndExit(void);
+// Leaves the game from its menus: back to the launcher if it started the game
+// (platform/returnToLauncher.h), else as cleanupAndExit
+void quitGame(void);
 // Debug: draws a 3D box as six projected faces
 void drawProjectedBox(int x1,int x2,int y1,int y2,int z1,int z2, int color, int transparency);
 

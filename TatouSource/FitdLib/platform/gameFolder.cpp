@@ -10,6 +10,7 @@
 #include "userFolder.h"
 #include "gameDisc.h"
 #include "gameFiles.h"
+#include "returnToLauncher.h"
 
 #include <SDL3/SDL.h>
 
@@ -211,6 +212,8 @@ void selectGameFolder(int argc, char* argv[])
             s_debug = false;
             debugGiven = true;
         }
+        else if (arg == "--from-launcher")
+            setStartedByLauncher(true);
     }
     if (!debugGiven)
         s_debug = launcherDebugMode();

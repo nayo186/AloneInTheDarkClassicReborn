@@ -903,6 +903,7 @@ static void startGame(LauncherState& state, const char* game, bool withOldOption
         state.optionsNotSaved = gameConfigFile(dataFolder(state));
         return;
     }
+    state.settings.lastGame = state.selectedGame;
     saveLauncherSettings(state.settings);
     const LaunchResult result = launchGame(state.settings, game);
     if (result == LaunchResult::Started)
@@ -1237,6 +1238,8 @@ int main(int, char**)
 
     LauncherState state;
     loadLauncherSettings(state.settings);
+    // On the game played last: coming back from Alone 2, Alone 2
+    state.selectedGame = (state.settings.lastGame >= 0 && state.settings.lastGame <= 2) ? state.settings.lastGame : 0;
     setUiLanguage(uiLanguageFromCode(state.settings.uiLanguage.c_str()));
     setLauncherDebugMode(state.settings.debugMode);
     // The portable folders exist from the first time the launcher opens

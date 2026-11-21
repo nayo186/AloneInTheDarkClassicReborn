@@ -79,6 +79,7 @@ Cuando un archivo tiene `.cpp` y `.h`, va en una sola fila.
 | `controls.cpp/.h` | Asignaciones de controles en uso; cada imagen convierte teclado y mando en las entradas de 1992 (`JoyD`, `key`, `Click`) y lee el stick izquierdo para el movimiento moderno (`controlsLeftStick`, `controller.modernStick`); la opción de vibración (`controller.vibration`, la vibración en sí en `input.cpp`). |
 | `settings.cpp/.h` | Las opciones (`g_settings`), guardadas en `aitd_remaster.cfg`: pantalla, efectos, animación, volumen, idioma, controles y ajustes de desarrollador. |
 | `platformHooks.cpp/.h` | Los ganchos del sistema (ver sección 1). |
+| `returnToLauncher.cpp/.h` | "Volver al launcher" (C94): el launcher abre el juego con `--from-launcher`; al salir desde el menú del juego o F1 se abre otra vez (en Android la app se reinicia con `RestartActivity`). |
 | `gameFolder.cpp/.h` | Carpetas: datos (copia o instalación de GOG/Steam), carpeta de trabajo (`UserData` o la copia en modo depuración), Jack en `JACK`. |
 | `languagePack.cpp/.h` | Los archivos de datos (`DataFile`, lo usan `pak.cpp` y `loadFromItd`) y un idioma del CD del jugador (AITD3): con él elegido, lo que tenga `Languages\<nombre>` (suelto o en su imagen del CD) se lee antes que los datos. |
 | `fileAccess.cpp/.h` | Cargar archivos `.ITD` y entradas de `.PAK` en memoria, y el error fatal si falta uno. |

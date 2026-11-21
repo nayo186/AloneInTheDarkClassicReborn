@@ -9,6 +9,7 @@
 
 #include "common.h"
 #include "consoleLog.h"
+#include "cheats.h"
 
 int getPosRelTable[] = {4,1,8,2,4,1,8,0};
 
@@ -633,7 +634,8 @@ int evalVar2(const char* name)
                 appendFormated("%s:", name);
             appendFormated("vars[%d], ", temp);
 
-            return(vars[temp]);
+            // What a cheat lets the script see (cheats.h); the variable stays
+            return(cheatVariableSeen(currentLifeNum, temp, vars[temp]));
         }
         else
         {

@@ -84,6 +84,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `EndFrame` | End of a frame: draws the menus and the effects and shows the frame |
 | `applyWindowAspectRatio` | Window mode: keeps the window in the shape of the aspect ratio (window thread) |
 | `toggleFullscreen` | Switches between window and fullscreen |
+| `osystem_androidHoldInBackground` | Android: while the app is in the background (a call, another app) nothing is drawn; back, bgfx gets the new surface (BUGS.md C87). Window thread, before each frame |
 
 ### `platform/controls.h`
 
@@ -181,6 +182,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `osystem_endOfFrame` | End of a game frame: draws what is pending and the text layer, and shows the frame |
 | `osystem_setPalette` | Sets the game palette (256 RGB colours) and clears the screen fade |
 | `osystem_setPalette` | Sets the game palette (256 RGB colours) and clears the screen fade |
+| `osystem_getPalette` | The game palette as set last: 256 colours, 3 bytes each (red, green, blue) |
 | `osystem_drawDarkness` | Dark room (lightOff): covers the scene drawn so far with black, except a lit circle around litX, litY (320x200) if lit; the text layer is drawn after it and the glass of this frame is skipped |
 | `osystem_flip` | Draws the 3D primitives still pending |
 | `osystem_CopyBlockPhys` | Sends a rectangle of the 320x200 screen to the graphics card |
@@ -236,6 +238,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `osystem_suspendScreenEffects` | Plain screens (title armadillo, intro screens, books) suspend the screen effects without changing the player's options; calls nest (BUGS.md C15) |
 | `osystem_setDepthSlice` | Limits the depth drawn (-1: all), used to draw objects in front of or behind a mask |
 | `osystem_depthSlicedThisFrame` | True if a depth slice was used this frame |
+| `osystem_modelArea` | Part of the 320x200 screen (x0, y0, x1, y1) where 3D models were drawn this frame or the one before; false if none (screen effects work only there, BUGS.md C86) |
 | `osystem_drawDeferredGlass` | Draws the glass polygons of the frame (Original mode), after the scene |
 | `osystem_takeFrozenSceneDrawn` | True if the frozen image was drawn since the last call (screen effects reuse its ambient occlusion) |
 | `osystem_isSceneSnapshotLive` | True while the scene snapshot follows the game (not frozen by a menu) |
@@ -264,7 +267,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `g_isMenuCapturingInput` | True while a menu owns keyboard, mouse and controller: the game receives no input |
 | `g_onFrameStart` | Each frame, before drawing: pictures saved or removed are picked up |
 | `g_getBackgroundPicture` | The picture for the screen on show; false: the game's own background |
-| `g_getMaskPicture` | The player's picture of a mask of the game (invalid handle: none); originalShape: 16:10 like the scene, otherwise the shape of the picture |
+| `g_getMaskPicture` | The player's picture of a mask of the game (invalid handle: none); originalShape: 16:10 like the scene, otherwise the shape of the picture; crop: the part of the player's mask the texture holds (u0, v0, u1, v1 of the whole mask: only the part with something white or grey is kept) |
 | `g_onScreenUploaded` | The 320x200 screen was sent to the graphics card |
 | `g_filterTextLayer` | The text layer (320x200 palette indexes) is about to be shown: the layer to show instead (the letters the new font draws taken out); null: as it is, no new font in this game or "Enhanced text" off |
 | `g_drawTextOverlay` | Right after the text layer, in the same view: the new font's letters |
@@ -276,6 +279,16 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | Función | Para qué sirve |
 | --- | --- |
 | `submitImageBackground` | Submits an RGBA picture quad (imageBackground_ps, with the fade level) |
+
+### `platform/returnToLauncher.h`
+
+| Función | Para qué sirve |
+| --- | --- |
+| `setStartedByLauncher` | Notes whether the launcher started this game (selectGameFolder, --from-launcher) |
+| `startedByLauncher` | True if the launcher started the game: its menus offer to go back to it |
+| `openLauncher` | Opens the launcher again: on a PC the Launcher next to Tatou, on Android the app starts anew on the launcher's screen once the game has ended. False if it could not |
+| `requestReturnToLauncher` | From F1 (the window thread's frame): the window thread opens the launcher and closes the game at the start of its next frame (osystemSDL.cpp) |
+| `returnToLauncherRequested` | True once requestReturnToLauncher was called |
 
 ### `platform/screenEffects.h`
 
@@ -298,6 +311,9 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `destroyTargets` | Deletes the offscreen images |
 | `renderAmbientOcclusion` | false when there is no camera yet |
 | `renderAntialiasing` | FXAA on the 3D models: m_sceneColor -> m_aaColor |
+| `modelRect` | The part of the scene image with 3D models (x, y, width, height), with a margin; false if there are none |
+| `placeScene` | Where the scene goes in the window this frame (m_sceneQuad) and the part of the scene image seen there (m_visible): with a zoomed aspect ratio the top and bottom of the scene are off the screen (BUGS.md C86) |
+| `setVisibleScissor` | A scissor of the part seen, for a target of width x height, with a margin |
 | `renderBloom` | Makes the bloom: bright parts of the painted backgrounds, blurred down and up |
 | `renderComposite` | Copies the scene to the screen with the chosen effects and the fade |
 
@@ -421,6 +437,9 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | Función | Para qué sirve |
 | --- | --- |
 | `applyCheats` | After each object's script (mainLoop.cpp): puts back the life a hit took |
+| `cheatKeepsVariable` | The running script (life.cpp, DEC_VAR and SUB_VAR) lowers variable var by amount: true to leave it (a weapon's shots, with the cheat on) |
+| `cheatVariableSeen` | The value the running script reads for variable var (evalVar.cpp): with infinite ammunition, a weapon the story jams (AITD2 script 610, AITD3 Gatling) never sees its jam; the variable itself is left, so turning the cheat off brings it back |
+| `cheatObjectFired` | The running script made the processed object fire (life.cpp, FIRE) |
 
 ### `core/common.h`
 
@@ -547,6 +566,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | `parseAllSaves` | Save and load screen: lists the slots with their date and returns the chosen one (-1 none) |
 | `getTextFromIdx` | The text entry number `index` of the language's texts |
 | `cleanupAndExit` | Closes everything (controller, sound, music, graphics) and ends the program |
+| `quitGame` | Leaves the game from its menus: back to the launcher if it started the game (platform/returnToLauncher.h), else as cleanupAndExit |
 | `drawProjectedBox` | Debug: draws a 3D box as six projected faces |
 | `playSequence` | Plays an animated sequence (cinematic) with its fades |
 | `sequenceName` | The PAK of sequence `index` of this game (Jack: PERE; AITD2: its list; AITD3: ANn), nullptr if there is none (AITD1: its ending is playEndSequence) |
@@ -899,6 +919,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | --- | --- |
 | `texturePackHas` | The packs' file with that name ("AITD1/Backgrounds/CAMERA00_000.jpg", any case) is there; time is the pack's (a pack replaced is read again) |
 | `texturePackRead` | The bytes of that file of the packs; false if none has it or it cannot be read |
+| `texturePackList` | The names of the packs' files that start with prefix (any case), in lower case ("aitd1/masks/camera00_002_mask_0_1.png") |
 | `texturePackGameFolder` | The folder of the current game in the packs: "AITD1", "JACK", "AITD2", "AITD3" |
 
 ### `remaster/ui/advancedOptions.h`

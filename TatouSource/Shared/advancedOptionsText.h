@@ -147,6 +147,11 @@ enum class AdvancedText
     ImprovedFailed,
     ImprovedBackgroundsAitd2,
     ImprovedBackgroundsAitd3,
+    ReturnToLauncher,
+    ReturnToLauncherWarning,
+    ReturnToLauncherCancel,
+    InfiniteAmmo,
+    InfiniteAmmoHelp,
     Count
 };
 
@@ -711,6 +716,24 @@ inline const char* advancedText(AdvancedText text, int language)
         { "Improved backgrounds (Alone 3)", "Fondos mejorados (Alone 3)",
           "Décors améliorés (Alone 3)", "Sfondi migliorati (Alone 3)",
           "Verbesserte Hintergründe (Alone 3)" },
+        // ReturnToLauncher
+        { "Return to the launcher", "Volver al launcher", "Retour au launcher", "Torna al launcher", "Zurück zum Launcher" },
+        // ReturnToLauncherWarning
+        { "The game closes and the launcher opens. Progress that is not saved will be lost.",
+          "El juego se cierra y se abre el launcher. Lo que no esté guardado se perderá.",
+          "Le jeu se ferme et le launcher s'ouvre. La progression non sauvegardée sera perdue.",
+          "Il gioco si chiude e si apre il launcher. I progressi non salvati andranno persi.",
+          "Das Spiel wird geschlossen und der Launcher geöffnet. Nicht gespeicherter Fortschritt geht verloren." },
+        // ReturnToLauncherCancel
+        { "Cancel", "Cancelar", "Annuler", "Annulla", "Abbrechen" },
+        // InfiniteAmmo
+        { "Infinite ammunition", "Munición infinita", "Munitions infinies", "Munizioni infinite", "Unendliche Munition" },
+        // InfiniteAmmoHelp
+        { "Your weapons never run out of shots once loaded.",
+          "Tus armas nunca se quedan sin balas una vez cargadas.",
+          "Vos armes ne manquent jamais de munitions une fois chargées.",
+          "Le tue armi non restano mai senza colpi una volta cariche.",
+          "Deine Waffen gehen nie die Schüsse aus, sobald sie geladen sind." },
     };
     if (language < 0 || language >= kAdvancedTextLanguages)
         language = 0;

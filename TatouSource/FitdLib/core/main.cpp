@@ -31,6 +31,7 @@ extern void playMenuSound(const char* soundName);
 
 #include "settings.h"
 #include "jobSystemInit.h"
+#include "returnToLauncher.h"
 
 #include <array>
 #include <string>
@@ -101,6 +102,9 @@ int FitdMain(int argc, char* argv[])
     return(0);
 }
 
+// The widest message on one line: the screen of 1992 (320) less a margin
+static const int kMessageMaxWidth = 312;
+
 int drawTextOverlay(void)
 {
     int var_14 = 0;
@@ -121,18 +125,39 @@ int drawTextOverlay(void)
         {
             if (currentMessage->string)
             {
-                int width = currentMessage->string->width;
-                int X = 160 - width / 2;
-                int Y = X + width;
-
-                if (X < BBox3D1)
+                // A message wider than the screen (a long translation: "¡Maldita
+                // sea! Mi Derringer se ha quedado sin munición") went off both
+                // sides and was cut: it is split in two lines at the space
+                // nearest its middle (BUGS.md C96)
+                const u8* text = currentMessage->string->textPtr;
+                const int textLength = (int)strlen((const char*)text);
+                static u8 lines[2][256];
+                const u8* lineTexts[2] = { text, nullptr };
+                int lineCount = 1;
+                if (currentMessage->string->width > kMessageMaxWidth && textLength < 255)
                 {
-                    BBox3D1 = X;
+                    int split = -1;
+                    for (int c = 0; c < textLength; c++)
+                        if (text[c] == ' ' && (split < 0 || abs(c - textLength / 2) < abs(split - textLength / 2)))
+                            split = c;
+                    if (split > 0)
+                    {
+                        memcpy(lines[0], text, split);
+                        lines[0][split] = 0;
+                        memcpy(lines[1], text + split + 1, textLength - split);   // with its end
+                        lineTexts[0] = lines[0];
+                        lineTexts[1] = lines[1];
+                        lineCount = 2;
+                    }
                 }
-
-                if (Y > BBox3D3)
+                for (int line = 0; line < lineCount; line++)
                 {
-                    BBox3D3 = Y;
+                    const int width = (lineCount == 1) ? currentMessage->string->width : ExtGetSizeFont((u8*)lineTexts[line]);
+                    const int X = 160 - width / 2;
+                    if (X < BBox3D1)
+                        BBox3D1 = X;
+                    if (X + width > BBox3D3)
+                        BBox3D3 = X + width;
                 }
 
                 // Counted in ticks of the game clock: the original counted
@@ -160,10 +185,16 @@ int drawTextOverlay(void)
                         SetFont(PtrFont, 16 + (currentMessage->time - kMessageFullTicks) / 2);
                     }
 
-                    PrintFont(X, var_10 + 1, logicalScreen, currentMessage->string->textPtr);
+                    // The last line at its place, the first one above it
+                    for (int line = 0; line < lineCount; line++)
+                    {
+                        const int width = (lineCount == 1) ? currentMessage->string->width : ExtGetSizeFont((u8*)lineTexts[line]);
+                        const int y = var_10 + 1 - 16 * (lineCount - 1 - line);
+                        PrintFont(160 - width / 2, y, logicalScreen, (u8*)lineTexts[line]);
+                    }
                 }
 
-                var_10 -= 16;
+                var_10 -= 16 * lineCount;
                 var_14 = 1;
 
             }
@@ -271,5 +302,12 @@ void cleanupAndExit(void)
     shutdownJobSystem();
 
     exitProgram(0);
+}
+
+void quitGame(void)
+{
+    if (startedByLauncher())
+        openLauncher();
+    cleanupAndExit();
 }
 

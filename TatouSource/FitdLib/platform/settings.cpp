@@ -60,6 +60,7 @@ static void setDefaults()
 
     c.cheats.enabled = false;
     c.cheats.infiniteLife = false;
+    c.cheats.infiniteAmmo = false;
 
     c.gameData.language[0] = '\0';
 
@@ -168,6 +169,7 @@ void loadSettings()
         else if (strcmp(key, "controller.vibration") == 0) controlsAnalog().vibration = isTrue(value);
         else if (strcmp(key, "cheats.enabled") == 0) c.cheats.enabled = isTrue(value);
         else if (strcmp(key, "cheats.infiniteLife") == 0) c.cheats.infiniteLife = isTrue(value);
+        else if (strcmp(key, "cheats.infiniteAmmo") == 0) c.cheats.infiniteAmmo = isTrue(value);
         else if (strcmp(key, "gamedata.language") == 0) copyText(c.gameData.language, sizeof(c.gameData.language), value);
         else if (strcmp(key, "debug.graphicsValidation") == 0) c.debug.enableGraphicsValidation = isTrue(value);
         else if (strcmp(key, "debug.logLifeScripts") == 0) c.debug.logLifeScripts = isTrue(value);
@@ -239,7 +241,8 @@ void saveSettings()
 
     fprintf(file, "# Cheats (F1): enabled turns them on\n");
     fprintf(file, "cheats.enabled = %s\n", flag(c.cheats.enabled));
-    fprintf(file, "cheats.infiniteLife = %s\n\n", flag(c.cheats.infiniteLife));
+    fprintf(file, "cheats.infiniteLife = %s\n", flag(c.cheats.infiniteLife));
+    fprintf(file, "cheats.infiniteAmmo = %s\n\n", flag(c.cheats.infiniteAmmo));
 
     fprintf(file, "# Controls (modernStick: the left stick walks where it points, seen from the camera;\n");
     fprintf(file, "# vibration: the controller vibrates when hit, dying or shooting)\n");

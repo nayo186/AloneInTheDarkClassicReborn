@@ -52,6 +52,7 @@ struct Settings
     struct {
         bool enabled;
         bool infiniteLife;   // a hit never takes the player's life
+        bool infiniteAmmo;   // a weapon's shots never go down (not Jack)
     } cheats;
 
     // The game's language: the PAK chosen in the launcher, e.g. "ESPAGNOL"

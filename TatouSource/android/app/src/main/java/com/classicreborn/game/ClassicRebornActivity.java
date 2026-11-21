@@ -101,6 +101,25 @@ public class ClassicRebornActivity extends SDLActivity {
         sActivity = this;
     }
 
+    // From the game (platform/returnToLauncher.cpp): "Return to the launcher".
+    // RestartActivity, in its own process, starts the app again once this
+    // process has ended (the game ends it right after); false if it could not
+    public static boolean restartOnLauncher() {
+        final ClassicRebornActivity activity = sActivity;
+        if (activity == null)
+            return false;
+        try {
+            Intent restart = new Intent(activity, RestartActivity.class);
+            restart.putExtra(RestartActivity.EXTRA_GAME_PROCESS, android.os.Process.myPid());
+            restart.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            activity.startActivity(restart);
+            return true;
+        } catch (Exception e) {
+            Log.e(TAG, "Return to the launcher failed", e);
+            return false;
+        }
+    }
+
     // From the launcher: opens the folder picker; what it holds goes into
     // userData (the app's UserData folder), for the game of the launcher's tab
     public static void startImport(String userData, int game) {
