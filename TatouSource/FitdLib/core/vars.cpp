@@ -16,7 +16,10 @@ hqrEntryStruct<char>* HQ_Memory;
 int musicConfigured;
 int musicEnabled = 1;
 int soundEnabled = 1;
-int detailLevel = 0; // the pause menu's detail entry (text 49/50 of the 1992 menu); fixed, as in Original mode
+// The pause menu's detail entry (text 49 low / 50 high of the 1992 menu).
+// In DOS, low drew less for slow PCs; this engine never reads it and always
+// draws everything, so it says high (issue #16, BUGS.md C97)
+int detailLevel = 1;
 
 float g_shadowLightDirX = -0.3f;
 float g_shadowLightDirY = -1.0f;
