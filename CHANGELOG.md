@@ -4,6 +4,18 @@ Alone in the Dark: Classic Reborn started on 2026-10-23 from [Alone in the Dark:
 
 This repository was published with a single starting commit, to keep it light: the early history carried large files that are no longer part of the project. Below are the changes of each release and, after them, the changes made in this fork before it was published, newest first, one line per change. The reasons behind larger removals are explained in `docs/DESCARTADO.md` and the fixes in `docs/baseline/BUGS.md`.
 
+## v1.8.4 (2026-11-21)
+
+Two ideas from players: going back to the launcher from the game, and a cheat for infinite ammunition. Also fixed: long messages cut at the edges of the screen, and the detail level of the pause menu.
+
+- All games: **return to the launcher**. When the game is opened from the launcher, its menu says **Return to the launcher** instead of quitting, and **F1** has a **Return to the launcher** button (it asks first: what is not saved is lost). The launcher opens on the game you left. On every platform, Android included; opened without the launcher, the game quits as before (issue #13, BUGS.md C94)
+- *Alone in the Dark 3*, outside Windows: the **Difficulty level** entry of the pause menu showed the text of the exit (BUGS.md C94)
+- *Alone in the Dark* 1, 2 and 3: **Infinite ammunition** cheat in **F1**, below **Infinite life**: weapons never run out of shots, and an empty one shoots again as soon as the cheat is on. A weapon the story jams (the Gatling of *Alone in the Dark 3*, one in *Alone in the Dark 2*) shoots while the cheat is on, and is jammed again when it is off (issue #15, BUGS.md C95)
+- All games: a message wider than the screen (a long translation, such as the Spanish message of the empty Derringer in *Alone in the Dark 2*) went off both edges; it is now split in two lines (BUGS.md C96)
+- All games: **Details Level** in the pause menu said "Low": that option of the DOS versions is not used, the game always draws at full detail, so it now says "High" (issue #16, BUGS.md C97)
+- macOS: *Alone in the Dark* could close at start, during the armadillo animation. Reported and fixed by iNdioNicarao (pull request #14, BUGS.md C93)
+- README: new screenshots of the three games, with the widescreen view and the improved backgrounds
+
 ## v1.8.3 (2026-11-21)
 
 Smoother on phones and lighter everywhere: the improved backgrounds and the screen effects cost much less, and several Android problems are fixed. And a new trailer.
