@@ -12,7 +12,7 @@ Classic Reborn is a C++17 source port of the Infogrames engine, built on a decom
 
 ## Trailer
 
-<p align="center"><a href="https://youtu.be/WBA-nOCI12k"><img src="docs/images/trailer.jpg" alt="Watch the trailer on YouTube" width="80%"></a></p>
+<p align="center"><a href="https://youtu.be/cziOu0ecWaI"><img src="docs/images/trailer.jpg" alt="Watch the trailer on YouTube" width="80%"></a></p>
 
 ## Screenshots
 
