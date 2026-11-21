@@ -1037,6 +1037,7 @@ Cada función pública del proyecto con para qué sirve, por capa y archivo. Las
 | Función | Para qué sirve |
 | --- | --- |
 | `launcherFolder` | Folder that contains Launcher.exe (and Tatou.exe), UTF-8, with trailing separator |
+| `enterLauncherFolder` | Makes the launcher's folder the working one: a data folder written as a relative path ("..\Alone in the Dark 1") is always read from there, also when the game opens the launcher from inside a game folder (BUGS.md C98) |
 | `logOpen` | Opens launcher.log next to Launcher.exe |
 | `logLine` | Writes a line to launcher.log |
 | `loadLauncherSettings` | Reads launcher.cfg |

@@ -76,6 +76,18 @@ std::string launcherFolder()
     return base ? std::string(base) : std::string();
 }
 
+void enterLauncherFolder()
+{
+#ifndef __ANDROID__
+    const std::string folder = launcherFolder();
+    if (folder.empty())
+        return;
+    std::error_code ec;
+    fs::current_path(toPath(folder), ec);
+    logLine("Working folder: %s%s", folder.c_str(), ec ? " (could not enter it)" : "");
+#endif
+}
+
 void logOpen()
 {
     fs::path path = toPath(launcherFolder() + "launcher.log");

@@ -1229,6 +1229,7 @@ int main(int, char**)
 #endif
 {
     logOpen();
+    enterLauncherFolder();
 
     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD))
     {

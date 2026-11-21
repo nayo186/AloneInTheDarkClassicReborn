@@ -116,6 +116,11 @@ struct LauncherSettings
 // Folder that contains Launcher.exe (and Tatou.exe), UTF-8, with trailing separator
 std::string launcherFolder();
 
+// Makes the launcher's folder the working one: a data folder written as a
+// relative path ("..\Alone in the Dark 1") is always read from there, also
+// when the game opens the launcher from inside a game folder (BUGS.md C98)
+void enterLauncherFolder();
+
 // Opens launcher.log next to Launcher.exe
 void logOpen();
 // Writes a line to launcher.log
