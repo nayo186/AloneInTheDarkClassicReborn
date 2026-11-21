@@ -71,12 +71,14 @@ int make3dTatou(void)
 
 	osystem_CopyBlockPhys(frontBuffer,0,0,320,200);
 
+#ifndef __APPLE__
 	// Bring the game window to the foreground so the console
 	// doesn't obscure the animation.
 	if (gWindowBGFX)
 	{
 		SDL_RaiseWindow(gWindowBGFX);
 	}
+#endif
 
 	FadeInPhys(8,0);
 
