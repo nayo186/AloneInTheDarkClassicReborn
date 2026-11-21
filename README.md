@@ -32,8 +32,8 @@ Classic Reborn is a C++17 source port of the Infogrames engine, built on a decom
 
 <table>
   <tr>
-    <td align="center"><img src="docs/images/aitd1-bedroom-hd.jpg" alt="Emily in the bedroom" width="100%"></td>
-    <td align="center"><img src="docs/images/aitd1-fight-hd.jpg" alt="A fight" width="100%"></td>
+    <td align="center"><img src="docs/images/aitd1-caves.jpg" alt="Edward in the caves" width="100%"><br><sub>Edward in the caves</sub></td>
+    <td align="center"><img src="docs/images/aitd1-fight.jpg" alt="A fight in the hall" width="100%"><br><sub>A fight in the hall</sub></td>
   </tr>
 </table>
 
@@ -41,8 +41,8 @@ Classic Reborn is a C++17 source port of the Infogrames engine, built on a decom
 
 <table>
   <tr>
-    <td align="center"><img src="docs/images/aitd2-intro-hd.jpg" alt="The intro: the clown and the old man" width="100%"><br><sub>The intro, with the HD pack</sub></td>
-    <td align="center"><img src="docs/images/aitd2-gangster-hd.jpg" alt="Carnby and a gangster on the landing" width="100%"><br><sub>Carnby and a gangster, with the HD pack</sub></td>
+    <td align="center"><img src="docs/images/aitd2-fight.jpg" alt="A fight by the Christmas tree" width="100%"><br><sub>A fight by the Christmas tree</sub></td>
+    <td align="center"><img src="docs/images/aitd2-grace.jpg" alt="Grace in the kitchen" width="100%"><br><sub>Grace in the kitchen</sub></td>
   </tr>
 </table>
 
@@ -50,8 +50,8 @@ Classic Reborn is a C++17 source port of the Infogrames engine, built on a decom
 
 <table>
   <tr>
-    <td align="center"><img src="docs/images/aitd3-portrait-hd.jpg" alt="Carnby by the portrait in the bedroom" width="100%"><br><sub>Carnby by the portrait, with the HD pack</sub></td>
-    <td align="center"><img src="docs/images/aitd3-saloon-hd.jpg" alt="Carnby behind the saloon's bar" width="100%"><br><sub>The saloon, with the HD pack</sub></td>
+    <td align="center"><img src="docs/images/aitd3-saloon.jpg" alt="Carnby in the saloon" width="100%"><br><sub>Carnby in the saloon</sub></td>
+    <td align="center"><img src="docs/images/aitd3-portrait.jpg" alt="Carnby by the portrait in the bedroom" width="100%"><br><sub>Carnby by the portrait in the bedroom</sub></td>
   </tr>
 </table>
 
