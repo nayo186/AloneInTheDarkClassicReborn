@@ -4,6 +4,22 @@ Alone in the Dark: Classic Reborn started on 2026-10-23 from [Alone in the Dark:
 
 This repository was published with a single starting commit, to keep it light: the early history carried large files that are no longer part of the project. Below are the changes of each release and, after them, the changes made in this fork before it was published, newest first, one line per change. The reasons behind larger removals are explained in `docs/DESCARTADO.md` and the fixes in `docs/baseline/BUGS.md`.
 
+## v1.8.3 (2026-11-21)
+
+Smoother on phones and lighter everywhere: the improved backgrounds and the screen effects cost much less, and several Android problems are fixed. And a new trailer.
+
+- All games with custom backgrounds: much faster. Which part of the screen keeps the game's own drawing (texts, messages) is now decided once when the screen changes, not for every pixel in every frame: on a phone it went from about 12 frames a second to 40-60 (BUGS.md C86)
+- All games with custom backgrounds: the stop when the camera changes is shorter. The masks of a camera are prepared together as soon as its background loads, a mask is not read again after a menu, and each one keeps only the part that covers something (BUGS.md C86)
+- *Alone in the Dark*: with custom backgrounds, the chosen portrait on the page of the character's story shows its new image too, not the 1992 pixels (BUGS.md C88)
+- All games: **Edge smoothing (FXAA)** and **Ambient occlusion (SSAO)** work only around the 3D models, and the ambient occlusion at half size; with a zoomed aspect ratio the effects work only on the part of the scene seen on screen. Each of them halved the frame rate of a phone (BUGS.md C86)
+- All games: the **Animation smoothing** option is removed: the game already blends the poses in every frame, and the difference could hardly be seen (BUGS.md C89)
+- All games: a new size in **Resolution**, **800** (800 × 450 zoomed, 800 × 600 in 4:3). On Android it is the size by default (new installs and **Default values**): with every effect on, a phone goes at about 50-60 frames a second. A size chosen before is kept (BUGS.md C86)
+- Android: the game is always fullscreen; the **Fullscreen** option made the system bars appear over the touch buttons, and is no longer shown on a phone (BUGS.md C90)
+- Android: coming back to the game after a call or another app left the screen black, and with Vulkan the game closed: it now carries on where it was (BUGS.md C87)
+- Android: the main menu said "Return to Linux"; it now says **Exit** in the language of the game (on Linux and macOS, "Return to Linux/macOS" in the language of the game) (BUGS.md C91)
+- Android: the **scroll bar** of the menus can be dragged with a finger, a touch on it takes the list there, and a list flicked with the finger keeps going and slows down; the Controls list can be dragged too (BUGS.md C92)
+- README: the new trailer
+
 ## v1.8.2 (2026-11-20)
 
 The ideas of v1.8.0 and v1.8.1 come to *Alone in the Dark 3*: the whole trilogy now has the widescreen view.
