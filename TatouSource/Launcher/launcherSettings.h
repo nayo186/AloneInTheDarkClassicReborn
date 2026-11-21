@@ -27,6 +27,15 @@ struct GameLanguage
     std::string displayName;  // "Español"
 };
 
+// Resolution by default: 800 on Android (light enough for a phone with every
+// effect on, BUGS.md C86), automatic elsewhere; the game's default
+// (platform/settings.cpp) is the same
+#ifdef __ANDROID__
+static const int kDefaultResolution = 800;
+#else
+static const int kDefaultResolution = 0;
+#endif
+
 struct LauncherSettings
 {
     std::string uiLanguage = "en";
@@ -45,7 +54,7 @@ struct LauncherSettings
     int frameLimit = kDefaultFrameLimit;   // frames per second, 0 = no limit
     bool vsync = true;
     int aspect = 0;            // 0 = 4:3 (original), 1 = 16:10, 2 = stretched
-    int resolution = 0;        // scene image width (4:3), 0 = automatic
+    int resolution = kDefaultResolution;   // scene image width (4:3), 0 = automatic
     int integerScale = 0;      // every pixel the same size: 0 off, -1 automatic, N = 200 lines N times
     int integerResolution = 0; // 3D models with integer scaling: 0 the whole size, N = 320 x 200 N times
     bool fullscreen = false;
@@ -55,7 +64,6 @@ struct LauncherSettings
     bool bloom = false;
     bool ssao = false;
     int antialiasing = 0;      // 0 off, 1 FXAA
-    bool animationSmoothing = false;
     bool customBackgrounds = false;
     bool enhancedText = false;
     std::string renderer = "auto";   // graphics.renderer: auto or one of Shared/rendererChoice.h
@@ -83,8 +91,8 @@ struct LauncherSettings
     static const int kDefaultFrameLimit = 60;
     bool isDefault() const
     {
-        return frameLimit == kDefaultFrameLimit && vsync && aspect == 0 && resolution == 0 && integerScale == 0 && integerResolution == 0 && !fullscreen &&
-            !filmGrain && !scanlines && scanlineLevel == 2 && !bloom && !ssao && antialiasing == 0 && !animationSmoothing && !customBackgrounds &&
+        return frameLimit == kDefaultFrameLimit && vsync && aspect == 0 && resolution == kDefaultResolution && integerScale == 0 && integerResolution == 0 && !fullscreen &&
+            !filmGrain && !scanlines && scanlineLevel == 2 && !bloom && !ssao && antialiasing == 0 && !customBackgrounds &&
             !enhancedText && renderer == "auto";
     }
     void restoreDefaults()
@@ -92,11 +100,11 @@ struct LauncherSettings
         frameLimit = kDefaultFrameLimit;
         vsync = true;
         aspect = 0;
-        resolution = 0;
+        resolution = kDefaultResolution;
         integerScale = 0;
         integerResolution = 0;
         fullscreen = false;
-        filmGrain = scanlines = bloom = ssao = animationSmoothing = customBackgrounds = false;
+        filmGrain = scanlines = bloom = ssao = customBackgrounds = false;
         enhancedText = false;
         antialiasing = 0;
         scanlineLevel = 2;

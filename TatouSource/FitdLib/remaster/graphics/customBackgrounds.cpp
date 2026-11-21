@@ -158,6 +158,19 @@ static int pictureOffset(int size)
     return (size == 64000 + 770) ? 770 : 0;
 }
 
+// Case-insensitive compare of the first n characters (file names of masks)
+static int strncasecmp_portable(const char* a, const char* b, size_t n)
+{
+    for (size_t i = 0; i < n; i++)
+    {
+        const int ca = tolower((unsigned char)a[i]);
+        const int cb = tolower((unsigned char)b[i]);
+        if (ca != cb || ca == 0)
+            return ca - cb;
+    }
+    return 0;
+}
+
 // ---- One picture: the original and the player's replacement -----------------
 
 struct Picture
@@ -186,6 +199,12 @@ static Picture s_screens[2];
 static int s_screenNewest = 0;   // the one loaded last
 static int s_screenShown = -1;   // the one on screen, -1 none
 
+// The screen as the game last sent it, and a count of the changes of the
+// screen and of the original pictures (keepGameTexture)
+static unsigned char s_screenCopy[320 * 200] = {};
+static unsigned s_screenVersion = 0;
+static unsigned s_originalVersion = 0;
+
 // The place of a full-screen picture: its own if it is one of the two, else
 // the older one
 static int screenSlot(const char* pakName, int index, bool sequence)
@@ -212,7 +231,14 @@ static void screenLoaded(int slot)
 struct DecodedPicture
 {
     fs::file_time_type time;            // of the file decoded
-    unsigned char* pixels = nullptr;    // RGBA, stbi's (freed with it)
+    unsigned char* pixels = nullptr;    // RGBA (a mask: grey), stbi's (freed with it)
+    int components = 4;
+    // A mask keeps only the part with something on it (cropX, cropY: where it
+    // starts; fullWidth x fullHeight: the whole mask; width x height: the part)
+    int cropX = 0;
+    int cropY = 0;
+    int fullWidth = 0;
+    int fullHeight = 0;
     int width = 0;
     int height = 0;
     std::string error;                  // why it could not be read
@@ -231,36 +257,105 @@ static std::deque<std::string> s_decodedOrder;
 static void decodePicture(const CustomFile& file, DecodedPicture& decoded)
 {
     int width = 0, height = 0;
-    unsigned char* pixels = loadCustomPixels(file, &width, &height, 4);
+    unsigned char* pixels = loadCustomPixels(file, &width, &height, decoded.components);
+    int fullWidth = width, fullHeight = height, cropX = 0, cropY = 0;
+    if (pixels && decoded.components == 1)
+    {
+        // A mask is black but for the shape of what covers the characters:
+        // only that part (and 2 pixels around, for its smoothed edge) goes to
+        // the graphics card and is drawn; a whole 2880x2160 mask is 6 MB, and
+        // a camera has up to about ten (BUGS.md C86)
+        int x0 = width, y0 = height, x1 = -1, y1 = -1;
+        for (int y = 0; y < height; y++)
+        {
+            const unsigned char* row = pixels + (size_t)y * width;
+            for (int x = 0; x < width; x++)
+            {
+                // Almost black is noise (enlarged masks): the shader only
+                // shows from about half grey, smoothed over a screen pixel
+                if (row[x] >= 32)
+                {
+                    if (x < x0) x0 = x;
+                    if (x > x1) x1 = x;
+                    if (y < y0) y0 = y;
+                    if (y > y1) y1 = y;
+                }
+            }
+        }
+        if (x1 < 0)
+        {
+            x0 = y0 = 0;   // nothing on it: one black pixel
+            x1 = y1 = 0;
+        }
+        else
+        {
+            x0 = (std::max)(0, x0 - 2);
+            y0 = (std::max)(0, y0 - 2);
+            x1 = (std::min)(width - 1, x1 + 2);
+            y1 = (std::min)(height - 1, y1 + 2);
+        }
+        const int cropWidth = x1 - x0 + 1;
+        const int cropHeight = y1 - y0 + 1;
+        if (cropWidth < width || cropHeight < height)
+        {
+            unsigned char* part = (unsigned char*)malloc((size_t)cropWidth * cropHeight);
+            if (part)
+            {
+                for (int y = 0; y < cropHeight; y++)
+                    memcpy(part + (size_t)y * cropWidth, pixels + (size_t)(y0 + y) * width + x0, (size_t)cropWidth);
+                stbi_image_free(pixels);
+                pixels = part;
+                cropX = x0;
+                cropY = y0;
+                width = cropWidth;
+                height = cropHeight;
+            }
+        }
+    }
     std::lock_guard<std::mutex> lock(decoded.mutex);
     decoded.pixels = pixels;
     decoded.width = width;
     decoded.height = height;
+    decoded.cropX = cropX;
+    decoded.cropY = cropY;
+    decoded.fullWidth = fullWidth;
+    decoded.fullHeight = fullHeight;
     if (!pixels)
         decoded.error = stbi_failure_reason() ? stbi_failure_reason() : "unknown";
     decoded.ready = true;
 }
 
-// The picture of that file, decoded or on its way (a changed file is decoded
-// again, so a picture saved while playing appears)
-static std::shared_ptr<DecodedPicture> requestDecode(const CustomFile& file)
+// The masks of the current camera, decoded together when it is shown (a
+// camera holds up to about ten of 2880x2160: one after the other they kept
+// the game waiting about a second, BUGS.md C86); dropped with its masks
+static std::map<std::string, std::shared_ptr<DecodedPicture>> s_decodedMasks;
+
+// The picture of that file (components 1: a mask), decoded or on its way (a
+// changed file is decoded again, so a picture saved while playing appears)
+static std::shared_ptr<DecodedPicture> requestDecode(const CustomFile& file, int components = 4)
 {
     const std::string key = file.key();
     const fs::file_time_type time = file.time;
-    auto found = s_decoded.find(key);
-    if (found != s_decoded.end() && found->second->time == time)
+    const bool mask = (components == 1);
+    auto& cache = mask ? s_decodedMasks : s_decoded;
+    auto found = cache.find(key);
+    if (found != cache.end() && found->second->time == time)
         return found->second;
 
     auto decoded = std::make_shared<DecodedPicture>();
     decoded->time = time;
-    if (found == s_decoded.end())
-        s_decodedOrder.push_back(key);
-    s_decoded[key] = decoded;
-    while (s_decodedOrder.size() > kMaxDecoded)
+    decoded->components = components;
+    if (!mask)
     {
-        s_decoded.erase(s_decodedOrder.front());   // a job still running keeps its own
-        s_decodedOrder.pop_front();
+        if (found == s_decoded.end())
+            s_decodedOrder.push_back(key);
+        while (s_decodedOrder.size() > kMaxDecoded)
+        {
+            s_decoded.erase(s_decodedOrder.front());   // a job still running keeps its own
+            s_decodedOrder.pop_front();
+        }
     }
+    cache[key] = decoded;
 
     if (!JobSystem::instance().isInitialized())
     {
@@ -279,6 +374,7 @@ static void dropDecoded()
 {
     s_decoded.clear();
     s_decodedOrder.clear();
+    s_decodedMasks.clear();
 }
 
 // Reads ahead the HD pictures of the other cameras of the current room
@@ -370,6 +466,7 @@ static bool setPicture(Picture& picture, const char* pakName, int index, const u
     picture.index = index;
 
     memcpy(picture.originalPixels, pixels, sizeof(picture.originalPixels));
+    s_originalVersion++;
     if (!bgfx::isValid(picture.original))
         picture.original = bgfx::createTexture2D(320, 200, false, 1, bgfx::TextureFormat::R8U, BGFX_SAMPLER_POINT);
     bgfx::updateTexture2D(picture.original, 0, 0, 0, 0, 320, 200, bgfx::copy(pixels, 320 * 200));
@@ -413,6 +510,7 @@ struct CameraMask
     fs::file_time_type customTime;
     bool customPresent = false;
     bool customOriginalShape = false;  // 16:10 like the 320x200 scene (e.g. enlarged by an AI)
+    float crop[4] = { 0.0f, 0.0f, 1.0f, 1.0f };   // the part of it in the texture (u0, v0, u1, v1)
 };
 static std::vector<CameraMask> s_masks;
 
@@ -436,6 +534,7 @@ static void dropMasks()
     for (CameraMask& mask : s_masks)
         dropMask(mask);
     s_masks.clear();
+    s_decodedMasks.clear();
 }
 
 // The player's mask: any size (the size of the custom picture), white covers
@@ -448,19 +547,68 @@ static void loadMask(CameraMask& mask)
     mask.customPresent = true;
     mask.customTime = file.time;
 
-    int width = 0, height = 0;
-    unsigned char* pixels = loadCustomPixels(file, &width, &height, 1);
-    if (!pixels)
+    // Usually on its way already, with the other masks of the camera
+    // (prefetchCameraMasks)
+    const std::shared_ptr<DecodedPicture> decoded = requestDecode(file, 1);
+    const double waitStart = (double)bx::getHPCounter() / (double)bx::getHPFrequency();
     {
-        printf(MAIN_WARN "Custom mask %s could not be read (%s)\n", file.label().c_str(), stbi_failure_reason() ? stbi_failure_reason() : "unknown");
+        std::unique_lock<std::mutex> lock(decoded->mutex);
+        decoded->done.wait(lock, [&] { return decoded->ready; });
+    }
+    const int waitedMs = (int)(((double)bx::getHPCounter() / (double)bx::getHPFrequency() - waitStart) * 1000.0);
+    if (!decoded->pixels)
+    {
+        printf(MAIN_WARN "Custom mask %s could not be read (%s)\n", file.label().c_str(), decoded->error.c_str());
         return;
     }
+    const int width = decoded->width;
+    const int height = decoded->height;
+    auto* keep = new std::shared_ptr<DecodedPicture>(decoded);
     mask.custom = bgfx::createTexture2D((uint16_t)width, (uint16_t)height, false, 1, bgfx::TextureFormat::R8,
-        BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP, bgfx::copy(pixels, (uint32_t)width * height));
-    stbi_image_free(pixels);
-    const float shape = (float)width / (float)height;
+        BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP,
+        bgfx::makeRef(decoded->pixels, (uint32_t)width * height,
+            [](void*, void* userData) { delete (std::shared_ptr<DecodedPicture>*)userData; }, keep));
+    const float shape = (float)decoded->fullWidth / (float)decoded->fullHeight;
     mask.customOriginalShape = (shape > 1.57f && shape < 1.63f);
-    printf(MAIN_TAG "Custom mask %s (%dx%d)\n", maskName(s_camera.pakName, s_camera.index, mask.roomId, mask.maskId).c_str(), width, height);
+    mask.crop[0] = (float)decoded->cropX / (float)decoded->fullWidth;
+    mask.crop[1] = (float)decoded->cropY / (float)decoded->fullHeight;
+    mask.crop[2] = (float)(decoded->cropX + width) / (float)decoded->fullWidth;
+    mask.crop[3] = (float)(decoded->cropY + height) / (float)decoded->fullHeight;
+    printf(MAIN_TAG "Custom mask %s (%dx%d, part %dx%d, waited %d ms)\n", maskName(s_camera.pakName, s_camera.index, mask.roomId, mask.maskId).c_str(),
+        decoded->fullWidth, decoded->fullHeight, width, height, waitedMs);
+}
+
+// The player's masks of a camera, decoded together by the job threads as soon
+// as its background is loaded: the game creates them one by one next
+// (osystem_createMask), and each one finds its pixels ready or on their way
+static void prefetchCameraMasks(const char* pakName, int index)
+{
+    if (!g_settings.graphics.customBackgrounds)
+        return;
+    char prefix[64];
+    snprintf(prefix, sizeof(prefix), "%s_%03d_mask_", pakName, index);
+    const size_t prefixLength = strlen(prefix);
+    std::vector<std::string> names;
+    std::error_code error;
+    for (fs::directory_iterator it(fs::u8path(folder(customMasksFolder())), error), end; !error && it != end; it.increment(error))
+    {
+        const std::string name = it->path().filename().string();
+        if (name.size() > prefixLength && strncasecmp_portable(name.c_str(), prefix, prefixLength) == 0)
+            names.push_back(name);
+    }
+    std::vector<std::string> packed;
+    texturePackList(std::string(texturePackGameFolder()) + "/" + kMasksFolder + "/" + prefix, packed);
+    for (const std::string& name : packed)
+        names.push_back(name.substr(name.rfind('/') + 1));
+    for (const std::string& name : names)
+    {
+        int roomId = 0, maskId = 0;
+        if (sscanf(name.c_str() + prefixLength, "%d_%d", &roomId, &maskId) != 2)
+            continue;
+        const CustomFile file = customMaskFile(maskName(pakName, index, roomId, maskId));
+        if (file.found)
+            requestDecode(file, 1);
+    }
 }
 
 // ---- Core hooks --------------------------------------------------------------
@@ -475,7 +623,10 @@ static void onCameraBackgroundReady(const char* pakName, int index, const unsign
     // masks: keep them (they were dropped and "Export masks" found none)
     const bool sameCamera = (s_camera.index == index && strcmp(s_camera.pakName, pakName) == 0);
     if (!sameCamera)
+    {
         dropMasks();  // the masks of this camera are created next (osystem_createMask)
+        prefetchCameraMasks(pakName, index);
+    }
     setPicture(s_camera, pakName, index, pixels);
     prefetchRoomCameras();
 }
@@ -532,6 +683,14 @@ static void prepareCustomFolder()
 
 static void screenUploaded(const unsigned char* screen)
 {
+    // The game sends the same screen again in many frames: only a real
+    // change makes keepGameTexture decide again
+    if (memcmp(s_screenCopy, screen, sizeof(s_screenCopy)) != 0)
+    {
+        memcpy(s_screenCopy, screen, sizeof(s_screenCopy));
+        s_screenVersion++;
+    }
+
     // The full-screen picture on screen: of the last two, the one the screen
     // matches best, if at least a quarter of it is still that picture. Texts,
     // frames and boxes drawn over it change a part, even half (the box of
@@ -625,23 +784,130 @@ static const Picture* activePicture()
     return nullptr;
 }
 
+// The other full-screen picture, when a page is made of two: the story page
+// of AITD1 is the paper of the intro with the chosen portrait copied from the
+// character choice beside it (AffBigCadre, CopyBox_Aux_Log). Null if there is
+// no such picture with a player's image.
+static const Picture* secondPicture(const Picture* picture)
+{
+    if (s_screenShown < 0 || picture != &s_screens[s_screenShown])
+        return nullptr;
+    const Picture& other = s_screens[1 - s_screenShown];
+    if (!other.known() || !bgfx::isValid(other.custom) || !bgfx::isValid(other.original))
+        return nullptr;
+    return &other;
+}
+
+// ---- Where the game's own pixels stay (BUGS.md C85, C86, C88) ---------------
+// Where the game drew something 2D over the picture (messages, 2D animations)
+// the screen differs from the original picture and keeps the game's pixels.
+// A pixel can be the same as the original only by chance inside what the game
+// changed: the black lines of a drawing the game erased to black (the
+// armadillo of the Infogrames logo, which becomes the 3D one). Those keep the
+// game's pixels too: a dark pixel with a changed pixel within 2, or any pixel
+// whose 8 neighbours are mostly changed. The light paper around the letters
+// of a page is not touched.
+// A pixel that is not the picture's but is the second picture's (a portrait
+// copied onto the page) shows the second player's image (C88).
+// Decided here for the 320x200 pixels, only when the screen, the pictures or
+// the palette change; the shader reads the answer (customBackground_ps): 0 the
+// picture, 1 the game's pixel, 2 the second picture. It was decided there for
+// every pixel of the screen in every frame (about 50 reads each): 12 frames a
+// second on a phone (C86).
+static bgfx::TextureHandle s_keepGame = BGFX_INVALID_HANDLE;
+static const Picture* s_keepFor = nullptr;
+static const Picture* s_keepSecond = nullptr;
+static unsigned s_keepScreenVersion = 0;
+static unsigned s_keepOriginalVersion = 0;
+static unsigned char s_keepPalette[256 * 3] = {};
+
+static bgfx::TextureHandle keepGameTexture(const Picture& picture, const Picture* second)
+{
+    const unsigned char* palette = osystem_getPalette();
+    if (bgfx::isValid(s_keepGame) && s_keepFor == &picture && s_keepSecond == second && s_keepScreenVersion == s_screenVersion
+        && s_keepOriginalVersion == s_originalVersion && memcmp(s_keepPalette, palette, sizeof(s_keepPalette)) == 0)
+        return s_keepGame;
+    s_keepFor = &picture;
+    s_keepSecond = second;
+    s_keepScreenVersion = s_screenVersion;
+    s_keepOriginalVersion = s_originalVersion;
+    memcpy(s_keepPalette, palette, sizeof(s_keepPalette));
+
+    // Changed: neither picture has this pixel (the game drew it)
+    static unsigned char changed[320 * 200];
+    for (int i = 0; i < 320 * 200; i++)
+        changed[i] = (s_screenCopy[i] != picture.originalPixels[i]) && !(second && s_screenCopy[i] == second->originalPixels[i]);
+
+    const bgfx::Memory* keep = bgfx::alloc(320 * 200);
+    for (int y = 0; y < 200; y++)
+    {
+        for (int x = 0; x < 320; x++)
+        {
+            const int i = y * 320 + x;
+            unsigned char result = 1;
+            if (!changed[i])
+            {
+                const unsigned char* colour = palette + s_screenCopy[i] * 3;
+                const bool dark = (0.299f * colour[0] + 0.587f * colour[1] + 0.114f * colour[2]) / 255.0f < 0.12f;
+                int nearCount = 0;    // changed among the 8 neighbours
+                int aroundCount = 0;  // changed within 2
+                for (int dy = -2; dy <= 2; dy++)
+                {
+                    const int ny = y + dy < 0 ? 0 : (y + dy > 199 ? 199 : y + dy);
+                    for (int dx = -2; dx <= 2; dx++)
+                    {
+                        if (dx == 0 && dy == 0)
+                            continue;
+                        const int nx = x + dx < 0 ? 0 : (x + dx > 319 ? 319 : x + dx);
+                        if (changed[ny * 320 + nx])
+                        {
+                            aroundCount++;
+                            if (dx >= -1 && dx <= 1 && dy >= -1 && dy <= 1)
+                                nearCount++;
+                        }
+                    }
+                }
+                if (nearCount >= 5 || (dark && aroundCount > 0))
+                    result = 1;
+                else
+                    result = (s_screenCopy[i] == picture.originalPixels[i]) ? 0 : 2;
+            }
+            keep->data[i] = result;
+        }
+    }
+    if (!bgfx::isValid(s_keepGame))
+        s_keepGame = bgfx::createTexture2D(320, 200, false, 1, bgfx::TextureFormat::R8U, BGFX_SAMPLER_POINT);
+    bgfx::updateTexture2D(s_keepGame, 0, 0, 0, 0, 320, 200, keep);
+    return s_keepGame;
+}
+
+// The 4:3 part of a player's image (0..1 across)
+static void pictureCentre(const Picture& picture, float* u0, float* u1)
+{
+    *u0 = 0.0f;
+    *u1 = 1.0f;
+    if (picture.customWidth <= 0 || picture.customHeight <= 0 || picture.customOriginalShape)
+        return;
+    const float centreWidth = (float)picture.customHeight * 4.0f / 3.0f;
+    if (centreWidth >= (float)picture.customWidth)
+        return;
+    *u0 = ((float)picture.customWidth - centreWidth) * 0.5f / (float)picture.customWidth;
+    *u1 = 1.0f - *u0;
+}
+
 // The picture on show, with the 4:3 part of a wider image
 static bool backgroundPicture(BackgroundPicture* out)
 {
     const Picture* picture = activePicture();
     if (!picture)
         return false;
+    const Picture* second = secondPicture(picture);
     out->picture = picture->custom;
     out->original = picture->original;
-    out->u0 = 0.0f;
-    out->u1 = 1.0f;
-    if (picture->customWidth <= 0 || picture->customHeight <= 0 || picture->customOriginalShape)
-        return true;
-    const float centreWidth = (float)picture->customHeight * 4.0f / 3.0f;
-    if (centreWidth >= (float)picture->customWidth)
-        return true;
-    out->u0 = ((float)picture->customWidth - centreWidth) * 0.5f / (float)picture->customWidth;
-    out->u1 = 1.0f - out->u0;
+    out->keepGame = keepGameTexture(*picture, second);
+    pictureCentre(*picture, &out->u0, &out->u1);
+    out->second = second ? second->custom : picture->custom;
+    pictureCentre(second ? *second : *picture, &out->secondU0, &out->secondU1);
     return true;
 }
 
@@ -652,8 +918,13 @@ static void maskCreated(int roomId, int maskId, const unsigned char* shape, int 
     {
         if (mask.roomId == roomId && mask.maskId == maskId)
         {
-            dropMask(mask);
             mask.shape.assign(shape, shape + 320 * 200);
+            // Created again (closing a menu, the same camera): its picture is
+            // kept; it was read again every time (BUGS.md C86). A file saved
+            // meanwhile is picked up by update()
+            if (bgfx::isValid(mask.custom))
+                return;
+            dropMask(mask);
             if (g_settings.graphics.customBackgrounds)
                 loadMask(mask);
             return;
@@ -668,7 +939,7 @@ static void maskCreated(int roomId, int maskId, const unsigned char* shape, int 
         loadMask(s_masks.back());
 }
 
-static bgfx::TextureHandle maskPicture(int roomId, int maskId, bool* originalShape)
+static bgfx::TextureHandle maskPicture(int roomId, int maskId, bool* originalShape, float crop[4])
 {
     *originalShape = false;
     // Masks belong to the camera background only
@@ -679,6 +950,8 @@ static bgfx::TextureHandle maskPicture(int roomId, int maskId, bool* originalSha
         if (mask.roomId == roomId && mask.maskId == maskId)
         {
             *originalShape = mask.customOriginalShape;
+            for (int i = 0; i < 4; i++)
+                crop[i] = mask.crop[i];
             return mask.custom;
         }
     }

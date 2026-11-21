@@ -551,7 +551,9 @@ void advancedOptionsDraw()
         // Resolution of the scene image (live: bgfxGlue.cpp resizes it)
         resolutionCombo(width, g_settings.graphics.resolution, g_settings.graphics.integerScale != 0);
 
-        // Fullscreen: the window thread switches it (g_pendingFullscreenToggle)
+        // Fullscreen: the window thread switches it (g_pendingFullscreenToggle);
+        // not on Android, always fullscreen (BUGS.md C90)
+#ifndef __ANDROID__
         bool fullscreen = gIsFullscreen;
         if (ImGui::Checkbox(text(AdvancedText::Fullscreen), &fullscreen))
         {
@@ -559,6 +561,7 @@ void advancedOptionsDraw()
             printf(CFG_TAG "Advanced option (F1): fullscreen=%s\n", fullscreen ? "true" : "false");
         }
         helpMarker(text(AdvancedText::FullscreenHelp));
+#endif
 
         rendererCombo(width);
 
@@ -572,7 +575,7 @@ void advancedOptionsDraw()
         integerResolutionCombo(width, g_settings.graphics.integerResolution, g_settings.graphics.integerScale, g_settings.graphics.aspect);
         ImGui::EndDisabled();
 
-        // Screen effects and animation smoothing
+        // Screen effects
         ImGui::Spacing();
         ImGui::TextColored(kGold, "%s", text(AdvancedText::Effects));
         ImGui::Separator();
@@ -586,8 +589,6 @@ void advancedOptionsDraw()
         optionCheckbox(AdvancedText::Ssao, AdvancedText::SsaoHelp,
             &g_settings.postProcessing.enableSSAO, "ssao");
         antialiasingCombo(width, g_settings.postProcessing.antialiasing);
-        optionCheckbox(AdvancedText::AnimationSmoothing, AdvancedText::AnimationSmoothingHelp,
-            &g_settings.animation.enablePoseSmoothing, "animationSmoothing");
         optionCheckbox(AdvancedText::EnhancedText, AdvancedText::EnhancedTextHelp,
             &g_settings.graphics.enhancedText, "enhancedText");
         optionCheckbox(AdvancedText::CustomBackgrounds, AdvancedText::CustomBackgroundsHelp,

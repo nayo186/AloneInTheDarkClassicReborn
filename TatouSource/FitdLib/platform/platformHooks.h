@@ -39,7 +39,11 @@ struct BackgroundPicture
 {
     bgfx::TextureHandle picture;   // the player's image
     bgfx::TextureHandle original;  // the game's own picture of this screen
+    bgfx::TextureHandle keepGame;  // 320x200: 0 the picture, 1 the game's own pixel, 2 the second picture
     float u0, u1;                  // the 4:3 part of the image (0..1 across)
+    bgfx::TextureHandle second;    // the image of a second picture copied in part onto
+                                   // this screen (a portrait beside a page); else the same
+    float secondU0, secondU1;      // its 4:3 part
 };
 
 // Each frame, before drawing: pictures saved or removed are picked up
@@ -49,8 +53,10 @@ extern void (*g_onFrameStart)();
 extern bool (*g_getBackgroundPicture)(BackgroundPicture* out);
 
 // The player's picture of a mask of the game (invalid handle: none);
-// originalShape: 16:10 like the scene, otherwise the shape of the picture
-extern bgfx::TextureHandle (*g_getMaskPicture)(int roomId, int maskId, bool* originalShape);
+// originalShape: 16:10 like the scene, otherwise the shape of the picture;
+// crop: the part of the player's mask the texture holds (u0, v0, u1, v1 of
+// the whole mask: only the part with something white or grey is kept)
+extern bgfx::TextureHandle (*g_getMaskPicture)(int roomId, int maskId, bool* originalShape, float crop[4]);
 
 // The 320x200 screen was sent to the graphics card
 extern void (*g_onScreenUploaded)(const unsigned char* screen);

@@ -3,7 +3,7 @@
 // Based on FITD by yaz0r, Re-haunted is released under GPL
 //
 // In-game advanced options (F1 or Home): the same options as the launcher
-// window (FPS, VSync, screen effects, animation smoothing), applied live and
+// window (FPS, VSync, screen effects), applied live and
 // saved to aitd_remaster.cfg when the window closes. The game waits while it
 // is open (mainLoop.cpp asks through g_isOptionsWindowOpen).
 ///////////////////////////////////////////////////////////////////////////////

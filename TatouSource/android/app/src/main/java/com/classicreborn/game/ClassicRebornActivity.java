@@ -78,6 +78,23 @@ public class ClassicRebornActivity extends SDLActivity {
         return args.trim().split(" +");
     }
 
+    // Paused (a call, another app): read by the game's window thread
+    // (osystem_androidHoldInBackground), which stops drawing before Android
+    // destroys the surface, about 0.7 s later (BUGS.md C87)
+    static volatile boolean sPaused = false;
+
+    @Override
+    protected void onPause() {
+        sPaused = true;
+        super.onPause();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        sPaused = false;
+    }
+
     @Override
     protected void onCreate(android.os.Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

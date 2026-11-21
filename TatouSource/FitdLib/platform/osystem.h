@@ -57,6 +57,8 @@
 	void osystem_setPalette(unsigned byte * palette);
 	// Sets the game palette (256 RGB colours) and clears the screen fade
 	void osystem_setPalette(palette_t* palette);
+	// The game palette as set last: 256 colours, 3 bytes each (red, green, blue)
+	const unsigned char* osystem_getPalette();
 	// Dark room (lightOff): covers the scene drawn so far with black, except
 	// a lit circle around litX, litY (320x200) if lit; the text layer is
 	// drawn after it and the glass of this frame is skipped
@@ -216,6 +218,10 @@
 	void osystem_setDepthSlice(int slice);
 	// True if a depth slice was used this frame
 	bool osystem_depthSlicedThisFrame();
+	// Part of the 320x200 screen (x0, y0, x1, y1) where 3D models were drawn
+	// this frame or the one before; false if none (screen effects work only
+	// there, BUGS.md C86)
+	bool osystem_modelArea(float area[4]);
 	// Draws the glass polygons of the frame (Original mode), after the scene
 	void osystem_drawDeferredGlass();
 	// True if the frozen image was drawn since the last call (screen effects

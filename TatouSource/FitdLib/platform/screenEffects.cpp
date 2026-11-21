@@ -170,9 +170,13 @@ void ScreenEffects::createTargets()
     m_aaColor = createTarget(m_width, m_height, bgfx::TextureFormat::RGBA8, 0);
     m_aaFB = bgfx::createFrameBuffer(1, &m_aaColor, false);
 
-    m_aoRaw = createTarget(m_width, m_height, bgfx::TextureFormat::R8, BGFX_SAMPLER_POINT);
+    // Ambient occlusion at half size: a soft shade, enlarged smoothly by the
+    // composite; a quarter of the work (BUGS.md C86)
+    m_aoWidth = m_width > 1 ? m_width / 2 : 1;
+    m_aoHeight = m_height > 1 ? m_height / 2 : 1;
+    m_aoRaw = createTarget(m_aoWidth, m_aoHeight, bgfx::TextureFormat::R8, BGFX_SAMPLER_POINT);
     m_aoRawFB = bgfx::createFrameBuffer(1, &m_aoRaw, false);
-    m_aoBlurred = createTarget(m_width, m_height, bgfx::TextureFormat::R8, 0);
+    m_aoBlurred = createTarget(m_aoWidth, m_aoHeight, bgfx::TextureFormat::R8, 0);
     m_aoBlurredFB = bgfx::createFrameBuffer(1, &m_aoBlurred, false);
     m_ambientOcclusionValid = false;
 
@@ -289,6 +293,7 @@ void ScreenEffects::endScene(bool modelsDrawn, bool frozenImageDrawn)
     bool ambientOcclusion = active && g_settings.postProcessing.enableSSAO;
     const bool antialias = active && g_settings.postProcessing.antialiasing == 1 && bgfx::isValid(m_antialiasProgram);
 
+    placeScene();
     m_sceneSource = m_sceneColor;
     if (antialias)
     {
@@ -320,6 +325,83 @@ void ScreenEffects::endScene(bool modelsDrawn, bool frozenImageDrawn)
     renderComposite(bloom, grain, scanlines, ambientOcclusion);
 }
 
+// SSAO and FXAA look for the 3D models in every pixel they shade (reading the
+// depth around it): over the whole image that halved the frame rate of a
+// phone each (BUGS.md C86). They shade only the part of the image with models.
+void ScreenEffects::placeScene()
+{
+    const int outputWidth = (m_outputWidth > 0) ? m_outputWidth : m_width;
+    const int outputHeight = (m_outputHeight > 0) ? m_outputHeight : m_height;
+    const int windowWidth = (m_windowWidth > 0) ? m_windowWidth : m_width;
+    const int windowHeight = (m_windowHeight > 0) ? m_windowHeight : m_height;
+    m_sceneQuad[0] = m_outputX;
+    m_sceneQuad[1] = m_outputY;
+    m_sceneQuad[2] = outputWidth;
+    m_sceneQuad[3] = outputHeight;
+    // Playing with a zoomed aspect ratio: the scene at the screen's width,
+    // the view where it follows the character (it moves the view: once a
+    // frame); otherwise the whole 4:3 scene in the middle
+    if (widescreenZoomed())
+    {
+        const int sceneRect[4] = { m_outputX, m_outputY, outputWidth, outputHeight };
+        widescreenSceneQuad(sceneRect, m_sceneQuad);
+    }
+    m_visible[0] = 0;
+    m_visible[1] = 0;
+    m_visible[2] = m_width;
+    m_visible[3] = m_height;
+    if (m_sceneQuad[2] <= 0 || m_sceneQuad[3] <= 0)
+        return;
+    const float sx = (float)m_width / (float)m_sceneQuad[2];
+    const float sy = (float)m_height / (float)m_sceneQuad[3];
+    const int x0 = (std::max)(0, (int)floorf((0 - m_sceneQuad[0]) * sx));
+    const int y0 = (std::max)(0, (int)floorf((0 - m_sceneQuad[1]) * sy));
+    const int x1 = (std::min)(m_width, (int)ceilf((windowWidth - m_sceneQuad[0]) * sx));
+    const int y1 = (std::min)(m_height, (int)ceilf((windowHeight - m_sceneQuad[1]) * sy));
+    if (x1 > x0 && y1 > y0)
+    {
+        m_visible[0] = x0;
+        m_visible[1] = y0;
+        m_visible[2] = x1 - x0;
+        m_visible[3] = y1 - y0;
+    }
+}
+
+void ScreenEffects::setVisibleScissor(int width, int height, int margin) const
+{
+    const float sx = (float)width / (float)m_width;
+    const float sy = (float)height / (float)m_height;
+    const int x0 = (std::max)(0, (int)floorf(m_visible[0] * sx) - margin);
+    const int y0 = (std::max)(0, (int)floorf(m_visible[1] * sy) - margin);
+    const int x1 = (std::min)(width, (int)ceilf((m_visible[0] + m_visible[2]) * sx) + margin);
+    const int y1 = (std::min)(height, (int)ceilf((m_visible[1] + m_visible[3]) * sy) + margin);
+    bgfx::setScissor((uint16_t)x0, (uint16_t)y0, (uint16_t)(x1 - x0), (uint16_t)(y1 - y0));
+}
+
+bool ScreenEffects::modelRect(int rect[4], int margin) const
+{
+    float area[4];
+    if (!osystem_modelArea(area))
+        return false;
+    int x0 = (int)floorf(area[0] / 320.0f * (float)m_width) - margin;
+    int y0 = (int)floorf(area[1] / 200.0f * (float)m_height) - margin;
+    int x1 = (int)ceilf(area[2] / 320.0f * (float)m_width) + margin;
+    int y1 = (int)ceilf(area[3] / 200.0f * (float)m_height) + margin;
+    // Only what is seen (a zoomed aspect ratio leaves the top and bottom of
+    // the scene off the screen)
+    x0 = (std::max)(x0, m_visible[0]);
+    y0 = (std::max)(y0, m_visible[1]);
+    x1 = (std::min)(x1, m_visible[0] + m_visible[2]);
+    y1 = (std::min)(y1, m_visible[1] + m_visible[3]);
+    if (x1 <= x0 || y1 <= y0)
+        return false;
+    rect[0] = x0;
+    rect[1] = y0;
+    rect[2] = x1 - x0;
+    rect[3] = y1 - y0;
+    return true;
+}
+
 bool ScreenEffects::renderAmbientOcclusion()
 {
     const bgfx::Caps* caps = bgfx::getCaps();
@@ -332,19 +414,34 @@ bool ScreenEffects::renderAmbientOcclusion()
     if (camera[0] <= 0.0f || camera[1] <= 0.0f)
         return false;  // no camera yet
 
+    // White (no shade) where there are no models; shaded only around them
+    // (the rectangle of the image, halved like the shade)
+    int rect[4] = { 0, 0, m_width, m_height };
+    modelRect(rect, 4);
+    rect[2] = (rect[0] + rect[2] + 1) / 2 - rect[0] / 2;
+    rect[3] = (rect[1] + rect[3] + 1) / 2 - rect[1] / 2;
+    rect[0] /= 2;
+    rect[1] /= 2;
+    // The depth is read at full size (normals); the blur steps over the shade
+    float aoTexel[4] = { 1.0f / (float)m_aoWidth, 1.0f / (float)m_aoHeight, 0.0f, 0.0f };
+
     bgfx::setUniform(u_fxSsao, ssao);
     bgfx::setUniform(u_fxCamera, camera);
     bgfx::setUniform(u_fxTexel, texel);
     bgfx::setUniform(u_fxDepth, depth);
     bgfx::setTexture(0, s_fxDepth, m_sceneDepth);
-    drawFullScreen(kViewSsao, m_aoRawFB, m_width, m_height, m_ssaoProgram, "SSAO");
+    bgfx::setScissor((uint16_t)rect[0], (uint16_t)rect[1], (uint16_t)rect[2], (uint16_t)rect[3]);
+    drawFullScreen(kViewSsao, m_aoRawFB, m_aoWidth, m_aoHeight, m_ssaoProgram, "SSAO");
+    bgfx::setViewClear(kViewSsao, BGFX_CLEAR_COLOR, 0xffffffff);
 
-    bgfx::setUniform(u_fxTexel, texel);
+    bgfx::setUniform(u_fxTexel, aoTexel);
     bgfx::setUniform(u_fxSsao, ssao);
     bgfx::setUniform(u_fxDepth, depth);
     bgfx::setTexture(0, s_fxAO, m_aoRaw);
     bgfx::setTexture(1, s_fxDepth, m_sceneDepth);
-    drawFullScreen(kViewSsaoBlur, m_aoBlurredFB, m_width, m_height, m_ssaoBlurProgram, "SSAO blur");
+    bgfx::setScissor((uint16_t)rect[0], (uint16_t)rect[1], (uint16_t)rect[2], (uint16_t)rect[3]);
+    drawFullScreen(kViewSsaoBlur, m_aoBlurredFB, m_aoWidth, m_aoHeight, m_ssaoBlurProgram, "SSAO blur");
+    bgfx::setViewClear(kViewSsaoBlur, BGFX_CLEAR_COLOR, 0xffffffff);
     return true;
 }
 
@@ -355,10 +452,24 @@ void ScreenEffects::renderAntialiasing()
     // Original mode draws each object in its own slice of the depth (V21)
     float depth[4] = { osystem_depthSlicedThisFrame() ? (float)OSYSTEM_DEPTH_SLICES : 0.0f,
         caps->homogeneousDepth ? 1.0f : 0.0f, 0.0f, 0.0f };
+    // The image as it is, then FXAA only around the models (margin: the
+    // pixels next to a model and the 8 texels FXAA reaches along an edge)
+    int rect[4];
+    const bool models = modelRect(rect, 10);
+    bgfx::setViewMode(kViewAntialias, bgfx::ViewMode::Sequential);
+    const float copy[4] = { 0.0f, 0.0f, 0.0f, 1.0f };   // effectsSides_ps: w = no fade
+    bgfx::setUniform(u_fxComposite, copy);
+    bgfx::setTexture(0, s_fxScene, m_sceneColor, BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_POINT);
+    setVisibleScissor(m_width, m_height, 2);
+    drawFullScreen(kViewAntialias, m_aaFB, m_width, m_height, m_sidesProgram, "Antialias");
+    if (!models)
+        return;   // nothing to smooth (title, books, menus)
+
     bgfx::setUniform(u_fxTexel, texel);
     bgfx::setUniform(u_fxDepth, depth);
     bgfx::setTexture(0, s_fxScene, m_sceneColor, BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
     bgfx::setTexture(1, s_fxDepth, m_sceneDepth);
+    bgfx::setScissor((uint16_t)rect[0], (uint16_t)rect[1], (uint16_t)rect[2], (uint16_t)rect[3]);
     drawFullScreen(kViewAntialias, m_aaFB, m_width, m_height, m_antialiasProgram, "Antialias");
 }
 
@@ -380,6 +491,8 @@ void ScreenEffects::renderBloom()
         bgfx::setUniform(u_fxDepth, depth);
         bgfx::setTexture(0, s_fxScene, source);
         bgfx::setTexture(1, s_fxDepth, m_sceneDepth);
+        // Only the part seen, and a few pixels around it the blur reaches
+        setVisibleScissor(m_bloomWidth[i], m_bloomHeight[i], 4);
         drawFullScreen(kViewBloomDown + i, m_bloomDownFB[i], m_bloomWidth[i], m_bloomHeight[i],
             m_bloomDownProgram, "Bloom down");
     }
@@ -392,6 +505,7 @@ void ScreenEffects::renderBloom()
         bgfx::setUniform(u_fxBloom, params);
         bgfx::setTexture(0, s_fxScene, smaller);
         bgfx::setTexture(1, s_fxBloom, m_bloomDown[i]);
+        setVisibleScissor(m_bloomWidth[i], m_bloomHeight[i], 4);
         drawFullScreen(kViewBloomUp + (kBloomLevels - 2 - i), m_bloomUpFB[i], m_bloomWidth[i], m_bloomHeight[i],
             m_bloomUpProgram, "Bloom up");
     }
@@ -432,7 +546,7 @@ void ScreenEffects::renderComposite(bool bloom, bool grain, bool scanlines, bool
 
     // The two quads below must keep their order: sides first, scene over them
     bgfx::setViewMode(kViewComposite, bgfx::ViewMode::Sequential);
-    int sceneQuad[4] = { m_outputX, m_outputY, outputWidth, outputHeight };
+    int sceneQuad[4] = { m_sceneQuad[0], m_sceneQuad[1], m_sceneQuad[2], m_sceneQuad[3] };
     if (widescreenZoomed())
     {
         // Zoomed aspect ratios (widescreen.cpp): a still, blurred picture of
@@ -452,10 +566,7 @@ void ScreenEffects::renderComposite(bool bloom, bool grain, bool scanlines, bool
             drawFullScreenAt(kViewComposite, BGFX_INVALID_HANDLE, (windowWidth - w) / 2, (windowHeight - h) / 2, w, h,
                 windowWidth, windowHeight, m_sidesProgram, "Composite", true);
         }
-        // Playing: the scene at the screen's width, the view where it follows
-        // the character; otherwise the whole 4:3 scene in the middle
-        const int sceneRect[4] = { m_outputX, m_outputY, outputWidth, outputHeight };
-        widescreenSceneQuad(sceneRect, sceneQuad);
+        // The scene where placeScene put it this frame
         bgfx::setUniform(u_fxComposite, composite);
         bgfx::setTexture(0, s_fxScene, m_sceneSource, sceneSampler);
         bgfx::setTexture(1, s_fxBloom, bloom ? m_bloomUp[0] : m_black);

@@ -12,6 +12,7 @@ USAMPLER2D(s_backgroundTexture, 2);
 USAMPLER2D(s_originalBackground, 3);
 SAMPLER2D(s_customBackground, 4);
 
+uniform vec4 u_maskCrop;          // the part of the player's mask in its texture (u0, v0, u1, v1 of the whole mask)
 uniform vec4 u_customBackground;  // xy: U range of the 4:3 centre of the picture, z: 1 = the player's mask has the picture's shape (else the scene's), w: 1 = the player's mask (edge antialiased)
 
 void main()
@@ -21,8 +22,18 @@ void main()
     // The player's mask: its edge is the middle of its grey, antialiased over
     // one screen pixel (whatever the mask's resolution or the width of its
     // grey); the game's mask covers or not
-    float coverage = texture2D(s_maskPaletteTexture, maskUV).r;
     float alpha = 1.0;
+    float coverage;
+    if (u_customBackground.w > 0.5)
+    {
+        // Out of the part kept (black there): nothing covers
+        vec2 partUV = (maskUV - u_maskCrop.xy) / (u_maskCrop.zw - u_maskCrop.xy);
+        if (partUV.x < 0.0 || partUV.y < 0.0 || partUV.x > 1.0 || partUV.y > 1.0)
+            discard;
+        coverage = texture2D(s_maskPaletteTexture, partUV).r;
+    }
+    else
+        coverage = texture2D(s_maskPaletteTexture, maskUV).r;
     if (u_customBackground.w > 0.5)
     {
         float pixel = max(fwidth(coverage), 0.0001);

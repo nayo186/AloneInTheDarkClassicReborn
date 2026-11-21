@@ -84,6 +84,7 @@ extern int outputResolution[2];
 
 #define _USE_MATH_DEFINES
 #include <math.h>
+#include <algorithm>
 
 // globals
 
@@ -202,6 +203,29 @@ bool osystem_depthSlicedThisFrame()
     return s_depthSlicedThisFrame;
 }
 
+// Part of the 320x200 screen covered by the 3D models (polygons, lines,
+// spheres) of this frame and of the one before (a frame can show the image
+// of the last one without drawing them again)
+static float s_modelArea[4] = { 1e9f, 1e9f, -1e9f, -1e9f };
+static float s_lastModelArea[4] = { 1e9f, 1e9f, -1e9f, -1e9f };
+
+static void addModelArea(float x0, float y0, float x1, float y1)
+{
+    s_modelArea[0] = (std::min)(s_modelArea[0], x0);
+    s_modelArea[1] = (std::min)(s_modelArea[1], y0);
+    s_modelArea[2] = (std::max)(s_modelArea[2], x1);
+    s_modelArea[3] = (std::max)(s_modelArea[3], y1);
+}
+
+bool osystem_modelArea(float area[4])
+{
+    area[0] = (std::min)(s_modelArea[0], s_lastModelArea[0]);
+    area[1] = (std::min)(s_modelArea[1], s_lastModelArea[1]);
+    area[2] = (std::max)(s_modelArea[2], s_lastModelArea[2]);
+    area[3] = (std::max)(s_modelArea[3], s_lastModelArea[3]);
+    return area[2] >= area[0] && area[3] >= area[1];
+}
+
 static void applyDepthSlice()
 {
     static bgfx::UniformHandle depthSliceUniform = BGFX_INVALID_HANDLE;
@@ -236,6 +260,11 @@ void osystem_setPalette(u8* palette)
     osystem_setScreenFade(1.0f);
     memcpy(RGB_Pal, palette, 256 * 3);
     uploadPalette();
+}
+
+const unsigned char* osystem_getPalette()
+{
+    return (const unsigned char*)RGB_Pal;
 }
 
 void osystem_setPalette(palette_t* palette)
@@ -688,21 +717,24 @@ void osystem_drawBackground()
         {
             static bgfx::ProgramHandle customProgram = BGFX_INVALID_HANDLE;
             static bgfx::UniformHandle customUniform = BGFX_INVALID_HANDLE;
-            static bgfx::UniformHandle originalUniform = BGFX_INVALID_HANDLE;
+            static bgfx::UniformHandle keepGameUniform = BGFX_INVALID_HANDLE;
+            static bgfx::UniformHandle secondUniform = BGFX_INVALID_HANDLE;
             static bgfx::UniformHandle centreUniform = BGFX_INVALID_HANDLE;
             if (!bgfx::isValid(customProgram))
             {
                 customProgram = loadBgfxProgram("background_vs", "customBackground_ps");
                 customUniform = bgfx::createUniform("s_customBackground", bgfx::UniformType::Sampler);
-                originalUniform = bgfx::createUniform("s_originalBackground", bgfx::UniformType::Sampler);
+                keepGameUniform = bgfx::createUniform("s_keepGame", bgfx::UniformType::Sampler);
+                secondUniform = bgfx::createUniform("s_secondBackground", bgfx::UniformType::Sampler);
                 centreUniform = bgfx::createUniform("u_customBackground", bgfx::UniformType::Vec4);
             }
-            float centre[4] = { picture.u0, picture.u1, 0.0f, 0.0f };
+            float centre[4] = { picture.u0, picture.u1, picture.secondU0, picture.secondU1 };
             bgfx::setUniform(centreUniform, centre);
             bgfx::setTexture(0, customUniform, picture.picture);
+            bgfx::setTexture(4, secondUniform, picture.second);
             bgfx::setTexture(1, paletteTextureUniform, g_paletteTexture);
             bgfx::setTexture(2, backgroundTextureUniform, g_backgroundTexture);
-            bgfx::setTexture(3, originalUniform, picture.original);
+            bgfx::setTexture(3, keepGameUniform, picture.keepGame);
             bgfx::submit(gameViewId, customProgram);
             return;
         }
@@ -748,6 +780,10 @@ void osystem_startFrame()
 
     g_3dFlushedThisFrame = false;
     s_depthSlicedThisFrame = false;
+    for (int i = 0; i < 4; i++)
+        s_lastModelArea[i] = s_modelArea[i];
+    s_modelArea[0] = s_modelArea[1] = 1e9f;
+    s_modelArea[2] = s_modelArea[3] = -1e9f;
     s_spriteLayersThisFrame = 0;
     s_deferredGlass.clear();
     s_sceneDarkThisFrame = false;
@@ -1372,6 +1408,8 @@ void osystem_fillPoly(float* buffer, int numPoint, unsigned char color, u8 polyT
             polyMinY = Y;
     }
 
+    addModelArea(polyMinX, polyMinY, polyMaxX, polyMaxY);
+
     float polyWidth = polyMaxX - polyMinX;
     float polyHeight = polyMaxY - polyMinY;
 
@@ -1640,6 +1678,7 @@ void osystem_draw3dLine(float x1, float y1, float z1, float x2, float y2, float 
     corners[1].X -= nx; corners[1].Y -= ny;
     corners[2].X -= nx; corners[2].Y -= ny;
     corners[3].X += nx; corners[3].Y += ny;
+    addModelArea((std::min)(x1, x2) - 1.0f, (std::min)(y1, y2) - 1.0f, (std::max)(x1, x2) + 1.0f, (std::max)(y1, y2) + 1.0f);
     const int order[6] = { 0, 1, 2, 0, 2, 3 };
     for (const int corner : order)
         g_lineVertices.push_back(corners[corner]);
@@ -1662,6 +1701,7 @@ static void addBillboard(float X, float Y, float Z, u8 color, u8 material, float
         return;
 
     const float fScaleRatio = 6.f / 5.f;
+    addModelArea(X - size * fScaleRatio, Y - size * fScaleRatio, X + size * fScaleRatio, Y + size * fScaleRatio);
     std::array<sphereVertex, 4> corners;
     corners[0].X = X + size * fScaleRatio;
     corners[0].Y = Y + size * fScaleRatio;
@@ -1901,8 +1941,9 @@ void osystem_drawMask(int roomId, int maskId)
     // shape may reach beyond the original rectangle. Its edge is antialiased
     // over one screen pixel (customMask_ps), blended with what is behind
     bool customMaskOriginalShape = false;
+    float customMaskCrop[4] = { 0.0f, 0.0f, 1.0f, 1.0f };
     const bgfx::TextureHandle customMask = g_getMaskPicture
-        ? g_getMaskPicture(roomId, maskId, &customMaskOriginalShape) : bgfx::TextureHandle(BGFX_INVALID_HANDLE);
+        ? g_getMaskPicture(roomId, maskId, &customMaskOriginalShape, customMaskCrop) : bgfx::TextureHandle(BGFX_INVALID_HANDLE);
 
     // Write depth (far plane) so SSAO treats masked pixels as background (no occlusion)
     bgfx::setState(0 | BGFX_STATE_WRITE_RGB
@@ -1930,7 +1971,20 @@ void osystem_drawMask(int roomId, int maskId)
     float rectY2 = (float)maskTextures[roomId][maskId].maskY2;
     if (bgfx::isValid(customMask))
     {
-        rectX1 = 0.f; rectX2 = 320.f; rectY1 = 0.f; rectY2 = 200.f;
+        // Only where the player's mask has something (its crop, BUGS.md C86):
+        // it was drawn over the whole screen, each mask of the camera
+        float u0 = customMaskCrop[0], u1 = customMaskCrop[2];
+        BackgroundPicture shown;
+        if (!customMaskOriginalShape && g_getBackgroundPicture && g_getBackgroundPicture(&shown) && shown.u1 > shown.u0)
+        {
+            // A mask of the picture's shape is sampled through its 4:3 centre
+            u0 = (u0 - shown.u0) / (shown.u1 - shown.u0);
+            u1 = (u1 - shown.u0) / (shown.u1 - shown.u0);
+        }
+        rectX1 = std::clamp(floorf(u0 * 320.f) - 1.f, 0.f, 320.f);
+        rectX2 = std::clamp(ceilf(u1 * 320.f) + 1.f, 0.f, 320.f);
+        rectY1 = std::clamp(floorf(customMaskCrop[1] * 200.f) - 1.f, 0.f, 200.f);
+        rectY2 = std::clamp(ceilf(customMaskCrop[3] * 200.f) + 1.f, 0.f, 200.f);
     }
 
     float mX1 = rectX1 + g_shakeOffsetX;
@@ -1986,8 +2040,10 @@ void osystem_drawMask(int roomId, int maskId)
         static bgfx::UniformHandle customUniform = BGFX_INVALID_HANDLE;
         static bgfx::UniformHandle originalUniform = BGFX_INVALID_HANDLE;
         static bgfx::UniformHandle centreUniform = BGFX_INVALID_HANDLE;
+        static bgfx::UniformHandle cropUniform = BGFX_INVALID_HANDLE;
         if (!bgfx::isValid(customMaskProgram))
         {
+            cropUniform = bgfx::createUniform("u_maskCrop", bgfx::UniformType::Vec4);
             customMaskProgram = loadBgfxProgram("maskBackground_vs", "customMask_ps");
             customUniform = bgfx::createUniform("s_customBackground", bgfx::UniformType::Sampler);
             originalUniform = bgfx::createUniform("s_originalBackground", bgfx::UniformType::Sampler);
@@ -2000,6 +2056,7 @@ void osystem_drawMask(int roomId, int maskId)
         const bool maskOverPicture = bgfx::isValid(customMask) && !customMaskOriginalShape;
         float centre[4] = { picture.u0, picture.u1, maskOverPicture ? 1.0f : 0.0f, bgfx::isValid(customMask) ? 1.0f : 0.0f };
         bgfx::setUniform(centreUniform, centre);
+        bgfx::setUniform(cropUniform, customMaskCrop);
         if (bgfx::isValid(customMask))
             bgfx::setTexture(0, maskTextureUniform, customMask);
         bgfx::setTexture(2, backgroundTextureUniform, g_backgroundTexture);

@@ -598,17 +598,33 @@ void freeAll(void)
 textEntryStruct* getTextFromIdx(int index)
 {
 #ifndef _WIN32
-    // Platform-specific text overrides
-    // String 13 = "Return to Windows" -> platform name
+    // String 13 is "Return to Windows" in the game's language: elsewhere the
+    // system's name, in the same language (texts of the game: DOS code page
+    // 437, 0x81 = u with umlaut). On a phone there is nothing to go back to:
+    // "Exit" (BUGS.md C91)
     if (index == 13)
     {
-#if defined(__APPLE__)
-        static textEntryStruct platformReturnEntry = { 13, (u8*)"Return to macOS", 0 };
+        static textEntryStruct platformReturnEntry = { 13, nullptr, 0 };
+        static std::string platformReturnText;
+        static std::string platformReturnLanguage;
+        if (platformReturnEntry.textPtr == nullptr || platformReturnLanguage != languageNameString)
+        {
+            platformReturnLanguage = languageNameString;
+            const bool french = languageNameString == "FRANCAIS", spanish = languageNameString == "ESPAGNOL";
+            const bool italian = languageNameString == "ITALIANO", german = languageNameString == "DEUTSCH";
+#if defined(__ANDROID__)
+            platformReturnText = french ? "Quitter" : spanish ? "Salir" : italian ? "Esci" : german ? "Beenden" : "Exit";
 #else
-        static textEntryStruct platformReturnEntry = { 13, (u8*)"Return to Linux", 0 };
+#if defined(__APPLE__)
+            const char* system = "macOS";
+#else
+            const char* system = "Linux";
 #endif
-        if (platformReturnEntry.width == 0)
+            platformReturnText = std::string(french ? "Retour sous " : spanish ? "Volver a " : italian ? "Torna a " : german ? "Zur\x81" "ck zu " : "Return to ") + system;
+#endif
+            platformReturnEntry.textPtr = (u8*)platformReturnText.c_str();
             platformReturnEntry.width = ExtGetSizeFont(platformReturnEntry.textPtr);
+        }
         return &platformReturnEntry;
     }
 #endif

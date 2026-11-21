@@ -401,8 +401,14 @@ static void drawAdvancedOptions(LauncherState& state, const Fonts& fonts, const 
                                              AdvancedText::Aspect16x9Wide, AdvancedText::Aspect16x10Wide };
     if (state.settings.aspect < 0 || state.settings.aspect > 4)
         state.settings.aspect = 0;
-    // Stretched only in fullscreen: a window takes 4:3
-    if (!state.settings.fullscreen && state.settings.aspect == 2)
+    // Stretched only in fullscreen: a window takes 4:3 (a phone is always
+    // fullscreen, BUGS.md C90)
+#ifdef __ANDROID__
+    const bool fullscreen = true;
+#else
+    const bool fullscreen = state.settings.fullscreen;
+#endif
+    if (!fullscreen && state.settings.aspect == 2)
         state.settings.aspect = 0;
     ImGui::AlignTextToFramePadding();
     ImGui::TextColored(color(kText), "%s", advText(AdvancedText::AspectRatio));
@@ -413,7 +419,7 @@ static void drawAdvancedOptions(LauncherState& state, const Fonts& fonts, const 
     {
         for (int i = 0; i < 5; i++)
         {
-            const ImGuiSelectableFlags flags = (i == 2 && !state.settings.fullscreen) ? ImGuiSelectableFlags_Disabled : 0;
+            const ImGuiSelectableFlags flags = (i == 2 && !fullscreen) ? ImGuiSelectableFlags_Disabled : 0;
             if (ImGui::Selectable(advText(kAspects[i]), state.settings.aspect == i, flags))
             {
                 state.settings.aspect = i;
@@ -456,7 +462,10 @@ static void drawAdvancedOptions(LauncherState& state, const Fonts& fonts, const 
         ImGui::EndDisabled();
     }
 
+#ifndef __ANDROID__
+    // A phone is always fullscreen (BUGS.md C90)
     optionCheckbox(AdvancedText::Fullscreen, AdvancedText::FullscreenHelp, &state.settings.fullscreen, "fullscreen");
+#endif
     rendererCombo(state.settings.renderer, column);
 
     // Integer scaling: its size and the 3D resolution that fits it, for the
@@ -540,7 +549,7 @@ static void drawAdvancedOptions(LauncherState& state, const Fonts& fonts, const 
     }
     ImGui::EndDisabled();
 
-    // Screen effects and animation smoothing (all off by default)
+    // Screen effects (all off by default)
     ImGui::Spacing();
     ImGui::TextColored(color(kGold), "%s", advText(AdvancedText::Effects));
     ImGui::Separator();
@@ -550,8 +559,6 @@ static void drawAdvancedOptions(LauncherState& state, const Fonts& fonts, const 
     optionCheckbox(AdvancedText::Bloom, AdvancedText::BloomHelp, &state.settings.bloom, "bloom");
     optionCheckbox(AdvancedText::Ssao, AdvancedText::SsaoHelp, &state.settings.ssao, "ssao");
     antialiasingCombo(state.settings.antialiasing, column);
-    optionCheckbox(AdvancedText::AnimationSmoothing, AdvancedText::AnimationSmoothingHelp,
-        &state.settings.animationSmoothing, "animationSmoothing");
     optionCheckbox(AdvancedText::EnhancedText, AdvancedText::EnhancedTextHelp, &state.settings.enhancedText, "enhancedText");
     optionCheckbox(AdvancedText::CustomBackgrounds, AdvancedText::CustomBackgroundsHelp,
         &state.settings.customBackgrounds, "customBackgrounds");

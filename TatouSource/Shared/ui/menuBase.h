@@ -21,6 +21,7 @@
 
 #include <algorithm>
 #include <cfloat>
+#include <cmath>
 #include <string>
 
 namespace menu
@@ -133,7 +134,9 @@ inline void applyStyle(const Metrics& metrics, float panelAlpha = 1.0f)
     style.PopupBorderSize = 1.0f;
     if (metrics.touch)
     {
-        // Wider grips and slider handles for fingers
+        // Wider grips and slider handles for fingers; a touch on the scroll
+        // bar's track takes the list there (not one page)
+        ImGui::GetIO().ConfigScrollbarScrollByPage = false;
         style.ScrollbarSize = 24.0f;
         style.GrabMinSize = 24.0f;
         style.TouchExtraPadding = ImVec2(4.0f, 4.0f);
@@ -212,22 +215,63 @@ constexpr ImGuiWindowFlags kPanelFlags = ImGuiWindowFlags_NoTitleBar | ImGuiWind
 // wheel). Call inside the area, after its items. A finger moving up or down
 // scrolls even when it started on a button, which then is not pressed (on a
 // phone almost all the screen is buttons); sideways drags stay with their
-// item (sliders).
+// item (sliders). Let go while moving, the area keeps going and slows down,
+// as everywhere on a phone (it only moved with the finger: slow to go down a
+// long list, BUGS.md C92); a touch stops it.
 inline void dragScroll()
 {
     ImGuiIO& io = ImGui::GetIO();
-    if (io.MouseSource != ImGuiMouseSource_TouchScreen || !ImGui::IsMouseDragging(ImGuiMouseButton_Left))
-        return;
-    if (!ImGui::IsWindowHovered(ImGuiHoveredFlags_ChildWindows | ImGuiHoveredFlags_AllowWhenBlockedByActiveItem))
-        return;
-    if (ImGui::IsAnyItemActive())
+    static ImGuiID s_area = 0;        // the area moving on its own
+    static float s_velocity = 0.0f;   // its speed, pixels a second (down: more)
+    const ImGuiID area = ImGui::GetID("##dragScroll");
+    const float dt = (io.DeltaTime > 0.0001f) ? io.DeltaTime : 1.0f / 60.0f;
+
+    const bool touch = (io.MouseSource == ImGuiMouseSource_TouchScreen);
+    // A finger on the scroll bar moves the bar (fast down a long list): the
+    // drag of the content took it away, moving the list slowly the other way
+    // (BUGS.md C92)
+    ImGuiWindow* window = ImGui::GetCurrentWindow();
+    const ImGuiID activeId = ImGui::GetActiveID();
+    if (activeId != 0 && (activeId == ImGui::GetWindowScrollbarID(window, ImGuiAxis_Y) ||
+                          activeId == ImGui::GetWindowScrollbarID(window, ImGuiAxis_X)))
     {
-        const ImVec2 drag = ImGui::GetMouseDragDelta(ImGuiMouseButton_Left);
-        if (drag.y * drag.y <= drag.x * drag.x)
-            return;
-        ImGui::ClearActiveID();
+        s_velocity = 0.0f;
+        return;
     }
-    ImGui::SetScrollY(ImGui::GetScrollY() - io.MouseDelta.y);
+    if (touch && ImGui::IsMouseDragging(ImGuiMouseButton_Left) &&
+        ImGui::IsWindowHovered(ImGuiHoveredFlags_ChildWindows | ImGuiHoveredFlags_AllowWhenBlockedByActiveItem))
+    {
+        if (ImGui::IsAnyItemActive())
+        {
+            const ImVec2 drag = ImGui::GetMouseDragDelta(ImGuiMouseButton_Left);
+            if (drag.y * drag.y <= drag.x * drag.x)
+                return;
+            ImGui::ClearActiveID();
+        }
+        ImGui::SetScrollY(ImGui::GetScrollY() - io.MouseDelta.y);
+        // The speed of the last moments of the drag
+        s_area = area;
+        s_velocity = s_velocity * 0.5f + (-io.MouseDelta.y / dt) * 0.5f;
+        return;
+    }
+    if (area != s_area)
+        return;
+    if (io.MouseDown[ImGuiMouseButton_Left])
+    {
+        // A finger down without dragging: it stops
+        if (!ImGui::IsMouseDragging(ImGuiMouseButton_Left))
+            s_velocity = 0.0f;
+        return;
+    }
+    if (s_velocity == 0.0f)
+        return;
+    const float before = ImGui::GetScrollY();
+    ImGui::SetScrollY(before + s_velocity * dt);
+    s_velocity *= expf(-3.5f * dt);   // slows down in about a second
+    // At an end, or slow enough: still
+    if (fabsf(s_velocity) < 30.0f || (s_velocity < 0.0f && before <= 0.0f) ||
+        (s_velocity > 0.0f && before >= ImGui::GetScrollMaxY()))
+        s_velocity = 0.0f;
 }
 
 // The controller / keyboard cursor on the last item, drawn by hand for the

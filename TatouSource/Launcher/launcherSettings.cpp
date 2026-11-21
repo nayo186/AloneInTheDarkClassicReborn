@@ -531,8 +531,6 @@ void readGameConfig(const std::string& folder, LauncherSettings& settings)
             settings.antialiasing = atoi(value.c_str());
         else if (key == "graphics.renderer")
             settings.renderer = value;
-        else if (key == "animation.poseSmoothing")
-            settings.animationSmoothing = isTrue(value);
         else if (key == "graphics.customBackgrounds")
             settings.customBackgrounds = isTrue(value);
         else if (key == "graphics.enhancedText")
@@ -558,10 +556,9 @@ void readGameConfig(const std::string& folder, LauncherSettings& settings)
                     settings.controls[a] = bindingsFromText(value);
         }
     }
-    logLine("Game config: language=%s frameLimit=%d vsync=%d filmGrain=%d scanlines=%d bloom=%d ssao=%d animationSmoothing=%d",
+    logLine("Game config: language=%s frameLimit=%d vsync=%d filmGrain=%d scanlines=%d bloom=%d ssao=%d",
         settings.gameLanguage.empty() ? "(first available)" : settings.gameLanguage.c_str(),
-        settings.frameLimit, settings.vsync, settings.filmGrain, settings.scanlines, settings.bloom, settings.ssao,
-        settings.animationSmoothing);
+        settings.frameLimit, settings.vsync, settings.filmGrain, settings.scanlines, settings.bloom, settings.ssao);
 }
 
 std::string gameConfigFile(const std::string& folder)
@@ -602,7 +599,6 @@ bool writeGameConfig(const std::string& folder, const LauncherSettings& settings
         { "postprocessing.bloom", std::string("postprocessing.bloom = ") + boolText(settings.bloom), false },
         { "postprocessing.ssao", std::string("postprocessing.ssao = ") + boolText(settings.ssao), false },
         { "postprocessing.antialiasing", "postprocessing.antialiasing = " + std::to_string(settings.antialiasing), false },
-        { "animation.poseSmoothing", std::string("animation.poseSmoothing = ") + boolText(settings.animationSmoothing), false },
         { "graphics.customBackgrounds", std::string("graphics.customBackgrounds = ") + boolText(settings.customBackgrounds), false },
         { "graphics.enhancedText", std::string("graphics.enhancedText = ") + boolText(settings.enhancedText), false },
         { "graphics.renderer", "graphics.renderer = " + settings.renderer, false },

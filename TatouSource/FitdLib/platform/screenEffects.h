@@ -84,6 +84,15 @@ private:
     void destroyTargets();
     bool renderAmbientOcclusion();  // false when there is no camera yet
     void renderAntialiasing();      // FXAA on the 3D models: m_sceneColor -> m_aaColor
+    // The part of the scene image with 3D models (x, y, width, height), with a
+    // margin; false if there are none
+    bool modelRect(int rect[4], int margin) const;
+    // Where the scene goes in the window this frame (m_sceneQuad) and the part
+    // of the scene image seen there (m_visible): with a zoomed aspect ratio
+    // the top and bottom of the scene are off the screen (BUGS.md C86)
+    void placeScene();
+    // A scissor of the part seen, for a target of width x height, with a margin
+    void setVisibleScissor(int width, int height, int margin) const;
     // Makes the bloom: bright parts of the painted backgrounds, blurred down and up
     void renderBloom();
     // Copies the scene to the screen with the chosen effects and the fade
@@ -91,6 +100,11 @@ private:
 
     int m_width = 0;
     int m_height = 0;
+    // Ambient occlusion at half the size of the image (BUGS.md C86)
+    int m_aoWidth = 0;
+    int m_aoHeight = 0;
+    int m_sceneQuad[4] = {};
+    int m_visible[4] = {};   // x, y, width, height in the scene image
     int m_outputX = 0;
     int m_outputY = 0;
     int m_outputWidth = 0;

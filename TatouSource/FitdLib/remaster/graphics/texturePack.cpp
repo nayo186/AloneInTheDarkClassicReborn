@@ -93,6 +93,14 @@ const char* texturePackGameFolder()
     }
 }
 
+void texturePackList(const std::string& prefix, std::vector<std::string>& names)
+{
+    std::call_once(s_opened, openPacks);
+    const std::string key = ZipArchive::key(prefix);
+    for (auto it = s_files.lower_bound(key); it != s_files.end() && it->first.compare(0, key.size(), key) == 0; ++it)
+        names.push_back(it->first);
+}
+
 bool texturePackHas(const std::string& name, fs::file_time_type* time)
 {
     const Found* found = find(name);

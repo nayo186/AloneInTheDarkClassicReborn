@@ -30,3 +30,9 @@ void applyWindowAspectRatio();
 // Switches between window and fullscreen
 void toggleFullscreen();
 
+#ifdef __ANDROID__
+// Android: while the app is in the background (a call, another app) nothing
+// is drawn; back, bgfx gets the new surface (BUGS.md C87). Window thread,
+// before each frame
+void osystem_androidHoldInBackground();
+#endif

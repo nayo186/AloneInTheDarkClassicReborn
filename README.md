@@ -103,7 +103,7 @@ It is not a static recompilation: a static recompilation translates the machine 
 - **Fixes** to the original: objects drawn in the wrong order, monsters stuck at windows, gaps in 3D models, lines at the edges of masks, game speed tied to the frame rate, and many more (see `docs/baseline/BUGS.md`).
 - **Launcher** to choose the game, its language (the five of the GOG and Steam editions: English, French, German, Italian, Spanish) and the data folder, with the same options as the in-game **F1** window. The menus are translated into the same five languages.
 - **Screen options**: resolution, aspect ratio (4:3, 16:10, stretched, and the zoomed widescreen view), integer scaling, fullscreen, frame limit, VSync.
-- **Optional effects**: edge smoothing (FXAA) on the 3D models, bloom from the painted backgrounds, film grain, CRT scanlines, ambient occlusion (SSAO), smoother animations, enhanced text (in *Alone in the Dark* and *Jack in the Dark*, a new smooth font with the game's own capitals; pages and lines stay as in the original).
+- **Optional effects**: edge smoothing (FXAA) on the 3D models, bloom from the painted backgrounds, film grain, CRT scanlines, ambient occlusion (SSAO), enhanced text (in *Alone in the Dark* and *Jack in the Dark*, a new smooth font with the game's own capitals; pages and lines stay as in the original).
 - **Custom backgrounds**: export every background and mask of the game, enlarge or repaint them, and the game uses yours. Ready-made **HD packs** are available for *Alone in the Dark*, *Jack in the Dark*, *Alone in the Dark 2* and *Alone in the Dark 3*; the improved backgrounds and masks of *Alone in the Dark* and *Jack* download from the launcher in one click (see [Custom backgrounds](#custom-backgrounds)). Backgrounds, masks, animated sequences, music and narrators can all be changed: see the **[modding guide](MODDING.md)**.
 - **Controls**: keyboard and game controller (Xbox, PlayStation, Nintendo Switch Pro and most other USB or Bluetooth controllers), every action can be changed, several inputs per action.
 - **Modern left stick**: the character walks where you push the stick, seen from the camera, like the Resident Evil HD remasters; the D-pad and the keys stay tank controls (see [Controls](#controls)).
@@ -338,7 +338,6 @@ The launcher (its **Options**, **Controls** and **Audio** cards) and the in-game
 | Film grain | A light grain over the picture |
 | Scanlines | Thin dark lines over the picture, like an old CRT screen; under it, their intensity from 1 (soft) to 4 (strong) |
 | SSAO | Soft shadows where surfaces meet |
-| Smooth animations | Poses blended between the original key frames |
 | Enhanced text | A new smooth font in every text, with each game's own capitals |
 | Custom backgrounds | Uses your pictures instead of the originals |
 | Improved backgrounds (Alone 1 and Jack) | Downloads the improved backgrounds and masks of *Alone in the Dark* and *Jack in the Dark* (one file, about 130 MB) and switches on Custom backgrounds; **Remove** deletes them |

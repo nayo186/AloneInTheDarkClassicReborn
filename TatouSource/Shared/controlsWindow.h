@@ -574,6 +574,7 @@ inline bool drawBindingList(ControlsWindowState& state, std::vector<std::vector<
         ImGui::EndTable();
     }
     ImGui::EndDisabled();
+    menu::dragScroll();   // a finger moves the list (BUGS.md C92)
     ImGui::EndChild();
     return changed;
 }

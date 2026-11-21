@@ -26,5 +26,9 @@ bool texturePackHas(const std::string& name, std::filesystem::file_time_type* ti
 // The bytes of that file of the packs; false if none has it or it cannot be read
 bool texturePackRead(const std::string& name, std::vector<unsigned char>& data);
 
+// The names of the packs' files that start with prefix (any case), in lower
+// case ("aitd1/masks/camera00_002_mask_0_1.png")
+void texturePackList(const std::string& prefix, std::vector<std::string>& names);
+
 // The folder of the current game in the packs: "AITD1", "JACK", "AITD2", "AITD3"
 const char* texturePackGameFolder();

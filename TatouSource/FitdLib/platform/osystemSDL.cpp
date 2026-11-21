@@ -220,8 +220,12 @@ int FitdInit(int argc, char* argv[])
     // Fullscreen saved in the options (F1 or the launcher): switched by the
     // window thread on its first frame, for every game (it used to be done
     // on AITD1's Tatou screen only, so Jack always opened in a window)
+    // Android is always fullscreen (created so above): switching would leave
+    // it and show the system's bars over the touch buttons (BUGS.md C90)
+#ifndef __ANDROID__
     if (g_settings.graphics.fullscreen)
         g_pendingFullscreenToggle = true;
+#endif
 
 #ifdef _WIN32
     // Now that the main window is visible, show the console window
@@ -339,6 +343,9 @@ int FitdInit(int argc, char* argv[])
             toggleFullscreen();
         }
         applyWindowAspectRatio();
+#ifdef __ANDROID__
+        osystem_androidHoldInBackground();
+#endif
 
         SDL_SignalSemaphore(startOfRender);
 

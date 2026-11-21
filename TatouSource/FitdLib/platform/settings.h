@@ -39,12 +39,6 @@ struct Settings
         int antialiasing;       // 3D models: 0 off, 1 FXAA
     } postProcessing;
 
-    // Smoother movement between the key poses (anim.cpp): only the drawn pose
-    // changes. Launcher and F1, off by default.
-    struct {
-        bool enablePoseSmoothing;
-    } animation;
-
     // Volumes, 0-100 (100 = the GOG level), launcher and F1
     struct {
         int musicVolume;   // background music (CD tracks, AdLib)

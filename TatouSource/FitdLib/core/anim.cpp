@@ -925,39 +925,6 @@ void PatchInterStep(s16* value, s16 previousValue, s16 nextValue, int bp, int bx
     }
 }
 
-// Animation smoothing (launcher option): the drawn pose follows a Catmull-Rom
-// curve through the key poses instead of a straight line between two, so the
-// limbs do not change speed abruptly at each key pose. Only the drawn pose
-// changes: the movement (animStep), collisions and hit timing stay original.
-static float catmullRom(float p0, float p1, float p2, float p3, float t)
-{
-    const float t2 = t * t;
-    const float t3 = t2 * t;
-    return 0.5f * (2.0f * p1 + (p2 - p0) * t + (2.0f * p0 - 5.0f * p1 + 4.0f * p2 - p3) * t2
-        + (3.0f * p1 - p0 - 3.0f * p2 + p3) * t3);
-}
-
-// Angle step from one value to the next the short way round (0x400 = a turn),
-// as PatchInterAngle does
-static int angleStep(s16 from, s16 to)
-{
-    int step = (to - from) & 0x3FF;
-    return (step > 0x200) ? step - 0x400 : step;
-}
-
-static void SmoothInterAngle(s16* value, s16 before, s16 previousValue, s16 nextValue, s16 after, float t)
-{
-    const int next = angleStep(previousValue, nextValue);
-    const float curve = catmullRom((float)-angleStep(before, previousValue), 0.0f, (float)next,
-        (float)(next + angleStep(nextValue, after)), t);
-    *value = (s16)(((int)floorf(curve + 0.5f) + previousValue) & 0x3FF);
-}
-
-static void SmoothInterStep(s16* value, s16 before, s16 previousValue, s16 nextValue, s16 after, float t)
-{
-    *value = (s16)floorf(catmullRom(before, previousValue, nextValue, after, t) + 0.5f);
-}
-
 s16 SetInterAnimObjet(int frame, sAnimation* pAnim, sBody* pBody)
 {
     int numOfBonesInAnim = pAnim->m_numGroups;
@@ -1001,20 +968,6 @@ s16 SetInterAnimObjet(int frame, sAnimation* pAnim, sBody* pBody)
 
     if(time<keyframeLength) // interpolate keyframe
     {
-        // Animation smoothing: the key poses before and after this pair, from
-        // the same animation; at its ends, or after a change of animation, the
-        // curve repeats the end pose
-        const bool smooth = g_settings.animation.enablePoseSmoothing && bx > 1;
-        const float t = (float)bp / (float)bx;
-        const int numFrames = (int)pAnim->m_frames.size();
-        const sFrame* pBeforeKeyframe = pPreviousKeyframe;
-        const sFrame* pAfterKeyframe = (frame + 1 < numFrames) ? &pAnim->m_frames[frame + 1] : pKeyframe;
-        if (numFrames >= 3 && pPreviousKeyframe >= &pAnim->m_frames[0] && pPreviousKeyframe < &pAnim->m_frames[0] + numFrames)
-        {
-            const int previousIndex = (int)(pPreviousKeyframe - &pAnim->m_frames[0]);
-            pBeforeKeyframe = &pAnim->m_frames[(previousIndex + numFrames - 1) % numFrames];
-        }
-
         if(!(flag&INFO_OPTIMISE))
         {
             for (int i = 0; i < numOfBonesInAnim; i++)
@@ -1022,38 +975,18 @@ s16 SetInterAnimObjet(int frame, sAnimation* pAnim, sBody* pBody)
                 point3dStruct& state = pBody->m_groups[i].m_state.m_delta;
                 point3dStruct& previousState = pPreviousKeyframe->m_groups[i].m_delta;
                 point3dStruct& nextState = pKeyframe->m_groups[i].m_delta;
-                const point3dStruct& before = pBeforeKeyframe->m_groups[i].m_delta;
-                const point3dStruct& after = pAfterKeyframe->m_groups[i].m_delta;
                 switch(PatchType(&pBody->m_groups[i].m_state, pKeyframe->m_groups[i].m_type))
                 {
                 case 0: // rotate
-                    if (smooth)
-                    {
-                        SmoothInterAngle(&state.x, before.x, previousState.x, nextState.x, after.x, t);
-                        SmoothInterAngle(&state.y, before.y, previousState.y, nextState.y, after.y, t);
-                        SmoothInterAngle(&state.z, before.z, previousState.z, nextState.z, after.z, t);
-                    }
-                    else
-                    {
-                        PatchInterAngle(&state.x, previousState.x, nextState.x, bp, bx);
-                        PatchInterAngle(&state.y, previousState.y, nextState.y, bp, bx);
-                        PatchInterAngle(&state.z, previousState.z, nextState.z, bp, bx);
-                    }
+                    PatchInterAngle(&state.x, previousState.x, nextState.x, bp, bx);
+                    PatchInterAngle(&state.y, previousState.y, nextState.y, bp, bx);
+                    PatchInterAngle(&state.z, previousState.z, nextState.z, bp, bx);
                     break;
                 case 1: // translate
                 case 2: // zoom
-                    if (smooth)
-                    {
-                        SmoothInterStep(&state.x, before.x, previousState.x, nextState.x, after.x, t);
-                        SmoothInterStep(&state.y, before.y, previousState.y, nextState.y, after.y, t);
-                        SmoothInterStep(&state.z, before.z, previousState.z, nextState.z, after.z, t);
-                    }
-                    else
-                    {
-                        PatchInterStep(&state.x, previousState.x, nextState.x, bp, bx);
-                        PatchInterStep(&state.y, previousState.y, nextState.y, bp, bx);
-                        PatchInterStep(&state.z, previousState.z, nextState.z, bp, bx);
-                    }
+                    PatchInterStep(&state.x, previousState.x, nextState.x, bp, bx);
+                    PatchInterStep(&state.y, previousState.y, nextState.y, bp, bx);
+                    PatchInterStep(&state.z, previousState.z, nextState.z, bp, bx);
                     break;
                 }
             }

@@ -15,7 +15,7 @@ bool (*g_isMenuCapturingInput)() = nullptr;
 
 void (*g_onFrameStart)() = nullptr;
 bool (*g_getBackgroundPicture)(BackgroundPicture* out) = nullptr;
-bgfx::TextureHandle (*g_getMaskPicture)(int roomId, int maskId, bool* originalShape) = nullptr;
+bgfx::TextureHandle (*g_getMaskPicture)(int roomId, int maskId, bool* originalShape, float crop[4]) = nullptr;
 void (*g_onScreenUploaded)(const unsigned char* screen) = nullptr;
 void (*g_onMaskCreated)(int roomId, int maskId, const unsigned char* shape, int x1, int y1, int x2, int y2) = nullptr;
 

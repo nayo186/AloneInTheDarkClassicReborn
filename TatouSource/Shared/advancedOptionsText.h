@@ -71,8 +71,6 @@ enum class AdvancedText
     Renderer,
     RendererHelp,
     RendererRestart,
-    AnimationSmoothing,
-    AnimationSmoothingHelp,
     Close,
     Controls,
     ControlsHelp,
@@ -161,11 +159,12 @@ static const int kAdvancedTextLanguages = 5;
 // in 1992: the 3D models on the same pixels as the backgrounds. 1440 is 4:3
 // at 1080 lines, the height of a Full HD screen
 static const int kAdvancedOriginalResolution = 320;
-static const int kAdvancedResolutions[] = { 0, 320, 640, 1024, 1280, 1440, 1600, 1920 };
+static const int kAdvancedResolutions[] = { 0, 320, 640, 800, 1024, 1280, 1440, 1600, 1920 };
 static const int kAdvancedResolutionCount = (int)(sizeof(kAdvancedResolutions) / sizeof(kAdvancedResolutions[0]));
 // The zoomed aspect ratios list 16:9 sizes (1920 = 1920 x 1080): both are
 // for a 16:9 screen, 16:10 zoomed less (narrow sides with the picture)
-static const int kZoomedResolutions[] = { 0, 1280, 1600, 1920, 2560, 3840 };
+// 800 (800 x 450): light enough for a phone with every effect on (BUGS.md C86)
+static const int kZoomedResolutions[] = { 0, 800, 1280, 1600, 1920, 2560, 3840 };
 static const int kZoomedResolutionCount = (int)(sizeof(kZoomedResolutions) / sizeof(kZoomedResolutions[0]));
 
 // The zoomed aspect ratios (16:9 and 16:10): on a 16:9 screen the 4:3 scene
@@ -503,15 +502,6 @@ inline const char* advancedText(AdvancedText text, int language)
         { "Applied when the game starts again.", "Se aplica al volver a abrir el juego.",
           "Appliqué au prochain lancement du jeu.", "Si applica al prossimo avvio del gioco.",
           "Gilt ab dem nächsten Spielstart." },
-        // AnimationSmoothing
-        { "Animation Smoothing", "Suavizado de animaciones", "Lissage des animations",
-          "Animazioni fluide", "Animationsglättung" },
-        // AnimationSmoothingHelp
-        { "Smoother animations.",
-          "Animaciones más fluidas.",
-          "Animations plus fluides.",
-          "Animazioni più fluide.",
-          "Flüssigere Animationen." },
         // Close
         { "CLOSE", "CERRAR", "FERMER", "CHIUDI", "SCHLIESSEN" },
         // Controls

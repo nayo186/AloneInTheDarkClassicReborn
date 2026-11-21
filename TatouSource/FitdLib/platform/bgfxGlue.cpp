@@ -13,6 +13,10 @@
 #include <bgfx/platform.h>
 #include <bx/platform.h>
 #include <backends/imgui_impl_sdl3.h>
+#include <atomic>
+#if BX_PLATFORM_ANDROID
+#include <jni.h>
+#endif
 #include <vector>
 #include <algorithm>
 #include <chrono>
@@ -64,6 +68,10 @@ void toggleFullscreen()
 {
     if (gWindowBGFX == nullptr)
         return;
+#ifdef __ANDROID__
+    // Always fullscreen on a phone (BUGS.md C90)
+    return;
+#endif
 
     gIsFullscreen = !gIsFullscreen;
     // Saved at once, however it was switched (F1, F11, Alt+Enter): the next
@@ -482,6 +490,82 @@ void EndFrame()
 }
 
 bgfx::Init initparam;
+
+#if BX_PLATFORM_ANDROID
+// Going to another app (a call, the home screen): Android destroys the
+// surface the game draws on and, coming back, makes a new one. Drawing on the
+// destroyed one left the screen black (OpenGL ES) or crashed the Vulkan
+// driver of an Adreno while it remade its images (BUGS.md C87). SDL tells it
+// only after the surface is gone: the activity's onPause comes about 0.7 s
+// before (ClassicRebornActivity.sPaused, read here through JNI).
+static bool androidActivityPaused()
+{
+    static jclass s_class = nullptr;
+    static jfieldID s_field = nullptr;
+    JNIEnv* env = (JNIEnv*)SDL_GetAndroidJNIEnv();
+    if (!env)
+        return false;
+    if (!s_field)
+    {
+        jobject activity = (jobject)SDL_GetAndroidActivity();
+        if (!activity)
+            return false;
+        jclass local = env->GetObjectClass(activity);
+        env->DeleteLocalRef(activity);
+        s_field = local ? env->GetStaticFieldID(local, "sPaused", "Z") : nullptr;
+        if (env->ExceptionCheck())
+        {
+            env->ExceptionClear();
+            s_field = nullptr;
+        }
+        if (!s_field)
+        {
+            if (local)
+                env->DeleteLocalRef(local);
+            return false;
+        }
+        s_class = (jclass)env->NewGlobalRef(local);
+        env->DeleteLocalRef(local);
+    }
+    return env->GetStaticBooleanField(s_class, s_field) == JNI_TRUE;
+}
+
+void osystem_androidHoldInBackground()
+{
+    if (!androidActivityPaused())
+        return;
+
+    // Nothing is drawn meanwhile: the game thread waits for its next frame
+    void* oldWindow = initparam.platformData.nwh;
+    printf("[BGFX] Android: paused, drawing stopped\n");
+    while (androidActivityPaused())
+    {
+        SDL_PumpEvents();
+        SDL_Delay(20);
+    }
+    // Back: the new surface (another window), the game on its side again (it
+    // comes back upright for a moment) and the same for a few frames
+    void* window = nullptr;
+    int settled = 0;
+    for (int tries = 0; tries < 200 && settled < 10; tries++)
+    {
+        SDL_PumpEvents();
+        window = SDL_GetPointerProperty(SDL_GetWindowProperties(gWindowBGFX), SDL_PROP_WINDOW_ANDROID_WINDOW_POINTER, NULL);
+        int w = 0, h = 0;
+        SDL_GetWindowSizeInPixels(gWindowBGFX, &w, &h);
+        settled = (window && (window != oldWindow || tries > 100) && w > h) ? settled + 1 : 0;
+        SDL_Delay(16);
+    }
+    printf("[BGFX] Android: back, surface %p -> %p\n", oldWindow, window);
+    if (window)
+    {
+        initparam.platformData.nwh = window;
+        bgfx::setPlatformData(initparam.platformData);
+    }
+    windowResolution[0] = -1;   // the game thread resets bgfx on its next frame (StartFrame)
+    windowResolution[1] = -1;
+}
+#endif
 
 void createBgfxInitParams()
 {
