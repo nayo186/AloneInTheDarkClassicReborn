@@ -4,6 +4,12 @@ Alone in the Dark: Classic Reborn started on 2026-10-23 from [Alone in the Dark:
 
 This repository was published with a single starting commit, to keep it light: the early history carried large files that are no longer part of the project. Below are the changes of each release and, after them, the changes made in this fork before it was published, newest first, one line per change. The reasons behind larger removals are explained in `docs/DESCARTADO.md` and the fixes in `docs/baseline/BUGS.md`.
 
+## v1.8.5 (2026-11-21)
+
+A quick fix for the new **Return to the launcher**.
+
+- All games: with **Return to the launcher**, the launcher forgot the game folders written as relative paths in `launcher.cfg` (such as `..\Alone in the Dark 1`): the launcher opened by the game looked for them from inside the game folder. The launcher now always reads them from its own folder, also when it is opened from a shortcut that starts in another folder (issue #17, BUGS.md C98)
+
 ## v1.8.4 (2026-11-21)
 
 Two ideas from players: going back to the launcher from the game, and a cheat for infinite ammunition. Also fixed: long messages cut at the edges of the screen, and the detail level of the pause menu.
