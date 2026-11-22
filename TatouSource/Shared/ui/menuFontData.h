@@ -49,14 +49,16 @@ inline ImFont* addEmbeddedFont(bool bold, float size)
 }
 
 #ifdef MENU_FONT_MODERN
-// Inter (regular or semibold) at that size, as addEmbeddedFont
+// Inter (regular or semibold) at that size, as addEmbeddedFont; with the
+// Russian letters too (the menus can be in Russian, launcherText.h)
 inline ImFont* addModernFont(bool bold, float size)
 {
     ImFontConfig config;
     config.FontDataOwnedByAtlas = false;
     return ImGui::GetIO().Fonts->AddFontFromMemoryTTF(
         const_cast<unsigned char*>(bold ? kMenuFont_modernBold : kMenuFont_modern),
-        (int)(bold ? kMenuFont_modernBold_size : kMenuFont_modern_size), size, &config);
+        (int)(bold ? kMenuFont_modernBold_size : kMenuFont_modern_size), size, &config,
+        ImGui::GetIO().Fonts->GetGlyphRangesCyrillic());
 }
 #endif
 

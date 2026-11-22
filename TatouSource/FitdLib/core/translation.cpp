@@ -20,6 +20,8 @@
 #include "common.h"
 #include "translation.h"
 #include "consoleLog.h"
+#include "languagePack.h"
+#include "knownEditions.h"
 
 #include "zlib.h"
 
@@ -53,6 +55,7 @@ struct Change
 typedef std::pair<std::string, int> EntryKey;   // PAK and entry (or frame)
 
 bool s_active = false;
+bool s_russianCd = false;     // Alone 3 from the Russian CD: its own files in Russian
 int s_game = AITD1;           // the game of the translation in use
 int s_fontEntry = 5;          // the font's entry of ITD_RESS in that game
 std::vector<std::vector<u8>> s_texts;
@@ -315,7 +318,53 @@ bool addGlyphs(std::vector<u8>& font)
     return true;
 }
 
+// What the Russian CD of Alone 3 changes with texts drawn in it: room
+// backgrounds, full-screen pictures and sequences (compared with the GOG
+// files, 2026-11-22)
+bool russianCdPicture(const char* name, int index, bool sequence)
+{
+    static const char* const kSequences[] = { "AN2", "AN18", "AN35", "AN43", "AN46", "AN59", "AN60" };
+    if (sequence)
+    {
+        for (const char* changed : kSequences)
+            if (strcmp(name, changed) == 0)
+                return true;
+        return false;
+    }
+    static const struct { const char* pak; int index; } kPictures[] = {
+        { "CAMERA00", 19 }, { "CAMERA03", 6 }, { "CAMERA03", 10 }, { "CAMERA03", 17 }, { "CAMERA09", 14 },
+        { "CAMERA12", 4 }, { "CAMERA12", 6 }, { "CAMERA13", 9 }, { "CAMERA13", 17 },
+    };
+    for (const auto& picture : kPictures)
+        if (picture.index == index && strcmp(name, picture.pak) == 0)
+            return true;
+    static const int kScreens[] = { 1, 8, 14, 15, 16, 17, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 49, 52,
+        56, 59, 60, 63, 64, 67, 68, 73, 76, 80, 82, 84, 85, 86, 87, 88, 89, 90, 91 };
+    if (strcmp(name, "ITD_RESS") == 0)
+        for (int screen : kScreens)
+            if (screen == index)
+                return true;
+    return false;
+}
+
 } // namespace
+
+bool selectRussianCd(const std::string& language, const std::string& game)
+{
+    s_russianCd = false;
+    if (game != "aitd3" || language != "ENGLISH")
+        return false;
+    DataFile file;
+    if (!file.open("ENGLISH.PAK"))
+        return false;
+    std::vector<unsigned char> data((size_t)(std::max)(file.size(), 0L));
+    file.seek(0, SEEK_SET);
+    data.resize(file.read(data.data(), data.size()));
+    s_russianCd = data.size() == kRussianAitd3Texts.size && (unsigned int)crc32(0L, data.data(), (uInt)data.size()) == kRussianAitd3Texts.crc;
+    if (s_russianCd)
+        printf(MAIN_OK "Russian CD of Old-Games.ru: texts in Russian\n");
+    return s_russianCd;
+}
 
 bool selectTranslation(const std::string& language, const std::string& game)
 {
@@ -348,7 +397,7 @@ bool selectTranslation(const std::string& language, const std::string& game)
 
 bool isRussianTranslation()
 {
-    return s_active && g_gameId == s_game;
+    return (s_active && g_gameId == s_game) || (s_russianCd && g_gameId == AITD3);
 }
 
 int translatedPakCount(const char* name)
@@ -415,6 +464,8 @@ bool isTranslatedPicture(const char* name, int index, bool sequence)
 {
     if (!isRussianTranslation())
         return false;
+    if (s_russianCd)
+        return russianCdPicture(name, index, sequence);
     if (sequence)
         return s_frames.count(EntryKey(name, index)) != 0;
     return s_patches.count(EntryKey(name, index)) != 0;

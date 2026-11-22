@@ -74,9 +74,15 @@ void applyLaunchOptions()
         // AITD3: a language from the player's CD, in Languages/<name>/ of the
         // working folder (its texts, the data that goes with them, its narrator)
         if (g_launchOptions.game == "aitd3" && selectLanguagePack(language))
+        {
             printf(MAIN_OK "Language folder: %s\n", languagePackFolder().c_str());
+            // Russian: the Old-Games.ru CD keeps its texts in ENGLISH.PAK
+            // (languageTextPak in Shared/languageFolder.h)
+            if (language == "RUSSIAN")
+                language = "ENGLISH";
+        }
 
-        // Alone 1: a language built into the game (core/translation.h)
+        // Alone 1 and 2: a language built into the game (core/translation.h)
         if (selectTranslation(language, g_launchOptions.game))
         {
             languageNameString = language;
@@ -86,6 +92,8 @@ void applyLaunchOptions()
         {
             languageNameString = language;
             printf(MAIN_OK "Language: %s\n", language.c_str());
+            // Alone 3: the Russian CD has its Russian texts in ENGLISH.PAK
+            selectRussianCd(language, g_launchOptions.game);
         }
         else
         {

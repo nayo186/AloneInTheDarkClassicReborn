@@ -24,7 +24,12 @@ static const char* const kRussianLanguage = "RUSSIAN";
 // Uses the built-in language of that name for this session, if there is one
 // for the game being started (game: --game, empty for Alone 1); false if not
 bool selectTranslation(const std::string& language, const std::string& game);
-// True while a Russian translation is in use (texts in DOS code page 866)
+// Alone 3 from the Russian CD of Old-Games.ru (its ENGLISH.PAK has the
+// Russian texts, Shared/knownEditions.h): its texts are read in Russian;
+// false if the language PAK is another
+bool selectRussianCd(const std::string& language, const std::string& game);
+// True while Russian texts are in use (a built-in translation or the
+// Russian CD of Alone 3; texts in DOS code page 866)
 bool isRussianTranslation();
 // An entry the translation gives instead of the player's file (the texts,
 // the font or a picture with its changes); null to read the file as it is

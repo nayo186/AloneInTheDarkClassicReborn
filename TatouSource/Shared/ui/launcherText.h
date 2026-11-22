@@ -2,8 +2,8 @@
 // Alone in the Dark: Classic Reborn
 // Based on FITD by yaz0r and AloneInTheDarkReHaunted, released under GPL
 //
-// Texts of the launcher screen in English, Spanish, French, Italian and
-// German (the language of the menus, not of the game). Header-only and in
+// Texts of the launcher screen in English, Spanish, French, Italian, German
+// and Russian (the language of the menus, not of the game). Header-only and in
 // Shared/ so the game can show the same screen where there is no separate
 // launcher (Android). UTF-8: compile with /utf-8.
 ///////////////////////////////////////////////////////////////////////////////
@@ -114,309 +114,358 @@ enum class UiLanguage
     French,
     Italian,
     German,
+    Russian,
     Count
 };
 
-// One row per UiText, one column per UiLanguage (EN, ES, FR, IT, DE)
+// One row per UiText, one column per UiLanguage (EN, ES, FR, IT, DE, RU)
 static const char* const kLauncherTexts[(int)UiText::Count][(int)UiLanguage::Count] =
 {
     // WindowTitle
     { "Alone in the Dark: Classic Reborn - Launcher", "Alone in the Dark: Classic Reborn - Lanzador",
       "Alone in the Dark: Classic Reborn - Lanceur", "Alone in the Dark: Classic Reborn - Avvio",
-      "Alone in the Dark: Classic Reborn - Starter" },
+      "Alone in the Dark: Classic Reborn - Starter",
+      "Alone in the Dark: Classic Reborn - лаунчер" },
     // LaunchMenu
-    { "Launch Menu", "Menú de inicio", "Menu de lancement", "Menu di avvio", "Startmenü" },
+    { "Launch Menu", "Menú de inicio", "Menu de lancement", "Menu di avvio", "Startmenü", "Меню запуска" },
     // PlayAitd1
     { "PLAY ALONE IN THE DARK", "JUGAR ALONE IN THE DARK", "JOUER À ALONE IN THE DARK",
-      "GIOCA AD ALONE IN THE DARK", "ALONE IN THE DARK SPIELEN" },
+      "GIOCA AD ALONE IN THE DARK", "ALONE IN THE DARK SPIELEN",
+      "ИГРАТЬ В ALONE IN THE DARK" },
     // PlayAitd2
     { "PLAY ALONE IN THE DARK 2", "JUGAR ALONE IN THE DARK 2", "JOUER À ALONE IN THE DARK 2",
-      "GIOCA AD ALONE IN THE DARK 2", "ALONE IN THE DARK 2 SPIELEN" },
+      "GIOCA AD ALONE IN THE DARK 2", "ALONE IN THE DARK 2 SPIELEN",
+      "ИГРАТЬ В ALONE IN THE DARK 2" },
     // PlayAitd3
     { "PLAY ALONE IN THE DARK 3", "JUGAR ALONE IN THE DARK 3", "JOUER À ALONE IN THE DARK 3",
-      "GIOCA AD ALONE IN THE DARK 3", "ALONE IN THE DARK 3 SPIELEN" },
+      "GIOCA AD ALONE IN THE DARK 3", "ALONE IN THE DARK 3 SPIELEN",
+      "ИГРАТЬ В ALONE IN THE DARK 3" },
     // PlayJack
     { "PLAY JACK IN THE DARK", "JUGAR JACK IN THE DARK", "JOUER À JACK IN THE DARK",
-      "GIOCA A JACK IN THE DARK", "JACK IN THE DARK SPIELEN" },
+      "GIOCA A JACK IN THE DARK", "JACK IN THE DARK SPIELEN",
+      "ИГРАТЬ В JACK IN THE DARK" },
     // Settings
-    { "Settings", "Configuración", "Configuration", "Configurazione", "Einstellungen" },
+    { "Settings", "Configuración", "Configuration", "Configurazione", "Einstellungen", "Настройки" },
     // Defaults
-    { "DEFAULT SETTINGS", "VALORES POR DEFECTO", "VALEURS PAR DÉFAUT", "VALORI PREDEFINITI", "STANDARDWERTE" },
+    { "DEFAULT SETTINGS", "VALORES POR DEFECTO", "VALEURS PAR DÉFAUT", "VALORI PREDEFINITI", "STANDARDWERTE", "НАСТРОЙКИ ПО УМОЛЧАНИЮ" },
     // DefaultsHelp
     { "The 1992 game with fixes, no extras", "El juego de 1992 con arreglos, sin añadidos",
       "Le jeu de 1992 corrigé, sans ajouts", "Il gioco del 1992 corretto, senza aggiunte",
-      "Das Spiel von 1992 mit Korrekturen, ohne Extras" },
+      "Das Spiel von 1992 mit Korrekturen, ohne Extras",
+      "Игра 1992 года с исправлениями, без дополнений" },
     // DefaultsChanged
     { "Options changed: click to restore", "Opciones cambiadas: pulsa para restaurar",
       "Options modifiées : cliquez pour rétablir", "Opzioni modificate: clic per ripristinare",
-      "Optionen geändert: klicken zum Zurücksetzen" },
+      "Optionen geändert: klicken zum Zurücksetzen",
+      "Настройки изменены: нажмите, чтобы вернуть" },
     // GameLanguage
-    { "Game language", "Idioma del juego", "Langue du jeu", "Lingua del gioco", "Spielsprache" },
+    { "Game language", "Idioma del juego", "Langue du jeu", "Lingua del gioco", "Spielsprache", "Язык игры" },
     // NoLanguageFound
     { "No language files found", "No se encontraron idiomas", "Aucune langue trouvée",
-      "Nessuna lingua trovata", "Keine Sprachdateien gefunden" },
+      "Nessuna lingua trovata", "Keine Sprachdateien gefunden",
+      "Файлы языков не найдены" },
     // DataFolder
     { "Game data folder", "Carpeta de datos del juego", "Dossier des données du jeu",
-      "Cartella dei dati del gioco", "Ordner der Spieldaten" },
+      "Cartella dei dati del gioco", "Ordner der Spieldaten",
+      "Папка с данными игры" },
     // Browse
-    { "Browse...", "Examinar...", "Parcourir...", "Sfoglia...", "Durchsuchen..." },
+    { "Browse...", "Examinar...", "Parcourir...", "Sfoglia...", "Durchsuchen...", "Обзор..." },
     // DataFolderMissing
     { "Choose the folder that contains the game data",
       "Elige la carpeta que contiene los datos del juego",
       "Choisissez le dossier qui contient les données du jeu",
       "Scegli la cartella che contiene i dati del gioco",
-      "Wähle den Ordner mit den Spieldaten" },
+      "Wähle den Ordner mit den Spieldaten",
+      "Выберите папку с данными игры" },
     // DataFolderInvalid
     { "Choose the GOG or Steam installation, or a copy of the data",
       "Elige la instalación de GOG o Steam, o una copia de los datos",
       "Choisissez l'installation GOG ou Steam, ou une copie des données",
       "Scegli l'installazione GOG o Steam, o una copia dei dati",
-      "Wähle die GOG- oder Steam-Installation oder eine Datenkopie" },
+      "Wähle die GOG- oder Steam-Installation oder eine Datenkopie",
+      "Выберите установку GOG или Steam либо копию данных" },
     // Exit
-    { "EXIT", "SALIR", "QUITTER", "ESCI", "BEENDEN" },
+    { "EXIT", "SALIR", "QUITTER", "ESCI", "BEENDEN", "ВЫХОД" },
     // InterfaceLanguage
-    { "Interface", "Interfaz", "Interface", "Interfaccia", "Oberfläche" },
+    { "Interface", "Interfaz", "Interface", "Interfaccia", "Oberfläche", "Интерфейс" },
     // TatouMissing
     { "Tatou.exe was not found next to the launcher", "No se encontró Tatou.exe junto al lanzador",
       "Tatou.exe est introuvable à côté du lanceur", "Tatou.exe non trovato accanto all'avvio",
-      "Tatou.exe wurde neben dem Starter nicht gefunden" },
+      "Tatou.exe wurde neben dem Starter nicht gefunden",
+      "Tatou.exe не найден рядом с лаунчером" },
     // LaunchFailed
     { "The game could not be started (see launcher.log)", "No se pudo abrir el juego (ver launcher.log)",
       "Impossible de lancer le jeu (voir launcher.log)", "Impossibile avviare il gioco (vedi launcher.log)",
-      "Das Spiel konnte nicht gestartet werden (siehe launcher.log)" },
+      "Das Spiel konnte nicht gestartet werden (siehe launcher.log)",
+      "Не удалось запустить игру (см. launcher.log)" },
     // Subtitle
     { "Survival Horror Classic", "Clásico del survival horror", "Classique du survival horror",
-      "Classico del survival horror", "Survival-Horror-Klassiker" },
+      "Classico del survival horror", "Survival-Horror-Klassiker",
+      "Классика survival horror" },
     // JackMissing
     { "Jack in the Dark not found (JACK folder)",
       "No se encontró Jack in the Dark (carpeta JACK)",
       "Jack in the Dark introuvable (dossier JACK)",
       "Jack in the Dark non trovato (cartella JACK)",
-      "Jack in the Dark nicht gefunden (Ordner JACK)" },
+      "Jack in the Dark nicht gefunden (Ordner JACK)",
+      "Jack in the Dark не найден (папка JACK)" },
     // InstallGog
     { "GOG/Steam installation",
       "Instalación de GOG/Steam",
       "Installation GOG/Steam",
       "Installazione GOG/Steam",
-      "GOG/Steam-Installation" },
+      "GOG/Steam-Installation",
+      "Установка GOG/Steam" },
     // InstallCopy
     { "Copy of the game data", "Copia de los datos del juego", "Copie des données du jeu",
-      "Copia dei dati del gioco", "Kopie der Spieldaten" },
+      "Copia dei dati del gioco", "Kopie der Spieldaten",
+      "Копия данных игры" },
     // DebugMode
-    { "Debug mode", "Modo depuración", "Mode débogage", "Modalità debug", "Debug-Modus" },
+    { "Debug mode", "Modo depuración", "Mode débogage", "Modalità debug", "Debug-Modus", "Режим отладки" },
     // Update
-    { "Update", "Actualizar", "Mettre à jour", "Aggiorna", "Aktualisieren" },
+    { "Update", "Actualizar", "Mettre à jour", "Aggiorna", "Aktualisieren", "Обновить" },
     // UpdateTitle
-    { "Updates", "Actualizaciones", "Mises à jour", "Aggiornamenti", "Updates" },
+    { "Updates", "Actualizaciones", "Mises à jour", "Aggiornamenti", "Updates", "Обновления" },
     // UpdateChecking
     { "Looking for a new version...", "Buscando una versión nueva...", "Recherche d'une nouvelle version...",
-      "Ricerca di una nuova versione...", "Suche nach einer neuen Version..." },
+      "Ricerca di una nuova versione...", "Suche nach einer neuen Version...",
+      "Поиск новой версии..." },
     // UpdateLatest (%s: this version)
     { "You have the latest version (%s).", "Ya tienes la última versión (%s).", "Vous avez la dernière version (%s).",
-      "Hai già l'ultima versione (%s).", "Sie haben die neueste Version (%s)." },
+      "Hai già l'ultima versione (%s).", "Sie haben die neueste Version (%s).",
+      "У вас последняя версия (%s)." },
     // UpdateCheckFailed
     { "Could not look for updates (no connection?). See launcher.log.",
       "No se pudo buscar actualizaciones (¿sin conexión?). Ver launcher.log.",
       "Impossible de rechercher des mises à jour (pas de connexion ?). Voir launcher.log.",
       "Impossibile cercare aggiornamenti (nessuna connessione?). Vedi launcher.log.",
-      "Die Suche nach Updates ist fehlgeschlagen (keine Verbindung?). Siehe launcher.log." },
+      "Die Suche nach Updates ist fehlgeschlagen (keine Verbindung?). Siehe launcher.log.",
+      "Не удалось проверить обновления (нет соединения?). См. launcher.log." },
     // UpdateAvailable (%s: the new version, %s: this one)
     { "A new version is available: %s (you have %s). Install it now? Your settings, saves and backgrounds are kept.",
       "Hay una versión nueva: %s (tienes la %s). ¿Instalarla ahora? Tus opciones, partidas y fondos se conservan.",
       "Une nouvelle version est disponible : %s (vous avez la %s). L'installer maintenant ? Vos options, sauvegardes et décors sont conservés.",
       "È disponibile una nuova versione: %s (hai la %s). Installarla ora? Opzioni, salvataggi e sfondi restano.",
-      "Eine neue Version ist verfügbar: %s (Sie haben %s). Jetzt installieren? Einstellungen, Spielstände und Hintergründe bleiben erhalten." },
+      "Eine neue Version ist verfügbar: %s (Sie haben %s). Jetzt installieren? Einstellungen, Spielstände und Hintergründe bleiben erhalten.",
+      "Доступна новая версия: %s (у вас %s). Установить сейчас? Ваши настройки, сохранения и фоны останутся." },
     // UpdateInstall
-    { "Install", "Instalar", "Installer", "Installa", "Installieren" },
+    { "Install", "Instalar", "Installer", "Installa", "Installieren", "Установить" },
     // UpdateLater
-    { "Not now", "Ahora no", "Plus tard", "Non ora", "Nicht jetzt" },
+    { "Not now", "Ahora no", "Plus tard", "Non ora", "Nicht jetzt", "Не сейчас" },
     // UpdateInstalling (%s: the new version)
     { "Downloading and installing %s...", "Descargando e instalando la %s...", "Téléchargement et installation de la %s...",
-      "Download e installazione della %s...", "%s wird heruntergeladen und installiert..." },
+      "Download e installazione della %s...", "%s wird heruntergeladen und installiert...",
+      "Загрузка и установка %s..." },
     // UpdateDone (%s: the new version)
     { "Updated to %s. The launcher will close: open it again.",
       "Actualizado a la %s. El lanzador se cerrará: vuelve a abrirlo.",
       "Mis à jour vers la %s. Le lanceur va se fermer : ouvrez-le à nouveau.",
       "Aggiornato alla %s. Il programma di avvio si chiuderà: riaprilo.",
-      "Auf %s aktualisiert. Der Starter wird geschlossen: öffnen Sie ihn erneut." },
+      "Auf %s aktualisiert. Der Starter wird geschlossen: öffnen Sie ihn erneut.",
+      "Обновлено до %s. Лаунчер закроется: откройте его снова." },
     // UpdateFailed
     { "The update could not be installed; nothing was changed. See launcher.log.",
       "No se pudo instalar la actualización; no se cambió nada. Ver launcher.log.",
       "La mise à jour n'a pas pu être installée ; rien n'a été modifié. Voir launcher.log.",
       "Impossibile installare l'aggiornamento; non è stato cambiato nulla. Vedi launcher.log.",
-      "Das Update konnte nicht installiert werden; nichts wurde geändert. Siehe launcher.log." },
+      "Das Update konnte nicht installiert werden; nichts wurde geändert. Siehe launcher.log.",
+      "Не удалось установить обновление; ничего не изменено. См. launcher.log." },
     // UpdateAccept
-    { "Accept", "Aceptar", "Accepter", "Accetta", "OK" },
+    { "Accept", "Aceptar", "Accepter", "Accetta", "OK", "Принять" },
     // UpdateClose
-    { "Close", "Cerrar", "Fermer", "Chiudi", "Schließen" },
+    { "Close", "Cerrar", "Fermer", "Chiudi", "Schließen", "Закрыть" },
     // About
-    { "About", "Acerca de", "À propos", "Informazioni", "Über" },
+    { "About", "Acerca de", "À propos", "Informazioni", "Über", "О программе" },
     // AboutText
     { "A source port of the Alone in the Dark trilogy and Jack in the Dark for modern PCs, with fixes and new options.",
       "Un port del motor de la trilogía Alone in the Dark y de Jack in the Dark para PCs modernos, con arreglos y opciones nuevas.",
       "Un portage du moteur de la trilogie Alone in the Dark et de Jack in the Dark pour les PC modernes, avec des corrections et de nouvelles options.",
       "Un port del motore della trilogia Alone in the Dark e di Jack in the Dark per PC moderni, con correzioni e nuove opzioni.",
-      "Eine Portierung der Engine der Alone-in-the-Dark-Trilogie und von Jack in the Dark für moderne PCs, mit Korrekturen und neuen Optionen." },
+      "Eine Portierung der Engine der Alone-in-the-Dark-Trilogie und von Jack in the Dark für moderne PCs, mit Korrekturen und neuen Optionen.",
+      "Порт трилогии Alone in the Dark и Jack in the Dark для современных ПК, с исправлениями и новыми настройками." },
     // AboutAuthor (%s: the author's alias)
-    { "Created by %s", "Creado por %s", "Créé par %s", "Creato da %s", "Erstellt von %s" },
+    { "Created by %s", "Creado por %s", "Créé par %s", "Creato da %s", "Erstellt von %s", "Автор: %s" },
     // AboutCredits
     { "Built on FITD by yaz0r, the reimplementation of the original engine that makes this project possible, with parts of Alone in the Dark Re-Haunted. Free software under the GPL v2. The games belong to their owners: you need your own copy.",
       "Basado en FITD de yaz0r, la reimplementación del motor original que hace posible este proyecto, con partes de Alone in the Dark Re-Haunted. Software libre con licencia GPL v2. Los juegos son de sus dueños: necesitas tu propia copia.",
       "Basé sur FITD de yaz0r, la réimplémentation du moteur original qui rend ce projet possible, avec des parties d'Alone in the Dark Re-Haunted. Logiciel libre sous licence GPL v2. Les jeux appartiennent à leurs propriétaires : il vous faut votre propre copie.",
       "Basato su FITD di yaz0r, la reimplementazione del motore originale che rende possibile questo progetto, con parti di Alone in the Dark Re-Haunted. Software libero con licenza GPL v2. I giochi appartengono ai loro proprietari: serve una copia propria.",
-      "Basiert auf FITD von yaz0r, der Neuimplementierung der Original-Engine, die dieses Projekt möglich macht, mit Teilen von Alone in the Dark Re-Haunted. Freie Software unter der GPL v2. Die Spiele gehören ihren Eigentümern: Sie brauchen eine eigene Kopie." },
+      "Basiert auf FITD von yaz0r, der Neuimplementierung der Original-Engine, die dieses Projekt möglich macht, mit Teilen von Alone in the Dark Re-Haunted. Freie Software unter der GPL v2. Die Spiele gehören ihren Eigentümern: Sie brauchen eine eigene Kopie.",
+      "Основан на FITD от yaz0r — воссоздании оригинального движка, благодаря которому возможен этот проект, — с частями Alone in the Dark Re-Haunted. Свободное ПО под лицензией GPL v2. Игры принадлежат их владельцам: нужна своя копия." },
     // AboutThanks
     { "Thank you to everyone who tests it and reports problems: every version is better thanks to you.",
       "Gracias a todos los que lo prueban y reportan errores: cada versión mejora gracias a vosotros.",
       "Merci à tous ceux qui le testent et signalent des problèmes : chaque version s'améliore grâce à vous.",
       "Grazie a tutti quelli che lo provano e segnalano problemi: ogni versione migliora grazie a voi.",
-      "Danke an alle, die es testen und Fehler melden: Jede Version wird dank euch besser." },
+      "Danke an alle, die es testen und Fehler melden: Jede Version wird dank euch besser.",
+      "Спасибо всем, кто тестирует и сообщает о проблемах: каждая версия становится лучше благодаря вам." },
     // AboutGithub
-    { "Open GitHub", "Abrir GitHub", "Ouvrir GitHub", "Apri GitHub", "GitHub öffnen" },
+    { "Open GitHub", "Abrir GitHub", "Ouvrir GitHub", "Apri GitHub", "GitHub öffnen", "Открыть GitHub" },
     // ImportGame (Android: instead of Browse; also languages, narrators and pictures)
-    { "Import...", "Importar...", "Importer...", "Importa...", "Importieren..." },
+    { "Import...", "Importar...", "Importer...", "Importa...", "Importieren...", "Импорт..." },
     // ImportCopying (%d: percent)
     { "Copying the game... %d%%", "Copiando el juego... %d%%", "Copie du jeu... %d%%", "Copia del gioco... %d%%",
-      "Spiel wird kopiert... %d%%" },
+      "Spiel wird kopiert... %d%%",
+      "Копирование игры... %d%%" },
     // ImportDone
-    { "Game imported.", "Juego importado.", "Jeu importé.", "Gioco importato.", "Spiel importiert." },
+    { "Game imported.", "Juego importado.", "Jeu importé.", "Gioco importato.", "Spiel importiert.", "Игра импортирована." },
     // ImportFailed
     { "The game could not be copied. See launcher.log.", "No se pudo copiar el juego. Ver launcher.log.",
       "Le jeu n'a pas pu être copié. Voir launcher.log.", "Impossibile copiare il gioco. Vedi launcher.log.",
-      "Das Spiel konnte nicht kopiert werden. Siehe launcher.log." },
+      "Das Spiel konnte nicht kopiert werden. Siehe launcher.log.",
+      "Не удалось скопировать игру. См. launcher.log." },
     // UpdateConfirm (Android; %s: the new version)
     { "Android will ask you to update the app to %s: accept it. Your games, saves and settings are kept.",
       "Android te pedirá actualizar la app a la %s: acéptalo. Tus juegos, partidas y opciones se conservan.",
       "Android va vous demander de mettre à jour l'application vers la %s : acceptez. Vos jeux, sauvegardes et options sont conservés.",
       "Android ti chiederà di aggiornare l'app alla %s: accetta. Giochi, salvataggi e opzioni restano.",
-      "Android wird Sie bitten, die App auf %s zu aktualisieren: Bestätigen Sie. Spiele, Spielstände und Einstellungen bleiben erhalten." },
+      "Android wird Sie bitten, die App auf %s zu aktualisieren: Bestätigen Sie. Spiele, Spielstände und Einstellungen bleiben erhalten.",
+      "Android предложит обновить приложение до %s: согласитесь. Ваши игры, сохранения и настройки останутся." },
     // ImportLanguageDone
     { "Language imported: choose it in Game language (Alone in the Dark 3).",
       "Idioma importado: elígelo en Idioma del juego (Alone in the Dark 3).",
       "Langue importée : choisissez-la dans Langue du jeu (Alone in the Dark 3).",
       "Lingua importata: sceglila in Lingua del gioco (Alone in the Dark 3).",
-      "Sprache importiert: Wählen Sie sie unter Spielsprache (Alone in the Dark 3)." },
+      "Sprache importiert: Wählen Sie sie unter Spielsprache (Alone in the Dark 3).",
+      "Язык импортирован: выберите его в «Язык игры» (Alone in the Dark 3)." },
     // ImportNarratorDone
     { "Narrator imported: choose it in the game's options (F1, Alone in the Dark).",
       "Narrador importado: elígelo en las opciones del juego (F1, Alone in the Dark).",
       "Narrateur importé : choisissez-le dans les options du jeu (F1, Alone in the Dark).",
       "Narratore importato: sceglilo nelle opzioni del gioco (F1, Alone in the Dark).",
-      "Erzähler importiert: Wählen Sie ihn in den Spieloptionen (F1, Alone in the Dark)." },
+      "Erzähler importiert: Wählen Sie ihn in den Spieloptionen (F1, Alone in the Dark).",
+      "Рассказчик импортирован: выберите его в настройках игры (F1, Alone in the Dark)." },
     // ImportPicturesDone
     { "Backgrounds and masks imported.", "Fondos y máscaras importados.", "Décors et masques importés.",
-      "Sfondi e maschere importati.", "Hintergründe und Masken importiert." },
+      "Sfondi e maschere importati.", "Hintergründe und Masken importiert.",
+      "Фоны и маски импортированы." },
     // ImportNothing
     { "Nothing to import in that folder: choose the game's folder (GOG or Steam), a language, a narrator, or Backgrounds or Masks.",
       "No hay nada que importar en esa carpeta: elige la del juego (GOG o Steam), un idioma, un narrador, o Backgrounds o Masks.",
       "Rien à importer dans ce dossier : choisissez celui du jeu (GOG ou Steam), une langue, un narrateur, ou Backgrounds ou Masks.",
       "Niente da importare in quella cartella: scegli quella del gioco (GOG o Steam), una lingua, un narratore, o Backgrounds o Masks.",
-      "In diesem Ordner gibt es nichts zu importieren: Wählen Sie den des Spiels (GOG oder Steam), eine Sprache, einen Erzähler oder Backgrounds oder Masks." },
+      "In diesem Ordner gibt es nichts zu importieren: Wählen Sie den des Spiels (GOG oder Steam), eine Sprache, einen Erzähler oder Backgrounds oder Masks.",
+      "В этой папке нечего импортировать: выберите папку игры (GOG или Steam), язык, рассказчика, Backgrounds или Masks." },
     // InstallDisc
-    { "Your CD (image)", "Tu CD (imagen)", "Votre CD (image)", "Il tuo CD (immagine)", "Ihre CD (Abbild)" },
+    { "Your CD (image)", "Tu CD (imagen)", "Votre CD (image)", "Il tuo CD (immagine)", "Ihre CD (Abbild)", "Ваш CD (образ)" },
     // FilesUnknown
     { "Some game files are in no edition we know (see launcher.log)",
       "Hay archivos del juego que no son de ninguna edición conocida (ver launcher.log)",
       "Des fichiers du jeu ne sont d'aucune édition connue (voir launcher.log)",
       "Alcuni file del gioco non sono di nessuna edizione conosciuta (vedi launcher.log)",
-      "Einige Spieldateien gehören zu keiner bekannten Ausgabe (siehe launcher.log)" },
+      "Einige Spieldateien gehören zu keiner bekannten Ausgabe (siehe launcher.log)",
+      "Некоторые файлы игры не относятся ни к одному известному изданию (см. launcher.log)" },
     // FilesUnknownTitle
     { "Game files we do not know", "Archivos del juego que no conocemos", "Des fichiers du jeu inconnus",
-      "File del gioco che non conosciamo", "Spieldateien, die wir nicht kennen" },
+      "File del gioco che non conosciamo", "Spieldateien, die wir nicht kennen",
+      "Неизвестные файлы игры" },
     // FilesUnknownText
     { "Some game files are different from the editions we know (GOG, Steam and the CDs we have checked): they may be from another edition, changed or damaged. The game may not work well, freeze or close. If it is your original edition and something goes wrong, please tell us on GitHub which one you have (language, year) and send launcher.log and tatou.log: they list the files that differ, so we can make it work.",
       "Algunos archivos del juego son distintos de los de las ediciones que conocemos (GOG, Steam y los CD que hemos comprobado): pueden ser de otra edición, estar modificados o dañados. El juego podría no funcionar bien, quedarse trabado o cerrarse. Si es tu edición original y algo falla, cuéntanos en GitHub cuál tienes (idioma, año) y envía launcher.log y tatou.log: dicen qué archivos son distintos, para poder hacerla funcionar.",
       "Certains fichiers du jeu diffèrent de ceux des éditions que nous connaissons (GOG, Steam et les CD que nous avons vérifiés) : ils peuvent venir d'une autre édition, être modifiés ou endommagés. Le jeu peut mal fonctionner, se bloquer ou se fermer. Si c'est votre édition d'origine et qu'il y a un problème, dites-nous sur GitHub laquelle vous avez (langue, année) et envoyez launcher.log et tatou.log : ils indiquent les fichiers différents, pour que nous puissions la faire fonctionner.",
       "Alcuni file del gioco sono diversi da quelli delle edizioni che conosciamo (GOG, Steam e i CD che abbiamo verificato): possono essere di un'altra edizione, modificati o danneggiati. Il gioco potrebbe non funzionare bene, bloccarsi o chiudersi. Se è la tua edizione originale e qualcosa va storto, dicci su GitHub quale hai (lingua, anno) e invia launcher.log e tatou.log: elencano i file diversi, così potremo farla funzionare.",
-      "Einige Spieldateien unterscheiden sich von den Ausgaben, die wir kennen (GOG, Steam und die CDs, die wir geprüft haben): Sie können aus einer anderen Ausgabe stammen, verändert oder beschädigt sein. Das Spiel funktioniert vielleicht nicht richtig, hängt sich auf oder schließt sich. Wenn es Ihre Originalausgabe ist und etwas schiefgeht, sagen Sie uns auf GitHub, welche Sie haben (Sprache, Jahr), und senden Sie launcher.log und tatou.log: Sie nennen die abweichenden Dateien, damit wir sie zum Laufen bringen können." },
+      "Einige Spieldateien unterscheiden sich von den Ausgaben, die wir kennen (GOG, Steam und die CDs, die wir geprüft haben): Sie können aus einer anderen Ausgabe stammen, verändert oder beschädigt sein. Das Spiel funktioniert vielleicht nicht richtig, hängt sich auf oder schließt sich. Wenn es Ihre Originalausgabe ist und etwas schiefgeht, sagen Sie uns auf GitHub, welche Sie haben (Sprache, Jahr), und senden Sie launcher.log und tatou.log: Sie nennen die abweichenden Dateien, damit wir sie zum Laufen bringen können.",
+      "Некоторые файлы игры отличаются от известных нам изданий (GOG, Steam и проверенные CD): они могут быть из другого издания, изменены или повреждены. Игра может работать плохо, зависнуть или закрыться. Если это ваше оригинальное издание и что-то пойдёт не так, сообщите нам на GitHub, какое оно у вас (язык, год), и пришлите launcher.log и tatou.log: в них перечислены отличающиеся файлы, и мы сможем это исправить." },
     // PlayAnyway
-    { "Play anyway", "Jugar igualmente", "Jouer quand même", "Gioca comunque", "Trotzdem spielen" },
+    { "Play anyway", "Jugar igualmente", "Jouer quand même", "Gioca comunque", "Trotzdem spielen", "Всё равно играть" },
     // Cancel
-    { "Cancel", "Cancelar", "Annuler", "Annulla", "Abbrechen" },
+    { "Cancel", "Cancelar", "Annuler", "Annulla", "Abbrechen", "Отмена" },
     // FilesChecking
     { "Checking the game files...", "Comprobando los archivos del juego...", "Vérification des fichiers du jeu...",
-      "Controllo dei file del gioco...", "Spieldateien werden geprüft..." },
+      "Controllo dei file del gioco...", "Spieldateien werden geprüft...",
+      "Проверка файлов игры..." },
     // FilesMissing (%d: how many)
     { "%d game files are missing (see launcher.log)", "Faltan %d archivos del juego (ver launcher.log)",
       "Il manque %d fichiers du jeu (voir launcher.log)", "Mancano %d file del gioco (vedi launcher.log)",
-      "%d Spieldateien fehlen (siehe launcher.log)" },
+      "%d Spieldateien fehlen (siehe launcher.log)",
+      "Не хватает файлов игры: %d (см. launcher.log)" },
     // FilesMissingTitle
     { "Game files are missing", "Faltan archivos del juego", "Il manque des fichiers du jeu",
-      "Mancano file del gioco", "Es fehlen Spieldateien" },
+      "Mancano file del gioco", "Es fehlen Spieldateien",
+      "Не хватает файлов игры" },
     // FilesMissingText
     { "Files the game needs are not in this folder. When the game needs them it will close or freeze. Copy the game's folder again from your installation or your CD.",
       "En esta carpeta faltan archivos que el juego necesita. Cuando el juego los necesite se cerrará o se quedará trabado. Vuelve a copiar la carpeta del juego desde tu instalación o tu CD.",
       "Des fichiers dont le jeu a besoin manquent dans ce dossier. Quand le jeu en aura besoin, il se fermera ou se bloquera. Copiez à nouveau le dossier du jeu depuis votre installation ou votre CD.",
       "In questa cartella mancano file di cui il gioco ha bisogno. Quando il gioco ne avrà bisogno si chiuderà o si bloccherà. Copia di nuovo la cartella del gioco dalla tua installazione o dal tuo CD.",
-      "In diesem Ordner fehlen Dateien, die das Spiel braucht. Wenn das Spiel sie braucht, schließt es sich oder hängt sich auf. Kopieren Sie den Ordner des Spiels erneut aus Ihrer Installation oder von Ihrer CD." },
+      "In diesem Ordner fehlen Dateien, die das Spiel braucht. Wenn das Spiel sie braucht, schließt es sich oder hängt sich auf. Kopieren Sie den Ordner des Spiels erneut aus Ihrer Installation oder von Ihrer CD.",
+      "Файлов, нужных игре, нет в этой папке. Когда игре они понадобятся, она закроется или зависнет. Скопируйте папку игры заново из вашей установки или с вашего CD." },
     // FilesDontWarn
     { "Do not warn again for these files", "No volver a avisar para estos archivos", "Ne plus avertir pour ces fichiers",
-      "Non avvisare più per questi file", "Für diese Dateien nicht mehr warnen" },
+      "Non avvisare più per questi file", "Für diese Dateien nicht mehr warnen",
+      "Больше не предупреждать об этих файлах" },
     // OptionsNotSavedTitle
     { "Your options could not be saved", "No se pudieron guardar tus opciones", "Vos options n'ont pas pu être enregistrées",
-      "Non è stato possibile salvare le tue opzioni", "Ihre Optionen konnten nicht gespeichert werden" },
+      "Non è stato possibile salvare le tue opzioni", "Ihre Optionen konnten nicht gespeichert werden",
+      "Не удалось сохранить настройки" },
     // OptionsNotSavedText
     { "The launcher could not write the file below. Its folder may be read-only or protected, for example by an antivirus or by Windows' controlled folder access. The game will start with the options it had before, and your saves may not be kept either. To fix it, move the game's folder to another place (for example C:\\Games) or allow it in the antivirus.",
       "El lanzador no pudo escribir el archivo de abajo. Su carpeta puede ser de solo lectura o estar protegida, por ejemplo por un antivirus o por el acceso controlado a carpetas de Windows. El juego empezará con las opciones que tenía, y puede que tus partidas tampoco se guarden. Para arreglarlo, mueve la carpeta del juego a otro sitio (por ejemplo C:\\Juegos) o permítela en el antivirus.",
       "Le lanceur n'a pas pu écrire le fichier ci-dessous. Son dossier est peut-être en lecture seule ou protégé, par exemple par un antivirus ou par l'accès contrôlé aux dossiers de Windows. Le jeu démarrera avec les options qu'il avait, et vos sauvegardes pourraient ne pas être gardées non plus. Pour corriger cela, déplacez le dossier du jeu ailleurs (par exemple C:\\Jeux) ou autorisez-le dans l'antivirus.",
       "L'avvio non è riuscito a scrivere il file qui sotto. La sua cartella potrebbe essere di sola lettura o protetta, per esempio da un antivirus o dall'accesso controllato alle cartelle di Windows. Il gioco partirà con le opzioni che aveva, e anche i salvataggi potrebbero non essere conservati. Per risolvere, sposta la cartella del gioco in un altro posto (per esempio C:\\Giochi) o consentila nell'antivirus.",
-      "Der Starter konnte die Datei unten nicht schreiben. Ihr Ordner ist vielleicht schreibgeschützt oder geschützt, zum Beispiel durch ein Antivirenprogramm oder den überwachten Ordnerzugriff von Windows. Das Spiel startet mit den bisherigen Optionen, und auch Ihre Spielstände werden vielleicht nicht gespeichert. Verschieben Sie den Ordner des Spiels an einen anderen Ort (zum Beispiel C:\\Spiele) oder erlauben Sie ihn im Antivirenprogramm." },
+      "Der Starter konnte die Datei unten nicht schreiben. Ihr Ordner ist vielleicht schreibgeschützt oder geschützt, zum Beispiel durch ein Antivirenprogramm oder den überwachten Ordnerzugriff von Windows. Das Spiel startet mit den bisherigen Optionen, und auch Ihre Spielstände werden vielleicht nicht gespeichert. Verschieben Sie den Ordner des Spiels an einen anderen Ort (zum Beispiel C:\\Spiele) oder erlauben Sie ihn im Antivirenprogramm.",
+      "Лаунчер не смог записать указанный ниже файл. Его папка может быть доступна только для чтения или защищена, например антивирусом или контролируемым доступом к папкам Windows. Игра запустится с прежними настройками, и ваши сохранения тоже могут не сохраниться. Чтобы это исправить, переместите папку игры в другое место (например, C:\\Games) или разрешите её в антивирусе." },
     // PlayShort
-    { "PLAY", "JUGAR", "JOUER", "GIOCA", "SPIELEN" },
+    { "PLAY", "JUGAR", "JOUER", "GIOCA", "SPIELEN", "ИГРАТЬ" },
     // OptionsCard
-    { "Options", "Opciones", "Options", "Opzioni", "Optionen" },
+    { "Options", "Opciones", "Options", "Opzioni", "Optionen", "Параметры" },
     // OptionsDetail
-    { "Picture and effects", "Imagen y efectos", "Image et effets", "Immagine ed effetti", "Bild und Effekte" },
+    { "Picture and effects", "Imagen y efectos", "Image et effets", "Immagine ed effetti", "Bild und Effekte", "Изображение и эффекты" },
     // ControlsCard
-    { "Controls", "Controles", "Commandes", "Comandi", "Steuerung" },
+    { "Controls", "Controles", "Commandes", "Comandi", "Steuerung", "Управление" },
     // ControlsDetail
-    { "Keyboard and controller", "Teclado y mando", "Clavier et manette", "Tastiera e controller", "Tastatur und Controller" },
+    { "Keyboard and controller", "Teclado y mando", "Clavier et manette", "Tastiera e controller", "Tastatur und Controller", "Клавиатура и геймпад" },
     // AudioCard
-    { "Audio", "Audio", "Audio", "Audio", "Audio" },
+    { "Audio", "Audio", "Audio", "Audio", "Audio", "Звук" },
     // AudioDetail
-    { "Music and voices", "Música y voces", "Musique et voix", "Musica e voci", "Musik und Stimmen" },
+    { "Music and voices", "Música y voces", "Musique et voix", "Musica e voci", "Musik und Stimmen", "Музыка и голоса" },
     // GameData
-    { "Game data", "Datos del juego", "Données du jeu", "Dati del gioco", "Spieldaten" },
+    { "Game data", "Datos del juego", "Données du jeu", "Dati del gioco", "Spieldaten", "Данные игры" },
     // ExitShort
-    { "Exit", "Salir", "Quitter", "Esci", "Beenden" },
+    { "Exit", "Salir", "Quitter", "Esci", "Beenden", "Выход" },
     // DefaultsShort
-    { "Default settings", "Valores por defecto", "Valeurs par défaut", "Valori predefiniti", "Standardwerte" },
+    { "Default settings", "Valores por defecto", "Valeurs par défaut", "Valori predefiniti", "Standardwerte", "По умолчанию" },
     // Library
-    { "LIBRARY", "BIBLIOTECA", "BIBLIOTHÈQUE", "LIBRERIA", "BIBLIOTHEK" },
+    { "LIBRARY", "BIBLIOTECA", "BIBLIOTHÈQUE", "LIBRERIA", "BIBLIOTHEK", "БИБЛИОТЕКА" },
     // StoryAitd1
     { "Louisiana, 1924. The owner of Derceto has hanged himself, and the mansion is not empty.",
       "Luisiana, 1924. El dueño de Derceto se ha ahorcado, y la mansión no está vacía.",
       "Louisiane, 1924. Le propriétaire de Derceto s'est pendu, et le manoir n'est pas vide.",
       "Louisiana, 1924. Il proprietario di Derceto si è impiccato, e la villa non è vuota.",
-      "Louisiana, 1924. Der Besitzer von Derceto hat sich erhängt, und das Herrenhaus ist nicht leer." },
+      "Louisiana, 1924. Der Besitzer von Derceto hat sich erhängt, und das Herrenhaus ist nicht leer.",
+      "Луизиана, 1924 год. Владелец Дерсето повесился, и особняк не пуст." },
     // StoryAitd2
     { "Christmas, 1924. A girl kidnapped by gangsters, and a pirate who never died.",
       "Navidad de 1924. Una niña secuestrada por gánsteres y un pirata que nunca murió.",
       "Noël 1924. Une fillette enlevée par des gangsters, et un pirate qui n'est jamais mort.",
       "Natale 1924. Una bambina rapita dai gangster e un pirata che non è mai morto.",
-      "Weihnachten 1924. Ein von Gangstern entführtes Mädchen und ein Pirat, der nie gestorben ist." },
+      "Weihnachten 1924. Ein von Gangstern entführtes Mädchen und ein Pirat, der nie gestorben ist.",
+      "Рождество 1924 года. Девочка, похищенная гангстерами, и пират, который так и не умер." },
     // StoryAitd3
     { "Slaughter Gulch, 1925. A ghost town in the Mojave desert, and a film crew gone missing.",
       "Slaughter Gulch, 1925. Un pueblo fantasma en el desierto de Mojave y un equipo de rodaje desaparecido.",
       "Slaughter Gulch, 1925. Une ville fantôme du désert Mojave, et une équipe de tournage disparue.",
       "Slaughter Gulch, 1925. Una città fantasma nel deserto del Mojave e una troupe cinematografica scomparsa.",
-      "Slaughter Gulch, 1925. Eine Geisterstadt in der Mojave-Wüste und ein verschwundenes Filmteam." },
+      "Slaughter Gulch, 1925. Eine Geisterstadt in der Mojave-Wüste und ein verschwundenes Filmteam.",
+      "Слотер-Галч, 1925 год. Город-призрак в пустыне Мохаве и пропавшая съёмочная группа." },
     // JackDetail
-    { "Christmas bonus game", "Juego extra de Navidad", "Jeu bonus de Noël", "Gioco bonus di Natale", "Weihnachts-Bonusspiel" },
+    { "Christmas bonus game", "Juego extra de Navidad", "Jeu bonus de Noël", "Gioco bonus di Natale", "Weihnachts-Bonusspiel", "Рождественская бонусная игра" },
     // NoFolderShort
-    { "No folder yet", "Sin carpeta", "Pas de dossier", "Nessuna cartella", "Kein Ordner" },
+    { "No folder yet", "Sin carpeta", "Pas de dossier", "Nessuna cartella", "Kein Ordner", "Папка ещё не выбрана" },
     // AudioDetailAlone
     { "Music, voices, narrator", "Música, voces, narrador", "Musique, voix, narrateur", "Musica, voci, narratore",
-      "Musik, Stimmen, Erzähler" },
+      "Musik, Stimmen, Erzähler",
+      "Музыка, голоса, рассказчик" },
     // FilesOk
-    { "All files OK", "Archivos correctos", "Fichiers corrects", "File corretti", "Dateien in Ordnung" },
+    { "All files OK", "Archivos correctos", "Fichiers corrects", "File corretti", "Dateien in Ordnung", "Все файлы в порядке" },
     // SourceGog
-    { "GOG / Steam", "GOG / Steam", "GOG / Steam", "GOG / Steam", "GOG / Steam" },
+    { "GOG / Steam", "GOG / Steam", "GOG / Steam", "GOG / Steam", "GOG / Steam", "GOG / Steam" },
     // SourceDisc
-    { "CD image", "Imagen del CD", "Image du CD", "Immagine del CD", "CD-Abbild" },
+    { "CD image", "Imagen del CD", "Image du CD", "Immagine del CD", "CD-Abbild", "Образ CD" },
     // SourceCopy
-    { "Copy of the game", "Copia del juego", "Copie du jeu", "Copia del gioco", "Kopie des Spiels" },
+    { "Copy of the game", "Copia del juego", "Copie du jeu", "Copia del gioco", "Kopie des Spiels", "Копия игры" },
     // RestoreDefaults
-    { "Restore defaults", "Restablecer", "Rétablir", "Ripristina", "Zurücksetzen" },
+    { "Restore defaults", "Restablecer", "Rétablir", "Ripristina", "Zurücksetzen", "Вернуть по умолчанию" },
 };
 
 inline UiLanguage& currentUiLanguage()
@@ -444,13 +493,13 @@ inline void setUiLanguage(UiLanguage language)
 // Native name of a language ("English", "Español"...) and its config code
 inline const char* uiLanguageName(UiLanguage language)
 {
-    static const char* const names[(int)UiLanguage::Count] = { "English", "Español", "Français", "Italiano", "Deutsch" };
+    static const char* const names[(int)UiLanguage::Count] = { "English", "Español", "Français", "Italiano", "Deutsch", "Русский" };
     return names[(int)language];
 }
 
 inline const char* uiLanguageCode(UiLanguage language)
 {
-    static const char* const codes[(int)UiLanguage::Count] = { "en", "es", "fr", "it", "de" };
+    static const char* const codes[(int)UiLanguage::Count] = { "en", "es", "fr", "it", "de", "ru" };
     return codes[(int)language];
 }
 

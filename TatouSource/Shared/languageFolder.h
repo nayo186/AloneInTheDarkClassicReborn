@@ -41,12 +41,20 @@ inline const char* languagePackName(const char* languagePak)
 {
     static const char* const names[][2] = {
         { "ENGLISH", "English" }, { "FRANCAIS", "French" }, { "ITALIANO", "Italian" },
-        { "ESPAGNOL", "Spanish" }, { "DEUTSCH", "German" },
+        { "ESPAGNOL", "Spanish" }, { "DEUTSCH", "German" }, { "RUSSIAN", "Russian" },
     };
     for (const auto& name : names)
         if (strcmp(languagePak, name[0]) == 0)
             return name[1];
     return "";
+}
+
+// The PAK of a language's texts (without .PAK): its own name, but Alone 3's
+// Russian CD of Old-Games.ru keeps its Russian texts in ENGLISH.PAK
+// (Shared/knownEditions.h, kRussianAitd3Texts)
+inline std::string languageTextPak(const std::string& language)
+{
+    return language == "RUSSIAN" ? std::string("ENGLISH") : language;
 }
 
 // The CD image in a language folder whose INDARK3 folder has the language

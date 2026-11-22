@@ -156,8 +156,8 @@ enum class AdvancedText
 };
 
 // Languages in the launcher's order: 0 English, 1 Spanish, 2 French,
-// 3 Italian, 4 German
-static const int kAdvancedTextLanguages = 5;
+// 3 Italian, 4 German, 5 Russian
+static const int kAdvancedTextLanguages = 6;
 
 // Widths of the resolution option, 4:3 (height = width * 3 / 4); 0 = automatic.
 // 320 is the games' own 320 x 200 (VGA mode 13h), stretched to the screen as
@@ -299,441 +299,487 @@ inline const char* advancedText(AdvancedText text, int language)
     static const char* const texts[(int)AdvancedText::Count][kAdvancedTextLanguages] =
     {
         // Title
-        { "ADVANCED OPTIONS", "OPCIONES AVANZADAS", "OPTIONS AVANCÉES", "OPZIONI AVANZATE", "ERWEITERTE OPTIONEN" },
+        { "ADVANCED OPTIONS", "OPCIONES AVANZADAS", "OPTIONS AVANCÉES", "OPZIONI AVANZATE", "ERWEITERTE OPTIONEN", "ДОПОЛНИТЕЛЬНЫЕ НАСТРОЙКИ" },
         // FrameLimit
-        { "FPS", "FPS", "FPS", "FPS", "FPS" },
+        { "FPS", "FPS", "FPS", "FPS", "FPS", "FPS" },
         // FrameLimitNone
-        { "No limit", "Sin límite", "Sans limite", "Nessun limite", "Kein Limit" },
+        { "No limit", "Sin límite", "Sans limite", "Nessun limite", "Kein Limit", "Без ограничения" },
         // FrameLimitHelp
         { "Frames per second. The game speed does not change.",
           "Imágenes por segundo. La velocidad del juego no cambia.",
           "Images par seconde. La vitesse du jeu ne change pas.",
           "Fotogrammi al secondo. La velocità del gioco non cambia.",
-          "Bilder pro Sekunde. Die Spielgeschwindigkeit ändert sich nicht." },
+          "Bilder pro Sekunde. Die Spielgeschwindigkeit ändert sich nicht.",
+          "Кадров в секунду. Скорость игры не меняется." },
         // VSync
-        { "VSync", "VSync", "VSync", "VSync", "VSync" },
+        { "VSync", "VSync", "VSync", "VSync", "VSync", "VSync" },
         // VSyncHelp
         { "Avoids tearing.",
           "Evita cortes en la imagen.",
           "Évite les déchirures.",
           "Evita lo strappo dell'immagine.",
-          "Vermeidet Tearing." },
+          "Vermeidet Tearing.",
+          "Убирает разрывы изображения." },
         // AspectRatio
-        { "Aspect ratio", "Relación de aspecto", "Format d'image", "Rapporto d'aspetto", "Seitenverhältnis" },
+        { "Aspect ratio", "Relación de aspecto", "Format d'image", "Rapporto d'aspetto", "Seitenverhältnis", "Соотношение сторон" },
         // AspectRatioHelp
         { "4:3 is the shape it was drawn for. 16:10: square pixels, as in GOG/DOSBox. Stretched: fullscreen only. Zoomed: fills a wide screen, the view follows the character (Alone 1, 2, 3, Jack).",
           "4:3 es la forma para la que se dibujó. 16:10: píxeles cuadrados, como en GOG/DOSBox. Estirada: solo en pantalla completa. Ampliada: llena la pantalla panorámica y la vista sigue al personaje (Alone 1, 2, 3, Jack).",
           "4:3 est le format pour lequel il a été dessiné. 16:10 : pixels carrés, comme dans GOG/DOSBox. Étirée : plein écran seulement. Agrandie : remplit un écran large, la vue suit le personnage (Alone 1, 2, 3, Jack).",
           "4:3 è la forma per cui è stato disegnato. 16:10: pixel quadrati, come in GOG/DOSBox. Allungata: solo a schermo intero. Ingrandita: riempie uno schermo largo, la vista segue il personaggio (Alone 1, 2, 3, Jack).",
-          "4:3 ist das Format, für das es gezeichnet wurde. 16:10: quadratische Pixel, wie in GOG/DOSBox. Gestreckt: nur im Vollbild. Vergrößert: füllt einen Breitbildschirm, die Ansicht folgt der Figur (Alone 1, 2, 3, Jack)." },
+          "4:3 ist das Format, für das es gezeichnet wurde. 16:10: quadratische Pixel, wie in GOG/DOSBox. Gestreckt: nur im Vollbild. Vergrößert: füllt einen Breitbildschirm, die Ansicht folgt der Figur (Alone 1, 2, 3, Jack).",
+          "4:3 — формат, под который рисовалась игра. 16:10: квадратные пиксели, как в GOG/DOSBox. Растянутое: только в полноэкранном режиме. Увеличенное: заполняет широкий экран, вид следует за персонажем (Alone 1, 2, 3, Jack)." },
         // Aspect4x3
-        { "4:3 (original)", "4:3 (original)", "4:3 (original)", "4:3 (originale)", "4:3 (Original)" },
+        { "4:3 (original)", "4:3 (original)", "4:3 (original)", "4:3 (originale)", "4:3 (Original)", "4:3 (оригинал)" },
         // Aspect16x10
-        { "16:10", "16:10", "16:10", "16:10", "16:10" },
+        { "16:10", "16:10", "16:10", "16:10", "16:10", "16:10" },
         // AspectStretched
-        { "Stretched", "Estirada", "Étirée", "Allungata", "Gestreckt" },
+        { "Stretched", "Estirada", "Étirée", "Allungata", "Gestreckt", "Растянутое" },
         // Aspect16x9Wide
-        { "16:9 (zoomed)", "16:9 (ampliada)", "16:9 (agrandie)", "16:9 (ingrandita)", "16:9 (vergrößert)" },
+        { "16:9 (zoomed)", "16:9 (ampliada)", "16:9 (agrandie)", "16:9 (ingrandita)", "16:9 (vergrößert)", "16:9 (увеличенное)" },
         // Aspect16x10Wide
-        { "16:10 (zoomed)", "16:10 (ampliada)", "16:10 (agrandie)", "16:10 (ingrandita)", "16:10 (vergrößert)" },
+        { "16:10 (zoomed)", "16:10 (ampliada)", "16:10 (agrandie)", "16:10 (ingrandita)", "16:10 (vergrößert)", "16:10 (увеличенное)" },
         // Fullscreen
-        { "Fullscreen", "Pantalla completa", "Plein écran", "Schermo intero", "Vollbild" },
+        { "Fullscreen", "Pantalla completa", "Plein écran", "Schermo intero", "Vollbild", "Полный экран" },
         // FullscreenHelp
         { "Also Alt+Enter or F11.",
           "También Alt+Intro o F11.",
           "Aussi Alt+Entrée ou F11.",
           "Anche Alt+Invio o F11.",
-          "Auch Alt+Eingabe oder F11." },
+          "Auch Alt+Eingabe oder F11.",
+          "Также Alt+Enter или F11." },
         // Resolution
-        { "Resolution", "Resolución", "Résolution", "Risoluzione", "Auflösung" },
+        { "Resolution", "Resolución", "Résolution", "Risoluzione", "Auflösung", "Разрешение" },
         // ResolutionHelp
         { "Sharpness of the 3D models. Automatic uses your screen.",
           "Nitidez de los modelos 3D. Automática usa tu pantalla.",
           "Netteté des modèles 3D. Automatique utilise votre écran.",
           "Nitidezza dei modelli 3D. Automatica usa il tuo schermo.",
-          "Schärfe der 3D-Modelle. Automatisch nutzt deinen Bildschirm." },
+          "Schärfe der 3D-Modelle. Automatisch nutzt deinen Bildschirm.",
+          "Чёткость 3D-моделей. «Автоматически» использует ваш экран." },
         // ResolutionAuto
-        { "Automatic", "Automática", "Automatique", "Automatica", "Automatisch" },
+        { "Automatic", "Automática", "Automatique", "Automatica", "Automatisch", "Автоматически" },
         // ResolutionOriginal
-        { "original", "original", "originale", "originale", "Original" },
+        { "original", "original", "originale", "originale", "Original", "оригинал" },
         // IntegerScale
-        { "Integer scaling", "Integer scaling", "Integer scaling", "Integer scaling", "Integer scaling" },
+        { "Integer scaling", "Integer scaling", "Integer scaling", "Integer scaling", "Integer scaling", "Целочисленное масштабирование" },
         // IntegerScaleHelp
         { "Every pixel the same size, black borders around.",
           "Todos los píxeles iguales, con bordes negros.",
           "Tous les pixels identiques, bords noirs autour.",
           "Tutti i pixel uguali, bordi neri intorno.",
-          "Alle Pixel gleich groß, schwarze Ränder." },
+          "Alle Pixel gleich groß, schwarze Ränder.",
+          "Все пиксели одного размера, вокруг чёрные поля." },
         // IntegerScaleOff
-        { "Off", "Desactivado", "Désactivé", "Disattivato", "Aus" },
+        { "Off", "Desactivado", "Désactivé", "Disattivato", "Aus", "Выкл." },
         // IntegerScaleAuto
-        { "Automatic", "Automático", "Automatique", "Automatico", "Automatisch" },
+        { "Automatic", "Automático", "Automatique", "Automatico", "Automatisch", "Автоматически" },
         // IntegerSize
-        { "Size", "Tamaño", "Taille", "Dimensione", "Größe" },
+        { "Size", "Tamaño", "Taille", "Dimensione", "Größe", "Размер" },
         // IntegerResolution
-        { "3D resolution", "Resolución 3D", "Résolution 3D", "Risoluzione 3D", "3D-Auflösung" },
+        { "3D resolution", "Resolución 3D", "Résolution 3D", "Risoluzione 3D", "3D-Auflösung", "Разрешение 3D" },
         // IntegerResolutionHelp
         { "Sharpness of the 3D models; only those that keep every pixel equal.",
           "Nitidez de los modelos 3D; solo las que dejan todos los píxeles iguales.",
           "Netteté des modèles 3D ; seulement celles qui gardent les pixels égaux.",
           "Nitidezza dei modelli 3D; solo quelle che lasciano i pixel uguali.",
-          "Schärfe der 3D-Modelle; nur solche mit gleich großen Pixeln." },
+          "Schärfe der 3D-Modelle; nur solche mit gleich großen Pixeln.",
+          "Чёткость 3D-моделей; только те, при которых все пиксели одинаковы." },
         // CustomBackgrounds
-        { "Custom backgrounds", "Fondos personalizados", "Décors personnalisés", "Sfondi personalizzati", "Eigene Hintergründe" },
+        { "Custom backgrounds", "Fondos personalizados", "Décors personnalisés", "Sfondi personalizzati", "Eigene Hintergründe", "Свои фоны" },
         // CustomBackgroundsHelp
         { "Uses your own backgrounds and masks.",
           "Usa tus propios fondos y máscaras.",
           "Utilise vos propres décors et masques.",
           "Usa i tuoi sfondi e maschere.",
-          "Nutzt eigene Hintergründe und Masken." },
+          "Nutzt eigene Hintergründe und Masken.",
+          "Использует ваши собственные фоны и маски." },
         // EnhancedText
-        { "Enhanced text", "Texto mejorado", "Texte amélioré", "Testo migliorato", "Verbesserter Text" },
+        { "Enhanced text", "Texto mejorado", "Texte amélioré", "Testo migliorato", "Verbesserter Text", "Улучшенный текст" },
         // EnhancedTextHelp
         { "Smoother, more legible letters.",
           "Letras más suaves y legibles.",
           "Lettres plus lisses et lisibles.",
           "Lettere più morbide e leggibili.",
-          "Glattere, besser lesbare Buchstaben." },
+          "Glattere, besser lesbare Buchstaben.",
+          "Более гладкие и разборчивые буквы." },
         // ExportBackgrounds
-        { "Export backgrounds", "Exportar fondos", "Exporter les décors", "Esporta sfondi", "Hintergründe exportieren" },
+        { "Export backgrounds", "Exportar fondos", "Exporter les décors", "Esporta sfondi", "Hintergründe exportieren", "Экспорт фонов" },
         // ExportBackgroundsHelp
         { "Saves every background as a PNG, to edit or enlarge.",
           "Guarda todos los fondos en PNG, para editarlos o ampliarlos.",
           "Enregistre tous les décors en PNG, à modifier ou agrandir.",
           "Salva tutti gli sfondi in PNG, da modificare o ampliare.",
-          "Speichert alle Hintergründe als PNG zum Bearbeiten oder Vergrößern." },
+          "Speichert alle Hintergründe als PNG zum Bearbeiten oder Vergrößern.",
+          "Сохраняет каждый фон в PNG, чтобы редактировать или увеличивать." },
         // ExportWorking
-        { "Exporting backgrounds...", "Exportando fondos...", "Export des décors...", "Esportazione sfondi...", "Hintergründe werden exportiert..." },
+        { "Exporting backgrounds...", "Exportando fondos...", "Export des décors...", "Esportazione sfondi...", "Hintergründe werden exportiert...", "Экспорт фонов..." },
         // ExportDone
         { "Backgrounds exported",
           "Fondos exportados",
           "Décors exportés",
           "Sfondi esportati",
-          "Hintergründe exportiert" },
+          "Hintergründe exportiert",
+          "Фоны экспортированы" },
         // ExportFailed
         { "The backgrounds could not be exported (see tatou.log)", "No se pudieron exportar los fondos (ver tatou.log)",
           "Impossible d'exporter les décors (voir tatou.log)", "Impossibile esportare gli sfondi (vedi tatou.log)",
-          "Hintergründe konnten nicht exportiert werden (siehe tatou.log)" },
+          "Hintergründe konnten nicht exportiert werden (siehe tatou.log)",
+          "Не удалось экспортировать фоны (см. tatou.log)" },
         // ExportMasks
-        { "Export masks", "Exportar máscaras", "Exporter les masques", "Esporta maschere", "Masken exportieren" },
+        { "Export masks", "Exportar máscaras", "Exporter les masques", "Esporta maschere", "Masken exportieren", "Экспорт масок" },
         // ExportMasksHelp
         { "Saves every mask (the parts of the background that cover the characters) as a PNG.",
           "Guarda todas las máscaras (partes del fondo que tapan a los personajes) en PNG.",
           "Enregistre tous les masques (parties du décor qui cachent les personnages) en PNG.",
           "Salva tutte le maschere (parti dello sfondo che coprono i personaggi) in PNG.",
-          "Speichert alle Masken (Teile des Hintergrunds, die die Figuren verdecken) als PNG." },
+          "Speichert alle Masken (Teile des Hintergrunds, die die Figuren verdecken) als PNG.",
+          "Сохраняет каждую маску (части фона, закрывающие персонажей) в PNG." },
         // ExportMasksDone
         { "masks exported",
           "máscaras exportadas",
           "masques exportés",
           "maschere esportate",
-          "Masken exportiert" },
+          "Masken exportiert",
+          "маски экспортированы" },
         // ExportSequences
-        { "Export sequences", "Exportar secuencias", "Exporter les séquences", "Esporta sequenze", "Sequenzen exportieren" },
+        { "Export sequences", "Exportar secuencias", "Exporter les séquences", "Esporta sequenze", "Sequenzen exportieren", "Экспорт роликов" },
         // ExportSequencesHelp
         { "Saves every frame of the animated scenes as a PNG, to remake them.",
           "Guarda cada imagen de las escenas animadas en PNG, para rehacerlas.",
           "Enregistre chaque image des scènes animées en PNG, pour les refaire.",
           "Salva ogni immagine delle scene animate in PNG, per rifarle.",
-          "Speichert jedes Bild der animierten Szenen als PNG zum Neugestalten." },
+          "Speichert jedes Bild der animierten Szenen als PNG zum Neugestalten.",
+          "Сохраняет каждый кадр анимированных сцен в PNG, чтобы переделать их." },
         // ExportSequencesDone
         { "frames exported",
           "imágenes exportadas",
           "images exportées",
           "immagini esportate",
-          "Bilder exportiert" },
+          "Bilder exportiert",
+          "кадры экспортированы" },
         // Effects
-        { "Effects", "Efectos", "Effets", "Effetti", "Effekte" },
+        { "Effects", "Efectos", "Effets", "Effetti", "Effekte", "Эффекты" },
         // FilmGrain
-        { "Film Grain", "Grano de película", "Grain de film", "Grana della pellicola", "Filmkörnung" },
+        { "Film Grain", "Grano de película", "Grain de film", "Grana della pellicola", "Filmkörnung", "Плёночное зерно" },
         // FilmGrainHelp
         { "Fine moving noise over the image, like an old film.",
           "Ruido fino y animado sobre la imagen, como una película antigua.",
           "Bruit fin et animé sur l'image, comme un vieux film.",
           "Rumore fine e animato sull'immagine, come una vecchia pellicola.",
-          "Feines, bewegtes Rauschen über dem Bild, wie bei einem alten Film." },
+          "Feines, bewegtes Rauschen über dem Bild, wie bei einem alten Film.",
+          "Мелкий движущийся шум поверх изображения, как на старой плёнке." },
         // Scanlines
-        { "Scanlines", "Scanlines", "Lignes de balayage", "Linee di scansione", "Scanlines" },
+        { "Scanlines", "Scanlines", "Lignes de balayage", "Linee di scansione", "Scanlines", "Строки развёртки" },
         // ScanlinesHelp
         { "Thin dark lines over the image, like an old CRT screen.",
           "Líneas finas y oscuras sobre la imagen, como una pantalla CRT antigua.",
           "Fines lignes sombres sur l'image, comme un vieil écran cathodique.",
           "Sottili linee scure sull'immagine, come un vecchio schermo a tubo catodico.",
-          "Feine dunkle Linien über dem Bild, wie bei einem alten Röhrenbildschirm." },
+          "Feine dunkle Linien über dem Bild, wie bei einem alten Röhrenbildschirm.",
+          "Тонкие тёмные линии поверх изображения, как на старом ЭЛТ-экране." },
         // ScanlineLevel
-        { "Intensity", "Intensidad", "Intensité", "Intensità", "Stärke" },
+        { "Intensity", "Intensidad", "Intensité", "Intensità", "Stärke", "Интенсивность" },
         // ScanlineLevelHelp
         { "How dark the scanlines are, from 1 (soft) to 4 (strong).",
           "Lo oscuras que son las scanlines, de 1 (suaves) a 4 (marcadas).",
           "L'intensité des lignes, de 1 (douces) à 4 (marquées).",
           "Quanto sono scure le linee, da 1 (leggere) a 4 (marcate).",
-          "Wie dunkel die Linien sind, von 1 (sanft) bis 4 (kräftig)." },
+          "Wie dunkel die Linien sind, von 1 (sanft) bis 4 (kräftig).",
+          "Насколько темны линии: от 1 (мягко) до 4 (сильно)." },
         // Bloom
-        { "Bloom", "Bloom", "Bloom", "Bloom", "Bloom" },
+        { "Bloom", "Bloom", "Bloom", "Bloom", "Bloom", "Свечение" },
         // BloomHelp
         { "Bright areas glow with a soft halo.",
           "Las zonas claras brillan con un halo suave.",
           "Les zones claires brillent avec un halo doux.",
           "Le zone chiare brillano con un alone morbido.",
-          "Helle Bereiche leuchten mit einem weichen Schein." },
+          "Helle Bereiche leuchten mit einem weichen Schein.",
+          "Яркие участки светятся мягким ореолом." },
         // Ssao
         { "Ambient Occlusion (SSAO)", "Oclusión ambiental (SSAO)", "Occlusion ambiante (SSAO)",
-          "Occlusione ambientale (SSAO)", "Umgebungsverdeckung (SSAO)" },
+          "Occlusione ambientale (SSAO)", "Umgebungsverdeckung (SSAO)",
+          "Затенение (SSAO)" },
         // SsaoHelp
         { "Shades the folds and corners of the 3D characters and objects.",
           "Sombrea los pliegues y rincones de los personajes y objetos 3D.",
           "Ombre les plis et les recoins des personnages et objets 3D.",
           "Ombreggia pieghe e angoli dei personaggi e degli oggetti 3D.",
-          "Schattiert Falten und Ecken der 3D-Figuren und -Objekte." },
+          "Schattiert Falten und Ecken der 3D-Figuren und -Objekte.",
+          "Затеняет складки и углы 3D-персонажей и предметов." },
         // Antialiasing
-        { "Antialiasing", "Suavizado (antialiasing)", "Anticrénelage", "Antialiasing", "Kantenglättung" },
+        { "Antialiasing", "Suavizado (antialiasing)", "Anticrénelage", "Antialiasing", "Kantenglättung", "Сглаживание" },
         // AntialiasingHelp
         { "Smooths the edges of the 3D models.",
           "Suaviza los bordes de los modelos 3D.",
           "Adoucit les bords des modèles 3D.",
           "Ammorbidisce i bordi dei modelli 3D.",
-          "Glättet die Kanten der 3D-Modelle." },
+          "Glättet die Kanten der 3D-Modelle.",
+          "Сглаживает края 3D-моделей." },
         // AntialiasingOff
-        { "Off", "Desactivado", "Désactivé", "Disattivato", "Aus" },
+        { "Off", "Desactivado", "Désactivé", "Disattivato", "Aus", "Выкл." },
         // Renderer
-        { "Graphics engine", "Motor gráfico", "Moteur graphique", "Motore grafico", "Grafik-Engine" },
+        { "Graphics engine", "Motor gráfico", "Moteur graphique", "Motore grafico", "Grafik-Engine", "Графический движок" },
         // RendererHelp
         { "How the game draws: change it if the picture looks wrong.",
           "Cómo dibuja el juego: cámbialo si la imagen se ve mal.",
           "Comment le jeu dessine : changez-le si l'image s'affiche mal.",
           "Come disegna il gioco: cambialo se l'immagine non si vede bene.",
-          "Wie das Spiel zeichnet: ändern, wenn das Bild falsch aussieht." },
+          "Wie das Spiel zeichnet: ändern, wenn das Bild falsch aussieht.",
+          "Как игра рисует: смените, если изображение выглядит неправильно." },
         // RendererRestart
         { "Applied when the game starts again.", "Se aplica al volver a abrir el juego.",
           "Appliqué au prochain lancement du jeu.", "Si applica al prossimo avvio del gioco.",
-          "Gilt ab dem nächsten Spielstart." },
+          "Gilt ab dem nächsten Spielstart.",
+          "Применится при следующем запуске игры." },
         // Close
-        { "CLOSE", "CERRAR", "FERMER", "CHIUDI", "SCHLIESSEN" },
+        { "CLOSE", "CERRAR", "FERMER", "CHIUDI", "SCHLIESSEN", "ЗАКРЫТЬ" },
         // Controls
-        { "CONTROLS", "CONTROLES", "COMMANDES", "COMANDI", "STEUERUNG" },
+        { "CONTROLS", "CONTROLES", "COMMANDES", "COMANDI", "STEUERUNG", "УПРАВЛЕНИЕ" },
         // ControlsHelp
         { "Click an entry to remove it.",
           "Pulsa una entrada para quitarla.",
           "Cliquez sur une entrée pour la retirer.",
           "Clicca su una voce per rimuoverla.",
-          "Klicke einen Eintrag an, um ihn zu entfernen." },
+          "Klicke einen Eintrag an, um ihn zu entfernen.",
+          "Нажмите на назначение, чтобы удалить его." },
         // ControlsPressKey
         { "Press a key for: %s  (Esc: cancel)",
           "Pulsa una tecla para: %s  (Esc: cancelar)",
           "Appuyez sur une touche pour : %s  (Échap : annuler)",
           "Premi un tasto per: %s  (Esc: annulla)",
-          "Drücke eine Taste für: %s  (Esc: abbrechen)" },
+          "Drücke eine Taste für: %s  (Esc: abbrechen)",
+          "Нажмите клавишу для: %s  (Esc: отмена)" },
         // ControlsPressPad
         { "Press a button, trigger or stick of the controller for: %s  (Esc: cancel)",
           "Pulsa un botón, gatillo o stick del mando para: %s  (Esc: cancelar)",
           "Appuyez sur un bouton, une gâchette ou un stick de la manette pour : %s  (Échap : annuler)",
           "Premi un pulsante, grilletto o stick del controller per: %s  (Esc: annulla)",
-          "Drücke eine Taste, einen Trigger oder Stick des Controllers für: %s  (Esc: abbrechen)" },
+          "Drücke eine Taste, einen Trigger oder Stick des Controllers für: %s  (Esc: abbrechen)",
+          "Нажмите кнопку, курок или стик геймпада для: %s  (Esc: отмена)" },
         // ControlsKeyboard
-        { "KEYBOARD", "TECLADO", "CLAVIER", "TASTIERA", "TASTATUR" },
+        { "KEYBOARD", "TECLADO", "CLAVIER", "TASTIERA", "TASTATUR", "КЛАВИАТУРА" },
         // ControlsController
-        { "CONTROLLER", "MANDO", "MANETTE", "CONTROLLER", "CONTROLLER" },
+        { "CONTROLLER", "MANDO", "MANETTE", "CONTROLLER", "CONTROLLER", "ГЕЙМПАД" },
         // ControlsAdd
-        { "+ Add", "+ Añadir", "+ Ajouter", "+ Aggiungi", "+ Hinzufügen" },
+        { "+ Add", "+ Añadir", "+ Ajouter", "+ Aggiungi", "+ Hinzufügen", "+ Добавить" },
         // ControlsRemove
-        { "Remove", "Quitar", "Retirer", "Rimuovi", "Entfernen" },
+        { "Remove", "Quitar", "Retirer", "Rimuovi", "Entfernen", "Удалить" },
         // ControlsDefaults
         { "RESTORE DEFAULT CONTROLS", "RESTAURAR CONTROLES POR DEFECTO", "RÉTABLIR LES COMMANDES PAR DÉFAUT",
-          "RIPRISTINA COMANDI PREDEFINITI", "STANDARDSTEUERUNG WIEDERHERSTELLEN" },
+          "RIPRISTINA COMANDI PREDEFINITI", "STANDARDSTEUERUNG WIEDERHERSTELLEN",
+          "ВЕРНУТЬ УПРАВЛЕНИЕ ПО УМОЛЧАНИЮ" },
         // ModernStick
         { "Modern left stick", "Stick izquierdo moderno", "Stick gauche moderne", "Levetta sinistra moderna",
-          "Moderner linker Stick" },
+          "Moderner linker Stick",
+          "Современный левый стик" },
         // ModernStickHelp
         { "The character walks where you push the stick, seen from the camera. The d-pad and the keys stay tank controls.",
           "El personaje camina hacia donde empujas el stick, según la cámara. La cruceta y el teclado siguen tipo tanque.",
           "Le personnage marche là où vous poussez le stick, vu de la caméra. La croix et le clavier restent en mode tank.",
           "Il personaggio cammina dove spingi la levetta, rispetto alla telecamera. Croce e tastiera restano a carro armato.",
-          "Die Figur läuft dorthin, wohin du den Stick drückst, von der Kamera aus gesehen. Steuerkreuz und Tastatur bleiben Panzersteuerung." },
+          "Die Figur läuft dorthin, wohin du den Stick drückst, von der Kamera aus gesehen. Steuerkreuz und Tastatur bleiben Panzersteuerung.",
+          "Персонаж идёт туда, куда вы наклоняете стик, относительно камеры. Крестовина и клавиши остаются «танковым» управлением." },
         // Vibration
         { "Controller vibration", "Vibración del mando", "Vibration de la manette", "Vibrazione del controller",
-          "Controller-Vibration" },
+          "Controller-Vibration",
+          "Вибрация геймпада" },
         // VibrationHelp
         { "The controller vibrates a little when you are hit or shoot, and more when you die.",
           "El mando vibra un poco al recibir un golpe o al disparar, y más al morir.",
           "La manette vibre un peu quand vous êtes touché ou tirez, et plus quand vous mourez.",
           "Il controller vibra un po' quando vieni colpito o spari, e di più quando muori.",
-          "Der Controller vibriert leicht, wenn du getroffen wirst oder schießt, und stärker, wenn du stirbst." },
+          "Der Controller vibriert leicht, wenn du getroffen wirst oder schießt, und stärker, wenn du stirbst.",
+          "Геймпад слегка вибрирует, когда вас ранят или вы стреляете, и сильнее, когда вы погибаете." },
         // ActionUp
-        { "Forward", "Avanzar", "Avancer", "Avanti", "Vorwärts" },
+        { "Forward", "Avanzar", "Avancer", "Avanti", "Vorwärts", "Вперёд" },
         // ActionDown
-        { "Back", "Retroceder", "Reculer", "Indietro", "Rückwärts" },
+        { "Back", "Retroceder", "Reculer", "Indietro", "Rückwärts", "Назад" },
         // ActionLeft
-        { "Turn left", "Girar a la izquierda", "Tourner à gauche", "Girare a sinistra", "Links drehen" },
+        { "Turn left", "Girar a la izquierda", "Tourner à gauche", "Girare a sinistra", "Links drehen", "Повернуть влево" },
         // ActionRight
-        { "Turn right", "Girar a la derecha", "Tourner à droite", "Girare a destra", "Rechts drehen" },
+        { "Turn right", "Girar a la derecha", "Tourner à droite", "Girare a destra", "Rechts drehen", "Повернуть вправо" },
         // ActionAction
-        { "Action", "Acción", "Action", "Azione", "Aktion" },
+        { "Action", "Acción", "Action", "Azione", "Aktion", "Действие" },
         // ActionConfirm
-        { "Confirm / inventory", "Confirmar / inventario", "Valider / inventaire", "Conferma / inventario", "Bestätigen / Inventar" },
+        { "Confirm / inventory", "Confirmar / inventario", "Valider / inventaire", "Conferma / inventario", "Bestätigen / Inventar", "Подтвердить / инвентарь" },
         // ActionCancel
-        { "Cancel / pause", "Cancelar / pausa", "Annuler / pause", "Annulla / pausa", "Abbrechen / Pause" },
+        { "Cancel / pause", "Cancelar / pausa", "Annuler / pause", "Annulla / pausa", "Abbrechen / Pause", "Отмена / пауза" },
         // ActionRun
-        { "Run", "Correr", "Courir", "Correre", "Rennen" },
+        { "Run", "Correr", "Courir", "Correre", "Rennen", "Бег" },
         // ActionMap
-        { "Map (Alone 3)", "Mapa (Alone 3)", "Plan (Alone 3)", "Mappa (Alone 3)", "Karte (Alone 3)" },
+        { "Map (Alone 3)", "Mapa (Alone 3)", "Plan (Alone 3)", "Mappa (Alone 3)", "Karte (Alone 3)", "Карта (Alone 3)" },
         // ActionLookUp
-        { "Look up (zoomed)", "Mirar arriba (ampliada)", "Regarder en haut (agrandie)", "Guarda in alto (ingrandita)", "Nach oben sehen (vergrößert)" },
+        { "Look up (zoomed)", "Mirar arriba (ampliada)", "Regarder en haut (agrandie)", "Guarda in alto (ingrandita)", "Nach oben sehen (vergrößert)", "Смотреть вверх (увеличенное)" },
         // ActionLookDown
-        { "Look down (zoomed)", "Mirar abajo (ampliada)", "Regarder en bas (agrandie)", "Guarda in basso (ingrandita)", "Nach unten sehen (vergrößert)" },
+        { "Look down (zoomed)", "Mirar abajo (ampliada)", "Regarder en bas (agrandie)", "Guarda in basso (ingrandita)", "Nach unten sehen (vergrößert)", "Смотреть вниз (увеличенное)" },
         // ActionOptions
-        { "Options window", "Ventana de opciones", "Fenêtre des options", "Finestra delle opzioni", "Optionsfenster" },
+        { "Options window", "Ventana de opciones", "Fenêtre des options", "Finestra delle opzioni", "Optionsfenster", "Окно настроек" },
         // Audio
-        { "AUDIO", "AUDIO", "AUDIO", "AUDIO", "AUDIO" },
+        { "AUDIO", "AUDIO", "AUDIO", "AUDIO", "AUDIO", "ЗВУК" },
         // MusicVolume
-        { "Music", "Música", "Musique", "Musica", "Musik" },
+        { "Music", "Música", "Musique", "Musica", "Musik", "Музыка" },
         // MusicVolumeHelp
         { "CD or AdLib music.",
           "Música del CD o AdLib.",
           "Musique du CD ou AdLib.",
           "Musica del CD o AdLib.",
-          "CD- oder AdLib-Musik." },
+          "CD- oder AdLib-Musik.",
+          "Музыка с CD или AdLib." },
         // SoundVolume
-        { "Voices and effects", "Voces y efectos", "Voix et effets", "Voci ed effetti", "Stimmen und Effekte" },
+        { "Voices and effects", "Voces y efectos", "Voix et effets", "Voci ed effetti", "Stimmen und Effekte", "Голоса и эффекты" },
         // SoundVolumeHelp
         { "Narrator and sound effects.",
           "Narrador y efectos de sonido.",
           "Narrateur et effets sonores.",
           "Narratore ed effetti sonori.",
-          "Erzähler und Soundeffekte." },
+          "Erzähler und Soundeffekte.",
+          "Рассказчик и звуковые эффекты." },
         // Voices
-        { "Narrator", "Narrador", "Narrateur", "Narratore", "Erzähler" },
+        { "Narrator", "Narrador", "Narrateur", "Narratore", "Erzähler", "Рассказчик" },
         // VoicesHelp
         { "Voice that reads the books. Others: folders in UserData\\AITD1\\Voices (see the README).",
           "Voz que lee los libros. Otras: carpetas en UserData\\AITD1\\Voices (ver el README).",
           "Voix qui lit les livres. Autres : dossiers dans UserData\\AITD1\\Voices (voir le README).",
           "Voce che legge i libri. Altre: cartelle in UserData\\AITD1\\Voices (vedi il README).",
-          "Stimme, die die Bücher liest. Weitere: Ordner in UserData\\AITD1\\Voices (siehe README)." },
+          "Stimme, die die Bücher liest. Weitere: Ordner in UserData\\AITD1\\Voices (siehe README).",
+          "Голос, читающий книги. Другие: папки в UserData\\AITD1\\Voices (см. README)." },
         // VoicesEnglish
-        { "English", "Inglés", "Anglais", "Inglese", "Englisch" },
+        { "English", "Inglés", "Anglais", "Inglese", "Englisch", "Английский" },
         // VoicesFrench
-        { "French", "Francés", "Français", "Francese", "Französisch" },
+        { "French", "Francés", "Français", "Francese", "Französisch", "Французский" },
         // VoicesSpanish
-        { "Spanish", "Español", "Espagnol", "Spagnolo", "Spanisch" },
+        { "Spanish", "Español", "Espagnol", "Spagnolo", "Spanisch", "Испанский" },
         // VoicesItalian
-        { "Italian", "Italiano", "Italien", "Italiano", "Italienisch" },
+        { "Italian", "Italiano", "Italien", "Italiano", "Italienisch", "Итальянский" },
         // VoicesGerman
-        { "German", "Alemán", "Allemand", "Tedesco", "Deutsch" },
+        { "German", "Alemán", "Allemand", "Tedesco", "Deutsch", "Немецкий" },
         // MusicSource
-        { "Music type", "Tipo de música", "Type de musique", "Tipo di musica", "Musikart" },
+        { "Music type", "Tipo de música", "Type de musique", "Tipo di musica", "Musikart", "Тип музыки" },
         // MusicSourceHelp
         { "CD: recorded music. AdLib: the synthesized one of 1992; some places are silent, as on floppy disks.",
           "CD: música grabada. AdLib: la sintetizada de 1992; algunos lugares sin música, como en disquetes.",
           "CD : musique enregistrée. AdLib : celle synthétisée de 1992 ; certains lieux sans musique, comme sur disquettes.",
           "CD: musica registrata. AdLib: quella sintetizzata del 1992; alcuni luoghi senza musica, come su dischetti.",
-          "CD: aufgenommene Musik. AdLib: die synthetisierte von 1992; manche Orte ohne Musik, wie auf Disketten." },
+          "CD: aufgenommene Musik. AdLib: die synthetisierte von 1992; manche Orte ohne Musik, wie auf Disketten.",
+          "CD: записанная музыка. AdLib: синтезированная музыка 1992 года; в некоторых местах тишина, как на дискетах." },
         // MusicSourceCD
-        { "CD", "CD", "CD", "CD", "CD" },
+        { "CD", "CD", "CD", "CD", "CD", "CD" },
         // MusicSourceAdlib
-        { "AdLib", "AdLib", "AdLib", "AdLib", "AdLib" },
+        { "AdLib", "AdLib", "AdLib", "AdLib", "AdLib", "AdLib" },
         // Cheats
-        { "CHEATS", "TRUCOS", "ASTUCES", "TRUCCHI", "CHEATS" },
+        { "CHEATS", "TRUCOS", "ASTUCES", "TRUCCHI", "CHEATS", "ЧИТЫ" },
         // CheatsEnabled
-        { "Enable cheats", "Activar trucos", "Activer les astuces", "Attiva trucchi", "Cheats aktivieren" },
+        { "Enable cheats", "Activar trucos", "Activer les astuces", "Attiva trucchi", "Cheats aktivieren", "Включить читы" },
         // CheatsEnabledHelp
         { "Turns every cheat on or off.",
           "Enciende o apaga todos los trucos.",
           "Active ou désactive toutes les astuces.",
           "Attiva o disattiva tutti i trucchi.",
-          "Schaltet alle Cheats ein oder aus." },
+          "Schaltet alle Cheats ein oder aus.",
+          "Включает или выключает все читы." },
         // InfiniteLife
-        { "Infinite life", "Vida infinita", "Vie infinie", "Vita infinita", "Unendliches Leben" },
+        { "Infinite life", "Vida infinita", "Vie infinie", "Vita infinita", "Unendliches Leben", "Бесконечное здоровье" },
         // InfiniteLifeHelp
         { "Damage never kills you; the game's traps still do.",
           "El daño nunca te mata; las trampas del juego sí.",
           "Les dégâts ne vous tuent jamais ; les pièges du jeu, si.",
           "I danni non ti uccidono mai; le trappole del gioco sì.",
-          "Schaden tötet dich nie, die Fallen des Spiels schon." },
+          "Schaden tötet dich nie, die Fallen des Spiels schon.",
+          "Урон никогда вас не убивает; ловушки игры по-прежнему убивают." },
         // KeyboardTab
-        { "Keyboard", "Teclado", "Clavier", "Tastiera", "Tastatur" },
+        { "Keyboard", "Teclado", "Clavier", "Tastiera", "Tastatur", "Клавиатура" },
         // ControllerTab
-        { "Controller", "Mando", "Manette", "Controller", "Controller" },
+        { "Controller", "Mando", "Manette", "Controller", "Controller", "Геймпад" },
         // PadHelp
-        { "Click a button (or its text) to change what it does.", "Pulsa un botón (o su texto) para cambiar lo que hace.", "Cliquez sur un bouton (ou son texte) pour changer ce qu'il fait.", "Fai clic su un pulsante (o sul suo testo) per cambiare cosa fa.", "Klicke auf eine Taste (oder ihren Text), um zu ändern, was sie tut." },
+        { "Click a button (or its text) to change what it does.", "Pulsa un botón (o su texto) para cambiar lo que hace.", "Cliquez sur un bouton (ou son texte) pour changer ce qu'il fait.", "Fai clic su un pulsante (o sul suo testo) per cambiare cosa fa.", "Klicke auf eine Taste (oder ihren Text), um zu ändern, was sie tut.", "Нажмите на кнопку (или её подпись), чтобы изменить её действие." },
         // PadNone
-        { "Not used", "Sin uso", "Non utilisé", "Non usato", "Nicht belegt" },
+        { "Not used", "Sin uso", "Non utilisé", "Non usato", "Nicht belegt", "Не используется" },
         // PadMove
-        { "Move", "Moverse", "Se déplacer", "Muoversi", "Bewegen" },
+        { "Move", "Moverse", "Se déplacer", "Muoversi", "Bewegen", "Движение" },
         // PadAction
-        { "Action: use, fight, take", "Acción: usar, luchar, coger", "Action : utiliser, combattre, prendre", "Azione: usare, combattere, prendere", "Aktion: benutzen, kämpfen, nehmen" },
+        { "Action: use, fight, take", "Acción: usar, luchar, coger", "Action : utiliser, combattre, prendre", "Azione: usare, combattere, prendere", "Aktion: benutzen, kämpfen, nehmen", "Действие: использовать, драться, взять" },
         // PadConfirm
-        { "Inventory · accept", "Inventario · aceptar", "Inventaire · valider", "Inventario · conferma", "Inventar · bestätigen" },
+        { "Inventory · accept", "Inventario · aceptar", "Inventaire · valider", "Inventario · conferma", "Inventar · bestätigen", "Инвентарь · принять" },
         // PadCancel
-        { "Back · pause menu", "Volver · menú de pausa", "Retour · menu pause", "Indietro · menu di pausa", "Zurück · Pausemenü" },
+        { "Back · pause menu", "Volver · menú de pausa", "Retour · menu pause", "Indietro · menu di pausa", "Zurück · Pausemenü", "Назад · меню паузы" },
         // PadOptions
-        { "Options (F1)", "Opciones (F1)", "Options (F1)", "Opzioni (F1)", "Optionen (F1)" },
+        { "Options (F1)", "Opciones (F1)", "Options (F1)", "Opzioni (F1)", "Optionen (F1)", "Настройки (F1)" },
         // PadLeftStick
-        { "Left stick", "Stick izquierdo", "Stick gauche", "Stick sinistro", "Linker Stick" },
+        { "Left stick", "Stick izquierdo", "Stick gauche", "Stick sinistro", "Linker Stick", "Левый стик" },
         // PadLeftStickPress
-        { "Left stick (press)", "Pulsar stick izquierdo", "Stick gauche (appui)", "Stick sinistro (pressione)", "Linker Stick (drücken)" },
+        { "Left stick (press)", "Pulsar stick izquierdo", "Stick gauche (appui)", "Stick sinistro (pressione)", "Linker Stick (drücken)", "Левый стик (нажатие)" },
         // PadRightStick
-        { "Right stick", "Stick derecho", "Stick droit", "Stick destro", "Rechter Stick" },
+        { "Right stick", "Stick derecho", "Stick droit", "Stick destro", "Rechter Stick", "Правый стик" },
         // PadRightStickPress
-        { "Right stick (press)", "Pulsar stick derecho", "Stick droit (appui)", "Stick destro (pressione)", "Rechter Stick (drücken)" },
+        { "Right stick (press)", "Pulsar stick derecho", "Stick droit (appui)", "Stick destro (pressione)", "Rechter Stick (drücken)", "Правый стик (нажатие)" },
         // PadDpad
-        { "D-pad", "Cruceta", "Croix directionnelle", "Croce direzionale", "Steuerkreuz" },
+        { "D-pad", "Cruceta", "Croix directionnelle", "Croce direzionale", "Steuerkreuz", "Крестовина" },
         // PadView
-        { "View", "Vista", "Affichage", "Visualizza", "Ansicht" },
+        { "View", "Vista", "Affichage", "Visualizza", "Ansicht", "View" },
         // PadMenu
-        { "Menu", "Menú", "Menu", "Menu", "Menü" },
+        { "Menu", "Menú", "Menu", "Menu", "Menü", "Menu" },
         // PadCross
-        { "Cross", "Cruz", "Croix", "Croce", "Kreuz" },
+        { "Cross", "Cruz", "Croix", "Croce", "Kreuz", "Крест" },
         // PadCircle
-        { "Circle", "Círculo", "Rond", "Cerchio", "Kreis" },
+        { "Circle", "Círculo", "Rond", "Cerchio", "Kreis", "Круг" },
         // PadSquare
-        { "Square", "Cuadrado", "Carré", "Quadrato", "Quadrat" },
+        { "Square", "Cuadrado", "Carré", "Quadrato", "Quadrat", "Квадрат" },
         // PadTriangle
-        { "Triangle", "Triángulo", "Triangle", "Triangolo", "Dreieck" },
+        { "Triangle", "Triángulo", "Triangle", "Triangolo", "Dreieck", "Треугольник" },
         // ImprovedBackgrounds
         { "Improved backgrounds (Alone 1 and Jack)", "Fondos mejorados (Alone 1 y Jack)",
           "Décors améliorés (Alone 1 et Jack)", "Sfondi migliorati (Alone 1 e Jack)",
-          "Verbesserte Hintergründe (Alone 1 und Jack)" },
+          "Verbesserte Hintergründe (Alone 1 und Jack)",
+          "Улучшенные фоны (Alone 1 и Jack)" },
         // ImprovedBackgroundsHelp
         { "Redrawn backgrounds and masks in high resolution, in one file.",
           "Fondos y máscaras redibujados en alta resolución, en un solo archivo.",
           "Décors et masques redessinés en haute résolution, en un seul fichier.",
           "Sfondi e maschere ridisegnati in alta risoluzione, in un solo file.",
-          "Neu gezeichnete Hintergründe und Masken in hoher Auflösung, in einer Datei." },
+          "Neu gezeichnete Hintergründe und Masken in hoher Auflösung, in einer Datei.",
+          "Перерисованные фоны и маски в высоком разрешении, в одном файле." },
         // ImprovedDownload (%d: megabytes)
-        { "Download (%d MB)", "Descargar (%d MB)", "Télécharger (%d Mo)", "Scarica (%d MB)", "Herunterladen (%d MB)" },
+        { "Download (%d MB)", "Descargar (%d MB)", "Télécharger (%d Mo)", "Scarica (%d MB)", "Herunterladen (%d MB)", "Скачать (%d МБ)" },
         // ImprovedDownloading (%d: percent)
-        { "Downloading... %d%%", "Descargando... %d%%", "Téléchargement... %d%%", "Download... %d%%", "Wird geladen... %d%%" },
+        { "Downloading... %d%%", "Descargando... %d%%", "Téléchargement... %d%%", "Download... %d%%", "Wird geladen... %d%%", "Загрузка... %d%%" },
         // ImprovedRemove
-        { "Remove", "Borrar", "Supprimer", "Elimina", "Entfernen" },
+        { "Remove", "Borrar", "Supprimer", "Elimina", "Entfernen", "Удалить" },
         // ImprovedFailed
         { "Could not download. Try again later.", "No se pudo descargar. Inténtalo más tarde.",
           "Téléchargement impossible. Réessayez plus tard.", "Download non riuscito. Riprova più tardi.",
-          "Download fehlgeschlagen. Später erneut versuchen." },
+          "Download fehlgeschlagen. Später erneut versuchen.",
+          "Не удалось скачать. Попробуйте позже." },
         // ImprovedBackgroundsAitd2
         { "Improved backgrounds (Alone 2)", "Fondos mejorados (Alone 2)",
           "Décors améliorés (Alone 2)", "Sfondi migliorati (Alone 2)",
-          "Verbesserte Hintergründe (Alone 2)" },
+          "Verbesserte Hintergründe (Alone 2)",
+          "Улучшенные фоны (Alone 2)" },
         // ImprovedBackgroundsAitd3
         { "Improved backgrounds (Alone 3)", "Fondos mejorados (Alone 3)",
           "Décors améliorés (Alone 3)", "Sfondi migliorati (Alone 3)",
-          "Verbesserte Hintergründe (Alone 3)" },
+          "Verbesserte Hintergründe (Alone 3)",
+          "Улучшенные фоны (Alone 3)" },
         // ReturnToLauncher
-        { "Return to the launcher", "Volver al launcher", "Retour au launcher", "Torna al launcher", "Zurück zum Launcher" },
+        { "Return to the launcher", "Volver al launcher", "Retour au launcher", "Torna al launcher", "Zurück zum Launcher", "Вернуться в лаунчер" },
         // ReturnToLauncherWarning
         { "The game closes and the launcher opens. Progress that is not saved will be lost.",
           "El juego se cierra y se abre el launcher. Lo que no esté guardado se perderá.",
           "Le jeu se ferme et le launcher s'ouvre. La progression non sauvegardée sera perdue.",
           "Il gioco si chiude e si apre il launcher. I progressi non salvati andranno persi.",
-          "Das Spiel wird geschlossen und der Launcher geöffnet. Nicht gespeicherter Fortschritt geht verloren." },
+          "Das Spiel wird geschlossen und der Launcher geöffnet. Nicht gespeicherter Fortschritt geht verloren.",
+          "Игра закроется, и откроется лаунчер. Несохранённый прогресс будет потерян." },
         // ReturnToLauncherCancel
-        { "Cancel", "Cancelar", "Annuler", "Annulla", "Abbrechen" },
+        { "Cancel", "Cancelar", "Annuler", "Annulla", "Abbrechen", "Отмена" },
         // InfiniteAmmo
-        { "Infinite ammunition", "Munición infinita", "Munitions infinies", "Munizioni infinite", "Unendliche Munition" },
+        { "Infinite ammunition", "Munición infinita", "Munitions infinies", "Munizioni infinite", "Unendliche Munition", "Бесконечные патроны" },
         // InfiniteAmmoHelp
         { "Your weapons never run out of shots once loaded.",
           "Tus armas nunca se quedan sin balas una vez cargadas.",
           "Vos armes ne manquent jamais de munitions une fois chargées.",
           "Le tue armi non restano mai senza colpi una volta cariche.",
-          "Deine Waffen gehen nie die Schüsse aus, sobald sie geladen sind." },
+          "Deine Waffen gehen nie die Schüsse aus, sobald sie geladen sind.",
+          "Заряженное оружие никогда не остаётся без патронов." },
     };
     if (language < 0 || language >= kAdvancedTextLanguages)
         language = 0;

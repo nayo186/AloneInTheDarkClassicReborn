@@ -52,12 +52,14 @@ bool selectLanguagePack(const std::string& language)
     if (!*name)
         return false;
     const std::string folder = matchFileCase(std::string(kLanguagesFolder) + "/" + name) + "/";
-    const std::string pak = language + ".PAK";
+    // (the Russian CD keeps its texts in ENGLISH.PAK: languageTextPak)
+    const std::string textPak = languageTextPak(language);
+    const std::string pak = textPak + ".PAK";
     if (pathExists(matchFileCase(folder + pak)))
     {
         // Loose files: only if none of the ones it needs is missing, else
         // the game would mix its scripts with other objects (BUGS.md T48)
-        const std::string missing = missingLanguageFiles(fs::u8path(folder), language, fs::u8path(homePath[0] ? homePath : "."));
+        const std::string missing = missingLanguageFiles(fs::u8path(folder), textPak, fs::u8path(homePath[0] ? homePath : "."));
         if (!missing.empty())
         {
             printf(MAIN_WARN "Language folder %s not used: it lacks %s\n", folder.c_str(), missing.c_str());
@@ -71,7 +73,7 @@ bool selectLanguagePack(const std::string& language)
         // A language pack: the same files in one file, if none it needs is missing
         if (!openLanguagePack(fs::u8path(folder.substr(0, folder.size() - 1)), pak, s_pack))
             return false;
-        const std::string missing = missingLanguagePackFiles(s_pack, language, fs::u8path(homePath[0] ? homePath : "."));
+        const std::string missing = missingLanguagePackFiles(s_pack, textPak, fs::u8path(homePath[0] ? homePath : "."));
         if (!missing.empty())
         {
             printf(MAIN_WARN "Language pack %s not used: it lacks %s\n", s_pack.path().string().c_str(), missing.c_str());

@@ -49,6 +49,10 @@ GAMES = {
         # others come one place later; text 4 is translated here
         'texts': lambda n: n if n < 4 else n + 1,
         'extra': {4: '#CВидение ...\n{1A}\n'},
+        # The team's page of the end credits does not name Old-Games.ru: a
+        # thank-you is added to the last page (the producer's), in the
+        # game's font and the credits' white (18) and blue (2), shadowed
+        'credit': (58, [('ПЕРЕВОД', 92, 18), ('БЮРО ПЕРЕВОДОВ OLD-GAMES.RU', 106, 2), ('www.old-games.ru', 120, 2)]),
     },
 }
 
@@ -188,6 +192,27 @@ def frames(entries):
     return entries[0][:768], out
 
 
+def add_credit(picture, font_data, lines):
+    """Lines of text written on a picture (320x200 first) with the game's
+    font, centred, each with a black shadow one pixel down and right."""
+    page = bytearray(picture)
+    letters = font(font_data)[2]
+    for text, y, colour in lines:
+        codes = text.encode('cp866')
+        x = (320 - sum((letters[c][0] or 3) + 1 for c in codes)) // 2
+        for code in codes:
+            width, rows = letters[code]
+            for row, pixels in enumerate(rows):
+                for column, pixel in enumerate(pixels):
+                    if pixel == '#':
+                        shadow = (y + row + 1) * 320 + x + column + 1
+                        if page[shadow] != colour:
+                            page[shadow] = 0
+                        page[(y + row) * 320 + x + column] = colour
+            x += (width or 3) + 1
+    return bytes(page)
+
+
 def main():
     if len(sys.argv) != 4 or sys.argv[1] not in GAMES:
         sys.exit('usage: makeRussianTranslation.py aitd1|aitd2 <folder of the translation> <folder of the GOG data>')
@@ -212,6 +237,9 @@ def main():
     # Letters of the font
     gog_res = pak.entries(find(gog_folder, 'ITD_RESS.PAK'))
     patch_res = pak.entries(find(patch_folder, 'ITD_RESS.PAK'))
+    if 'credit' in info:
+        page = info['credit'][0]
+        patch_res[page] = add_credit(patch_res[page], patch_res[info['font']], info['credit'][1])
     first, height, gog_letters = font(gog_res[info['font']])
     first_r, height_r, patch_letters = font(patch_res[info['font']])
     if (first, height) != (first_r, height_r):

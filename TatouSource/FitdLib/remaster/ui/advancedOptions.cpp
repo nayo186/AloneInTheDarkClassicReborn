@@ -25,6 +25,7 @@
 #include "ui/menuGamepad.h"
 #include "bgfxGlue.h"
 #include "returnToLauncher.h"
+#include "translation.h"
 
 #include <imgui.h>
 #include <atomic>
@@ -117,9 +118,11 @@ static const ImVec4 kHeader = menu::color(menu::kHeader);
 static const ImVec2 kDesignLandscape(1200.0f, 900.0f);
 static const ImVec2 kDesignPortrait(560.0f, 900.0f);
 
-// Texts in the language of the game (launcher order: EN, ES, FR, IT, DE)
+// Texts in the language of the game (launcher order: EN, ES, FR, IT, DE, RU)
 static int textLanguage()
 {
+    // Russian: a built-in translation or Alone 3's Russian CD (core/translation.h)
+    if (isRussianTranslation()) return 5;
     if (languageNameString == "ESPAGNOL") return 1;
     if (languageNameString == "FRANCAIS") return 2;
     if (languageNameString == "ITALIANO") return 3;

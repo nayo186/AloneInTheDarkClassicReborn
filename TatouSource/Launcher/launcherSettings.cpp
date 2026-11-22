@@ -10,6 +10,7 @@
 #include "narrators.h"
 #include "languageFolder.h"
 #include "gameDisc.h"
+#include "gameFiles.h"
 
 #include <SDL3/SDL.h>
 #include <algorithm>
@@ -20,6 +21,7 @@
 #include <ctime>
 #include <filesystem>
 #include <fstream>
+#include <iterator>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -416,6 +418,8 @@ std::vector<GameLanguage> findGameLanguages(const std::string& folder)
         { "ITALIANO", "Italiano" },
         { "ESPAGNOL", "Español" },
         { "DEUTSCH", "Deutsch" },
+        // Alone 3: the Russian CD of Old-Games.ru, only in a language folder
+        { "RUSSIAN", "Русский" },
     };
     std::vector<GameLanguage> found;
     const GameInstall install = findGameInstall(folder);
@@ -433,11 +437,14 @@ std::vector<GameLanguage> findGameLanguages(const std::string& folder)
         installed.clear();
     for (const GameLanguage& language : all)
     {
-        const std::string pak = language.pakName + ".PAK";
+        // (Russian keeps its texts in ENGLISH.PAK: languageTextPak)
+        const std::string textPak = languageTextPak(language.pakName);
+        const std::string pak = textPak + ".PAK";
+        const bool russian = language.pakName == "RUSSIAN";
         // AITD3 is sold one language at a time and changing it leaves the
         // other's PAK behind: only the installed one, whose voices and
         // tracks are there (BUGS.md T46)
-        bool has = disc ? discImage.hasFile(kGogDataFolder[install.game], pak)
+        bool has = russian ? false : disc ? discImage.hasFile(kGogDataFolder[install.game], pak)
             : pathExists(install.gameData / pak) && (installed.empty() || installed == language.pakName);
         if (!has && install.game == 2)
         {
@@ -449,7 +456,7 @@ std::vector<GameLanguage> findGameLanguages(const std::string& folder)
                 has = true;
             else if (languageFileExists(folder, pak.c_str()))
             {
-                const std::string missing = missingLanguageFiles(folder, language.pakName, install.gameData);
+                const std::string missing = missingLanguageFiles(folder, textPak, install.gameData);
                 has = missing.empty();
                 if (!has)
                     logLine("Language folder %s not used: it lacks %s", folder.u8string().c_str(), missing.c_str());
@@ -460,7 +467,7 @@ std::vector<GameLanguage> findGameLanguages(const std::string& folder)
                 ZipArchive pack;
                 if (openLanguagePack(folder, pak, pack))
                 {
-                    const std::string missing = missingLanguagePackFiles(pack, language.pakName, install.gameData);
+                    const std::string missing = missingLanguagePackFiles(pack, textPak, install.gameData);
                     has = missing.empty();
                     if (!has)
                         logLine("Language pack %s not used: it lacks %s", pack.path().u8string().c_str(), missing.c_str());
@@ -468,13 +475,31 @@ std::vector<GameLanguage> findGameLanguages(const std::string& folder)
             }
         }
         if (has)
-            found.push_back(language);
+        {
+            // Alone 3: the Russian CD of Old-Games.ru has its Russian texts
+            // in ENGLISH.PAK (Shared/knownEditions.h)
+            GameLanguage shown = language;
+            if (install.game == 2 && language.pakName == "ENGLISH" && !russian)
+            {
+                std::vector<unsigned char> texts;
+                if (disc)
+                    discImage.readFile(kGogDataFolder[install.game], pak, texts);
+                else
+                {
+                    std::ifstream file(install.gameData / pak, std::ios::binary);
+                    texts.assign(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
+                }
+                if (texts.size() == kRussianAitd3Texts.size && gameFileCrc32(texts) == kRussianAitd3Texts.crc)
+                    shown.displayName = "Русский";
+            }
+            found.push_back(shown);
+        }
     }
     // Alone 1 and 2: the Russian translations of Old-Games.ru, built into the
-    // game (FitdLib/core/translation.h): written in Latin letters, which
-    // every font of the menus has
+    // game (FitdLib/core/translation.h); the menus' font (Inter) has the
+    // Russian letters (Shared/ui/menuFontData.h)
     if (install.game == 0 || install.game == 1)
-        found.push_back({ "RUSSIAN", "Russian" });
+        found.push_back({ "RUSSIAN", "Русский" });
     return found;
 }
 

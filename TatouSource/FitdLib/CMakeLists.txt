@@ -215,9 +215,9 @@ target_sources(FitdLib PRIVATE "${MENU_FONT_DATA}")
 
 # The fonts of the game's texts (assets/fonts -> gameFont*.cpp, textFont.cpp):
 # Grenze Gotisch for Alone 1, IM Fell DW Pica Italic for Jack, Crimson Pro for
-# Alone 2, Arvo for Alone 3, Ponomar and Alegreya for Alone 1 and 2 in Russian
+# Alone 2, Arvo for Alone 3; in Russian Ponomar, Alegreya and Podkova
 # (all SIL OFL)
-foreach(GAME_FONT "GrenzeGotisch-SemiBold;kGameFontGothic" "IMFellDWPica-Italic;kGameFontItalic" "CrimsonPro-Medium;kGameFontBook" "Arvo-Regular;kGameFontSlab" "Ponomar-Regular;kGameFontRussian" "Alegreya-Regular;kGameFontRussianBook")
+foreach(GAME_FONT "GrenzeGotisch-SemiBold;kGameFontGothic" "IMFellDWPica-Italic;kGameFontItalic" "CrimsonPro-Medium;kGameFontBook" "Arvo-Regular;kGameFontSlab" "Ponomar-Regular;kGameFontRussian" "Alegreya-Regular;kGameFontRussianBook" "Podkova-Regular;kGameFontRussianSlab")
     list(GET GAME_FONT 0 GAME_FONT_FILE)
     list(GET GAME_FONT 1 GAME_FONT_NAME)
     set(GAME_FONT_DATA "${CMAKE_CURRENT_BINARY_DIR}/${GAME_FONT_NAME}.cpp")
