@@ -101,7 +101,7 @@ It is not a static recompilation: a static recompilation translates the machine 
 
 - **Widescreen view** (all the games): the game fills a 16:9 screen with no stretching and no black bars. The scene is enlarged to the width of the screen and the view follows the character up and down; the right stick (or Page Up / Page Down) looks up and down. Menus, the inventory and books stay whole in 4:3, with a blurred picture of the game at the sides. Choose **16:9 (zoomed)** or **16:10 (zoomed)** in **Aspect ratio** (see [Widescreen view](#widescreen-view)).
 - **Fixes** to the original: objects drawn in the wrong order, monsters stuck at windows, gaps in 3D models, lines at the edges of masks, game speed tied to the frame rate, and many more (see `docs/baseline/BUGS.md`).
-- **Launcher** to choose the game, its language (the five of the GOG and Steam editions: English, French, German, Italian, Spanish) and the data folder, with the same options as the in-game **F1** window. The menus are translated into the same five languages. When you quit a game opened from the launcher, you go back to the launcher, on the game you left.
+- **Launcher** to choose the game, its language (the five of the GOG and Steam editions: English, French, German, Italian, Spanish) and the data folder, with the same options as the in-game **F1** window. The menus are translated into the same five languages and Russian. When you quit a game opened from the launcher, you go back to the launcher, on the game you left.
 - **Screen options**: resolution, aspect ratio (4:3, 16:10, stretched, and the zoomed widescreen view), integer scaling, fullscreen, frame limit, VSync.
 - **Optional effects**: edge smoothing (FXAA) on the 3D models, bloom from the painted backgrounds, film grain, CRT scanlines, ambient occlusion (SSAO), enhanced text (in *Alone in the Dark* and *Jack in the Dark*, a new smooth font with the game's own capitals; pages and lines stay as in the original).
 - **Custom backgrounds**: export every background and mask of the game, enlarge or repaint them, and the game uses yours. Ready-made **HD packs** are available for *Alone in the Dark*, *Jack in the Dark*, *Alone in the Dark 2* and *Alone in the Dark 3*; the improved backgrounds and masks of *Alone in the Dark* and *Jack* download from the launcher in one click (see [Custom backgrounds](#custom-backgrounds)). Backgrounds, masks, animated sequences, music and narrators can all be changed: see the **[modding guide](MODDING.md)**.
@@ -115,6 +115,7 @@ It is not a static recompilation: a static recompilation translates the machine 
 - **CD or AdLib music** in *Alone in the Dark* and *Alone in the Dark 2*, which come with both.
 - **Narrators**: the French CD's narrator (from your own CD) or a fans' dubbing, with any text language; in *Alone in the Dark 2* and *3* the narrator reads the books from the CD, and fans can dub it too (see [Narrators](#narrators)).
 - ***Alone in the Dark 3* in any of its languages** over your GOG or Steam installation, with the files of that language (English, French, German, Italian, and Spanish from the original Spanish CD): texts, voices and narrator (see [Other languages in Alone in the Dark 3](#other-languages-in-alone-in-the-dark-3)).
+- **Russian**: *Alone in the Dark* and *Alone in the Dark 2* in Russian, built in, with the translations of the [Old-Games.ru](https://www.old-games.ru) translation bureau; *Alone in the Dark 3* with their Russian CD (see [Russian](#russian)).
 - **Saves** in the format of the GOG edition: saves made in the GOG game load here (the three *Alone in the Dark* games).
 - **Menus** that adapt to any window size and work with mouse, keyboard, controller and touch.
 - **Android**: the four games on a phone, with on-screen controls as a controller (see [On Android](#on-android-experimental)).
@@ -155,7 +156,7 @@ Tatou.exe --game aitd3
 Only if you want something else for one entry, add it to the line:
 
 - `--data "<folder>"`: another game folder, the same kind you would choose with **Browse** (for example `--data "C:\GOG Games\Alone in the Dark"` or `--data "C:\GOG Games\Alone in the Dark 2"`);
-- `--lang <language>`: another language of the game for that session (`ENGLISH`, `FRANCAIS`, `DEUTSCH`, `ESPAGNOL` or `ITALIANO`).
+- `--lang <language>`: another language of the game for that session (`ENGLISH`, `FRANCAIS`, `DEUTSCH`, `ESPAGNOL` or `ITALIANO`; `RUSSIAN` in *Alone in the Dark* 1 and 2, and in *3* with the Russian CD in its `Languages` folder).
 
 ### Your original CD
 
@@ -166,7 +167,7 @@ If you own the original CD of a game, you can play from an image of it instead o
 
 Everything is read straight from the image: the game files (from its `INDARK`, `INDARK2` or `INDARK3` folder, and *Jack in the Dark* from `JACK`), the voices and the music tracks. Nothing is extracted, and nothing is written next to the image: options, saves and the log go to `UserData`, as with GOG. The languages on the CD are offered in the launcher.
 
-**Editions.** The game knows the files of the GOG and Steam editions, which are the English CDs, and of the Spanish CD of *Alone in the Dark 3*. Other CDs (other countries, other years) should work too, but some may have small differences: the launcher checks the files of your CD as those of any game folder and warns you if one is in no edition we know (see [Checking the game files](#checking-the-game-files)). If something goes wrong, please open an issue saying which edition you have (language, year) and attach `launcher.log` and `tatou.log`: they list the files that differ, which is what we need to make it work. If everything works, please tell us too, so your edition can be added to the known ones.
+**Editions.** The game knows the files of the GOG and Steam editions, which are the English CDs, and of the Spanish CD of *Alone in the Dark 3* and the Russian CD of Old-Games.ru (see [Russian](#russian)). Other CDs (other countries, other years) should work too, but some may have small differences: the launcher checks the files of your CD as those of any game folder and warns you if one is in no edition we know (see [Checking the game files](#checking-the-game-files)). If something goes wrong, please open an issue saying which edition you have (language, year) and attach `launcher.log` and `tatou.log`: they list the files that differ, which is what we need to make it work. If everything works, please tell us too, so your edition can be added to the known ones.
 
 ### Checking the game files
 
@@ -190,6 +191,15 @@ GOG and Steam sell the same edition of each game, with the same languages:
 
 The narrator reads with any text language. A French narrator only came on the old French CD of *Alone in the Dark* (1993), not in GOG or Steam; if you own it, see [Narrators](#narrators).
 
+### Russian
+
+The game can be played in Russian thanks to the translations of the **[Old-Games.ru](https://www.old-games.ru) translation bureau**: thank you! In Russian, the credits of *Alone in the Dark* and *Alone in the Dark 2* name their team.
+
+- ***Alone in the Dark* and *Alone in the Dark 2***: Russian is built into the game. Choose **Русский** in **Game language**: the texts, the books and the texts drawn in pictures and animations are in Russian, over your GOG or Steam edition. The voices stay those of your edition.
+- ***Alone in the Dark 3***: with the Russian CD of Old-Games.ru (version 1.0, 2019, as `.bin` and `.cue`, `.iso` or its files). Put it in `UserData\AITD3\Languages\Russian` and choose **Русский** in **Game language**, or choose its folder as the game folder with **Browse**. Nothing is extracted.
+
+With **Enhanced text**, the Russian letters are drawn with the game's own capitals and a free font with the Russian alphabet (Ponomar, Alegreya and Podkova). The menus (launcher and F1) can be in Russian too: **Русский** in **Interface**.
+
 **Changing them** takes a click:
 
 - **Game language:** the **Game language** list on each game's page of the launcher. It is kept for next time.
@@ -200,7 +210,7 @@ The narrator reads with any text language. A French narrator only came on the ol
 
 GOG and Steam sell *Alone in the Dark 3* one language at a time (English, French, German or Italian), and each language has its own texts, voices, narrator and some data files. Spanish was only on the original Spanish CD. The launcher offers the language of your installation; any other one you own can be added as a folder, and the game reads it over your installation without changing it:
 
-1. Open `UserData\AITD3\Languages` (next to `Launcher.exe`; the launcher creates it the first time it opens) and make a folder in it named `English`, `French`, `German`, `Italian` or `Spanish`.
+1. Open `UserData\AITD3\Languages` (next to `Launcher.exe`; the launcher creates it the first time it opens) and make a folder in it named `English`, `French`, `German`, `Italian`, `Spanish` or `Russian`.
 2. Put that language's files in it, from the `INDARK3` folder of an installation in that language (or the whole folder):
 
    | Language | Files |
@@ -210,10 +220,11 @@ GOG and Steam sell *Alone in the Dark 3* one language at a time (English, French
    | German | `DEUTSCH.PAK`, `LISTSAMP.PAK`, `LISTLIFE.PAK`, `ITD_RESS.PAK`, `LISTMAT.PAK`, `LISTTRAK.PAK`, `PRIORITY.ITD` |
    | Italian | `ITALIANO.PAK`, `LISTSAMP.PAK`, `LISTLIFE.PAK`, `LISTANIM.PAK`, `ITD_RESS.PAK`, `LISTMAT.PAK`, `LISTTRAK.PAK`, `PRIORITY.ITD` |
    | Spanish (CD) | `ESPAGNOL.PAK`, `LISTSAMP.PAK`, `LISTLIFE.PAK`, `PRIORITY.ITD`, `ITD_RESS.PAK` |
+   | Russian (CD of Old-Games.ru) | the whole `INDARK3` folder of the CD (its Russian texts are in its `ENGLISH.PAK`) |
 
    With a French installation, the other languages also need its `OBJETS.ITD`, and French over any other one needs its own: the French version numbers its scripts differently. A folder that lacks a file it needs is not offered (the launcher writes which one in `launcher.log`).
 3. For the voiced intro and the narrator, add that language's audio tracks: the files of its `MUSIC` folder (`Track02.ogg`...) as they are, or named after the track minus 1 (`01.ogg`...), as `.ogg`, `.wav` or `.mp3`. Without them, the texts and the voices of the scenes are in that language and the intro and the books are read by the narrator of your installation. The narrator's timing of each language is built into the game.
-4. The Spanish CD also works as **an image**: its `.bin` (or `.img`) with its `.cue` of the same name in the `Spanish` folder. Everything is read straight from the image; nothing is extracted.
+4. The Spanish CD and the Russian CD also work as **an image**: its `.bin` (or `.img`) with its `.cue` of the same name in the `Spanish` or `Russian` folder. Everything is read straight from the image; nothing is extracted.
 
    **Or one file:** the files of a language folder (and its tracks) can go in a single `Spanish.language` file (or `French.language`...) in `Languages`, instead of the folder (a language pack, see the [modding guide](MODDING.md#language-packs-language)). A folder with the same name comes first.
 5. In the launcher, choose the language in the **Game language** list of the *Alone in the Dark 3* page (it appears once the folder is found) and press **Play**.

@@ -4,6 +4,17 @@ Alone in the Dark: Classic Reborn started on 2026-10-23 from [Alone in the Dark:
 
 This repository was published with a single starting commit, to keep it light: the early history carried large files that are no longer part of the project. Below are the changes of each release and, after them, the changes made in this fork before it was published, newest first, one line per change. The reasons behind larger removals are explained in `docs/DESCARTADO.md` and the fixes in `docs/baseline/BUGS.md`.
 
+## v1.8.6 (2026-11-22)
+
+The trilogy in Russian, thanks to the translations of the Old-Games.ru translation bureau, and the menus in Russian.
+
+- *Alone in the Dark*: Russian built into the game, from the translation of the Old-Games.ru translation bureau (2011, www.old-games.ru): texts, books, the game's font with the Russian letters, and the title of the start menu's book. Choose **Русский** in **Game language**. No game file is included: the game puts the translation over your own files (BUGS.md C99)
+- *Alone in the Dark 2*: Russian built into the game, from the translation of the Old-Games.ru translation bureau (2013): texts, books, the font, and the texts drawn in pictures, in the intro and in the ending; the last page of the end credits names the Old-Games.ru translation bureau and its address (BUGS.md A60, A61)
+- *Alone in the Dark 3*: the Russian CD of the Old-Games.ru translation bureau (2019) works as the game folder or as a language, in `UserData\AITD3\Languages\Russian` (as `.bin` and `.cue`, `.iso` or its files); it is a known edition, and the launcher offers it as **Русский** (BUGS.md T54)
+- All three, in Russian: **Enhanced text** draws the Russian letters with the game's own capitals and a free font with the Russian alphabet: Ponomar (*Alone in the Dark*), Alegreya (*Alone in the Dark 2*) and Podkova (*Alone in the Dark 3*). Remade backgrounds never hide a picture with Russian texts (BUGS.md C99, A60, T54)
+- Launcher and F1: the menus can be in Russian (**Русский** in **Interface**); F1 is in Russian when the game is (BUGS.md C100)
+- README: a Russian section
+
 ## v1.8.5 (2026-11-21)
 
 A quick fix for the new **Return to the launcher**.
