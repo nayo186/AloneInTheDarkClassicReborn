@@ -180,17 +180,21 @@ add_custom_command(
 )
 target_sources(FitdLib PRIVATE "${TEXT_FIXES_DATA}")
 
-# Languages built into the game (assets/translations -> translationRussian.cpp,
-# core/translation.cpp): the Russian translation of Alone 1 by Old-Games.ru
-set(TRANSLATION_RUSSIAN_DATA "${CMAKE_CURRENT_BINARY_DIR}/translationRussian.cpp")
-add_custom_command(
-    OUTPUT "${TRANSLATION_RUSSIAN_DATA}"
-    COMMAND ${CMAKE_COMMAND} -DFILE=${CMAKE_CURRENT_SOURCE_DIR}/assets/translations/aitd1-russian.txt
-            -DNAME=kTranslationRussian -DOUTPUT=${TRANSLATION_RUSSIAN_DATA} -P "${CMAKE_CURRENT_SOURCE_DIR}/../Shared/embedPicture.cmake"
-    DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/assets/translations/aitd1-russian.txt" "${CMAKE_CURRENT_SOURCE_DIR}/../Shared/embedPicture.cmake"
-    COMMENT "Embedding the Russian translation"
-)
-target_sources(FitdLib PRIVATE "${TRANSLATION_RUSSIAN_DATA}")
+# Languages built into the game (assets/translations -> translation*.cpp,
+# core/translation.cpp): the Russian translations of Alone 1 and 2 by Old-Games.ru
+foreach(TRANSLATION "aitd1-russian;kTranslationRussian" "aitd2-russian;kTranslationRussianAitd2")
+    list(GET TRANSLATION 0 TRANSLATION_FILE)
+    list(GET TRANSLATION 1 TRANSLATION_NAME)
+    set(TRANSLATION_DATA "${CMAKE_CURRENT_BINARY_DIR}/${TRANSLATION_NAME}.cpp")
+    add_custom_command(
+        OUTPUT "${TRANSLATION_DATA}"
+        COMMAND ${CMAKE_COMMAND} -DFILE=${CMAKE_CURRENT_SOURCE_DIR}/assets/translations/${TRANSLATION_FILE}.txt
+                -DNAME=${TRANSLATION_NAME} -DOUTPUT=${TRANSLATION_DATA} -P "${CMAKE_CURRENT_SOURCE_DIR}/../Shared/embedPicture.cmake"
+        DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/assets/translations/${TRANSLATION_FILE}.txt" "${CMAKE_CURRENT_SOURCE_DIR}/../Shared/embedPicture.cmake"
+        COMMENT "Embedding the translation ${TRANSLATION_FILE}"
+    )
+    target_sources(FitdLib PRIVATE "${TRANSLATION_DATA}")
+endforeach()
 
 # The menus' fonts compiled in: Inter, F1's (and the launcher's on Android,
 # shown by the game), and Gelasio (Shared/assets/fonts -> menuFontData.cpp,
@@ -211,8 +215,9 @@ target_sources(FitdLib PRIVATE "${MENU_FONT_DATA}")
 
 # The fonts of the game's texts (assets/fonts -> gameFont*.cpp, textFont.cpp):
 # Grenze Gotisch for Alone 1, IM Fell DW Pica Italic for Jack, Crimson Pro for
-# Alone 2, Arvo for Alone 3, Ponomar for Alone 1 in Russian (all SIL OFL)
-foreach(GAME_FONT "GrenzeGotisch-SemiBold;kGameFontGothic" "IMFellDWPica-Italic;kGameFontItalic" "CrimsonPro-Medium;kGameFontBook" "Arvo-Regular;kGameFontSlab" "Ponomar-Regular;kGameFontRussian")
+# Alone 2, Arvo for Alone 3, Ponomar and Alegreya for Alone 1 and 2 in Russian
+# (all SIL OFL)
+foreach(GAME_FONT "GrenzeGotisch-SemiBold;kGameFontGothic" "IMFellDWPica-Italic;kGameFontItalic" "CrimsonPro-Medium;kGameFontBook" "Arvo-Regular;kGameFontSlab" "Ponomar-Regular;kGameFontRussian" "Alegreya-Regular;kGameFontRussianBook")
     list(GET GAME_FONT 0 GAME_FONT_FILE)
     list(GET GAME_FONT 1 GAME_FONT_NAME)
     set(GAME_FONT_DATA "${CMAKE_CURRENT_BINARY_DIR}/${GAME_FONT_NAME}.cpp")

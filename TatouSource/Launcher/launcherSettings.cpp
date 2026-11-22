@@ -470,10 +470,10 @@ std::vector<GameLanguage> findGameLanguages(const std::string& folder)
         if (has)
             found.push_back(language);
     }
-    // Alone 1: the Russian translation of Old-Games.ru, built into the game
-    // (FitdLib/core/translation.h): written in Latin letters, which every
-    // font of the menus has
-    if (install.game == 0)
+    // Alone 1 and 2: the Russian translations of Old-Games.ru, built into the
+    // game (FitdLib/core/translation.h): written in Latin letters, which
+    // every font of the menus has
+    if (install.game == 0 || install.game == 1)
         found.push_back({ "RUSSIAN", "Russian" });
     return found;
 }

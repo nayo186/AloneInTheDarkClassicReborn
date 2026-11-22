@@ -4,27 +4,35 @@
 //
 // Built-in languages (translation.h). The file of a translation (made by
 // tools/makeRussianTranslation.py) has, after its comments:
-//   @@ text N                the text N of the language PAK, in UTF-8; a line
-//                            break is \r\n and {XX} is a byte of its own
-//   @@ glyph XX W            a letter of the game's font: W columns, then
-//                            one line of # and . for each of its rows
-//   @@ patch ITD_RESS N SIZE an entry of the player's ITD_RESS (of that
-//                            size), then lines "offset HEX": the new bytes
+//   @@ text N            the text N of the language PAK, in UTF-8; a line
+//                        break is \r\n and {XX} is a byte of its own
+//   @@ glyph XX W        a letter of the game's font: W columns, then one
+//                        line of # and . for each of its rows
+//   @@ patch PAK N SIZE  an entry of the player's PAK (of that size), then
+//                        the bytes that change
+//   @@ frame PAK N       a frame of a sequence (unpacked), then the pixels
+//                        that change
 //   @@ end
+// The changes are base64 of zlib data: runs of a 32-bit offset, a 16-bit
+// length and the new bytes.
 ///////////////////////////////////////////////////////////////////////////////
 
 #include "common.h"
 #include "translation.h"
 #include "consoleLog.h"
 
+#include "zlib.h"
+
 #include <cstring>
 #include <map>
 #include <mutex>
 #include <sstream>
 
-// The translation compiled in (assets/translations, CMakeLists.txt)
+// The translations compiled in (assets/translations, CMakeLists.txt)
 extern const unsigned char kTranslationRussian[];
 extern const size_t kTranslationRussian_size;
+extern const unsigned char kTranslationRussianAitd2[];
+extern const size_t kTranslationRussianAitd2_size;
 
 namespace
 {
@@ -35,18 +43,23 @@ struct Glyph
     std::vector<std::string> rows;
 };
 
-struct Patch
+// The runs of a change, unpacked: offset (4 bytes), length (2), bytes
+struct Change
 {
-    size_t size = 0;
-    std::vector<std::pair<size_t, std::vector<u8>>> bytes;
+    size_t size = 0;           // of the entry it is made for (0: a frame)
+    std::vector<u8> runs;
 };
 
+typedef std::pair<std::string, int> EntryKey;   // PAK and entry (or frame)
+
 bool s_active = false;
-bool s_parsed = false;
+int s_game = AITD1;           // the game of the translation in use
+int s_fontEntry = 5;          // the font's entry of ITD_RESS in that game
 std::vector<std::vector<u8>> s_texts;
 std::map<int, Glyph> s_glyphs;
-std::map<int, Patch> s_patches;          // by ITD_RESS entry
-std::map<int, std::vector<u8>> s_built;  // ITD_RESS entries already changed
+std::map<EntryKey, Change> s_patches;
+std::map<EntryKey, Change> s_frames;
+std::map<EntryKey, std::vector<u8>> s_built;   // entries already changed
 std::mutex s_mutex;
 
 // The DOS code page 866 code of a Unicode letter ('?' if it has none)
@@ -97,43 +110,103 @@ void appendLine(const std::string& line, std::vector<u8>& out)
     }
 }
 
-void parse()
+// base64, then zlib: the runs of a change
+bool unpackChange(const std::string& text, std::vector<u8>& out)
 {
-    if (s_parsed)
-        return;
-    s_parsed = true;
-    std::istringstream file(std::string((const char*)kTranslationRussian, kTranslationRussian_size));
-    std::string line;
-    enum { None, Text, GlyphRows, PatchBytes } section = None;
-    std::vector<std::string> textLines;
-    int current = -1;
-    auto finishText = [&]() {
-        if (section != Text || current < 0)
-            return;
-        if ((int)s_texts.size() <= current)
-            s_texts.resize(current + 1);
-        std::vector<u8>& text = s_texts[current];
-        for (size_t n = 0; n < textLines.size(); n++)
+    static const std::string kDigits = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    std::vector<u8> packed;
+    int value = 0, bits = 0;
+    for (char c : text)
+    {
+        const size_t digit = kDigits.find(c);
+        if (digit == std::string::npos)
+            continue;   // '=' and line ends
+        value = (value << 6) | (int)digit;
+        bits += 6;
+        if (bits >= 8)
         {
-            if (n)
-            {
-                text.push_back('\r');
-                text.push_back('\n');
-            }
-            appendLine(textLines[n], text);
+            bits -= 8;
+            packed.push_back((u8)(value >> bits));
+            value &= (1 << bits) - 1;
         }
+    }
+    z_stream stream = {};
+    if (inflateInit(&stream) != Z_OK)
+        return false;
+    stream.next_in = packed.data();
+    stream.avail_in = (uInt)packed.size();
+    int result = Z_OK;
+    u8 buffer[16384];
+    while (result == Z_OK)
+    {
+        stream.next_out = buffer;
+        stream.avail_out = sizeof(buffer);
+        result = inflate(&stream, Z_NO_FLUSH);
+        out.insert(out.end(), buffer, buffer + (sizeof(buffer) - stream.avail_out));
+    }
+    inflateEnd(&stream);
+    return result == Z_STREAM_END;
+}
+
+// The runs of a change over data (of size bytes)
+void applyChange(const Change& change, u8* data, size_t size)
+{
+    const std::vector<u8>& runs = change.runs;
+    for (size_t i = 0; i + 6 <= runs.size();)
+    {
+        const size_t offset = READ_LE_U32((void*)&runs[i]);
+        const size_t length = READ_LE_U16((void*)&runs[i + 4]);
+        i += 6;
+        if (i + length > runs.size())
+            break;
+        if (offset + length <= size)
+            memcpy(data + offset, &runs[i], length);
+        i += length;
+    }
+}
+
+void parse(const unsigned char* file, size_t fileSize)
+{
+    std::istringstream lines(std::string((const char*)file, fileSize));
+    std::string line;
+    enum { None, Text, GlyphRows, Changes } section = None;
+    std::vector<std::string> textLines;
+    std::string changeText;
+    Change* change = nullptr;
+    int current = -1;
+    auto finish = [&]() {
+        if (section == Text && current >= 0)
+        {
+            if ((int)s_texts.size() <= current)
+                s_texts.resize(current + 1);
+            std::vector<u8>& text = s_texts[current];
+            for (size_t n = 0; n < textLines.size(); n++)
+            {
+                if (n)
+                {
+                    text.push_back('\r');
+                    text.push_back('\n');
+                }
+                appendLine(textLines[n], text);
+            }
+        }
+        else if (section == Changes && change && !unpackChange(changeText, change->runs))
+            printf(MAIN_WARN "Russian translation: a change could not be read\n");
         textLines.clear();
+        changeText.clear();
+        change = nullptr;
     };
-    while (std::getline(file, line))
+    while (std::getline(lines, line))
     {
         if (!line.empty() && line.back() == '\r')
             line.pop_back();
         if (line.compare(0, 3, "@@ ") == 0)
         {
-            finishText();
+            finish();
             std::istringstream header(line.substr(3));
-            std::string kind;
+            std::string kind, pak;
             header >> kind;
+            section = None;
             if (kind == "text")
             {
                 header >> current;
@@ -147,46 +220,28 @@ void parse()
                 header >> s_glyphs[current].width;
                 section = GlyphRows;
             }
-            else if (kind == "patch")
+            else if (kind == "patch" || kind == "frame")
             {
-                std::string pak;
                 header >> pak >> current;
-                header >> s_patches[current].size;
-                section = PatchBytes;
+                change = &(kind == "patch" ? s_patches : s_frames)[EntryKey(pak, current)];
+                if (kind == "patch")
+                    header >> change->size;
+                section = Changes;
             }
-            else
-                section = None;
             continue;
         }
-        if (section == None && (line.empty() || line[0] == '#'))
+        if (section == None)
             continue;
-        switch (section)
-        {
-        case Text:
+        if (section == Text)
             textLines.push_back(line);
-            break;
-        case GlyphRows:
+        else if (section == GlyphRows)
             s_glyphs[current].rows.push_back(line);
-            break;
-        case PatchBytes:
-        {
-            std::istringstream values(line);
-            size_t offset = 0;
-            std::string hex;
-            values >> offset >> hex;
-            std::vector<u8> bytes;
-            for (size_t i = 0; i + 1 < hex.size(); i += 2)
-                bytes.push_back((u8)strtol(hex.substr(i, 2).c_str(), nullptr, 16));
-            s_patches[current].bytes.emplace_back(offset, std::move(bytes));
-            break;
-        }
-        default:
-            break;
-        }
+        else
+            changeText += line;
     }
-    finishText();
-    printf(MAIN_TAG "Russian translation: %d texts, %d letters, %d pictures\n", (int)s_texts.size(),
-        (int)s_glyphs.size(), (int)s_patches.size());
+    finish();
+    printf(MAIN_TAG "Russian translation: %d texts, %d letters, %d pictures, %d frames\n", (int)s_texts.size(),
+        (int)s_glyphs.size(), (int)s_patches.size(), (int)s_frames.size());
 }
 
 // The game's font with the translation's letters: each one is added at
@@ -207,15 +262,12 @@ bool addGlyphs(std::vector<u8>& font)
     const size_t bitmapsEnd = 8 + (size_t)height * rowBytes;
     if (height <= 0 || rowBytes <= 0 || tableOffset < (int)bitmapsEnd || bitmapsEnd > font.size())
         return false;
-    for (const auto& glyph : s_glyphs)
-        if (glyph.first < firstCode)
-            return false;
 
     int bits = rowBytes * 8;
     std::map<int, int> start;
     for (const auto& glyph : s_glyphs)
     {
-        if ((int)glyph.second.rows.size() < height && glyph.second.width)
+        if (glyph.first < firstCode || ((int)glyph.second.rows.size() < height && glyph.second.width))
             return false;
         start[glyph.first] = bits;
         bits += glyph.second.width;
@@ -238,7 +290,7 @@ bool addGlyphs(std::vector<u8>& font)
                     out[8 + (size_t)row * newRowBytes + (bit >> 3)] |= (u8)(0x80 >> (bit & 7));
                 }
     out.insert(out.end(), font.begin() + bitmapsEnd, font.end());
-    // The table: 256 entries (GOG's stops two bytes short of the last)
+    // The table: 256 entries (GOG's can stop before the last ones)
     const size_t newTable = (size_t)table + grow;
     if (out.size() < newTable + 512)
         out.resize(newTable + 512, 0);
@@ -267,18 +319,36 @@ bool addGlyphs(std::vector<u8>& font)
 
 bool selectTranslation(const std::string& language, const std::string& game)
 {
-    s_active = language == kRussianLanguage && (game.empty() || game == "aitd1");
-    if (!s_active)
+    s_active = false;
+    if (language != kRussianLanguage)
+        return false;
+    const unsigned char* file = nullptr;
+    size_t size = 0;
+    if (game.empty() || game == "aitd1")
+    {
+        s_game = AITD1;
+        s_fontEntry = 5;
+        file = kTranslationRussian;
+        size = kTranslationRussian_size;
+    }
+    else if (game == "aitd2")
+    {
+        s_game = AITD2;
+        s_fontEntry = 1;
+        file = kTranslationRussianAitd2;
+        size = kTranslationRussianAitd2_size;
+    }
+    else
         return false;
     std::lock_guard<std::mutex> lock(s_mutex);
-    parse();
+    parse(file, size);
     s_active = !s_texts.empty();
     return s_active;
 }
 
 bool isRussianTranslation()
 {
-    return s_active && g_gameId == AITD1;
+    return s_active && g_gameId == s_game;
 }
 
 int translatedPakCount(const char* name)
@@ -295,19 +365,20 @@ const std::vector<u8>* translatedPakEntry(const char* name, int index)
     std::lock_guard<std::mutex> lock(s_mutex);
     if (strcmp(name, kRussianLanguage) == 0)
         return index >= 0 && index < (int)s_texts.size() ? &s_texts[index] : nullptr;
-    if (g_gameId != AITD1 || strcmp(name, "ITD_RESS") != 0)
+    if (g_gameId != s_game)
         return nullptr;
-    const bool font = index == 5;
-    auto patch = s_patches.find(index);
+    const EntryKey key(name, index);
+    const bool font = strcmp(name, "ITD_RESS") == 0 && index == s_fontEntry;
+    auto patch = s_patches.find(key);
     if (!font && patch == s_patches.end())
         return nullptr;
-    auto built = s_built.find(index);
+    auto built = s_built.find(key);
     if (built != s_built.end())
         return built->second.empty() ? nullptr : &built->second;
 
     // The player's own entry, with the translation's changes; if it is not
     // the one the translation was made for, it stays as it is
-    std::vector<u8>& entry = s_built[index];
+    std::vector<u8>& entry = s_built[key];
     if (!readPakEntryFromFile(name, index, entry))
         entry.clear();
     else if (font)
@@ -320,12 +391,31 @@ const std::vector<u8>* translatedPakEntry(const char* name, int index)
     }
     else if (entry.size() != patch->second.size)
     {
-        printf(MAIN_WARN "Russian translation: ITD_RESS %d is not the expected one, left as it is\n", index);
+        printf(MAIN_WARN "Russian translation: %s %d is not the expected one, left as it is\n", name, index);
         entry.clear();
     }
     else
-        for (const auto& bytes : patch->second.bytes)
-            if (bytes.first + bytes.second.size() <= entry.size())
-                memcpy(&entry[bytes.first], bytes.second.data(), bytes.second.size());
+        applyChange(patch->second, entry.data(), entry.size());
     return entry.empty() ? nullptr : &entry;
+}
+
+bool translateSequenceFrame(const char* name, int frame, const u8* pixels, u8* out)
+{
+    if (!isRussianTranslation())
+        return false;
+    auto found = s_frames.find(EntryKey(name, frame));
+    if (found == s_frames.end())
+        return false;
+    memcpy(out, pixels, 320 * 200);
+    applyChange(found->second, out, 320 * 200);
+    return true;
+}
+
+bool isTranslatedPicture(const char* name, int index, bool sequence)
+{
+    if (!isRussianTranslation())
+        return false;
+    if (sequence)
+        return s_frames.count(EntryKey(name, index)) != 0;
+    return s_patches.count(EntryKey(name, index)) != 0;
 }

@@ -56,6 +56,8 @@ extern const unsigned char kGameFontSlab[];
 extern const size_t kGameFontSlab_size;
 extern const unsigned char kGameFontRussian[];
 extern const size_t kGameFontRussian_size;
+extern const unsigned char kGameFontRussianBook[];
+extern const size_t kGameFontRussianBook_size;
 
 // The palette of the game (platform/rendererBGFX.cpp) and the size of the
 // scene picture (platform/bgfxGlue.cpp)
@@ -297,10 +299,13 @@ void loadFont()
     // Each game its own: Grenze Gotisch with Alone 1's gothic capitals,
     // IM Fell DW Pica Italic with Jack's script capitals, Crimson Pro with
     // Alone 2's book capitals, Arvo with Alone 3's slab (western) capitals
-    // (Grenze has no Russian letters: Alone 1 in Russian has Ponomar)
-    const unsigned char* data = g_gameId == JACK ? kGameFontItalic : g_gameId == AITD2 ? kGameFontBook
+    // (Grenze and Crimson Pro have no Russian letters: in Russian, Alone 1
+    // has Ponomar and Alone 2 Alegreya)
+    const bool russian = isRussianTranslation();
+    const unsigned char* data = g_gameId == JACK ? kGameFontItalic
+                              : g_gameId == AITD2 ? (russian ? kGameFontRussianBook : kGameFontBook)
                               : g_gameId == AITD3 ? kGameFontSlab
-                              : isRussianTranslation() ? kGameFontRussian : kGameFontGothic;
+                              : russian ? kGameFontRussian : kGameFontGothic;
     s_fontReady = stbtt_InitFont(&s_font, data, stbtt_GetFontOffsetForIndex(data, 0)) != 0;
 
     // The small letters stand where the game's "a" ends

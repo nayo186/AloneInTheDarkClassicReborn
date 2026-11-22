@@ -123,12 +123,18 @@ static CustomFile findCustom(const std::string& folderName, const char* packFold
 // extensions count too (Linux tells them apart)
 static CustomFile customFile(const std::string& base)
 {
-    // The built-in Russian of Alone 1 has its own title on the start menu's
-    // book (core/translation.h): a picture made for the English one would hide it
-    if (base == "ITD_RESS_013" && isRussianTranslation())
-        return CustomFile();
     static const char* const kExtensions[] = { ".png", ".jpg", ".jpeg", ".PNG", ".JPG", ".JPEG" };
     return findCustom(folder(customPicturesFolder()), kPicturesFolder, base, kExtensions, 6);
+}
+
+// The player's picture for an entry of a PAK or a frame of a sequence; none
+// where a built-in translation draws its texts (core/translation.h): a
+// picture made for the original would hide them
+static CustomFile customPicture(const char* pakName, int index, bool sequence)
+{
+    if (isTranslatedPicture(pakName, index, sequence))
+        return CustomFile();
+    return customFile(pictureBase(pakName, index, sequence));
 }
 
 // The player's file of that mask ("CAMERA00_000_mask_0_1.png")
@@ -391,7 +397,7 @@ static void prefetchRoomCameras()
     snprintf(pakName, sizeof(pakName), "CAMERA%02d", g_currentFloor);
     for (const u16 camera : roomDataTable[currentRoom].cameraIdxTable)
     {
-        const CustomFile file = customFile(pictureBase(pakName, camera, false));
+        const CustomFile file = customPicture(pakName, camera, false);
         if (file.found)
             requestDecode(file);
     }
@@ -412,7 +418,7 @@ static void loadCustom(Picture& picture)
     if (!picture.known())
         return;
 
-    const CustomFile file = customFile(pictureBase(picture.pakName, picture.index, picture.sequence));
+    const CustomFile file = customPicture(picture.pakName, picture.index, picture.sequence);
     if (!file.found)
         return;
     picture.customTime = file.time;
@@ -491,7 +497,7 @@ static void pollCustom(Picture& picture)
 {
     if (!picture.known())
         return;
-    const CustomFile file = customFile(pictureBase(picture.pakName, picture.index, picture.sequence));
+    const CustomFile file = customPicture(picture.pakName, picture.index, picture.sequence);
     if (!file.found)
     {
         if (bgfx::isValid(picture.custom))
@@ -652,7 +658,7 @@ static void onSequenceFrameShown(const char* pakName, int frame, const unsigned 
         return;
     for (int next = frame + 1; next <= frame + kSequenceFramesAhead; next++)
     {
-        const CustomFile file = customFile(pictureBase(pakName, next, true));
+        const CustomFile file = customPicture(pakName, next, true);
         if (file.found)
             requestDecode(file);
     }
@@ -992,7 +998,7 @@ static void buildSides()
     // The picture in RGBA
     std::vector<unsigned char> rgba;
     int width = 0, height = 0;
-    const CustomFile file = customFile(pictureBase("ITD_RESS", index, false));
+    const CustomFile file = customPicture("ITD_RESS", index, false);
     if (s_sidesCustom && file.found)
     {
         unsigned char* pixels = loadCustomPixels(file, &width, &height, 4);

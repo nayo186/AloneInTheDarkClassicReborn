@@ -8,6 +8,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include "common.h"
+#include "translation.h"
 #include "consoleLog.h"
 #include "settings.h"
 #include "coreHooks.h"
@@ -285,9 +286,15 @@ void playSequence(int sequenceIdx, int fadeStart, int fadeOutVar)
                 }
             }
 
+			// The built-in Russian (core/translation.h) puts its texts on a copy
+			// of the frame: the next frames still unpack over the game's own
+			static unsigned char translatedFrame[320 * 200];
+			unsigned char* shownFrame = translateSequenceFrame(buffer, currentFrameId, (const u8*)aux, translatedFrame)
+				? translatedFrame : (unsigned char*)aux;
+
 			// A remade frame of the player replaces it (customBackgrounds.cpp)
-			coreSequenceFrameShown(buffer, currentFrameId, (const unsigned char*)aux);
-			osystem_CopyBlockPhys((unsigned char*)aux,0,0,320,200);
+			coreSequenceFrameShown(buffer, currentFrameId, shownFrame);
+			osystem_CopyBlockPhys(shownFrame,0,0,320,200);
 
 			// setPalette left the screen lit: not one bright frame before the fade
 			if (fadeInFirstFrame && frames == 1)

@@ -58,8 +58,8 @@ cp "$source/Shared/assets/fonts/OFL.txt" "$staging/Gelasio-OFL.txt"
 chmod 755 "$staging/Launcher" "$staging/Tatou"
 cp "$source/Shared/assets/fonts/Inter-OFL.txt" "$staging/"
 # the fonts of the game's texts (FitdLib/assets/fonts)
-cp "$source/FitdLib/assets/fonts/GrenzeGotisch-OFL.txt" "$source/FitdLib/assets/fonts/IMFell-OFL.txt" "$source/FitdLib/assets/fonts/CrimsonPro-OFL.txt" "$source/FitdLib/assets/fonts/Arvo-OFL.txt" "$source/FitdLib/assets/fonts/Ponomar-OFL.txt" "$staging/"
-chmod 644 "$staging/README.md" "$staging/LICENSE" "$staging/Gelasio-OFL.txt" "$staging/Inter-OFL.txt" "$staging/GrenzeGotisch-OFL.txt" "$staging/IMFell-OFL.txt" "$staging/CrimsonPro-OFL.txt" "$staging/Arvo-OFL.txt" "$staging/Ponomar-OFL.txt"
+cp "$source/FitdLib/assets/fonts/GrenzeGotisch-OFL.txt" "$source/FitdLib/assets/fonts/IMFell-OFL.txt" "$source/FitdLib/assets/fonts/CrimsonPro-OFL.txt" "$source/FitdLib/assets/fonts/Arvo-OFL.txt" "$source/FitdLib/assets/fonts/Ponomar-OFL.txt" "$source/FitdLib/assets/fonts/Alegreya-OFL.txt" "$staging/"
+chmod 644 "$staging/README.md" "$staging/LICENSE" "$staging/Gelasio-OFL.txt" "$staging/Inter-OFL.txt" "$staging/GrenzeGotisch-OFL.txt" "$staging/IMFell-OFL.txt" "$staging/CrimsonPro-OFL.txt" "$staging/Arvo-OFL.txt" "$staging/Ponomar-OFL.txt" "$staging/Alegreya-OFL.txt"
 
 archive="$releaseFolder/$name.tar.gz"
 rm -f "$archive"
