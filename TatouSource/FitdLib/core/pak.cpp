@@ -12,6 +12,7 @@
 #include "common.h"
 #include "consoleLog.h"
 #include "languagePack.h"
+#include "translation.h"
 
 #ifdef WIN32
 #include <direct.h>
@@ -43,8 +44,17 @@ void readPakInfo(pakInfoStruct* pPakInfo, DataFile& fileHandle)
     pPakInfo->offset = READ_LE_U16(&pPakInfo->offset);
 }
 
+// While true, the entries are read from the player's files only, without
+// a built-in translation (readPakEntryFromFile)
+static thread_local bool s_filesOnly = false;
+
 unsigned int PAK_getNumFiles(const char* name)
 {
+    // A built-in language (core/translation.h) gives its texts whole
+    const int translated = s_filesOnly ? -1 : translatedPakCount(name);
+    if(translated >= 0)
+        return (unsigned int)translated;
+
     // Try disk file first
     {
         DataFile fileHandle;
@@ -107,6 +117,9 @@ int LoadPak(const char* name, int index, char* ptr)
 
 int getPakSize(const char* name, int index)
 {
+    if(const std::vector<u8>* translated = s_filesOnly ? nullptr : translatedPakEntry(name, index))
+        return (int)translated->size();
+
     // Bounds check - log warning but continue to access data (DOS buffer skipover)
     int numFiles = PAK_getNumFiles(name);
     if(index < 0 || numFiles <= index)
@@ -194,6 +207,14 @@ int getPakSize(const char* name, int index)
 
 char* loadPak(const char* name, int index)
 {
+	if(const std::vector<u8>* translated = s_filesOnly ? nullptr : translatedPakEntry(name, index))
+	{
+		char* copy = (char*)malloc(translated->empty() ? 1 : translated->size());
+		if(copy && !translated->empty())
+			memcpy(copy, translated->data(), translated->size());
+		return copy;
+	}
+
 	// Bounds check - log warning but continue to access data (DOS buffer skipover)
 	int numFiles = PAK_getNumFiles(name);
 	if(index < 0 || numFiles <= index)
@@ -343,3 +364,18 @@ char* loadPak(const char* name, int index)
 #endif
 }
 
+bool readPakEntryFromFile(const char* name, int index, std::vector<u8>& data)
+{
+    s_filesOnly = true;
+    char* ptr = loadPak(name, index);
+    const int size = ptr ? getPakSize(name, index) : 0;
+    s_filesOnly = false;
+    if(!ptr || size <= 0)
+    {
+        free(ptr);
+        return false;
+    }
+    data.assign((u8*)ptr, (u8*)ptr + size);
+    free(ptr);
+    return true;
+}

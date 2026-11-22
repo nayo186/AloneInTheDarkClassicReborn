@@ -180,6 +180,18 @@ add_custom_command(
 )
 target_sources(FitdLib PRIVATE "${TEXT_FIXES_DATA}")
 
+# Languages built into the game (assets/translations -> translationRussian.cpp,
+# core/translation.cpp): the Russian translation of Alone 1 by Old-Games.ru
+set(TRANSLATION_RUSSIAN_DATA "${CMAKE_CURRENT_BINARY_DIR}/translationRussian.cpp")
+add_custom_command(
+    OUTPUT "${TRANSLATION_RUSSIAN_DATA}"
+    COMMAND ${CMAKE_COMMAND} -DFILE=${CMAKE_CURRENT_SOURCE_DIR}/assets/translations/aitd1-russian.txt
+            -DNAME=kTranslationRussian -DOUTPUT=${TRANSLATION_RUSSIAN_DATA} -P "${CMAKE_CURRENT_SOURCE_DIR}/../Shared/embedPicture.cmake"
+    DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/assets/translations/aitd1-russian.txt" "${CMAKE_CURRENT_SOURCE_DIR}/../Shared/embedPicture.cmake"
+    COMMENT "Embedding the Russian translation"
+)
+target_sources(FitdLib PRIVATE "${TRANSLATION_RUSSIAN_DATA}")
+
 # The menus' fonts compiled in: Inter, F1's (and the launcher's on Android,
 # shown by the game), and Gelasio (Shared/assets/fonts -> menuFontData.cpp,
 # Shared/ui/menuFontData.h)
@@ -199,8 +211,8 @@ target_sources(FitdLib PRIVATE "${MENU_FONT_DATA}")
 
 # The fonts of the game's texts (assets/fonts -> gameFont*.cpp, textFont.cpp):
 # Grenze Gotisch for Alone 1, IM Fell DW Pica Italic for Jack, Crimson Pro for
-# Alone 2, Arvo for Alone 3 (all SIL OFL)
-foreach(GAME_FONT "GrenzeGotisch-SemiBold;kGameFontGothic" "IMFellDWPica-Italic;kGameFontItalic" "CrimsonPro-Medium;kGameFontBook" "Arvo-Regular;kGameFontSlab")
+# Alone 2, Arvo for Alone 3, Ponomar for Alone 1 in Russian (all SIL OFL)
+foreach(GAME_FONT "GrenzeGotisch-SemiBold;kGameFontGothic" "IMFellDWPica-Italic;kGameFontItalic" "CrimsonPro-Medium;kGameFontBook" "Arvo-Regular;kGameFontSlab" "Ponomar-Regular;kGameFontRussian")
     list(GET GAME_FONT 0 GAME_FONT_FILE)
     list(GET GAME_FONT 1 GAME_FONT_NAME)
     set(GAME_FONT_DATA "${CMAKE_CURRENT_BINARY_DIR}/${GAME_FONT_NAME}.cpp")

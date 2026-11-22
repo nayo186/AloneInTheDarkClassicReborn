@@ -9,6 +9,7 @@
 #include "consoleLog.h"
 #include "settings.h"
 #include "launchOptions.h"
+#include "translation.h"
 #include "coreHooks.h"
 #include "languagePack.h"
 #include <algorithm>
@@ -75,7 +76,13 @@ void applyLaunchOptions()
         if (g_launchOptions.game == "aitd3" && selectLanguagePack(language))
             printf(MAIN_OK "Language folder: %s\n", languagePackFolder().c_str());
 
-        if (dataFileExists((language + ".PAK").c_str()))
+        // Alone 1: a language built into the game (core/translation.h)
+        if (selectTranslation(language, g_launchOptions.game))
+        {
+            languageNameString = language;
+            printf(MAIN_OK "Language: %s (built in)\n", language.c_str());
+        }
+        else if (dataFileExists((language + ".PAK").c_str()))
         {
             languageNameString = language;
             printf(MAIN_OK "Language: %s\n", language.c_str());

@@ -10,6 +10,10 @@
 #ifndef _PAK_
 #define _PAK_
 
+#include "types.h"
+
+#include <vector>
+
 // Loads an entry of a PAK into new memory (decompressed)
 char* loadPak(const char* name, int index);
 // Loads an entry of a PAK into the given memory
@@ -18,5 +22,8 @@ int LoadPak(const char* name, int index, char* ptr);
 int getPakSize(const char* name, int index);
 // Number of entries of a PAK
 unsigned int PAK_getNumFiles(const char* name);
+// Reads an entry from the player's files, without a built-in translation
+// (core/translation.h); false if it cannot be read
+bool readPakEntryFromFile(const char* name, int index, std::vector<u8>& data);
 
 #endif

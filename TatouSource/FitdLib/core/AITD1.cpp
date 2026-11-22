@@ -416,6 +416,8 @@ int ChoosePerso(void)
         loadingText = "Por Favor Espere...";
     else if (languageNameString == "DEUTSCH")
         loadingText = "Bitte Warten...";
+    else if (languageNameString == "RUSSIAN")
+        loadingText = "\x8F\xAE\xA4\xAE\xA6\xA4\xA8\xE2\xA5...";   // DOS code page 866 (core/translation.h)
 
     SetFont(PtrFont, 15);
     int textWidth = ExtGetSizeFont((u8*)loadingText);

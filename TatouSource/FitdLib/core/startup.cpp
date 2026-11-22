@@ -620,20 +620,22 @@ textEntryStruct* getTextFromIdx(int index)
             platformReturnLanguage = languageNameString;
             const bool french = languageNameString == "FRANCAIS", spanish = languageNameString == "ESPAGNOL";
             const bool italian = languageNameString == "ITALIANO", german = languageNameString == "DEUTSCH";
+            // The built-in Russian (core/translation.h): DOS code page 866
+            const bool russian = languageNameString == "RUSSIAN";
             if (startedByLauncher())
-                platformReturnText = french ? "Retour au launcher" : spanish ? "Volver al launcher" : italian ? "Torna al launcher"
+                platformReturnText = russian ? "\x82\xA5\xE0\xAD\xE3\xE2\xEC\xE1\xEF \xA2 " "\xAB\xA0\xE3\xAD\xE7\xA5\xE0" : french ? "Retour au launcher" : spanish ? "Volver al launcher" : italian ? "Torna al launcher"
                     : german ? "Zur\x81" "ck zum Launcher" : "Return to the launcher";
             else
             {
 #if defined(__ANDROID__)
-                platformReturnText = french ? "Quitter" : spanish ? "Salir" : italian ? "Esci" : german ? "Beenden" : "Exit";
+                platformReturnText = russian ? "\x82\xEB\xE5\xAE\xA4" : french ? "Quitter" : spanish ? "Salir" : italian ? "Esci" : german ? "Beenden" : "Exit";
 #else
 #if defined(__APPLE__)
                 const char* system = "macOS";
 #else
                 const char* system = "Linux";
 #endif
-                platformReturnText = std::string(french ? "Retour sous " : spanish ? "Volver a " : italian ? "Torna a " : german ? "Zur\x81" "ck zu " : "Return to ") + system;
+                platformReturnText = std::string(russian ? "\x82\xA5\xE0\xAD\xE3\xE2\xEC\xE1\xEF \xA2 " : french ? "Retour sous " : spanish ? "Volver a " : italian ? "Torna a " : german ? "Zur\x81" "ck zu " : "Return to ") + system;
 #endif
             }
             platformReturnEntry.index = exitIndex;

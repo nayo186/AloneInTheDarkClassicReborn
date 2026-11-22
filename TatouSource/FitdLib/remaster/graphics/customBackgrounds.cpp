@@ -17,6 +17,7 @@
 #include "platformHooks.h"
 #include "pak.h"
 #include "AITD1.h"
+#include "translation.h"
 
 #define STB_IMAGE_WRITE_STATIC
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -122,6 +123,10 @@ static CustomFile findCustom(const std::string& folderName, const char* packFold
 // extensions count too (Linux tells them apart)
 static CustomFile customFile(const std::string& base)
 {
+    // The built-in Russian of Alone 1 has its own title on the start menu's
+    // book (core/translation.h): a picture made for the English one would hide it
+    if (base == "ITD_RESS_013" && isRussianTranslation())
+        return CustomFile();
     static const char* const kExtensions[] = { ".png", ".jpg", ".jpeg", ".PNG", ".JPG", ".JPEG" };
     return findCustom(folder(customPicturesFolder()), kPicturesFolder, base, kExtensions, 6);
 }

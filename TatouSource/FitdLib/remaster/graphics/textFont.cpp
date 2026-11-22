@@ -27,6 +27,7 @@
 #include "settings.h"
 #include "font.h"
 #include "cp437.h"
+#include "translation.h"
 
 #include <bgfx/bgfx.h>
 
@@ -53,6 +54,8 @@ extern const unsigned char kGameFontBook[];
 extern const size_t kGameFontBook_size;
 extern const unsigned char kGameFontSlab[];
 extern const size_t kGameFontSlab_size;
+extern const unsigned char kGameFontRussian[];
+extern const size_t kGameFontRussian_size;
 
 // The palette of the game (platform/rendererBGFX.cpp) and the size of the
 // scene picture (platform/bgfxGlue.cpp)
@@ -153,6 +156,10 @@ void footprint(const GameFont& f, int x, int y, const u8* s, std::vector<int>& o
 
 int unicodeOf(u8 c)
 {
+    // The built-in Russian of Alone 1 writes with the Russian code page of
+    // DOS (866); its codes under 32 are signs of the game's own font
+    if (isRussianTranslation())
+        return c < 32 ? 0 : cp866ToUnicode(c);
     // Alone 1 writes its copyright with the code of DOS's "⌐" (© Infogrames 1992)
     if (c == 0xA9)
         return 0x00A9;
@@ -164,6 +171,9 @@ bool isCapital(u8 c)
 {
     if (c >= 'A' && c <= 'Z')
         return true;
+    // Russian: А-Я and Ё, Є, Ї, Ў (code page 866)
+    if (isRussianTranslation())
+        return (c >= 0x80 && c <= 0x9F) || c == 0xF0 || c == 0xF2 || c == 0xF4 || c == 0xF6;
     switch (c)
     {
     case 0x80: case 0x8E: case 0x8F: case 0x90: case 0x92: case 0x99: case 0x9A: case 0xA5:
@@ -186,7 +196,7 @@ bool usesGameShape(const GameFont& f, u8 c)
         return true;
     // The ornament under a book's title in Alone 1 ("Demonia Particularis",
     // code of DOS's "µ"): the game's own drawing, not a Greek letter
-    if (c == 0xE6)
+    if (c == 0xE6 && !isRussianTranslation())   // in Russian, the letter ц
         return true;
     return !s_fontReady || stbtt_FindGlyphIndex(&s_font, unicodeOf(c)) == 0;
 }
@@ -287,8 +297,10 @@ void loadFont()
     // Each game its own: Grenze Gotisch with Alone 1's gothic capitals,
     // IM Fell DW Pica Italic with Jack's script capitals, Crimson Pro with
     // Alone 2's book capitals, Arvo with Alone 3's slab (western) capitals
+    // (Grenze has no Russian letters: Alone 1 in Russian has Ponomar)
     const unsigned char* data = g_gameId == JACK ? kGameFontItalic : g_gameId == AITD2 ? kGameFontBook
-                              : g_gameId == AITD3 ? kGameFontSlab : kGameFontGothic;
+                              : g_gameId == AITD3 ? kGameFontSlab
+                              : isRussianTranslation() ? kGameFontRussian : kGameFontGothic;
     s_fontReady = stbtt_InitFont(&s_font, data, stbtt_GetFontOffsetForIndex(data, 0)) != 0;
 
     // The small letters stand where the game's "a" ends

@@ -27,6 +27,27 @@ inline int cp437ToUnicode(unsigned char c)
     return c < 128 ? c : kHigh[c - 128];
 }
 
+// The letter of a code of the Russian DOS (code page 866: the built-in
+// Russian translation of Alone 1, core/translation.h)
+inline int cp866ToUnicode(unsigned char c)
+{
+    if (c < 128)
+        return c;
+    if (c < 0xB0)
+        return 0x0410 + (c - 0x80);   // А-Я, а-п
+    if (c >= 0xE0 && c < 0xF0)
+        return 0x0440 + (c - 0xE0);   // р-я
+    if (c >= 0xF0)
+    {
+        static const unsigned short kLast[16] = {
+            0x0401, 0x0451, 0x0404, 0x0454, 0x0407, 0x0457, 0x040E, 0x045E,
+            0x00B0, 0x2219, 0x00B7, 0x221A, 0x2116, 0x00A4, 0x25A0, 0x00A0,
+        };
+        return kLast[c - 0xF0];
+    }
+    return cp437ToUnicode(c);          // the box drawing signs are the same
+}
+
 // A text in UTF-8 written with the codes of DOS ('?' for a letter DOS lacks)
 inline std::string utf8ToCp437(const std::string& text)
 {
